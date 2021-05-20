@@ -17,11 +17,11 @@
                         placeholder="/ndn/alice/test" value="/ndn/multicast/test/$time">
 
                 <div class="control">
-                <button class="button is-link is-light is-small"
-                        onclick="selExpressInterest(sideExpressInterest.value)">
-                    Send
-                </button>
-            </div>
+                    <button class="button is-link is-light is-small"
+                            onclick="selExpressInterest(sideExpressInterest.value)">
+                        Send
+                    </button>
+                </div>
             </div>
 
             <div class="field">
@@ -32,16 +32,20 @@
                 </button>
             </div>
 
-            <label class="label is-small">Computed FIB:</label>
-            <pre id="sideFib"></pre>
-            <br/>
+            <div>
+                <label class="label is-small">Computed FIB:</label>
+                <pre id="sideFib"></pre>
+                <br/>
+            </div>
 
-            <label class="label is-small">Produced Prefixes:</label>
-            <textarea class="textarea full-width mb-3 is-small" id="sideProducedPrefixes"></textarea>
-            <button class="button is-link is-light is-small full-width"
-                    onclick="selectedNode.producedPrefixes = sideProducedPrefixes.value.split('\n'); computeNFibs()">
-                Set
-            </button>
+            <div class="field">
+                <label class="label is-small">Produced Prefixes:</label>
+                <textarea class="textarea full-width mb-3 is-small" id="sideProducedPrefixes"></textarea>
+                <button class="button is-link is-light is-small full-width"
+                        onclick="selectedNode.producedPrefixes = sideProducedPrefixes.value.split('\n'); computeNFibs()">
+                    Set
+                </button>
+            </div>
 
             <hr/>
         </div>
@@ -107,7 +111,8 @@
                 </div>
             </div>
 
-            <label class="label is-small">MiniNDN Config:</label>
+            <div class="field">
+                <label class="label is-small">MiniNDN Config:</label>
                 <textarea class="textarea full-width mb-1 is-small" id="miniNDNConfig"></textarea>
                 <button class="button is-danger is-light is-small full-width" onclick="loadMiniNDNConfig()">
                     Load
@@ -115,6 +120,7 @@
                 <button class="button is-link is-light is-small full-width mt-1">
                     Generate
                 </button>
+            </div>
         </div>
     </div>
 </ng-template>

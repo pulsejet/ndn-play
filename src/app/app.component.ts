@@ -2,7 +2,6 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { GlobalService } from './global.service';
 import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
-import * as vis from 'vis-network';
 
 @Component({
   selector: 'app-root',
@@ -65,5 +64,29 @@ export class AppComponent implements OnInit, AfterViewInit {
         node.nfw.fib = fibs[nodeId];
         node.nfw.nodeUpdated();
     }
+  }
+
+  sendPingClick(params: any) {
+    const id = this.gs.network.getNodeAt(params.pointer.DOM);
+    if (!id) return;
+
+    const dest = <INode>this.gs.nodes.get(id);
+    const interest = {
+        name: `/ndn/${this.selectedNode?.label}-site/${this.selectedNode?.label}/ping`,
+        freshness: 3000,
+    };
+
+    const start = performance.now();
+    dest.nfw.expressInterest(interest, (data) => {
+        console.log("Received = " + data.content, 'in', Math.round(performance.now() - start), 'ms');
+    });
+    this.pendingClickEvent = undefined;
+  }
+
+  selExpressInterest(name: string) {
+    name = name.replace('$time', (new Date).getTime().toString());
+    this.selectedNode?.nfw.expressInterest({ name }, (data) => {
+      console.log(data.content);
+    });
   }
 }

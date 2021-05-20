@@ -15,12 +15,12 @@
             <label class="label is-small">Express Interest</label>
             <div class="field has-addons">
                 <input class="input is-small" type="text"
-                       placeholder="/ndn/alice/test"
+                       placeholder="/ndn/alice/test" #expressInput
                        value="/ndn/multicast/test/$time">
 
                 <div class="control">
                     <button class="button is-link is-light is-small"
-                            onclick="selExpressInterest(sideExpressInterest.value)">
+                            (click)="selExpressInterest(expressInput.value)">
                         Send
                     </button>
                 </div>
@@ -28,7 +28,8 @@
 
             <div class="field">
                 <button class="button is-link full-width is-light is-small full-width"
-                        onclick="pendingClickEvent = sendPingClick; pingButton.disabled = true;">
+                        [disabled]="pendingClickEvent == sendPingClick"
+                        (click)="pendingClickEvent = sendPingClick">
                     Ping Node
                 </button>
             </div>

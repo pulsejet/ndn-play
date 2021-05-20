@@ -128,8 +128,8 @@
 
             <div class="field">
                 <label class="label is-small">MiniNDN Config:</label>
-                <textarea class="textarea full-width mb-1 is-small"></textarea>
-                <button class="button is-danger is-light is-small full-width" onclick="loadMiniNDNConfig()">
+                <textarea class="textarea full-width mb-1 is-small" #mnConf></textarea>
+                <button class="button is-danger is-light is-small full-width" (click)="loadMiniNDNConfig(gs, mnConf.value)">
                     Load
                 </button>
                 <button class="button is-link is-light is-small full-width mt-1">

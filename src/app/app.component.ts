@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { GlobalService } from './global.service';
 import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
+import { loadMiniNDNConfig } from './minindn-config';
 
 @Component({
   selector: 'app-root',
@@ -18,12 +19,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   @ViewChild('networkContainer') networkContainer?: ElementRef;
 
+  public loadMiniNDNConfig = loadMiniNDNConfig;
+
   constructor(public gs: GlobalService)
   {}
 
-  ngOnInit() {
-
-  }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     this.gs.createNetwork(this.networkContainer?.nativeElement);

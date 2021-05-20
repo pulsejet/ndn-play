@@ -108,6 +108,9 @@ export class GlobalService {
       manipulation: {
         enabled: true,
       },
+      layout: {
+        randomSeed: 2,
+      }
     };
 
     this.network = new vis.Network(container, data, options);

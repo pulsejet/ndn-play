@@ -1,0 +1,20 @@
+#side-produced-prefixes {
+    height: 50px;
+}
+
+#network {
+    height: 100%; width: 100%;
+    background-color: white;
+}
+
+#sidebar {
+    padding: 1em;
+    width: 100%;
+    overflow: auto;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+}
+
+#side-details {
+    display: none;
+}

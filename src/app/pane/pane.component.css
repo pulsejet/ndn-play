@@ -1,0 +1,28 @@
+#pane1, #pane2, #pane-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+#pane1 {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 25%;
+    overflow: hidden;
+}
+
+#pane2 {
+    flex-grow: 0;
+    flex-shrink: 1;
+    background-color: white;
+}
+
+#rpanrResize {
+    flex-grow: 0;
+    flex-shrink: 0;
+    background: gray;
+    opacity: 0.6;
+    width: 0.15rem;
+    cursor: col-resize;
+    margin: 0 0 0 auto;
+}

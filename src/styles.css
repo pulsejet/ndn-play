@@ -1,1 +1,22 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'bulma/css/bulma.css';
+
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+*::-webkit-scrollbar {
+    width: 5px;
+}
+*::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+*::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+}
+
+.full-width {
+    width: 100%;
+}

@@ -1,0 +1,126 @@
+
+<ng-template #pane1>
+    <div id="sidebar">
+        <div id="sideDetailsNode">
+            <h2 id="sideHeadNode" class="is-size-4 mb-3">Nothing Selected</h2>
+
+            <div class="field">
+                <label class="label is-small">Node Name</label>
+                <input class="input is-small" type="text" placeholder="Alice" id="sideNodeLabel"
+                    oninput="nodes.update({id: selectedNode.id, label: this.value})"
+                    onchange="computeNFibs()">
+            </div>
+
+            <label class="label is-small">Express Interest</label>
+            <div class="field has-addons">
+                <input class="input is-small" type="text" id="sideExpressInterest"
+                        placeholder="/ndn/alice/test" value="/ndn/multicast/test/$time">
+
+                <div class="control">
+                <button class="button is-link is-light is-small"
+                        onclick="selExpressInterest(sideExpressInterest.value)">
+                    Send
+                </button>
+            </div>
+            </div>
+
+            <div class="field">
+                <button class="button is-link full-width is-light is-small full-width"
+                        id="pingButton"
+                        onclick="pendingClickEvent = sendPingClick; pingButton.disabled = true;">
+                    Ping Node
+                </button>
+            </div>
+
+            <label class="label is-small">Computed FIB:</label>
+            <pre id="sideFib"></pre>
+            <br/>
+
+            <label class="label is-small">Produced Prefixes:</label>
+            <textarea class="textarea full-width mb-3 is-small" id="sideProducedPrefixes"></textarea>
+            <button class="button is-link is-light is-small full-width"
+                    onclick="selectedNode.producedPrefixes = sideProducedPrefixes.value.split('\n'); computeNFibs()">
+                Set
+            </button>
+
+            <hr/>
+        </div>
+
+        <div id="sideDetailsEdge">
+            <h2 id="sideHeadEdge" class="is-size-4 mb-3">Nothing Selected</h2>
+
+            <div class="field">
+                <label class="label is-small">Latency (ms)</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="10" id="sideEdgeLatency"
+                            oninput="edges.update({id: selectedEdge.id, latency: Number(this.value)})">
+                </div>
+                <p class="help is-small">Negative for default latency</p>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Loss (%)</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="0" id="sideEdgeLoss"
+                            oninput="edges.update({id: selectedEdge.id, loss: Number(this.value)})">
+                </div>
+                <p class="help is-small">Negative for default loss</p>
+            </div>
+
+            <hr/>
+        </div>
+
+        <div id="side-global-sec">
+            <h2 id="side-global" class="is-size-4">Global Operations</h2>
+            <br/>
+            <div class="field">
+                <button class="button is-link full-width is-light is-small full-width"
+                        onclick="computeNFibs()">Compute Routes</button>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Default Latency (ms)</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="10" id="sideGlobalLatency" value="10"
+                            onchange="computeNFibs()">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Default Loss (%)</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="0" id="sideGlobalLoss" value="0">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Content Store Size</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="100" id="sideGlobalCSSize" value="500">
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Latency Slowdown Multiplier</label>
+                <div class="control">
+                    <input class="input is-small" type="number" placeholder="100" id="sideSlowdown" value="10">
+                </div>
+            </div>
+
+            <label class="label is-small">MiniNDN Config:</label>
+                <textarea class="textarea full-width mb-1 is-small" id="miniNDNConfig"></textarea>
+                <button class="button is-danger is-light is-small full-width" onclick="loadMiniNDNConfig()">
+                    Load
+                </button>
+                <button class="button is-link is-light is-small full-width mt-1">
+                    Generate
+                </button>
+        </div>
+    </div>
+</ng-template>
+
+<ng-template #pane2>
+    <div id="network"></div>
+</ng-template>
+
+<app-pane [pane1]="pane1" [pane2]="pane2"></app-pane>

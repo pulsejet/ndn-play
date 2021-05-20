@@ -7,28 +7,37 @@ import { NFW } from './nfw';
   providedIn: 'root'
 })
 export class GlobalService {
-
+  // Constants
   public readonly DEFAULT_LINK_COLOR = "#3583ea";
   public readonly DEFAULT_NODE_COLOR = '#a4b7fc';
   public readonly SELECTED_NODE_COLOR = '#4ee44e';
   public readonly ACTIVE_NODE_COLOR = '#ffcccb';
   public readonly LOG_INTERESTS = false;
 
+  // Animation updates
   public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
   public pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
 
+  // Global Dataset
   public readonly nodes: vis.DataSet<INode, "id">;
   public readonly edges: vis.DataSet<IEdge, "id">;
 
+  // Global network
   public network: vis.Network;
 
+  // Global defaults
   public defaultLatency = 10;
   public defaultLoss = 0;
   public contentStoreSize = 500;
   public latencySlowdown = 10;
 
+  // Animation color busiest
   public busiestNode?: INode;
   public busiestLink?: IEdge;
+
+  // Selected objects
+  public selectedNode?: INode;
+  public selectedEdge?: IEdge;
 
   constructor() {
     // create an array with nodes

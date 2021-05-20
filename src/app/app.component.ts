@@ -14,9 +14,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public pendingClickEvent?: (params: any) => void;
 
-  public selectedNode?: INode;
-  public selectedEdge?: IEdge;
-
   @ViewChild('networkContainer') networkContainer?: ElementRef;
 
   public loadMiniNDNConfig = loadMiniNDNConfig;
@@ -45,13 +42,17 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     const id = this.gs.network?.getNodeAt(params.pointer.DOM);
-    this.selectedNode = id ? <INode>this.gs.nodes.get(id) : undefined;
+    this.gs.selectedNode = id ? <INode>this.gs.nodes.get(id) : undefined;
 
-    if (!this.selectedNode) {
+    if (!this.gs.selectedNode) {
         const edgeId = this.gs.network?.getEdgeAt(params.pointer.DOM);
-        this.selectedEdge = edgeId ? <IEdge>this.gs.edges.get(edgeId) : undefined;
+        this.gs.selectedEdge = edgeId ? <IEdge>this.gs.edges.get(edgeId) : undefined;
     } else {
-        this.selectedEdge = undefined;
+        this.gs.selectedEdge = undefined;
+    }
+
+    for (const node of this.gs.nodes.get()) {
+      node.nfw.updateColors();
     }
   }
 
@@ -72,8 +73,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (!id) return;
 
     const dest = <INode>this.gs.nodes.get(id);
+    const label = this.gs.selectedNode?.label;
     const interest = {
-        name: `/ndn/${this.selectedNode?.label}-site/${this.selectedNode?.label}/ping`,
+        name: `/ndn/${label}-site/${label}/ping`,
         freshness: 3000,
     };
 
@@ -86,7 +88,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
-    this.selectedNode?.nfw.expressInterest({ name }, (data) => {
+    this.gs.selectedNode?.nfw.expressInterest({ name }, (data) => {
       console.log(data.content);
     });
   }

@@ -1,14 +1,14 @@
 
 <ng-template #pane1>
     <div id="sidebar">
-        <div *ngIf="selectedNode">
-            <h2 class="is-size-4 mb-3">On {{ selectedNode.label }}</h2>
+        <div *ngIf="gs.selectedNode">
+            <h2 class="is-size-4 mb-3">On {{ gs.selectedNode.label }}</h2>
 
             <div class="field">
                 <label class="label is-small">Node Name</label>
                 <input class="input is-small" type="text" placeholder="Alice"
-                    [(ngModel)]="selectedNode.label"
-                    (input)="this.gs.nodes.update({ id: selectedNode.id, label: selectedNode.label })"
+                    [(ngModel)]="gs.selectedNode.label"
+                    (input)="this.gs.nodes.update({ id: gs.selectedNode.id, label: gs.selectedNode.label })"
                     (change)="computeNFibs()">
             </div>
 
@@ -36,7 +36,7 @@
 
             <div>
                 <label class="label is-small">Computed FIB:</label>
-                <pre>{{ selectedNode.nfw.strsFIB().join('\n') }}</pre>
+                <pre>{{ gs.selectedNode.nfw.strsFIB().join('\n') }}</pre>
                 <br/>
             </div>
 
@@ -44,9 +44,9 @@
                 <label class="label is-small">Produced Prefixes:</label>
                 <textarea class="textarea full-width mb-3 is-small"
                           id="side-produced-prefixes" #prp
-                          [value]="selectedNode.producedPrefixes.join('\n')"></textarea>
+                          [value]="gs.selectedNode.producedPrefixes.join('\n')"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        (click)="selectedNode.producedPrefixes = prp.value.split('\n'); computeNFibs()">
+                        (click)="gs.selectedNode.producedPrefixes = prp.value.split('\n'); computeNFibs()">
                     Set
                 </button>
             </div>
@@ -54,20 +54,20 @@
             <hr/>
         </div>
 
-        <div *ngIf="selectedEdge">
+        <div *ngIf="gs.selectedEdge">
             <h2 class="is-size-4 mb-3">
                 On
-                {{ $any(gs.nodes.get($any(selectedEdge?.from))).label }}
+                {{ $any(gs.nodes.get($any(gs.selectedEdge?.from))).label }}
                 &#8212;
-                {{ $any(gs.nodes.get($any(selectedEdge?.to))).label }}
+                {{ $any(gs.nodes.get($any(gs.selectedEdge?.to))).label }}
             </h2>
 
             <div class="field">
                 <label class="label is-small">Latency (ms)</label>
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="10"
-                           [(ngModel)]="selectedEdge.latency"
-                           (input)="gs.edges.update(selectedEdge); computeNFibs()">
+                           [(ngModel)]="gs.selectedEdge.latency"
+                           (input)="gs.edges.update(gs.selectedEdge); computeNFibs()">
                 </div>
                 <p class="help is-small">Negative for default latency</p>
             </div>
@@ -76,8 +76,8 @@
                 <label class="label is-small">Loss (%)</label>
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="0"
-                           [(ngModel)]="selectedEdge.loss"
-                           (input)="gs.edges.update(selectedEdge)">
+                           [(ngModel)]="gs.selectedEdge.loss"
+                           (input)="gs.edges.update(gs.selectedEdge)">
                 </div>
                 <p class="help is-small">Negative for default loss</p>
             </div>

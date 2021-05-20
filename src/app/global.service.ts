@@ -104,10 +104,10 @@ export class GlobalService {
     };
 
     const options = {
-        interaction: { hover: true },
-        manipulation: {
-            enabled: true,
-        },
+      interaction: { hover: true },
+      manipulation: {
+        enabled: true,
+      },
     };
 
     this.network = new vis.Network(container, data, options);

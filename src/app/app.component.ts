@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from './global.service';
 import { IEdge, INode } from './interfaces';
+import { RoutingHelper } from './routing-helper';
 import * as vis from 'vis-network';
 
 @Component({
@@ -27,8 +28,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.gs.createNetwork(this.networkContainer?.nativeElement);
-
     this.gs.network?.on("click", this.onNetworkClick.bind(this));
+
+    const computeFun = this.computeNFibs.bind(this);
+    this.gs.nodes.on('add', computeFun);
+    this.gs.nodes.on('remove', computeFun);
+    this.gs.edges.on('add', computeFun);
+    this.gs.edges.on('remove', computeFun);
+    computeFun();
   }
 
   onNetworkClick(params: any) {
@@ -49,6 +56,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   computeNFibs() {
-
+    console.warn('Computing routes');
+    const rh = new RoutingHelper(this.gs);
+    const fibs = rh.calculateNPossibleRoutes();
+    for (const nodeId in fibs) {
+        const node = this.gs.nodes.get(nodeId);
+        if (!node) continue;
+        node.nfw.fib = fibs[nodeId];
+        node.nfw.nodeUpdated();
+    }
   }
 }

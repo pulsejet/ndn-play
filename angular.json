@@ -56,7 +56,9 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/dijkstrajs/dijkstra.js"
+            ]
           },
           "configurations": {
             "production": {

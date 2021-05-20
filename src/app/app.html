@@ -35,7 +35,7 @@
 
             <div>
                 <label class="label is-small">Computed FIB:</label>
-                <pre></pre>
+                <pre>{{ selectedNode.nfw.strsFIB().join('\n') }}</pre>
                 <br/>
             </div>
 
@@ -43,7 +43,7 @@
                 <label class="label is-small">Produced Prefixes:</label>
                 <textarea class="textarea full-width mb-3 is-small" id="side-produced-prefixes"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        onclick="selectedNode.producedPrefixes = sideProducedPrefixes.value.split('\n'); computeNFibs()">
+                        (click)="computeNFibs()">
                     Set
                 </button>
             </div>
@@ -64,7 +64,7 @@
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="10"
                            [(ngModel)]="selectedEdge.latency"
-                           (input)="gs.edges.update(selectedEdge)">
+                           (input)="gs.edges.update(selectedEdge); computeNFibs()">
                 </div>
                 <p class="help is-small">Negative for default latency</p>
             </div>

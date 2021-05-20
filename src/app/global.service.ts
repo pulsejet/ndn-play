@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IEdge, INode } from './interfaces';
 import * as vis from 'vis-network/standalone';
+import { NFW } from './nfw';
 
 @Injectable({
   providedIn: 'root'
@@ -13,22 +14,25 @@ export class GlobalService {
   public readonly ACTIVE_NODE_COLOR = '#ffcccb';
   public readonly LOG_INTERESTS = false;
 
-  private pendingUpdatesNodes: { [id: string]: INode } = {};
-  private pendingUpdatesEdges: { [id: string]: IEdge } = {};
+  public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
+  public pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
 
   public readonly nodes: vis.DataSet<INode, "id">;
   public readonly edges: vis.DataSet<IEdge, "id">;
 
-  public network?: vis.Network;
+  public network: vis.Network;
 
   public defaultLatency = 10;
   public defaultLoss = 0;
   public contentStoreSize = 500;
   public latencySlowdown = 10;
 
+  public busiestNode?: INode;
+  public busiestLink?: IEdge;
+
   constructor() {
     // create an array with nodes
-    this.nodes = new vis.DataSet<INode, "id">([
+    this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "alice" },
       { id: "2", label: "mallory" },
       { id: "3", label: "eve" },
@@ -42,7 +46,7 @@ export class GlobalService {
     ]);
 
     // create an array with edges
-    this.edges = new vis.DataSet<IEdge, "id">([
+    this.edges = new vis.DataSet<IEdge, "id">(<any>[
       { from: "1", to: "3" },
       { from: "1", to: "2" },
       { from: "2", to: "4" },
@@ -60,6 +64,13 @@ export class GlobalService {
 
     // Start animating
     requestAnimationFrame(this.runAnimationFrame.bind(this));
+
+    // Initialize always
+    this.nodes.on('add', this.ensureInitialized.bind(this));
+    this.edges.on('add', this.ensureInitialized.bind(this));
+
+    // Temporary init
+    this.network = <any>null;
   }
 
   /** Update objects every animation frame */
@@ -108,6 +119,7 @@ export class GlobalService {
         });
       }
     }
+
     for (const node of this.nodes.get()) {
       if (!node.init) {
         this.nodes.update({
@@ -115,6 +127,7 @@ export class GlobalService {
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
           producedPrefixes: ['/ndn/multicast'],
+          nfw: new NFW(this, node),
         });
       }
     }

@@ -46,7 +46,7 @@
                           id="side-produced-prefixes" #prp
                           [value]="gs.selectedNode.producedPrefixes.join('\n')"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        (click)="gs.nodes.update({ id: gs.selectedNode.id, producedPrefixes: prp.value.split('\n') }); computeNFibs()">
+                        (click)="gs.nodes.update({ id: gs.selectedNode.id, producedPrefixes: mlstrToArray(prp.value) }); computeNFibs()">
                     Set
                 </button>
             </div>

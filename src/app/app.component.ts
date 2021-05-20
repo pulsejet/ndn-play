@@ -92,4 +92,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       console.log(data.content);
     });
   }
+
+  mlstrToArray(str: string) {
+    return str.split('\n').map(v => v.trim()).filter(v => v);
+  }
 }

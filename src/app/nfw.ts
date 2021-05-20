@@ -105,14 +105,9 @@ export class NFW {
     checkPrefixRegistrationMatches(interest: IInterest) {
         let matched = false;
 
-        let matchInterestName = interest.name;
-        if (!matchInterestName.endsWith('/')) matchInterestName += '/';
-
-        for (const entry of this.prefixRegistrations) {
-            if (matchInterestName.startsWith(entry.prefix + (entry.prefix.endsWith('/') ? '' : '/'))) {
-                entry.callback(interest);
-                matched = true;
-            }
+        for (const entry of this.allMatches(this.prefixRegistrations, interest.name)) {
+            entry.callback(interest);
+            matched = true;
         }
 
         return matched;
@@ -135,6 +130,20 @@ export class NFW {
         }
 
         return match;
+    }
+
+    allMatches(table: any[], name: string, identifier='prefix') {
+        let matchName = name;
+        if (!matchName.endsWith('/')) matchName += '/';
+
+        let matches: any[] = [];
+        for (const entry of table) {
+            if (matchName.startsWith(entry[identifier] + (entry[identifier].endsWith('/') ? '' : '/'))) {
+                matches.push(entry);
+            }
+        }
+
+        return matches;
     }
 
     expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
@@ -175,21 +184,22 @@ export class NFW {
         this.updateColors();
 
         // Get longest prefix match
-        const fibMatch = this.longestMatch(this.fib, interest.name);
+        const fibMatches = (strategy == 'multicast' ?
+            this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
 
         // Make sure the next hop is not the previous one
-        const allNextHops = fibMatch?.routes?.filter((r: any) => r.hop !== fromFace);
+        const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== fromFace)).flat(1);
 
         // Drop packet if not matching
         // TODO: NACK
-        if (!allNextHops || allNextHops.length == 0) {
+        if (!allNextHops?.length) {
             this.pendingTraffic--;
             setTimeout(() => this.updateColors(), 100);
             return;
         }
 
         // Where to forward the interest
-        let nextHops = [];
+        let nextHops: vis.IdType[] = [];
 
         // Strategies
         if (strategy == 'best-route') {
@@ -206,8 +216,16 @@ export class NFW {
         // This will be added in the first iteration
         this.pendingTraffic--;
 
+        // Which hops sent to (prevent dupulicate sending)
+        const sentHops: vis.IdType[] = [];
+
         // Add all hops
         for (const nextHop of nextHops) {
+            // Prevent duplicates
+            if (sentHops.includes(nextHop)) continue;
+            sentHops.push(nextHop);
+
+            // Add overhead signal
             this.pendingTraffic++;
 
             // Forward to next NFW

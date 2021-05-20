@@ -42,9 +42,11 @@
 
             <div class="field">
                 <label class="label is-small">Produced Prefixes:</label>
-                <textarea class="textarea full-width mb-3 is-small" id="side-produced-prefixes"></textarea>
+                <textarea class="textarea full-width mb-3 is-small"
+                          id="side-produced-prefixes" #prp
+                          [value]="selectedNode.producedPrefixes.join('\n')"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        (click)="computeNFibs()">
+                        (click)="selectedNode.producedPrefixes = prp.value.split('\n'); computeNFibs()">
                     Set
                 </button>
             </div>

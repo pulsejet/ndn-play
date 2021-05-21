@@ -77,6 +77,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     const interest = {
         name: `/ndn/${label}-site/${label}/ping`,
         freshness: 3000,
+        content: 'blob',
     };
 
     const start = performance.now();
@@ -88,7 +89,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
-    this.gs.selectedNode?.nfw.expressInterest({ name }, (data) => {
+    this.gs.selectedNode?.nfw.expressInterest({ name, content: 'blob' }, (data) => {
       console.log(data.content);
     });
   }

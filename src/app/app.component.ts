@@ -41,6 +41,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.gs.edges.on('add', computeFun);
     this.gs.edges.on('remove', computeFun);
     computeFun();
+
+    setTimeout(() => {
+      this.gs.selectedNode = this.gs.nodes.get()[0];
+      this.showCodeEditor = true;
+    }, 500);
   }
 
   onNetworkClick(params: any) {

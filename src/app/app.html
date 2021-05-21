@@ -160,15 +160,14 @@
 
 <div class="modal is-active" *ngIf="showCodeEditor">
     <div class="modal-background"></div>
-    <div class="modal-card">
+    <div class="modal-card" style="width: 85vw;">
         <header class="modal-card-head">
             <p class="modal-card-title">Function for {{ gs.selectedNode?.label }}</p>
             <button class="delete" aria-label="close" (click)="showCodeEditor = false"></button>
         </header>
         <section class="modal-card-body">
             <div class="field">
-                <textarea class="textarea full-width mb-3" #codeEdit
-                          [(ngModel)]="$any(gs.selectedNode).nfw.codeEdit"></textarea>
+                <app-editor [(code)]="$any(gs.selectedNode).nfw.codeEdit"></app-editor>
             </div>
         </section>
         <footer class="modal-card-foot">

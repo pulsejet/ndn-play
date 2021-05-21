@@ -8,14 +8,14 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "~11.1.1",
-    "@angular/common": "~11.1.1",
-    "@angular/compiler": "~11.1.1",
-    "@angular/core": "~11.1.1",
-    "@angular/forms": "~11.1.1",
-    "@angular/platform-browser": "~11.1.1",
-    "@angular/platform-browser-dynamic": "~11.1.1",
-    "@angular/router": "~11.1.1",
+    "@angular/animations": "~12.0.1",
+    "@angular/common": "~12.0.1",
+    "@angular/compiler": "~12.0.1",
+    "@angular/core": "~12.0.1",
+    "@angular/forms": "~12.0.1",
+    "@angular/platform-browser": "~12.0.1",
+    "@angular/platform-browser-dynamic": "~12.0.1",
+    "@angular/router": "~12.0.1",
     "@ndn/endpoint": "https://ndnts-nightly.ndn.today/endpoint.tgz",
     "@ndn/fw": "https://ndnts-nightly.ndn.today/fw.tgz",
     "@ndn/keychain": "https://ndnts-nightly.ndn.today/keychain.tgz",
@@ -34,13 +34,13 @@
     "vis-data": "^7.1.2",
     "vis-network": "^9.0.4",
     "vis-util": "^5.0.2",
-    "zone.js": "~0.11.3"
+    "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.1101.2",
-    "@angular/cli": "~11.1.2",
-    "@angular/compiler-cli": "~11.1.1",
+    "@angular-devkit/build-angular": "~12.0.1",
+    "@angular/cli": "~12.0.1",
+    "@angular/compiler-cli": "~12.0.1",
     "@types/hammerjs": "^2.0.39",
-    "typescript": "~4.1.2"
+    "typescript": "~4.2.4"
   }
 }

@@ -46,10 +46,13 @@
             </div>
 
             <div class="field">
-                <label class="label is-small">Run Code</label>
-                <textarea class="textarea full-width mb-3 is-small" #code></textarea>
-                <button class="button is-link is-light is-small full-width"
-                        (click)="runCode(code.value)">
+                <label class="label is-small">Execute Function:</label>
+                <button class="button is-link is-light is-small full-width mb-1 mt-1"
+                        (click)="showCodeEditor = true">
+                    Open Editor
+                </button>
+                <button class="button is-success is-light is-small full-width mb-1"
+                        (click)="runCode($any(gs.selectedNode).nfw.codeEdit);">
                     Run
                 </button>
             </div>
@@ -154,3 +157,26 @@
 </ng-template>
 
 <app-pane [pane1]="pane1" [pane2]="pane2"></app-pane>
+
+<div class="modal is-active" *ngIf="showCodeEditor">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Function for {{ gs.selectedNode?.label }}</p>
+            <button class="delete" aria-label="close" (click)="showCodeEditor = false"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <textarea class="textarea full-width mb-3" #codeEdit
+                          [(ngModel)]="$any(gs.selectedNode).nfw.codeEdit"></textarea>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-success"
+                    (click)="runCode($any(gs.selectedNode).nfw.codeEdit);">
+                Run
+            </button>
+            <button class="button" (click)="showCodeEditor = false">Close</button>
+        </footer>
+        </div>
+</div>

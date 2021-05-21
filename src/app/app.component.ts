@@ -22,6 +22,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public loadMiniNDNConfig = loadMiniNDNConfig;
 
+  public showCodeEditor = false;
+
   constructor(public gs: GlobalService)
   {}
 

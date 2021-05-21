@@ -7,23 +7,36 @@ import { ConsumerContext, ConsumerOptions, Producer, ProducerHandler, ProducerOp
 import { AltUri, Data, Interest, Name, NameLike } from "@ndn/packet";
 
 export class NFW {
-    fib: any[] = [];
-    pit: {
+    /** ID of this node */
+    private readonly nodeId: vis.IdType;
+
+    /** Forwarding table */
+    public fib: any[] = [];
+
+    /** Pending interest table */
+    private pit: {
         interest: IInterest;
         removeTimer: number;
         faceCallback: (data: IData) => void;
     }[] = [];
-    cs: { recv: number; data: IData}[] = [];
 
-    strategies = [
+    /** Content Store */
+    private cs: { recv: number; data: IData}[] = [];
+
+    /** Routing strategies */
+    public readonly strategies = [
         { prefix: '/', strategy: 'best-route' },
         { prefix: '/ndn/multicast', strategy: 'multicast' },
     ];
 
-    pendingTraffic = 0;
-    prefixRegistrations: { prefix: string; callback: (interest: IInterest) => void }[] = [];
+    /** Packets pending to be forwarded */
+    public pendingTraffic = 0;
 
-    private readonly nodeId: vis.IdType;
+    /** Registered producer prefixes */
+    public prefixRegistrations: { prefix: string; callback: (interest: IInterest) => void }[] = [];
+
+    /** Code the user is currently editing */
+    public codeEdit = '';
 
     constructor(private gs: GlobalService, node: INode) {
         this.nodeId = <vis.IdType>node.id;

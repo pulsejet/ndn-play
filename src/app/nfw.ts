@@ -3,6 +3,9 @@ import { IData, IInterest, INode } from "./interfaces";
 import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
 
+import { ConsumerContext, ConsumerOptions, Producer, ProducerHandler, ProducerOptions } from "@ndn/endpoint";
+import { AltUri, Data, Interest, Name, NameLike } from "@ndn/packet";
+
 export class NFW {
     fib: any[] = [];
     pit: {
@@ -286,5 +289,74 @@ export class NFW {
         }
 
         return text;
+    }
+
+    getEndpoint = async () => {
+        return {
+            consume: (interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext => {
+                const interest = interestInput instanceof Interest ? interestInput : new Interest(interestInput);
+
+                let nRetx = -1;
+                const promise = new Promise<Data>((resolve, reject) => {
+                    const timer = setTimeout(() => {
+                        reject(new Error(`Interest timed out`))
+                    }, interest.lifetime);
+
+                    this.expressInterest({
+                        name: AltUri.ofName(interest.name),
+                        content: interest,
+                        freshness: interest.lifetime,
+                    }, (data) => {
+                        resolve(data.content)
+                        clearTimeout(timer);
+                    });
+                });
+                return Object.defineProperties(promise, {
+                    interest: { value: interest },
+                    nRetx: { get() { return nRetx; } },
+                });
+            },
+            produce: (prefixInput: undefined | NameLike, handler: ProducerHandler, opts?: ProducerOptions): Producer => {
+                const prefix = typeof prefixInput === "undefined" ? undefined : new Name(prefixInput);
+
+                let producer: Producer;
+
+                const processInterestUnbuffered = async (interest: Interest) => {
+                    const data = await handler(interest, producer);
+                    if (!(data instanceof Data)) {
+                      return undefined;
+                    }
+                    return data;
+                };
+
+                const reg = {
+                    prefix: AltUri.ofName(<Name>prefix),
+                    callback: (ii: IInterest) => {
+                        processInterestUnbuffered(ii.content).then((data) => {
+                            if (data) {
+                                this.putData({
+                                    name: AltUri.ofName(data.name),
+                                    content: data,
+                                    freshness: data.freshnessPeriod,
+                                });
+                            }
+                        })
+                    }
+                };
+                this.prefixRegistrations.push(reg);
+
+                producer = {
+                    prefix,
+                    face: <any>null,
+                    dataBuffer: <any>null,
+                    processInterest: processInterestUnbuffered,
+                    close: () => {
+                        this.prefixRegistrations.splice(this.prefixRegistrations.indexOf(reg), 1);
+                    },
+                };
+
+                return producer;
+            },
+        }
     }
 }

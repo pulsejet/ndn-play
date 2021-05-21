@@ -4,6 +4,10 @@ import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
 import { loadMiniNDNConfig } from './minindn-config';
 
+import * as packet from '@ndn/packet';
+import * as tlv from "@ndn/tlv";
+import * as sync from '@ndn/sync';
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.html',
@@ -21,7 +25,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   constructor(public gs: GlobalService)
   {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    (<any>window).ndn = { packet, tlv, sync };
+  }
 
   ngAfterViewInit() {
     this.gs.createNetwork(this.networkContainer?.nativeElement);
@@ -99,6 +105,26 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   runCode(code: string) {
+    const testcode = `
+      const { Data, Interest } = ndn.packet;
+      const { fromUtf8, toUtf8 } = ndn.tlv;
+
+      if (this.label === 'cathy') {
+        const endpoint = await this.nfw.getEndpoint();
+        const producer = endpoint.produce('/ndn/cathy-site/cathy/test', async (interest) => {
+          const data = new Data(interest.name, Data.FreshnessPeriod(500));
+          data.content = toUtf8("Hello from NDNts");
+          return data;
+        });
+      } else {
+        const endpoint = await this.nfw.getEndpoint();
+        const interest = new Interest('/ndn/cathy-site/cathy/test');
+        const data = await endpoint.consume(interest);
+        alert(fromUtf8(data.content));
+      }
+    `;
+
+    code = "try { (async () => {" + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
     fun.call(this.gs.selectedNode);
   }

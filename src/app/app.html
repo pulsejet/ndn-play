@@ -34,12 +34,6 @@
                 </button>
             </div>
 
-            <div>
-                <label class="label is-small">Computed FIB:</label>
-                <pre>{{ gs.selectedNode.nfw.strsFIB().join('\n') }}</pre>
-                <br/>
-            </div>
-
             <div class="field">
                 <label class="label is-small">Produced Prefixes:</label>
                 <textarea class="textarea full-width mb-3 is-small"
@@ -49,6 +43,21 @@
                         (click)="gs.nodes.update({ id: gs.selectedNode.id, producedPrefixes: mlstrToArray(prp.value) }); computeNFibs()">
                     Set
                 </button>
+            </div>
+
+            <div class="field">
+                <label class="label is-small">Run Code</label>
+                <textarea class="textarea full-width mb-3 is-small" #code></textarea>
+                <button class="button is-link is-light is-small full-width"
+                        (click)="runCode(code.value)">
+                    Run
+                </button>
+            </div>
+
+            <div>
+                <label class="label is-small">Computed FIB:</label>
+                <pre>{{ gs.selectedNode.nfw.strsFIB().join('\n') }}</pre>
+                <br/>
             </div>
 
             <hr/>

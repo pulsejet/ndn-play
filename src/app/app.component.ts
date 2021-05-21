@@ -97,4 +97,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   mlstrToArray(str: string) {
     return str.split('\n').map(v => v.trim()).filter(v => v);
   }
+
+  runCode(code: string) {
+    const fun = new Function(code);
+    fun.call(this.gs.selectedNode);
+  }
 }

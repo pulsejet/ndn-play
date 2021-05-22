@@ -4,6 +4,10 @@ import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
 import { loadMiniNDNConfig } from './minindn-config';
 import { ndn as ndnUserTypes } from './user-types';
+import { Encoder, Decoder } from "@ndn/tlv";
+import { getTlvTypeText } from './tlv-types';
+
+interface visTlv { t: number; l: number; v: visTlv[]; vl: Uint8Array };
 
 @Component({
   selector: 'app-root',
@@ -20,6 +24,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   public loadMiniNDNConfig = loadMiniNDNConfig;
 
   public showCodeEditor = false;
+  public visualizedPacket?: visTlv[];
+  public getTlvTypeText = getTlvTypeText;
 
   constructor(public gs: GlobalService)
   {}
@@ -40,9 +46,34 @@ export class AppComponent implements OnInit, AfterViewInit {
     computeFun();
 
     setTimeout(() => {
-      this.gs.selectedNode = this.gs.nodes.get()[0];
-      this.showCodeEditor = true;
-    }, 500);
+      this.gs.selectedNode = <INode>this.gs.nodes.get('5');
+      (<any>window).visualize = (p: any) => {
+        const decodeRecursive = (input: Uint8Array) => {
+          let t: Decoder.Tlv;
+          let decoder = new Decoder(input);
+          const arr: visTlv[] = [];
+
+          while (true) {
+            try {
+              t = decoder.read()
+              arr.push({ t: t.type, l: t.length, v: decodeRecursive(t.value), vl: t.value });
+            } catch { break; }
+          }
+
+          return arr;
+        }
+
+        const encoder = new Encoder();
+        encoder.encode(p);
+        this.visualizedPacket = decodeRecursive(encoder.output);
+        console.log(this.visualizedPacket);
+      }
+      this.runCode(`
+        const { Interest } = ndn.packet;
+        const interest = new Interest('/ndn/cathy-site/cathy/test');
+        visualize(interest);
+      `);
+    }, 300);
   }
 
   onNetworkClick(params: any) {

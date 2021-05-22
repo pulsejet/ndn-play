@@ -5231,13 +5231,13 @@ export class NFW {
     node(): INode;
     nodeUpdated(): void;
     capturePacket(p: any): void;
-    setupPingServer(): void;
+    private setupPingServer;
     updateColors(): void;
     /** Add traffic to link */
-    addLinkTraffic(nextHop: IdType, callback: (success: boolean) => void): void;
-    checkPrefixRegistrationMatches(interest: IInterest): boolean;
-    longestMatch(table: any[], name: string, identifier?: string): any;
-    allMatches(table: any[], name: string, identifier?: string): any[];
+    private addLinkTraffic;
+    private checkPrefixRegistrationMatches;
+    private longestMatch;
+    private allMatches;
     expressInterest: (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: IdType | undefined) => void;
     putData(data: IData): void;
     strsFIB(): string[];

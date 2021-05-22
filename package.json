@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "editor-types": "rimraf types.d.ts && rollup -c && mve types.d.ts src/assets/types.d.ts.out"
+    "editor-types": "rollup -c && bash ./process-types.sh"
   },
   "private": true,
   "dependencies": {
@@ -45,8 +45,6 @@
     "@angular/cli": "~12.0.1",
     "@angular/compiler-cli": "~12.0.1",
     "@types/hammerjs": "^2.0.39",
-    "mve": "^0.1.2",
-    "rimraf": "^3.0.2",
     "rollup": "^2.48.0",
     "rollup-plugin-dts": "^3.0.2",
     "typescript": "~4.2.4"

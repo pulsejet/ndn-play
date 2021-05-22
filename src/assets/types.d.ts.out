@@ -1,9 +1,10 @@
+declare namespace ndn {
 /// <reference types="node" />
 interface Decodable<R> {
     decodeFrom: (decoder: Decoder) => R;
 }
 /** TLV decoder. */
-declare class Decoder {
+export class Decoder {
     private input;
     /** Determine whether end of input has been reached. */
     get eof(): boolean;
@@ -18,7 +19,7 @@ declare class Decoder {
     private readLength;
     private skipValue;
 }
-declare namespace Decoder {
+export namespace Decoder {
     /** Types acceptable to Decoder.from(). */
     type Input = Decoder | Uint8Array;
     /** Test whether obj is Decoder.Input. */
@@ -65,13 +66,13 @@ interface EncodableObj {
  * Optional second item could be OmitEmpty to omit the TLV if TLV-VALUE is empty.
  * Subsequent items are Encodables for TLV-VALUE.
  */
-declare type EncodableTlv = [number, ...any[]];
+export type EncodableTlv = [number, ...any[]];
 /**
  * An object acceptable to Encoder.encode().
  */
-declare type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
+export type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
 /** TLV encoder that accepts objects in reverse order. */
-declare class Encoder {
+export class Encoder {
     private buf;
     private off;
     /** Return encoding output size. */
@@ -102,7 +103,7 @@ declare class Encoder {
     encode(obj: Encodable | readonly Encodable[]): void;
     private grow;
 }
-declare namespace Encoder {
+export namespace Encoder {
     function asDataView(a: Uint8Array): DataView;
     const OmitEmpty: unique symbol;
     function encode(obj: Encodable | readonly Encodable[], initBufSize?: number): Uint8Array;
@@ -111,7 +112,7 @@ declare namespace Encoder {
 }
 
 /** Invoked when a matching TLV element is found. */
-declare type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
+export type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
 interface Rule$1<T> {
     cb: ElementCallback<T>;
     /**
@@ -124,18 +125,18 @@ interface Rule$1<T> {
     /** Whether TLV element may appear more than once. */
     repeat: boolean;
 }
-declare type RuleOptions<T> = Partial<Omit<Rule$1<T>, "cb">>;
+export type RuleOptions<T> = Partial<Omit<Rule$1<T>, "cb">>;
 /**
  * Invoked when a TLV element does not match any rule.
  * 'order' denotes the order number of last recognized TLV element.
  * Return true if this TLV element is accepted, or false to follow evolvability guidelines.
  */
-declare type UnknownElementCallback<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
-declare type IsCriticalCallback = (tt: number) => boolean;
-declare type TopElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
-declare type TargetCallback<T> = (target: T) => void;
+export type UnknownElementCallback<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
+export type IsCriticalCallback = (tt: number) => boolean;
+export type TopElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
+export type TargetCallback<T> = (target: T) => void;
 /** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
-declare class EvDecoder<T> {
+export class EvDecoder<T> {
     private readonly typeName;
     private readonly topTT;
     private readonly rules;
@@ -179,7 +180,7 @@ declare class EvDecoder<T> {
 interface Extensible {
     [Extensible.TAG]: Extensible.Records;
 }
-declare namespace Extensible {
+export namespace Extensible {
     const TAG: unique symbol;
     type Records = Map<number, unknown>;
     function newRecords(): Map<number, unknown>;
@@ -209,12 +210,12 @@ interface Extension<T, R = unknown> {
      */
     encode: (obj: T, value: R) => Encodable;
 }
-declare namespace Extension {
+export namespace Extension {
     function get(obj: Extensible, tt: number): unknown;
     function set(obj: Extensible, tt: number, value: unknown): void;
     function clear(obj: Extensible, tt: number): void;
 }
-declare class ExtensionRegistry<T extends Extensible> {
+export class ExtensionRegistry<T extends Extensible> {
     private table;
     registerExtension: <R>(ext: Extension<T, R>) => void;
     unregisterExtension: (tt: number) => void;
@@ -222,50 +223,50 @@ declare class ExtensionRegistry<T extends Extensible> {
     encode(source: T): Encodable[];
 }
 
-declare class Nni1 {
+export class Nni1 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-declare class Nni2 {
+export class Nni2 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-declare class Nni4 {
+export class Nni4 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-declare class Nni8Number {
+export class Nni8Number {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-declare type Len = 1 | 2 | 4 | 8;
-interface Options$4<LenT = Len> {
+export type Len = 1 | 2 | 4 | 8;
+interface Options$3<LenT = Len> {
     /** If set, use/enforce specific TLV-LENGTH. */
     len?: LenT;
     /** If true, allow approximate integers. */
     unsafe?: boolean;
 }
-declare const EncodeNniClass: {
+export const EncodeNniClass: {
     1: typeof Nni1;
     2: typeof Nni2;
     4: typeof Nni4;
     8: typeof Nni8Number;
 };
 /** Create Encodable from non-negative integer. */
-declare function NNI(n: number | bigint, { len, unsafe, }?: Options$4<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
-declare namespace NNI {
+export function NNI(n: number | bigint, { len, unsafe, }?: Options$3<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
+export namespace NNI {
     /** Determine if len is a valid length of encoded NNI. */
     function isValidLength(len: number): boolean;
     /** Decode non-negative integer as number. */
-    function decode(value: Uint8Array, opts?: Options$4 & {
+    function decode(value: Uint8Array, opts?: Options$3 & {
         big?: false;
     }): number;
     /** Decode non-negative integer as bigint. */
-    function decode(value: Uint8Array, opts: Options$4 & {
+    function decode(value: Uint8Array, opts: Options$3 & {
         big: true;
     }): bigint;
     /** Error if n exceeds [0,MAX_SAFE_INTEGER] range. */
@@ -277,37 +278,37 @@ declare namespace NNI {
 }
 
 /** Pretty-print TLV-TYPE number. */
-declare function printTT(tlvType: number): string;
+export function printTT(tlvType: number): string;
 /** Convert byte array to upper-case hexadecimal string. */
-declare function toHex(buf: Uint8Array): string;
+export function toHex(buf: Uint8Array): string;
 /**
  * Convert hexadecimal string to byte array.
  *
  * This function lacks error handling. Use on trusted input only.
  */
-declare function fromHex(s: string): Uint8Array;
-declare function toUtf8(s: string): Uint8Array;
-declare function fromUtf8(buf: Uint8Array): string;
+export function fromHex(s: string): Uint8Array;
+export function toUtf8(s: string): Uint8Array;
+export function fromUtf8(buf: Uint8Array): string;
 
 type tlv_Decodable<_0> = Decodable<_0>;
-declare const tlv_Decoder: typeof Decoder;
+export const tlv_Decoder: typeof Decoder;
 type tlv_EncodableObj = EncodableObj;
 type tlv_EncodableTlv = EncodableTlv;
 type tlv_Encodable = Encodable;
-declare const tlv_Encoder: typeof Encoder;
+export const tlv_Encoder: typeof Encoder;
 type tlv_EvDecoder<_0> = EvDecoder<_0>;
-declare const tlv_EvDecoder: typeof EvDecoder;
-declare const tlv_Extensible: typeof Extensible;
-declare const tlv_Extension: typeof Extension;
+export const tlv_EvDecoder: typeof EvDecoder;
+export const tlv_Extensible: typeof Extensible;
+export const tlv_Extension: typeof Extension;
 type tlv_ExtensionRegistry<_0> = ExtensionRegistry<_0>;
-declare const tlv_ExtensionRegistry: typeof ExtensionRegistry;
-declare const tlv_NNI: typeof NNI;
-declare const tlv_printTT: typeof printTT;
-declare const tlv_toHex: typeof toHex;
-declare const tlv_fromHex: typeof fromHex;
-declare const tlv_toUtf8: typeof toUtf8;
-declare const tlv_fromUtf8: typeof fromUtf8;
-declare namespace tlv {
+export const tlv_ExtensionRegistry: typeof ExtensionRegistry;
+export const tlv_NNI: typeof NNI;
+export const tlv_printTT: typeof printTT;
+export const tlv_toHex: typeof toHex;
+export const tlv_fromHex: typeof fromHex;
+export const tlv_toUtf8: typeof toUtf8;
+export const tlv_fromUtf8: typeof fromUtf8;
+export namespace tlv {
   export {
     tlv_Decodable as Decodable,
     tlv_Decoder as Decoder,
@@ -341,7 +342,7 @@ interface NamingConvention<A, R = A> {
     /** Parse value of a matched component. */
     parse: (comp: Component) => R;
 }
-declare namespace NamingConvention {
+export namespace NamingConvention {
     /** A naming convention that supports alternate/pretty URI. */
     interface WithAltUri {
         /** Convert to alternate URI. */
@@ -355,12 +356,12 @@ declare namespace NamingConvention {
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
-declare type ComponentLike = Component | string;
+export type ComponentLike = Component | string;
 /**
  * Name component.
  * This type is immutable.
  */
-declare class Component {
+export class Component {
     get length(): number;
     /** TLV-VALUE interpreted as UTF-8 string. */
     get text(): string;
@@ -391,7 +392,7 @@ declare class Component {
     /** Determine if this component equals other. */
     equals(other: ComponentLike): boolean;
 }
-declare namespace Component {
+export namespace Component {
     /** Component compare result. */
     enum CompareResult {
         /** lhs is less than rhs */
@@ -405,12 +406,12 @@ declare namespace Component {
     function compare(lhs: ComponentLike, rhs: ComponentLike): CompareResult;
 }
 
-declare type NameLike = Name | string;
+export type NameLike = Name | string;
 /**
  * Name.
  * This type is immutable.
  */
-declare class Name {
+export class Name {
     static decodeFrom(decoder: Decoder): Name;
     /** TLV-VALUE of the Name. */
     readonly value: Uint8Array;
@@ -452,7 +453,7 @@ declare class Name {
     isPrefixOf(other: NameLike): boolean;
     encodeTo(encoder: Encoder): void;
 }
-declare namespace Name {
+export namespace Name {
     function isNameLike(obj: any): obj is NameLike;
     /** Name compare result. */
     enum CompareResult {
@@ -474,7 +475,7 @@ declare namespace Name {
  * @param name target name.
  * @param get callback function to retrieve entry by hexadecimal name prefix.
  */
-declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Entry | undefined;
+export function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Entry | undefined;
 
 /**
  * Functions to print and parse names in alternate/pretty URI syntax.
@@ -488,7 +489,7 @@ declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | unde
  * component that happens to match a convention that your application did not adopt is not
  * mistakenly interpreted with that convention.
  */
-declare class AltUriConverter {
+export class AltUriConverter {
     readonly conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>;
     constructor(conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>);
     /** Print component in alternate URI syntax */
@@ -501,9 +502,9 @@ declare class AltUriConverter {
     parseName: (input: string) => Name;
 }
 /** Print Generic, ImplicitDigest, ParamsDigest in alternate URI syntax. */
-declare const AltUri: AltUriConverter;
+export const AltUri: AltUriConverter;
 
-declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
+export class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
     private readonly tt;
     private readonly altUriPrefix;
     private readonly altUriRegex;
@@ -514,14 +515,14 @@ declare class DigestComp implements NamingConvention<Uint8Array>, NamingConventi
     toAltUri(comp: Component): string;
     fromAltUri(input: string): Component | undefined;
 }
-declare class ImplicitDigestComp extends DigestComp {
+export class ImplicitDigestComp extends DigestComp {
     constructor();
     /** Remove ImplicitDigest if present at last component. */
     strip(name: Name): Name;
 }
 /** ImplicitSha256DigestComponent */
-declare const ImplicitDigest: ImplicitDigestComp;
-declare class ParamsDigestComp extends DigestComp {
+export const ImplicitDigest: ImplicitDigestComp;
+export class ParamsDigestComp extends DigestComp {
     /** ParamsDigest placeholder during Interest encoding. */
     readonly PLACEHOLDER: Component;
     constructor();
@@ -531,10 +532,10 @@ declare class ParamsDigestComp extends DigestComp {
     findIn(name: Name, matchPlaceholder?: boolean): number;
 }
 /** ParametersSha256DigestComponent */
-declare const ParamsDigest: ParamsDigestComp;
+export const ParamsDigest: ParamsDigestComp;
 
 /** ForwardingHint in Interest. */
-declare class FwHint {
+export class FwHint {
     static decodeValue(value: Uint8Array): FwHint;
     constructor(copy?: FwHint);
     constructor(delegations: readonly FwHint.Delegation[]);
@@ -542,7 +543,7 @@ declare class FwHint {
     private readonly m;
     encodeTo(encoder: Encoder): void;
 }
-declare namespace FwHint {
+export namespace FwHint {
     /** Delegation in ForwardingHint. */
     class Delegation {
         preference: number;
@@ -554,26 +555,26 @@ declare namespace FwHint {
 }
 
 /** KeyLocator in SigInfo. */
-declare class KeyLocator {
+export class KeyLocator {
     static decodeFrom(decoder: Decoder): KeyLocator;
     name?: Name;
     digest?: Uint8Array;
     constructor(...args: KeyLocator.CtorArg[]);
     encodeTo(encoder: Encoder): void;
 }
-declare namespace KeyLocator {
+export namespace KeyLocator {
     type CtorArg = KeyLocator | NameLike | Uint8Array;
     function isCtorArg(arg: unknown): arg is CtorArg;
     /** Throw if KeyLocator is missing or does not have Name. */
     function mustGetName(kl?: KeyLocator): Name;
 }
 
-declare const ctorAssign$2: unique symbol;
+export const ctorAssign$2: unique symbol;
 interface CtorTag$2 {
     [ctorAssign$2]: (si: SigInfo) => void;
 }
 /** SignatureInfo on Interest or Data. */
-declare class SigInfo {
+export class SigInfo {
     static decodeFrom(decoder: Decoder): SigInfo;
     type: number;
     keyLocator?: KeyLocator;
@@ -600,7 +601,7 @@ declare class SigInfo {
     encodeAs(tt: number): EncodableObj;
     private encodeTo;
 }
-declare namespace SigInfo {
+export namespace SigInfo {
     function Nonce(v?: Uint8Array | number): CtorTag$2;
     /** Generate a random nonce. */
     function generateNonce(size?: number): Uint8Array;
@@ -613,14 +614,14 @@ declare namespace SigInfo {
     const unregisterExtension: (tt: number) => void;
 }
 
-declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
+export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
 
 /**
  * Low level signing function.
  * It takes a buffer of signed portion, and returns a Promise of signature value.
  */
-declare type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
-declare namespace LLSign {
+export type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
+export namespace LLSign {
     const OP: unique symbol;
     interface Signable {
         [OP]: (signer: LLSign) => Promise<void>;
@@ -631,8 +632,8 @@ declare namespace LLSign {
  * It takes a buffer of signed portion and the signature value, and returns a Promise
  * that is resolved upon good signature or rejected upon bad signature.
  */
-declare type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
-declare namespace LLVerify {
+export type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
+export namespace LLVerify {
     const OP: unique symbol;
     interface Verifiable {
         [OP]: (verifier: LLVerify) => Promise<void>;
@@ -649,7 +650,7 @@ interface Signer {
     /** Sign a packet. */
     sign: (pkt: Signer.Signable) => Promise<void>;
 }
-declare namespace Signer {
+export namespace Signer {
     interface Signable extends PacketWithSignature, LLSign.Signable {
     }
     /**
@@ -668,7 +669,7 @@ interface Verifier {
      */
     verify: (pkt: Verifier.Verifiable) => Promise<void>;
 }
-declare namespace Verifier {
+export namespace Verifier {
     interface Verifiable extends Readonly<PacketWithSignature>, LLVerify.Verifiable {
     }
     /** Throw if packet does not have expected SigType. */
@@ -677,17 +678,17 @@ declare namespace Verifier {
     function throwOnBadSig(ok: boolean): asserts ok;
 }
 /** Signer and Verifier that do nothing. */
-declare const noopSigning: Signer & Verifier;
+export const noopSigning: Signer & Verifier;
 /** Signer and Verifier for SigType.Sha256 digest. */
-declare const digestSigning: Signer & Verifier;
+export const digestSigning: Signer & Verifier;
 /**
  * Signer for SigType.Null, a packet that is not signed.
  * @see https://redmine.named-data.net/projects/ndn-tlv/wiki/NullSignature
  */
-declare const nullSigner: Signer;
+export const nullSigner: Signer;
 
-declare const FIELDS$1: unique symbol;
-declare class Fields$1 {
+export const FIELDS$1: unique symbol;
+export class Fields$1 {
     constructor(...args: Array<Interest | Interest.CtorArg>);
     name: Name;
     canBePrefix: boolean;
@@ -708,12 +709,12 @@ declare class Fields$1 {
     signedPortion?: Uint8Array;
     paramsPortion?: Uint8Array;
 }
-declare const ctorAssign$1: unique symbol;
+export const ctorAssign$1: unique symbol;
 interface CtorTag$1 {
     [ctorAssign$1]: (f: Fields$1) => void;
 }
 /** Interest packet. */
-declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+export class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
      * Construct from flexible arguments.
      *
@@ -740,7 +741,7 @@ declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.S
 }
 interface Interest extends Fields$1 {
 }
-declare namespace Interest {
+export namespace Interest {
     /** Signer that calculates ParamsDigest. */
     const Parameterize: LLSign;
     /** Generate a random nonce. */
@@ -775,9 +776,9 @@ declare namespace Interest {
     function makeModifyFunc(input?: Modify): ModifyFunc;
 }
 
-declare const FIELDS: unique symbol;
-declare class Fields {
-    constructor(...args: Array<Data$1 | Data$1.CtorArg>);
+export const FIELDS: unique symbol;
+export class Fields {
+    constructor(...args: Array<Data | Data.CtorArg>);
     get isFinalBlock(): boolean;
     set isFinalBlock(v: boolean);
     name: Name;
@@ -795,12 +796,12 @@ declare class Fields {
     topTlv?: Uint8Array;
     topTlvDigest?: Uint8Array;
 }
-declare const ctorAssign: unique symbol;
+export const ctorAssign: unique symbol;
 interface CtorTag {
     [ctorAssign]: (f: Fields) => void;
 }
 /** Data packet. */
-declare class Data$1 implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+export class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
      * Construct from flexible arguments.
      *
@@ -812,9 +813,9 @@ declare class Data$1 implements LLSign.Signable, LLVerify.Verifiable, Signer.Sig
      * - Data.FinalBlock (must appear after Name)
      * - Uint8Array as Content
      */
-    constructor(...args: Array<Data$1 | Data$1.CtorArg>);
+    constructor(...args: Array<Data | Data.CtorArg>);
     readonly [FIELDS]: Fields;
-    static decodeFrom(decoder: Decoder): Data$1;
+    static decodeFrom(decoder: Decoder): Data;
     encodeTo(encoder: Encoder): void;
     private encodeSignedPortion;
     getImplicitDigest(): Uint8Array | undefined;
@@ -829,9 +830,9 @@ declare class Data$1 implements LLSign.Signable, LLVerify.Verifiable, Signer.Sig
     [LLSign.OP](sign: LLSign): Promise<void>;
     [LLVerify.OP](verify: LLVerify): Promise<void>;
 }
-interface Data$1 extends Fields {
+interface Data extends Fields {
 }
-declare namespace Data$1 {
+export namespace Data {
     /** Constructor argument to set ContentType field. */
     function ContentType(v: number): CtorTag;
     /** Constructor argument to set FreshnessPeriod field. */
@@ -843,8 +844,8 @@ declare namespace Data$1 {
 }
 
 /** Low level encryption function. */
-declare type LLEncrypt = (params: LLEncrypt.Params) => Promise<LLEncrypt.Result>;
-declare namespace LLEncrypt {
+export type LLEncrypt = (params: LLEncrypt.Params) => Promise<LLEncrypt.Result>;
+export namespace LLEncrypt {
     /** Input of LLEncrypt function. */
     interface Params {
         plaintext: Uint8Array;
@@ -863,8 +864,8 @@ declare namespace LLEncrypt {
     }
 }
 /** Low level decryption function. */
-declare type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
-declare namespace LLDecrypt {
+export type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
+export namespace LLDecrypt {
     /** Input of LLDecrypt function. */
     interface Params {
         ciphertext: Uint8Array;
@@ -886,7 +887,7 @@ declare namespace LLDecrypt {
  *
  * This captures both the encryption key and the wire format of encrypted content.
  */
-interface Encrypter<T = Data$1> {
+interface Encrypter<T = Data> {
     /** Encrypt a packet. The packet is modified in-place. */
     encrypt: (pkt: T) => Promise<void>;
 }
@@ -895,12 +896,12 @@ interface Encrypter<T = Data$1> {
  *
  * This captures both the decryption key and the wire format of encrypted content.
  */
-interface Decrypter<T = Data$1> {
+interface Decrypter<T = Data> {
     /** Decrypt a packet. The packet is modified in-place. */
     decrypt: (pkt: T) => Promise<void>;
 }
 /** Encrypter and decrypter that do nothing. */
-declare const noopEncryption: Encrypter<any> & Decrypter<any>;
+export const noopEncryption: Encrypter<any> & Decrypter<any>;
 
 interface KeyState {
     nonces?: Set<string>;
@@ -912,7 +913,7 @@ interface Rule {
     check: (si: SigInfo, state: KeyState) => () => void;
 }
 /** Validation policy for SigInfo fields in signed Interest. */
-declare class SignedInterestPolicy {
+export class SignedInterestPolicy {
     private readonly owned;
     private readonly trackedKeys;
     private readonly records;
@@ -948,7 +949,7 @@ declare class SignedInterestPolicy {
     /** Wrap a Verifier to check the policy when verifying an Interest. */
     makeVerifier(inner: Verifier, { passData, passUnsignedInterest, }?: SignedInterestPolicy.WrapOptions): Verifier;
 }
-declare namespace SignedInterestPolicy {
+export namespace SignedInterestPolicy {
     interface Options {
         /**
          * How many distinct public keys to keep track.
@@ -1056,7 +1057,7 @@ declare namespace SignedInterestPolicy {
     function SeqNum(opts?: SeqNumOptions): Rule;
 }
 
-declare const TT: {
+export const TT: {
     Name: number;
     GenericNameComponent: number;
     ImplicitSha256DigestComponent: number;
@@ -1090,21 +1091,21 @@ declare const TT: {
     Nack: number;
     NackReason: number;
 };
-declare const SigType: {
+export const SigType: {
     Sha256: number;
     Sha256WithRsa: number;
     Sha256WithEcdsa: number;
     HmacWithSha256: number;
     Null: number;
 };
-declare const NackReason: {
+export const NackReason: {
     Congestion: number;
     Duplicate: number;
     NoRoute: number;
 };
 
 /** Nack header. */
-declare class NackHeader {
+export class NackHeader {
     get reason(): number;
     set reason(v: number);
     private reason_;
@@ -1113,7 +1114,7 @@ declare class NackHeader {
     encodeTo(encoder: Encoder): void;
 }
 /** Nack packet. */
-declare class Nack {
+export class Nack {
     get reason(): number;
     set reason(v: number);
     header: NackHeader;
@@ -1121,42 +1122,43 @@ declare class Nack {
     constructor(interest: Interest, header?: NackHeader | number);
 }
 
-declare const packet_lpm: typeof lpm;
+export const packet_lpm: typeof lpm;
 type packet_AltUriConverter = AltUriConverter;
-declare const packet_AltUriConverter: typeof AltUriConverter;
-declare const packet_AltUri: typeof AltUri;
+export const packet_AltUriConverter: typeof AltUriConverter;
+export const packet_AltUri: typeof AltUri;
 type packet_ComponentLike = ComponentLike;
-declare const packet_Component: typeof Component;
-declare const packet_NamingConvention: typeof NamingConvention;
-declare const packet_ImplicitDigest: typeof ImplicitDigest;
-declare const packet_ParamsDigest: typeof ParamsDigest;
+export const packet_Component: typeof Component;
+export const packet_NamingConvention: typeof NamingConvention;
+export const packet_ImplicitDigest: typeof ImplicitDigest;
+export const packet_ParamsDigest: typeof ParamsDigest;
 type packet_NameLike = NameLike;
-declare const packet_Name: typeof Name;
-declare const packet_LLEncrypt: typeof LLEncrypt;
-declare const packet_LLDecrypt: typeof LLDecrypt;
+export const packet_Name: typeof Name;
+export const packet_LLEncrypt: typeof LLEncrypt;
+export const packet_LLDecrypt: typeof LLDecrypt;
 type packet_Encrypter<_0> = Encrypter<_0>;
 type packet_Decrypter<_0> = Decrypter<_0>;
-declare const packet_noopEncryption: typeof noopEncryption;
-declare const packet_SignedInterestPolicy: typeof SignedInterestPolicy;
-declare const packet_LLSign: typeof LLSign;
-declare const packet_LLVerify: typeof LLVerify;
-declare const packet_Signer: typeof Signer;
-declare const packet_Verifier: typeof Verifier;
-declare const packet_noopSigning: typeof noopSigning;
-declare const packet_digestSigning: typeof digestSigning;
-declare const packet_nullSigner: typeof nullSigner;
-declare const packet_TT: typeof TT;
-declare const packet_SigType: typeof SigType;
-declare const packet_NackReason: typeof NackReason;
-declare const packet_FwHint: typeof FwHint;
-declare const packet_Interest: typeof Interest;
-declare const packet_KeyLocator: typeof KeyLocator;
+export const packet_noopEncryption: typeof noopEncryption;
+export const packet_SignedInterestPolicy: typeof SignedInterestPolicy;
+export const packet_LLSign: typeof LLSign;
+export const packet_LLVerify: typeof LLVerify;
+export const packet_Signer: typeof Signer;
+export const packet_Verifier: typeof Verifier;
+export const packet_noopSigning: typeof noopSigning;
+export const packet_digestSigning: typeof digestSigning;
+export const packet_nullSigner: typeof nullSigner;
+export const packet_TT: typeof TT;
+export const packet_SigType: typeof SigType;
+export const packet_NackReason: typeof NackReason;
+export const packet_Data: typeof Data;
+export const packet_FwHint: typeof FwHint;
+export const packet_Interest: typeof Interest;
+export const packet_KeyLocator: typeof KeyLocator;
 type packet_NackHeader = NackHeader;
-declare const packet_NackHeader: typeof NackHeader;
+export const packet_NackHeader: typeof NackHeader;
 type packet_Nack = Nack;
-declare const packet_Nack: typeof Nack;
-declare const packet_SigInfo: typeof SigInfo;
-declare namespace packet {
+export const packet_Nack: typeof Nack;
+export const packet_SigInfo: typeof SigInfo;
+export namespace packet {
   export {
     packet_lpm as lpm,
     packet_AltUriConverter as AltUriConverter,
@@ -1184,7 +1186,7 @@ declare namespace packet {
     packet_TT as TT,
     packet_SigType as SigType,
     packet_NackReason as NackReason,
-    Data$1 as Data,
+    packet_Data as Data,
     packet_FwHint as FwHint,
     packet_Interest as Interest,
     packet_KeyLocator as KeyLocator,
@@ -1195,7 +1197,7 @@ declare namespace packet {
 }
 
 /** Invertible Bloom Lookup Table. */
-declare class IBLT {
+export class IBLT {
     constructor(p: IBLT.Parameters | IBLT.PreparedParameters);
     private readonly p;
     private readonly ht;
@@ -1231,7 +1233,7 @@ declare class IBLT {
      */
     clone(): IBLT;
 }
-declare namespace IBLT {
+export namespace IBLT {
     type HashFunction = (seed: number, input: Uint8Array) => number;
     /** IBLT parameters. */
     interface Parameters {
@@ -1310,16 +1312,16 @@ interface RetxOptions {
     max?: number;
 }
 /** A function to generate retx intervals. */
-declare type RetxGenerator = (interestLifetime: number) => Iterable<number>;
+export type RetxGenerator = (interestLifetime: number) => Iterable<number>;
 /**
  * Interest retransmission policy.
  *
  * A number is interpreted as the limit.
  * Set 0 to disable retransmissions.
  */
-declare type RetxPolicy = RetxOptions | RetxGenerator | number;
+export type RetxPolicy = RetxOptions | RetxGenerator | number;
 
-declare type L3Pkt = Interest | Data$1 | Nack;
+export type L3Pkt = Interest | Data | Nack;
 /** A logical packet in the forwarder. */
 interface FwPacket<T extends L3Pkt = L3Pkt> {
     l3: T;
@@ -1327,19 +1329,19 @@ interface FwPacket<T extends L3Pkt = L3Pkt> {
     reject?: RejectInterest.Reason;
     cancel?: boolean;
 }
-declare namespace FwPacket {
+export namespace FwPacket {
     function create<T extends L3Pkt>(l3: T, token?: unknown): FwPacket<T>;
     /** Whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
 }
 /** Indicate an Interest has been rejected. */
-declare class RejectInterest implements FwPacket<Interest> {
+export class RejectInterest implements FwPacket<Interest> {
     reject: RejectInterest.Reason;
     l3: Interest;
     token?: unknown;
     constructor(reject: RejectInterest.Reason, l3: Interest, token?: unknown);
 }
-declare namespace RejectInterest {
+export namespace RejectInterest {
     type Reason = "cancel" | "expire";
 }
 
@@ -1390,7 +1392,7 @@ interface TypedEventEmitter<Events> {
  * Mnemonist DefaultMap Typings
  * =============================
  */
-declare class DefaultMap<K, V> implements Iterable<[K, V]> {
+export class DefaultMap<K, V> implements Iterable<[K, V]> {
 
   // Members
   size: number;
@@ -1416,10 +1418,10 @@ declare class DefaultMap<K, V> implements Iterable<[K, V]> {
   static autoIncrement(): number;
 }
 
-declare class FibEntry {
+export class FibEntry {
     readonly nexthops: Set<FaceImpl>;
 }
-declare class Fib {
+export class Fib {
     readonly table: DefaultMap<string, FibEntry>;
     insert(face: FaceImpl, nameHex: string): void;
     delete(face: FaceImpl, nameHex: string): void;
@@ -1438,7 +1440,7 @@ interface PitDn {
     token: unknown;
 }
 /** Aggregated pending Interests from one or more downstream faces. */
-declare class PitEntry {
+export class PitEntry {
     private readonly pit;
     readonly key: string;
     /** Representative Interest. */
@@ -1467,7 +1469,7 @@ declare class PitEntry {
     private expire;
 }
 /** Pending Interest table. */
-declare class Pit {
+export class Pit {
     readonly byName: Map<string, PitEntry>;
     readonly byToken: Map<number, PitEntry>;
     private lastToken;
@@ -1478,7 +1480,7 @@ declare class Pit {
      *   return true: deliver matched PIT entry.
      *   return false: drop Data.
      */
-    dataNoTokenMatch: boolean | ((data: Data$1, key: string) => boolean);
+    dataNoTokenMatch: boolean | ((data: Data, key: string) => boolean);
     private generateToken;
     insertEntry(entry: PitEntry): void;
     eraseEntry(entry: PitEntry): void;
@@ -1490,11 +1492,11 @@ declare class Pit {
      * Satisfy pending Interests with incoming Data.
      * @returns true if Data satisfies any pending Interest, or false if Data is unsolicited.
      */
-    satisfy(face: FaceImpl, { l3: data, token }: FwPacket<Data$1>): Promise<boolean>;
+    satisfy(face: FaceImpl, { l3: data, token }: FwPacket<Data>): Promise<boolean>;
     private findPotentialMatches;
 }
 
-declare namespace pushable {
+export namespace pushable {
   export interface Pushable<T> extends AsyncIterable<T> {
     push: (value: T) => this,
     end: (err?: Error) => this
@@ -1516,8 +1518,8 @@ declare namespace pushable {
   }
 }
 
-declare function pushable<T> (options?: pushable.Options): pushable.Pushable<T>
-declare function pushable<T> (options: pushable.OptionsV): pushable.PushableV<T>
+export function pushable<T> (options?: pushable.Options): pushable.Pushable<T>
+export function pushable<T> (options: pushable.OptionsV): pushable.PushableV<T>
 
 interface MultiMapConstructor {
   new <K, V>(container: SetConstructor): MultiMap<K, V, Set<V>>;
@@ -1563,7 +1565,7 @@ interface MultiMap<K, V, C extends V[] | Set<V> = V[]> extends Iterable<[K, V]> 
   toJSON(): any;
 }
 
-declare const MultiMap: MultiMapConstructor;
+export const MultiMap: MultiMapConstructor;
 
 // Type definitions for retry 0.12
 // Project: https://github.com/tim-kos/node-retry
@@ -1689,7 +1691,7 @@ interface CreateTimeoutOptions {
  * It accepts announcements from faces attached to the forwarder, and then informs
  * each destination on what prefixes should be advertised.
  */
-declare class Readvertise {
+export class Readvertise {
     readonly fw: ForwarderImpl;
     constructor(fw: ForwarderImpl);
     readonly announcements: MultiMap<string, FaceImpl, Set<FaceImpl>>;
@@ -1703,7 +1705,7 @@ declare class Readvertise {
  * Generally, a prefix advertised to a destination would cause Interests matching the prefix
  * to come to the forwarder. aka prefix registration.
  */
-declare abstract class ReadvertiseDestination<State extends {} = {}> {
+export abstract class ReadvertiseDestination<State extends {} = {}> {
     private readonly retryOptions;
     private readvertise?;
     protected readonly table: Map<string, ReadvertiseDestination.Record<State>>;
@@ -1731,7 +1733,7 @@ declare abstract class ReadvertiseDestination<State extends {} = {}> {
     /** Withdraw a prefix once. */
     protected abstract doWithdraw(name: Name, state: State, nameHex: string): Promise<void>;
 }
-declare namespace ReadvertiseDestination {
+export namespace ReadvertiseDestination {
     type RetryOptions = OperationOptions;
     enum Status {
         ADVERTISING = 0,
@@ -1765,8 +1767,8 @@ interface Events$6 {
     /** Emitted before packet transmission. */
     pkttx: (face: FwFace, pkt: FwPacket) => void;
 }
-declare const ForwarderImpl_base: new () => TypedEventEmitter<Events$6>;
-declare class ForwarderImpl extends ForwarderImpl_base implements Forwarder {
+export const ForwarderImpl_base: new () => TypedEventEmitter<Events$6>;
+export class ForwarderImpl extends ForwarderImpl_base implements Forwarder {
     readonly options: Forwarder.Options;
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
@@ -1783,7 +1785,7 @@ declare class ForwarderImpl extends ForwarderImpl_base implements Forwarder {
     /** Process incoming cancel Interest request. */
     cancelInterest(face: FaceImpl, pkt: FwPacket<Interest>): void;
     /** Process incoming Data. */
-    processData(face: FaceImpl, pkt: FwPacket<Data$1>): void;
+    processData(face: FaceImpl, pkt: FwPacket<Data>): void;
     /** Process incoming Nack. */
     processNack(face: FaceImpl, nack: FwPacket<Nack>): void;
 }
@@ -1792,7 +1794,7 @@ interface Forwarder extends Pick<ForwarderImpl, "nodeNames" | "addFace" | Exclud
     readonly faces: Set<FwFace>;
     readonly pit: Pick<Pit, "dataNoTokenMatch">;
 }
-declare namespace Forwarder {
+export namespace Forwarder {
     type Options = FaceImpl.Options;
     /** Create a new forwarding plane. */
     function create(options?: Options): Forwarder;
@@ -1806,8 +1808,8 @@ interface Events$5 {
     /** Emitted upon face closing. */
     close: () => void;
 }
-declare const FaceImpl_base: new () => TypedEventEmitter<Events$5>;
-declare class FaceImpl extends FaceImpl_base {
+export const FaceImpl_base: new () => TypedEventEmitter<Events$5>;
+export class FaceImpl extends FaceImpl_base {
     readonly fw: ForwarderImpl;
     readonly attributes: FwFace.Attributes;
     private readonly routes;
@@ -1835,7 +1837,7 @@ declare class FaceImpl extends FaceImpl_base {
     private rxLoop;
     private txLoop;
 }
-declare namespace FaceImpl {
+export namespace FaceImpl {
     interface Options {
         faceRxBuffer: number;
         faceTxBuffer: number;
@@ -1848,7 +1850,7 @@ interface FwFace extends Pick<FaceImpl, "attributes" | "close" | "toString" | "h
     readonly running: boolean;
     readonly txQueueLength: number;
 }
-declare namespace FwFace {
+export namespace FwFace {
     export interface Attributes extends Record<string, any> {
         /** Short string to identify the face. */
         describe?: string;
@@ -2054,7 +2056,7 @@ type EventTarget<
     ): boolean
 }
 
-declare const EventTarget: EventTargetConstructor & {
+export const EventTarget: EventTargetConstructor & {
     /**
      * Create an `EventTarget` instance with detailed event definition.
      *
@@ -2121,7 +2123,7 @@ declare const EventTarget: EventTargetConstructor & {
     >
 }
 
-declare namespace EventTarget {
+export namespace EventTarget {
     /**
      * Options of `removeEventListener()` method.
      */
@@ -2266,7 +2268,7 @@ type EventAttributes = {
  * The signal class.
  * @see https://dom.spec.whatwg.org/#abortsignal
  */
-declare class AbortSignal extends EventTarget<Events$4, EventAttributes> {
+export class AbortSignal extends EventTarget<Events$4, EventAttributes> {
     /**
      * AbortSignal cannot be constructed directly.
      */
@@ -2277,7 +2279,7 @@ declare class AbortSignal extends EventTarget<Events$4, EventAttributes> {
     readonly aborted: boolean
 }
 
-interface Options$3 {
+interface Options$2 {
     /** Description for debugging purpose. */
     describe?: string;
     /**
@@ -2304,22 +2306,22 @@ interface Options$3 {
  * This is a Promise that resolves with the retrieved Data, and rejects upon timeout.
  * Calling .cancel() cancels Data retrieval and rejects the Promise.
  */
-declare type Context = Promise<Data$1> & {
+export type Context = Promise<Data> & {
     readonly interest: Interest;
     readonly nRetx: number;
 };
 /** Consumer functionality of Endpoint. */
-declare class EndpointConsumer {
+export class EndpointConsumer {
     fw: Forwarder;
-    opts: Options$3;
+    opts: Options$2;
     /** Consume a single piece of Data. */
-    consume(interestInput: Interest | NameLike, opts?: Options$3): Context;
+    consume(interestInput: Interest | NameLike, opts?: Options$2): Context;
 }
 
 /** Outgoing Data buffer for producer. */
 interface DataBuffer {
-    find: (interest: Interest) => Promise<Data$1 | undefined>;
-    insert: (...pkts: Data$1[]) => Promise<void>;
+    find: (interest: Interest) => Promise<Data | undefined>;
+    insert: (...pkts: Data[]) => Promise<void>;
 }
 
 /**
@@ -2332,8 +2334,8 @@ interface DataBuffer {
  * unless Options.autoBuffer is set to false. If the handler returns `undefined`, the Interest is used
  * to query the DataBuffer, and any matching Data may be sent.
  */
-declare type Handler = (interest: Interest, producer: Producer) => Promise<Data$1 | undefined>;
-interface Options$2 {
+export type Handler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
+interface Options$1 {
     /** Description for debugging purpose. */
     describe?: string;
     /**
@@ -2373,46 +2375,46 @@ interface Producer {
      * 2. Producer A can invoke this function to let producer B generate a response.
      * 3. The response should be sent by producer A.
      */
-    processInterest: (interest: Interest) => Promise<Data$1 | undefined>;
+    processInterest: (interest: Interest) => Promise<Data | undefined>;
     /** Close the producer. */
     close: () => void;
 }
 /** Producer functionality of Endpoint. */
-declare class EndpointProducer {
+export class EndpointProducer {
     fw: Forwarder;
-    opts: Options$2;
+    opts: Options$1;
     /**
      * Start a producer.
      * @param prefixInput prefix registration; if undefined, prefixes may be added later.
      * @param handler function to handle incoming Interest.
      */
-    produce(prefixInput: NameLike | undefined, handler: Handler, opts?: Options$2): Producer;
+    produce(prefixInput: NameLike | undefined, handler: Handler, opts?: Options$1): Producer;
 }
-declare namespace EndpointProducer {
+export namespace EndpointProducer {
     type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
-interface Options$1 extends Options$3, Options$2 {
+interface Options extends Options$2, Options$1 {
     fw?: Forwarder;
 }
 /**
  * Endpoint is the main entrypoint for an application to interact with the forwarding plane.
  * It provides basic consumer and producer functionality.
  */
-declare class Endpoint {
-    readonly opts: Options$1;
+export class Endpoint {
+    readonly opts: Options;
     readonly fw: Forwarder;
-    constructor(opts?: Options$1);
+    constructor(opts?: Options);
 }
 interface Endpoint extends EndpointConsumer, EndpointProducer {
 }
-declare namespace Endpoint {
+export namespace Endpoint {
     /** Delete default Forwarder instance (mainly for unit testing). */
     const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
 }
 
-declare type IntervalRange = [min: number, max: number];
+export type IntervalRange = [min: number, max: number];
 
 /** A sync protocol participant. */
 interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<ID>> {
@@ -2423,7 +2425,7 @@ interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<I
     /** Retrieve or create a node. */
     add(id: ID): SyncNode<ID>;
 }
-declare namespace SyncProtocol {
+export namespace SyncProtocol {
     interface Events<ID> {
         /** Emitted when a node is updated, i.e. has new sequence numbers. */
         update: (update: SyncUpdate<ID>) => void;
@@ -2452,7 +2454,7 @@ interface SyncNode<ID = any> {
     remove(): void;
 }
 /** A received update regarding a node. */
-declare class SyncUpdate<ID = any> {
+export class SyncUpdate<ID = any> {
     readonly node: SyncNode<ID>;
     readonly loSeqNum: number;
     readonly hiSeqNum: number;
@@ -2483,7 +2485,7 @@ interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends TypedEv
     /** Unsubscribe. */
     remove(): void;
 }
-declare namespace Subscription {
+export namespace Subscription {
     interface Events<Update> {
         /** Emitted when a subscription update is received. */
         update: (update: Update) => void;
@@ -2491,7 +2493,7 @@ declare namespace Subscription {
 }
 
 /** 32-bit hash function. */
-declare type HashFunction = (seed: number, input: Uint8Array) => number;
+export type HashFunction = (seed: number, input: Uint8Array) => number;
 /**
  * Bloom filter algorithm parameters.
  *
@@ -2503,7 +2505,7 @@ interface Parameters {
     falsePositiveProbability: number;
 }
 /** A Bloom filter. */
-declare class BloomFilter {
+export class BloomFilter {
     private readonly m;
     /**
      * Construct a Bloom filter.
@@ -2535,14 +2537,14 @@ interface Compression {
     compress: (input: Uint8Array) => Uint8Array;
     decompress: (compressed: Uint8Array) => Uint8Array;
 }
-declare class IbltCodec {
+export class IbltCodec {
     readonly ibltCompression: Compression;
     protected readonly ibltParams: IBLT.PreparedParameters;
     iblt2comp(iblt: IBLT): Component;
     comp2iblt(comp: Component): IBLT;
 }
 
-declare class PSyncCore {
+export class PSyncCore {
     constructor(p: PSyncCore.Parameters);
     readonly ibltParams: IBLT.PreparedParameters;
     readonly threshold: number;
@@ -2555,7 +2557,7 @@ declare class PSyncCore {
     list(filter: (node: PSyncNode) => boolean): PSyncCore.State;
     onIncreaseSeqNum?: (node: PSyncNode, prevSeqNum: number, prevKey: number) => void;
 }
-declare namespace PSyncCore {
+export namespace PSyncCore {
     interface PrefixSeqNum {
         prefix: Name;
         seqNum: number;
@@ -2573,7 +2575,7 @@ declare namespace PSyncCore {
         joinPrefixSeqNum: (ps: PrefixSeqNum) => PrefixSeqNumEncoded;
     }
 }
-declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
+export class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
     readonly id: Name;
     private readonly prefixHex;
@@ -2596,7 +2598,7 @@ declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private detachKey;
 }
 
-declare class PSyncCodec {
+export class PSyncCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: PSyncCodec.Parameters, ibltParams: IBLT.PreparedParameters);
     readonly uselessCompsAfterIblt: Component[];
@@ -2605,7 +2607,7 @@ declare class PSyncCodec {
 }
 interface PSyncCodec extends Readonly<PSyncCodec.Parameters>, IbltCodec {
 }
-declare namespace PSyncCodec {
+export namespace PSyncCodec {
     type Compression = Compression;
     interface Parameters {
         /** Version convention for SyncData. */
@@ -2645,9 +2647,9 @@ interface DebugEntry$3 {
 interface Events$3 extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry$3) => void;
 }
-declare const PSyncFull_base: new () => TypedEventEmitter<Events$3>;
+export const PSyncFull_base: new () => TypedEventEmitter<Events$3>;
 /** PSync - FullSync participant. */
-declare class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
+export class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, addSyncPrefixOnUplinks, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -2676,7 +2678,7 @@ declare class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
     private scheduleSyncInterest;
     private sendSyncInterest;
 }
-declare namespace PSyncFull {
+export namespace PSyncFull {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
     }
     interface Options {
@@ -2737,9 +2739,9 @@ interface DebugEntry$2 {
 interface Events$2 extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry$2) => void;
 }
-declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$2>;
+export const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$2>;
 /** PSync - PartialSync publisher. */
-declare class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
+export class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PSyncPartialPublisher.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -2763,7 +2765,7 @@ declare class PSyncPartialPublisher extends PSyncPartialPublisher_base implement
     private handleIncreaseSeqNum;
     private sendStateData;
 }
-declare namespace PSyncPartialPublisher {
+export namespace PSyncPartialPublisher {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
     }
     interface Options {
@@ -2802,8 +2804,8 @@ declare namespace PSyncPartialPublisher {
     }
 }
 
-declare type Sub = Subscription<Name, SyncUpdate<Name>>;
-declare type Update = SyncUpdate<Name>;
+export type Sub = Subscription<Name, SyncUpdate<Name>>;
+export type Update = SyncUpdate<Name>;
 interface DebugEntry$1 {
     action: string;
 }
@@ -2811,9 +2813,9 @@ interface Events$1 {
     debug: (entry: DebugEntry$1) => void;
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 }
-declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$1>;
+export const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$1>;
 /** PSync - PartialSync subscriber. */
-declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
+export class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncPartialSubscriber.Options);
     readonly describe: string;
     private readonly helloPrefix;
@@ -2841,7 +2843,7 @@ declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base impleme
     private sendSyncInterest;
     private handleState;
 }
-declare namespace PSyncPartialSubscriber {
+export namespace PSyncPartialSubscriber {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
         bloom: Parameters;
     }
@@ -2878,8 +2880,8 @@ declare namespace PSyncPartialSubscriber {
 }
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
-declare function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
-declare namespace makePSyncCompatParam {
+export function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
+export namespace makePSyncCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting uint32 key to Uint8Array.
@@ -2922,25 +2924,25 @@ declare namespace makePSyncCompatParam {
 }
 
 /** Use zlib compression with PSync. */
-declare const PSyncZlib: PSyncCodec.Compression;
+export const PSyncZlib: PSyncCodec.Compression;
 
-declare class SyncpsCodec {
+export class SyncpsCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: SyncpsCodec.Parameters, ibltParams: IBLT.PreparedParameters);
 }
 interface SyncpsCodec extends Readonly<SyncpsCodec.Parameters>, IbltCodec {
 }
-declare namespace SyncpsCodec {
+export namespace SyncpsCodec {
     type Compression = Compression;
     interface Parameters {
         /** Compression method for IBLT in name component. */
         ibltCompression: Compression;
         /** Compute the hash of a publication. */
-        hashPub: (pub: Data$1) => number;
+        hashPub: (pub: Data) => number;
         /** Encode Content to buffer. */
-        encodeContent: (pubs: readonly Data$1[], maxSize: number) => [wire: Uint8Array, count: number];
+        encodeContent: (pubs: readonly Data[], maxSize: number) => [wire: Uint8Array, count: number];
         /** Decode Content from buffer. */
-        decodeContent: (payload: Uint8Array) => Data$1[];
+        decodeContent: (payload: Uint8Array) => Data[];
     }
 }
 
@@ -2955,9 +2957,9 @@ interface DebugEntry {
 interface Events {
     debug: (entry: DebugEntry) => void;
 }
-declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events>;
+export const SyncpsPubsub_base: new () => TypedEventEmitter<Events>;
 /** syncps - pubsub service. */
-declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data$1> {
+export class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data> {
     constructor({ p, endpoint, describe, syncPrefix, addSyncPrefixOnUplinks, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -2998,12 +3000,12 @@ declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name,
      * @returns a Promise that resolves when the publication is recorded.
      *          It does not mean the publication has reached other participants.
      */
-    publish(pub: Data$1, cb?: SyncpsPubsub.PublishCallback): Promise<void>;
+    publish(pub: Data, cb?: SyncpsPubsub.PublishCallback): Promise<void>;
     /**
      * Subscribe to a topic.
      * @param topic a name prefix.
      */
-    subscribe(topic: Name): Subscription<Name, Data$1>;
+    subscribe(topic: Name): Subscription<Name, Data>;
     private handleSyncInterest;
     private processSyncInterest;
     private processPendingInterests;
@@ -3013,11 +3015,11 @@ declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name,
     private addToActive;
     private invokePublishCb;
 }
-declare namespace SyncpsPubsub {
+export namespace SyncpsPubsub {
     interface Parameters extends SyncpsCodec.Parameters {
         iblt: IBLT.Parameters;
     }
-    type ModifyPublicationCallback = (pub: Data$1) => void;
+    type ModifyPublicationCallback = (pub: Data) => void;
     /**
      * Callback to determine if a publication is expired.
      *
@@ -3027,10 +3029,10 @@ declare namespace SyncpsPubsub {
      *   The publication is considered expired if this timestamp is before
      *   `NOW - (maxPubLifetime+maxClockSkew)` or after `NOW + maxClockSkew`.
      */
-    type IsExpiredCallback = (pub: Data$1) => boolean | number;
+    type IsExpiredCallback = (pub: Data) => boolean | number;
     interface FilterPubItem {
         /** A publication, i.e. Data packet. */
-        readonly pub: Data$1;
+        readonly pub: Data;
         /** Whether the publication is owned by the local participant. */
         readonly own: boolean;
     }
@@ -3115,12 +3117,12 @@ declare namespace SyncpsPubsub {
          */
         pubVerifier?: Verifier;
     }
-    type PublishCallback = (pub: Data$1, confirmed: boolean) => void;
+    type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
-declare function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
-declare namespace makeSyncpsCompatParam {
+export function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
+export namespace makeSyncpsCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting a uint32 key to a byte array.
@@ -3138,21 +3140,21 @@ declare namespace makeSyncpsCompatParam {
     }
 }
 
-declare const sync_IBLT: typeof IBLT;
-declare const sync_makePSyncCompatParam: typeof makePSyncCompatParam;
-declare const sync_PSyncFull: typeof PSyncFull;
-declare const sync_PSyncZlib: typeof PSyncZlib;
-declare const sync_PSyncPartialPublisher: typeof PSyncPartialPublisher;
-declare const sync_PSyncPartialSubscriber: typeof PSyncPartialSubscriber;
-declare const sync_makeSyncpsCompatParam: typeof makeSyncpsCompatParam;
-declare const sync_SyncpsPubsub: typeof SyncpsPubsub;
-declare const sync_SyncProtocol: typeof SyncProtocol;
+export const sync_IBLT: typeof IBLT;
+export const sync_makePSyncCompatParam: typeof makePSyncCompatParam;
+export const sync_PSyncFull: typeof PSyncFull;
+export const sync_PSyncZlib: typeof PSyncZlib;
+export const sync_PSyncPartialPublisher: typeof PSyncPartialPublisher;
+export const sync_PSyncPartialSubscriber: typeof PSyncPartialSubscriber;
+export const sync_makeSyncpsCompatParam: typeof makeSyncpsCompatParam;
+export const sync_SyncpsPubsub: typeof SyncpsPubsub;
+export const sync_SyncProtocol: typeof SyncProtocol;
 type sync_SyncNode<_0> = SyncNode<_0>;
 type sync_SyncUpdate<_0> = SyncUpdate<_0>;
-declare const sync_SyncUpdate: typeof SyncUpdate;
+export const sync_SyncUpdate: typeof SyncUpdate;
 type sync_Subscriber<_0, _1, _2> = Subscriber<_0, _1, _2>;
-declare const sync_Subscription: typeof Subscription;
-declare namespace sync {
+export const sync_Subscription: typeof Subscription;
+export namespace sync {
   export {
     sync_IBLT as IBLT,
     sync_makePSyncCompatParam as makePSyncCompatParam,
@@ -3170,15 +3172,26 @@ declare namespace sync {
   };
 }
 
+export const ndn: {
+    packet: typeof packet;
+    tlv: typeof tlv;
+    sync: typeof sync;
+};
+
+}
+
+
+declare namespace ndn.play {
+/// <reference types="node" />
 /**
  * Use this symbol to delete properies in deepObjectAssign.
  */
-declare const DELETE: unique symbol;
+export const DELETE: unique symbol;
 /**
  * Turns `undefined` into `undefined | typeof DELETE` and makes everything
  * partial. Intended to be used with `deepObjectAssign`.
  */
-declare type Assignable<T> = T extends undefined ? (T extends Function ? T : T extends object ? {
+export type Assignable<T> = T extends undefined ? (T extends Function ? T : T extends object ? {
     [Key in keyof T]?: Assignable<T[Key]> | undefined;
 } : T) | typeof DELETE : T extends Function ? T | undefined : T extends object ? {
     [Key in keyof T]?: Assignable<T[Key]> | undefined;
@@ -3209,7 +3222,7 @@ interface QueueExtendOptions<T> {
  * - A function to be executed.
  * - An object with function, args, context (like function.bind(context, ...args)).
  */
-declare type QueueCallEntry = Function | {
+export type QueueCallEntry = Function | {
     fn: Function;
     args: unknown[];
 } | {
@@ -3222,7 +3235,7 @@ declare type QueueCallEntry = Function | {
  *
  * @typeParam T - The type of method names to be replaced by queued versions.
  */
-declare class Queue<T = never> {
+export class Queue<T = never> {
     /** Delay in milliseconds. If defined the queue will be periodically flushed. */
     delay: null | number;
     /** Maximum number of entries in the queue before it will be flushed. */
@@ -3287,7 +3300,7 @@ declare class Queue<T = never> {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare abstract class DataSetPart<Item, IdProp extends string> implements Pick<DataInterface<Item, IdProp>, "on" | "off"> {
+export abstract class DataSetPart<Item, IdProp extends string> implements Pick<DataInterface<Item, IdProp>, "on" | "off"> {
     private readonly _subscribers;
     protected _trigger(event: "add", payload: EventPayloads<Item, IdProp>["add"], senderId?: Id | null): void;
     protected _trigger(event: "update", payload: EventPayloads<Item, IdProp>["update"], senderId?: Id | null): void;
@@ -3329,7 +3342,7 @@ declare abstract class DataSetPart<Item, IdProp extends string> implements Pick<
  *
  * @typeParam Item - The item type this stream is going to work with.
  */
-declare class DataStream<Item> implements Iterable<[Id, Item]> {
+export class DataStream<Item> implements Iterable<[Id, Item]> {
     private readonly _pairs;
     /**
      * Create a new data stream.
@@ -3588,7 +3601,7 @@ interface DataSetOptions {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id"> extends DataSetPart<Item, IdProp> implements DataInterface<Item, IdProp> {
+export class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id"> extends DataSetPart<Item, IdProp> implements DataInterface<Item, IdProp> {
     /** Flush all queued calls. */
     flush?: () => void;
     /** @inheritDoc */
@@ -3854,13 +3867,13 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
 }
 
 /** Valid id type. */
-declare type Id = number | string;
+export type Id = number | string;
 /** Nullable id type. */
-declare type OptId = undefined | null | Id;
+export type OptId = undefined | null | Id;
 /**
  * Make an object deeply partial.
  */
-declare type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
+export type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
     [key in keyof T]?: DeepPartial<T[key]>;
 } : T;
 /**
@@ -3868,21 +3881,21 @@ declare type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends 
  *
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare type PartItem<IdProp extends string> = Partial<Record<IdProp, OptId>>;
+export type PartItem<IdProp extends string> = Partial<Record<IdProp, OptId>>;
 /**
  * An item that has a property containing an id and all other required properties of given item type.
  *
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id>;
+export type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id>;
 /**
  * An item that has a property containing an id and optionally other properties of given item type.
  *
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id>;
+export type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id>;
 /** Add event payload. */
 interface AddEventPayload {
     /** Ids of added items. */
@@ -3966,7 +3979,7 @@ interface EventCallbacksWithAny<Item, IdProp extends string> extends EventCallba
  *
  * @typeParam Item - Item type that may or may not have an id.
  */
-declare type DataInterfaceOrder<Item> = keyof Item | ((a: Item, b: Item) => number);
+export type DataInterfaceOrder<Item> = keyof Item | ((a: Item, b: Item) => number);
 /**
  * Data interface get options (return type independent).
  *
@@ -4016,7 +4029,7 @@ interface DataInterfaceGetOptionsObject<Item> extends DataInterfaceGetOptionsBas
  *
  * @typeParam Item - Item type that may or may not have an id.
  */
-declare type DataInterfaceGetOptions<Item> = DataInterfaceGetOptionsArray<Item> | DataInterfaceGetOptionsObject<Item>;
+export type DataInterfaceGetOptions<Item> = DataInterfaceGetOptionsArray<Item> | DataInterfaceGetOptionsObject<Item>;
 /**
  * Data interface get ids options.
  *
@@ -4345,7 +4358,7 @@ type NetworkEvents =
  * The network visualization works smooth on any modern browser for up to a few thousand nodes and edges.
  * To handle a larger amount of nodes, Network has clustering support. Network uses HTML canvas for rendering.
  */
-declare class Network {
+export class Network {
   /**
    * Creates an instance of Network.
    *
@@ -4353,7 +4366,7 @@ declare class Network {
    * @param data network data
    * @param [options] optional network options
    */
-  constructor(container: HTMLElement, data: Data, options?: Options);
+  constructor(container: HTMLElement, data: Data$1, options?: Options$2);
 
   /**
    * 	Remove the network from the DOM and remove all Hammer bindings and references.
@@ -4368,7 +4381,7 @@ declare class Network {
    *
    * @param data network data
    */
-  setData(data: Data): void;
+  setData(data: Data$1): void;
 
   /**
    * Set the options.
@@ -4377,7 +4390,7 @@ declare class Network {
    *
    * @param options network options
    */
-  setOptions(options: Options): void;
+  setOptions(options: Options$2): void;
 
   /**
    * Set an event listener.
@@ -5022,7 +5035,7 @@ interface Position {
   y: number;
 }
 
-interface Data {
+interface Data$1 {
   nodes?: Node$1[] | DataInterfaceNodes;
   edges?: Edge[] | DataInterfaceEdges;
 }
@@ -5065,7 +5078,7 @@ interface LocaleMessages {
   editClusterError: string;
 }
 
-interface Options {
+interface Options$2 {
   autoResize?: boolean;
 
   width?: string;
@@ -5374,7 +5387,7 @@ interface OptionsShadow {
   y?: number;
 }
 
-declare module 'keycharm' {
+export module 'keycharm' {
   interface KeycharmOptions {
     preventDefault?: boolean;
     container?: Window | Element;
@@ -5399,7 +5412,7 @@ declare module 'keycharm' {
   export default function keycharm(options?: KeycharmOptions): Keycharm;
 }
 
-declare class GlobalService {
+export class GlobalService {
     readonly DEFAULT_LINK_COLOR = "#3583ea";
     readonly DEFAULT_NODE_COLOR = "#a4b7fc";
     readonly SELECTED_NODE_COLOR = "#4ee44e";
@@ -5429,7 +5442,1728 @@ declare class GlobalService {
     ensureInitialized(): void;
 }
 
-declare class NFW {
+/** Interest retransmission policy options. */
+interface RetxOptions {
+    /**
+     * Maximum number of retransmissions, excluding initial Interest.
+     *
+     * Default is 0, which disables retransmissions.
+     */
+    limit?: number;
+    /**
+     * Initial retx interval
+     *
+     * Default is 50% of InterestLifetime.
+     */
+    interval?: number;
+    /**
+     * Randomize retx interval within [1-randomize, 1+randomize].
+     *
+     * Suppose this is set to 0.1, an interval of 100ms would become [90ms, 110ms].
+     * Default is 0.1.
+     */
+    randomize?: number;
+    /**
+     * Multiply retx interval by backoff factor after each retx.
+     *
+     * This number should be in range [1.0, 2.0].
+     * Default is 1.0.
+     */
+    backoff?: number;
+    /**
+     * Maximum retx interval.
+     *
+     * Default is 90% of InterestLifetime.
+     */
+    max?: number;
+}
+/** A function to generate retx intervals. */
+export type RetxGenerator = (interestLifetime: number) => Iterable<number>;
+/**
+ * Interest retransmission policy.
+ *
+ * A number is interpreted as the limit.
+ * Set 0 to disable retransmissions.
+ */
+export type RetxPolicy = RetxOptions | RetxGenerator | number;
+
+interface Decodable<R> {
+    decodeFrom: (decoder: Decoder) => R;
+}
+/** TLV decoder. */
+export class Decoder {
+    private input;
+    /** Determine whether end of input has been reached. */
+    get eof(): boolean;
+    private offset;
+    constructor(input: Uint8Array);
+    /** Read TLV structure. */
+    read(): Decoder.Tlv;
+    /** Read a Decodable object. */
+    decode<R>(d: Decodable<R>): R;
+    private readVarNum;
+    private readType;
+    private readLength;
+    private skipValue;
+}
+export namespace Decoder {
+    /** Types acceptable to Decoder.from(). */
+    type Input = Decoder | Uint8Array;
+    /** Test whether obj is Decoder.Input. */
+    function isInput(obj: unknown): obj is Input;
+    /** Construct from Decoder.Input, or return existing Decoder. */
+    function from(obj: Input): Decoder;
+    /** Decoded TLV. */
+    interface Tlv {
+        /** TLV-TYPE */
+        readonly type: number;
+        /** TLV-LENGTH */
+        readonly length: number;
+        /** TLV-VALUE */
+        readonly value: Uint8Array;
+        /** TLV buffer */
+        readonly tlv: Uint8Array;
+        /** sizeof tlv */
+        readonly size: number;
+        /** TLV as decoder */
+        readonly decoder: Decoder;
+        /** TLV-VALUE as decoder */
+        readonly vd: Decoder;
+        /** TLV-VALUE as non-negative integer */
+        readonly nni: number;
+        /** TLV-VALUE as UTF-8 string */
+        readonly text: string;
+        /** siblings before this TLV */
+        readonly before: Uint8Array;
+        /** siblings after this TLV */
+        readonly after: Uint8Array;
+    }
+}
+
+/**
+ * An object that knows how to prepend itself to an Encoder.
+ */
+interface EncodableObj {
+    encodeTo: (encoder: Encoder) => void;
+}
+/**
+ * An encodable TLV structure.
+ *
+ * First item is a number for TLV-TYPE.
+ * Optional second item could be OmitEmpty to omit the TLV if TLV-VALUE is empty.
+ * Subsequent items are Encodables for TLV-VALUE.
+ */
+export type EncodableTlv = [number, ...any[]];
+/**
+ * An object acceptable to Encoder.encode().
+ */
+export type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
+/** TLV encoder that accepts objects in reverse order. */
+export class Encoder {
+    private buf;
+    private off;
+    /** Return encoding output size. */
+    get size(): number;
+    /** Obtain encoding output. */
+    get output(): Uint8Array;
+    constructor(initSize?: number);
+    /** Obtain part of encoding output. */
+    slice(start?: number, length?: number): Uint8Array;
+    /**
+     * Make room to prepend an object.
+     * @param sizeofObject object size.
+     * @returns room to write object.
+     */
+    prependRoom(sizeofObject: number): Uint8Array;
+    /** Prepend TLV-TYPE and TLV-LENGTH. */
+    prependTypeLength(tlvType: number, tlvLength: number): void;
+    /** Prepend TLV-VALUE. */
+    prependValue(...tlvValue: Encodable[]): void;
+    /**
+     * Prepend TLV structure.
+     * @param tlvType TLV-TYPE number.
+     * @param omitEmpty omit TLV altogether if set to Encoder.OmitEmpty
+     * @param tlvValue TLV-VALUE objects.
+     */
+    prependTlv(tlvType: number, omitEmpty?: typeof Encoder.OmitEmpty | Encodable, ...tlvValue: Encodable[]): void;
+    /** Prepend an Encodable object. */
+    encode(obj: Encodable | readonly Encodable[]): void;
+    private grow;
+}
+export namespace Encoder {
+    function asDataView(a: Uint8Array): DataView;
+    const OmitEmpty: unique symbol;
+    function encode(obj: Encodable | readonly Encodable[], initBufSize?: number): Uint8Array;
+    /** Extract the encoding output of an element while writing to a larger encoder. */
+    function extract(obj: Encodable | readonly Encodable[], cb: (output: Uint8Array) => void): Encodable;
+}
+
+/** An TLV element that allows extension sub element. */
+interface Extensible {
+    [Extensible.TAG]: Extensible.Records;
+}
+export namespace Extensible {
+    const TAG: unique symbol;
+    type Records = Map<number, unknown>;
+    function newRecords(): Map<number, unknown>;
+}
+/**
+ * An extension sub element on a parent TLV element.
+ * T is the parent TLV element type.
+ * R is the value type of this extension.
+ */
+interface Extension<T, R = unknown> {
+    /** TLV-TYPE. */
+    readonly tt: number;
+    /** Order relative to other extensions, used on encoding only. */
+    readonly order?: number;
+    /**
+     * Decode extension element.
+     * @param obj parent object.
+     * @param tlv TLV of sub element; its TLV-TYPE would be this.tt .
+     * @param accumulator previous decoded value, if extension element appears more than once.
+     */
+    decode: (obj: T, tlv: Decoder.Tlv, accumulator?: R) => R;
+    /**
+     * Encode extension element.
+     * @param obj parent object.
+     * @param value decoded value.
+     * @returns encoding of sub element; its TLV-TYPE should be this.tt .
+     */
+    encode: (obj: T, value: R) => Encodable;
+}
+export namespace Extension {
+    function get(obj: Extensible, tt: number): unknown;
+    function set(obj: Extensible, tt: number, value: unknown): void;
+    function clear(obj: Extensible, tt: number): void;
+}
+
+/**
+ * Naming convention, which interprets a name component in a specific way.
+ * @template A input type to construct component.
+ * @template R output type to interpret component.
+ */
+interface NamingConvention<A, R = A> {
+    /** Determine if a component follows this naming convention. */
+    match: (comp: Component) => boolean;
+    /** Create a component from input value following this naming convention. */
+    create: (v: A) => Component;
+    /** Parse value of a matched component. */
+    parse: (comp: Component) => R;
+}
+export namespace NamingConvention {
+    /** A naming convention that supports alternate/pretty URI. */
+    interface WithAltUri {
+        /** Convert to alternate URI. */
+        toAltUri: (comp: Component) => string;
+        /**
+         * Parse from alternate URI.
+         * @returns component, or undefined if it cannot be parsed.
+         */
+        fromAltUri: (input: string) => Component | undefined;
+    }
+    function isConvention(obj: any): obj is NamingConvention<any>;
+}
+
+export type ComponentLike = Component | string;
+/**
+ * Name component.
+ * This type is immutable.
+ */
+export class Component {
+    get length(): number;
+    /** TLV-VALUE interpreted as UTF-8 string. */
+    get text(): string;
+    static decodeFrom(decoder: Decoder): Component;
+    /** Parse from URI representation, or return existing Component. */
+    static from(input: ComponentLike): Component;
+    readonly tlv: Uint8Array;
+    readonly type: number;
+    readonly value: Uint8Array;
+    /**
+     * Construct from TLV-TYPE and TLV-VALUE.
+     * @param type TLV-TYPE, default is GenericNameComponent.
+     * @param value TLV-VALUE; if specified as string, it's encoded as UTF-8 but not interpreted
+     *              as URI representation. Use from() to interpret URI.
+     */
+    constructor(type?: number, value?: Uint8Array | string);
+    /** Construct from TLV. */
+    constructor(tlv: Uint8Array);
+    /** Get URI string. */
+    toString(): string;
+    encodeTo(encoder: Encoder): void;
+    /** Determine if component follows a naming convention. */
+    is(convention: NamingConvention<any>): boolean;
+    /** Convert with naming convention. */
+    as<R>(convention: NamingConvention<any, R>): R;
+    /** Compare this component with other. */
+    compare(other: ComponentLike): Component.CompareResult;
+    /** Determine if this component equals other. */
+    equals(other: ComponentLike): boolean;
+}
+export namespace Component {
+    /** Component compare result. */
+    enum CompareResult {
+        /** lhs is less than rhs */
+        LT = -2,
+        /** lhs and rhs are equal */
+        EQUAL = 0,
+        /** lhs is greater than rhs */
+        GT = 2
+    }
+    /** Compare two components. */
+    function compare(lhs: ComponentLike, rhs: ComponentLike): CompareResult;
+}
+
+export type NameLike = Name | string;
+/**
+ * Name.
+ * This type is immutable.
+ */
+export class Name {
+    static decodeFrom(decoder: Decoder): Name;
+    /** TLV-VALUE of the Name. */
+    readonly value: Uint8Array;
+    /** List of name components. */
+    readonly comps: readonly Component[];
+    /** Create empty name, or copy from other name, or parse from URI. */
+    constructor(input?: NameLike);
+    /** Parse from URI, with specific component parser. */
+    constructor(uri: string, parseComponent?: (input: string) => Component);
+    /** Construct from TLV-VALUE. */
+    constructor(value: Uint8Array);
+    /** Construct from components. */
+    constructor(comps: readonly ComponentLike[]);
+    get length(): number;
+    /** Retrieve i-th component. */
+    get(i: number): Component | undefined;
+    /**
+     * Retrieve i-th component.
+     * @throws i-th component does not exist.
+     */
+    at(i: number): Component;
+    /** Get URI string. */
+    toString(): string;
+    /** Get sub name [begin, end). */
+    slice(begin?: number, end?: number): Name;
+    /** Get prefix of n components. */
+    getPrefix(n: number): Name;
+    /** Append a component from naming convention. */
+    append<A>(convention: NamingConvention<A, unknown>, v: A): Name;
+    /** Append suffix with one or more components. */
+    append(...suffix: readonly ComponentLike[]): Name;
+    /** Return a copy of Name with a component replaced. */
+    replaceAt(i: number, comp: ComponentLike): Name;
+    /** Compare with other name. */
+    compare(other: NameLike): Name.CompareResult;
+    /** Determine if this name equals other. */
+    equals(other: NameLike): boolean;
+    /** Determine if this name is a prefix of other. */
+    isPrefixOf(other: NameLike): boolean;
+    encodeTo(encoder: Encoder): void;
+}
+export namespace Name {
+    function isNameLike(obj: any): obj is NameLike;
+    /** Name compare result. */
+    enum CompareResult {
+        /** lhs is less than, but not a prefix of rhs */
+        LT = -2,
+        /** lhs is a prefix of rhs */
+        LPREFIX = -1,
+        /** lhs and rhs are equal */
+        EQUAL = 0,
+        /** rhs is a prefix of lhs */
+        RPREFIX = 1,
+        /** rhs is less than, but not a prefix of lhs */
+        GT = 2
+    }
+}
+
+/** ForwardingHint in Interest. */
+export class FwHint {
+    static decodeValue(value: Uint8Array): FwHint;
+    constructor(copy?: FwHint);
+    constructor(delegations: readonly FwHint.Delegation[]);
+    get delegations(): readonly FwHint.Delegation[];
+    private readonly m;
+    encodeTo(encoder: Encoder): void;
+}
+export namespace FwHint {
+    /** Delegation in ForwardingHint. */
+    class Delegation {
+        preference: number;
+        static decodeFrom(decoder: Decoder): Delegation;
+        constructor(name?: NameLike, preference?: number);
+        name: Name;
+        encodeTo(encoder: Encoder): void;
+    }
+}
+
+/** KeyLocator in SigInfo. */
+export class KeyLocator {
+    static decodeFrom(decoder: Decoder): KeyLocator;
+    name?: Name;
+    digest?: Uint8Array;
+    constructor(...args: KeyLocator.CtorArg[]);
+    encodeTo(encoder: Encoder): void;
+}
+export namespace KeyLocator {
+    type CtorArg = KeyLocator | NameLike | Uint8Array;
+    function isCtorArg(arg: unknown): arg is CtorArg;
+    /** Throw if KeyLocator is missing or does not have Name. */
+    function mustGetName(kl?: KeyLocator): Name;
+}
+
+export const ctorAssign$2: unique symbol;
+interface CtorTag$2 {
+    [ctorAssign$2]: (si: SigInfo) => void;
+}
+/** SignatureInfo on Interest or Data. */
+export class SigInfo {
+    static decodeFrom(decoder: Decoder): SigInfo;
+    type: number;
+    keyLocator?: KeyLocator;
+    nonce?: Uint8Array;
+    time?: number;
+    seqNum?: number;
+    [Extensible.TAG]: Map<number, unknown>;
+    /**
+     * Construct from flexible arguments.
+     *
+     * Arguments can include, in any order:
+     * - SigInfo to copy from
+     * - number as SigType
+     * - KeyLocator, or Name/URI/KeyDigest to construct KeyLocator
+     * - SigInfo.Nonce(v)
+     * - SigInfo.Time(v)
+     * - SigInfo.SeqNum(v)
+     */
+    constructor(...args: SigInfo.CtorArg[]);
+    /**
+     * Create an Encodable.
+     * @param tt either TT.ISigInfo or TT.DSigInfo.
+     */
+    encodeAs(tt: number): EncodableObj;
+    private encodeTo;
+}
+export namespace SigInfo {
+    function Nonce(v?: Uint8Array | number): CtorTag$2;
+    /** Generate a random nonce. */
+    function generateNonce(size?: number): Uint8Array;
+    function Time(v?: number): CtorTag$2;
+    function SeqNum(v: number): {
+        [ctorAssign$2](si: SigInfo): void;
+    };
+    type CtorArg = SigInfo | number | KeyLocator.CtorArg | CtorTag$2;
+    const registerExtension: <R>(ext: Extension<SigInfo, R>) => void;
+    const unregisterExtension: (tt: number) => void;
+}
+
+export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
+
+/**
+ * Low level signing function.
+ * It takes a buffer of signed portion, and returns a Promise of signature value.
+ */
+export type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
+export namespace LLSign {
+    const OP: unique symbol;
+    interface Signable {
+        [OP]: (signer: LLSign) => Promise<void>;
+    }
+}
+/**
+ * Low level verification function.
+ * It takes a buffer of signed portion and the signature value, and returns a Promise
+ * that is resolved upon good signature or rejected upon bad signature.
+ */
+export type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
+export namespace LLVerify {
+    const OP: unique symbol;
+    interface Verifiable {
+        [OP]: (verifier: LLVerify) => Promise<void>;
+    }
+    const timingSafeEqual: typeof timingSafeEqual;
+}
+interface PacketWithSignature {
+    readonly name: Name;
+    sigInfo?: SigInfo;
+    sigValue: Uint8Array;
+}
+/** High level signer, such as a private key. */
+interface Signer {
+    /** Sign a packet. */
+    sign: (pkt: Signer.Signable) => Promise<void>;
+}
+export namespace Signer {
+    interface Signable extends PacketWithSignature, LLSign.Signable {
+    }
+    /**
+     * Put SigInfo on packet if it does not exist.
+     * @param pkt target packet.
+     * @param sigType optionally set sigType.
+     * @param keyLocator optionally set keyLocator; false to unset KeyLocator.
+     */
+    function putSigInfo(pkt: PacketWithSignature, sigType?: number, keyLocator?: KeyLocator.CtorArg | false): SigInfo;
+}
+/** High level verifier, such as a public key. */
+interface Verifier {
+    /**
+     * Verify a packet.
+     * @returns a Promise is resolved upon good signature/policy or rejected upon bad signature/policy.
+     */
+    verify: (pkt: Verifier.Verifiable) => Promise<void>;
+}
+export namespace Verifier {
+    interface Verifiable extends Readonly<PacketWithSignature>, LLVerify.Verifiable {
+    }
+    /** Throw if packet does not have expected SigType. */
+    function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
+    /** Throw bad signature error if not OK. */
+    function throwOnBadSig(ok: boolean): asserts ok;
+}
+
+export const FIELDS$1: unique symbol;
+export class Fields$1 {
+    constructor(...args: Array<Interest | Interest.CtorArg>);
+    name: Name;
+    canBePrefix: boolean;
+    mustBeFresh: boolean;
+    fwHint?: FwHint;
+    get nonce(): number | undefined;
+    set nonce(v: number | undefined);
+    get lifetime(): number;
+    set lifetime(v: number);
+    get hopLimit(): number;
+    set hopLimit(v: number);
+    appParameters?: Uint8Array;
+    sigInfo?: SigInfo;
+    sigValue: Uint8Array;
+    private nonce_;
+    private lifetime_;
+    private hopLimit_;
+    signedPortion?: Uint8Array;
+    paramsPortion?: Uint8Array;
+}
+export const ctorAssign$1: unique symbol;
+interface CtorTag$1 {
+    [ctorAssign$1]: (f: Fields$1) => void;
+}
+/** Interest packet. */
+export class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+    /**
+     * Construct from flexible arguments.
+     *
+     * Arguments can include, in any order:
+     * - Interest to copy from
+     * - Name or name URI
+     * - Interest.CanBePrefix
+     * - Interest.MustBeFresh
+     * - Interest.Nonce(v)
+     * - Interest.Lifetime(v)
+     * - Interest.HopLimit(v)
+     * - Uint8Array as AppParameters
+     */
+    constructor(...args: Array<Interest | Interest.CtorArg>);
+    readonly [FIELDS$1]: Fields$1;
+    static decodeFrom(decoder: Decoder): Interest;
+    encodeTo(encoder: Encoder): void;
+    private encodeParamsPortion;
+    private appendParamsDigestPlaceholder;
+    updateParamsDigest(): Promise<void>;
+    validateParamsDigest(): Promise<void>;
+    [LLSign.OP](sign: LLSign): Promise<void>;
+    [LLVerify.OP](verify: LLVerify): Promise<void>;
+}
+interface Interest extends Fields$1 {
+}
+export namespace Interest {
+    /** Signer that calculates ParamsDigest. */
+    const Parameterize: LLSign;
+    /** Generate a random nonce. */
+    function generateNonce(): number;
+    /** Default InterestLifetime. */
+    const DefaultLifetime = 4000;
+    /** Constructor argument to set CanBePrefix flag. */
+    const CanBePrefix: unique symbol;
+    /** Constructor argument to set MustBeFresh flag. */
+    const MustBeFresh: unique symbol;
+    /** Constructor argument to set Nonce field. */
+    function Nonce(v?: number): CtorTag$1;
+    /** Constructor argument to set InterestLifetime field. */
+    function Lifetime(v: number): CtorTag$1;
+    /** Constructor argument to set HopLimit field. */
+    function HopLimit(v: number): CtorTag$1;
+    /** Constructor argument. */
+    type CtorArg = NameLike | typeof CanBePrefix | typeof MustBeFresh | FwHint | CtorTag$1 | Uint8Array;
+    /** A function to modify an existing Interest. */
+    type ModifyFunc = (interest: Interest) => void;
+    /** Common fields to assign onto an existing Interest. */
+    interface ModifyFields {
+        canBePrefix?: boolean;
+        mustBeFresh?: boolean;
+        fwHint?: FwHint;
+        lifetime?: number;
+        hopLimit?: number;
+    }
+    /** A structure to modify an existing Interest. */
+    type Modify = ModifyFunc | ModifyFields;
+    /** Turn ModifyFields to ModifyFunc; return ModifyFunc as-is. */
+    function makeModifyFunc(input?: Modify): ModifyFunc;
+}
+
+export const FIELDS: unique symbol;
+export class Fields {
+    constructor(...args: Array<Data | Data.CtorArg>);
+    get isFinalBlock(): boolean;
+    set isFinalBlock(v: boolean);
+    name: Name;
+    get contentType(): number;
+    set contentType(v: number);
+    get freshnessPeriod(): number;
+    set freshnessPeriod(v: number);
+    finalBlockId?: Component;
+    content: Uint8Array;
+    sigInfo: SigInfo;
+    sigValue: Uint8Array;
+    private contentType_;
+    private freshnessPeriod_;
+    signedPortion?: Uint8Array;
+    topTlv?: Uint8Array;
+    topTlvDigest?: Uint8Array;
+}
+export const ctorAssign: unique symbol;
+interface CtorTag {
+    [ctorAssign]: (f: Fields) => void;
+}
+/** Data packet. */
+export class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+    /**
+     * Construct from flexible arguments.
+     *
+     * Arguments can include:
+     * - Data to copy from
+     * - Name or name URI
+     * - Data.ContentType(v)
+     * - Data.FreshnessPeriod(v)
+     * - Data.FinalBlock (must appear after Name)
+     * - Uint8Array as Content
+     */
+    constructor(...args: Array<Data | Data.CtorArg>);
+    readonly [FIELDS]: Fields;
+    static decodeFrom(decoder: Decoder): Data;
+    encodeTo(encoder: Encoder): void;
+    private encodeSignedPortion;
+    getImplicitDigest(): Uint8Array | undefined;
+    computeImplicitDigest(): Promise<Uint8Array>;
+    getFullName(): Name | undefined;
+    computeFullName(): Promise<Name>;
+    /**
+     * Determine if a Data can satisfy an Interest.
+     * @returns a Promise that will be resolved with the result.
+     */
+    canSatisfy(interest: Interest): Promise<boolean>;
+    [LLSign.OP](sign: LLSign): Promise<void>;
+    [LLVerify.OP](verify: LLVerify): Promise<void>;
+}
+interface Data extends Fields {
+}
+export namespace Data {
+    /** Constructor argument to set ContentType field. */
+    function ContentType(v: number): CtorTag;
+    /** Constructor argument to set FreshnessPeriod field. */
+    function FreshnessPeriod(v: number): CtorTag;
+    /** Constructor argument to set the current packet as FinalBlock. */
+    const FinalBlock: unique symbol;
+    /** Constructor argument. */
+    type CtorArg = NameLike | CtorTag | typeof FinalBlock | Uint8Array;
+}
+
+/** Nack header. */
+export class NackHeader {
+    get reason(): number;
+    set reason(v: number);
+    private reason_;
+    static decodeFrom(decoder: Decoder): NackHeader;
+    constructor(reason?: number);
+    encodeTo(encoder: Encoder): void;
+}
+/** Nack packet. */
+export class Nack {
+    get reason(): number;
+    set reason(v: number);
+    header: NackHeader;
+    interest: Interest;
+    constructor(interest: Interest, header?: NackHeader | number);
+}
+
+export type L3Pkt = Interest | Data | Nack;
+/** A logical packet in the forwarder. */
+interface FwPacket<T extends L3Pkt = L3Pkt> {
+    l3: T;
+    token?: unknown;
+    reject?: RejectInterest.Reason;
+    cancel?: boolean;
+}
+export namespace FwPacket {
+    function create<T extends L3Pkt>(l3: T, token?: unknown): FwPacket<T>;
+    /** Whether this is a plain packet that can be sent on the wire. */
+    function isEncodable({ reject, cancel }: FwPacket): boolean;
+}
+/** Indicate an Interest has been rejected. */
+export class RejectInterest implements FwPacket<Interest> {
+    reject: RejectInterest.Reason;
+    l3: Interest;
+    token?: unknown;
+    constructor(reject: RejectInterest.Reason, l3: Interest, token?: unknown);
+}
+export namespace RejectInterest {
+    type Reason = "cancel" | "expire";
+}
+
+type Arguments<T> = [T] extends [(...args: infer U) => any]
+  ? U
+  : [T] extends [void] ? [] : [T]
+
+/**
+ * Type-safe event emitter.
+ *
+ * Use it like this:
+ *
+ * interface MyEvents {
+ *   error: (error: Error) => void
+ *   message: (from: string, content: string) => void
+ * }
+ *
+ * const myEmitter = new EventEmitter() as TypedEmitter<MyEvents>
+ *
+ * myEmitter.on("message", (from, content) => {
+ *   // ...
+ * })
+ *
+ * myEmitter.emit("error", "x")  // <- Will catch this type error
+ */
+interface TypedEventEmitter<Events> {
+  addListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  on<E extends keyof Events> (event: E, listener: Events[E]): this
+  once<E extends keyof Events> (event: E, listener: Events[E]): this
+  prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
+  prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+
+  off<E extends keyof Events>(event: E, listener: Events[E]): this
+  removeAllListeners<E extends keyof Events> (event?: E): this
+  removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
+
+  emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
+  eventNames (): (keyof Events | string | symbol)[]
+  rawListeners<E extends keyof Events> (event: E): Function[]
+  listeners<E extends keyof Events> (event: E): Function[]
+  listenerCount<E extends keyof Events> (event: E): number
+
+  getMaxListeners (): number
+  setMaxListeners (maxListeners: number): this
+}
+
+/**
+ * Mnemonist DefaultMap Typings
+ * =============================
+ */
+export class DefaultMap<K, V> implements Iterable<[K, V]> {
+
+  // Members
+  size: number;
+
+  // Constructor
+  constructor(factory: (key: K, index: number) => V);
+
+  // Methods
+  clear(): void;
+  set(key: K, value: V): this;
+  delete(key: K): boolean;
+  has(key: K): boolean;
+  get(key: K): V;
+  peek(key: K): V | undefined;
+  forEach(callback: (value: V, key: K, map: this) => void, scope?: any): void;
+  keys(): IterableIterator<K>;
+  values(): IterableIterator<V>;
+  entries(): IterableIterator<[K, V]>;
+  [Symbol.iterator](): IterableIterator<[K, V]>;
+  inspect(): any;
+
+  // Statics
+  static autoIncrement(): number;
+}
+
+export class FibEntry {
+    readonly nexthops: Set<FaceImpl>;
+}
+export class Fib {
+    readonly table: DefaultMap<string, FibEntry>;
+    insert(face: FaceImpl, nameHex: string): void;
+    delete(face: FaceImpl, nameHex: string): void;
+    lpm(name: Name): FibEntry | undefined;
+}
+
+/** Downstream of pending Interest. */
+interface PitDn {
+    /** How many times this downstream has (re)transmitted the Interest. */
+    nRx: number;
+    /** Expiration time of this pending Interest at downstream. */
+    expire: number;
+    /** Last nonce from this downstream. */
+    nonce: number;
+    /** Last InterestToken from this downstream. */
+    token: unknown;
+}
+/** Aggregated pending Interests from one or more downstream faces. */
+export class PitEntry {
+    private readonly pit;
+    readonly key: string;
+    /** Representative Interest. */
+    readonly interest: Interest;
+    /** Outgoing numeric PIT token. */
+    token?: number;
+    /** Downstream records. */
+    dnRecords: DefaultMap<FaceImpl, PitDn>;
+    /** Last expiration time among downstream. */
+    lastExpire: number;
+    /** Entry expiration timer; should match this.lastExpire. */
+    expireTimer?: NodeJS.Timer | number;
+    constructor(pit: Pit, key: string, interest: Interest);
+    /** Record Interest from downstream. */
+    receiveInterest(face: FaceImpl, { l3: interest, token }: FwPacket<Interest>): void;
+    /** Record Interest cancellation from downstream. */
+    cancelInterest(face: FaceImpl): void;
+    /** Forward Interest to upstream. */
+    forwardInterest(face: FaceImpl): void;
+    /** Determine which downstream faces should receive Data from upstream. */
+    returnData(up: FaceImpl): Iterable<{
+        dn: FaceImpl;
+        token: unknown;
+    }>;
+    private updateExpire;
+    private expire;
+}
+/** Pending Interest table. */
+export class Pit {
+    readonly byName: Map<string, PitEntry>;
+    readonly byToken: Map<number, PitEntry>;
+    private lastToken;
+    /**
+     * true: try to match Data without token.
+     * false: Data without token.
+     * callback function: invoked when Data without token matches PIT entry.
+     *   return true: deliver matched PIT entry.
+     *   return false: drop Data.
+     */
+    dataNoTokenMatch: boolean | ((data: Data, key: string) => boolean);
+    private generateToken;
+    insertEntry(entry: PitEntry): void;
+    eraseEntry(entry: PitEntry): void;
+    /** Find or insert entry. */
+    lookup(interest: FwPacket<Interest>): PitEntry;
+    /** Find entry, disallow insertion. */
+    lookup(interest: FwPacket<Interest>, canInsert: false): PitEntry | undefined;
+    /**
+     * Satisfy pending Interests with incoming Data.
+     * @returns true if Data satisfies any pending Interest, or false if Data is unsolicited.
+     */
+    satisfy(face: FaceImpl, { l3: data, token }: FwPacket<Data>): Promise<boolean>;
+    private findPotentialMatches;
+}
+
+export namespace pushable {
+  export interface Pushable<T> extends AsyncIterable<T> {
+    push: (value: T) => this,
+    end: (err?: Error) => this
+  }
+
+  export interface PushableV<T> extends AsyncIterable<T[]> {
+    push: (value: T) => this,
+    end: (err?: Error) => this
+  }
+
+  type Options = {
+    onEnd?: (err?: Error) => void,
+    writev?: false
+  }
+
+  type OptionsV = {
+    onEnd?: (err?: Error) => void,
+    writev: true
+  }
+}
+
+export function pushable<T> (options?: pushable.Options): pushable.Pushable<T>
+export function pushable<T> (options: pushable.OptionsV): pushable.PushableV<T>
+
+interface MultiMapConstructor {
+  new <K, V>(container: SetConstructor): MultiMap<K, V, Set<V>>;
+  new <K, V>(container?: ArrayConstructor): MultiMap<K, V, V[]>;
+
+  from<K, V>(
+    iterable: Iterable<[K, V]> | {[key: string]: V},
+    Container: SetConstructor
+  ): MultiMap<K, V, Set<V>>;
+  from<K, V>(
+    iterable: Iterable<[K, V]> | {[key: string]: V},
+    Container?: ArrayConstructor
+  ): MultiMap<K, V, V[]>;
+}
+/**
+ * Mnemonist MultiMap Typings
+ * ===========================
+ */
+
+interface MultiMap<K, V, C extends V[] | Set<V> = V[]> extends Iterable<[K, V]> {
+
+  // Members
+  dimension: number;
+  size: number;
+
+  // Methods
+  clear(): void;
+  set(key: K, value: V): this;
+  delete(key: K): boolean;
+  remove(key: K, value: V): boolean;
+  has(key: K): boolean;
+  get(key: K): C | undefined;
+  multiplicity(key: K): number;
+  forEach(callback: (value: V, key: K, map: this) => void, scope?: any): void;
+  forEachAssociation(callback: (value: C, key: K, map: this) => void, scope?: any): void;
+  keys(): IterableIterator<K>;
+  values(): IterableIterator<V>;
+  entries(): IterableIterator<[K, V]>;
+  containers(): IterableIterator<C>;
+  associations(): IterableIterator<[K, C]>;
+  [Symbol.iterator](): IterableIterator<[K, V]>;
+  inspect(): any;
+  toJSON(): any;
+}
+
+export const MultiMap: MultiMapConstructor;
+
+// Type definitions for retry 0.12
+// Project: https://github.com/tim-kos/node-retry
+// Definitions by: Stan Goldmann <https://github.com/krenor>
+//                 BendingBender <https://github.com/BendingBender>
+// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
+// TypeScript Version: 2.3
+
+interface RetryOperation {
+    /**
+     * Returns an array of all errors that have been passed to `retryOperation.retry()` so far.
+     * The returning array has the errors ordered chronologically based on when they were passed to
+     * `retryOperation.retry()`, which means the first passed error is at index zero and the last is at the last index.
+     */
+    errors(): Error[];
+
+    /**
+     * A reference to the error object that occured most frequently.
+     * Errors are compared using the `error.message` property.
+     * If multiple error messages occured the same amount of time, the last error object with that message is returned.
+     *
+     * @return If no errors occured so far the value will be `null`.
+     */
+    mainError(): Error | null;
+
+    /**
+     * Defines the function that is to be retried and executes it for the first time right away.
+     *
+     * @param fn The function that is to be retried. `currentAttempt` represents the number of attempts
+     * callback has been executed so far.
+     * @param [timeoutOps.timeout] A timeout in milliseconds.
+     * @param [timeoutOps.callback] Callback to execute when the operation takes longer than the timeout.
+     */
+    attempt(fn: (currentAttempt: number) => void, timeoutOps?: AttemptTimeoutOptions): void;
+
+    /**
+     * Returns `false` when no `error` value is given, or the maximum amount of retries has been reached.
+     * Otherwise it returns `true`, and retries the operation after the timeout for the current attempt number.
+     */
+    retry(err?: Error): boolean;
+
+    /**
+     * Stops the operation being retried. Useful for aborting the operation on a fatal error etc.
+     */
+    stop(): void;
+
+    /**
+     * Resets the internal state of the operation object, so that you can call `attempt()` again as if
+     * this was a new operation object.
+     */
+    reset(): void;
+
+    /**
+     * Returns an int representing the number of attempts it took to call `fn` before it was successful.
+     */
+    attempts(): number;
+}
+
+interface AttemptTimeoutOptions {
+    /**
+     * A timeout in milliseconds.
+     */
+    timeout?: number;
+    /**
+     * Callback to execute when the operation takes longer than the timeout.
+     */
+    callback?(): void;
+}
+
+interface OperationOptions extends TimeoutsOptions {
+    /**
+     * Whether to retry forever.
+     * @default false
+     */
+    forever?: boolean;
+    /**
+     * Whether to [unref](https://nodejs.org/api/timers.html#timers_unref) the setTimeout's.
+     * @default false
+     */
+    unref?: boolean;
+    /**
+     * The maximum time (in milliseconds) that the retried operation is allowed to run.
+     * @default Infinity
+     */
+    maxRetryTime?: number;
+}
+
+interface TimeoutsOptions extends CreateTimeoutOptions {
+    /**
+     * The maximum amount of times to retry the operation.
+     * @default 10
+     */
+    retries?: number;
+}
+
+interface CreateTimeoutOptions {
+    /**
+     * The exponential factor to use.
+     * @default 2
+     */
+    factor?: number;
+    /**
+     * The number of milliseconds before starting the first retry.
+     * @default 1000
+     */
+    minTimeout?: number;
+    /**
+     * The maximum number of milliseconds between two retries.
+     * @default Infinity
+     */
+    maxTimeout?: number;
+    /**
+     * Randomizes the timeouts by multiplying a factor between 1-2.
+     * @default false
+     */
+    randomize?: boolean;
+}
+
+/**
+ * Manage advertised prefix of the forwarder.
+ *
+ * This class keeps track of what prefixes are announced by the owning forwarder.
+ * It accepts announcements from faces attached to the forwarder, and then informs
+ * each destination on what prefixes should be advertised.
+ */
+export class Readvertise {
+    readonly fw: ForwarderImpl;
+    constructor(fw: ForwarderImpl);
+    readonly announcements: MultiMap<string, FaceImpl, Set<FaceImpl>>;
+    readonly destinations: Set<ReadvertiseDestination<{}>>;
+    addAnnouncement(face: FaceImpl, name: Name, nameHex: string): void;
+    removeAnnouncement(face: FaceImpl, name: Name | undefined, nameHex: string): void;
+}
+/**
+ * A destination of prefix advertisement.
+ *
+ * Generally, a prefix advertised to a destination would cause Interests matching the prefix
+ * to come to the forwarder. aka prefix registration.
+ */
+export abstract class ReadvertiseDestination<State extends {} = {}> {
+    private readonly retryOptions;
+    private readvertise?;
+    protected readonly table: Map<string, ReadvertiseDestination.Record<State>>;
+    protected readonly queue: pushable.Pushable<string>;
+    protected closed: boolean;
+    constructor(retryOptions?: ReadvertiseDestination.RetryOptions);
+    /** Enable and attach to a forwarder. */
+    enable(fw: Forwarder): void;
+    /**
+     * Disable and detach from forwarder.
+     *
+     * Once detached, this instance is no longer usable.
+     */
+    disable(): void;
+    /** Set a prefix to be advertised. */
+    advertise(name: Name, nameHex: string): void;
+    /** Set a prefix to be withdrawn. */
+    withdraw(name: Name, nameHex: string): void;
+    private restart;
+    private process;
+    /** Create per-prefix state. */
+    protected makeState(name: Name, nameHex: string): State;
+    /** Advertise a prefix once. */
+    protected abstract doAdvertise(name: Name, state: State, nameHex: string): Promise<void>;
+    /** Withdraw a prefix once. */
+    protected abstract doWithdraw(name: Name, state: State, nameHex: string): Promise<void>;
+}
+export namespace ReadvertiseDestination {
+    type RetryOptions = OperationOptions;
+    enum Status {
+        ADVERTISING = 0,
+        ADVERTISED = 1,
+        WITHDRAWING = 2,
+        WITHDRAWN = 3
+    }
+    interface Record<State> {
+        name: Name;
+        status: Status;
+        retry?: RetryOperation;
+        state: State;
+    }
+}
+
+interface Events$2 {
+    /** Emitted before adding face. */
+    faceadd: (face: FwFace) => void;
+    /** Emitted after removing face. */
+    facerm: (face: FwFace) => void;
+    /** Emitted before adding prefix to face. */
+    prefixadd: (face: FwFace, prefix: Name) => void;
+    /** Emitted after removing prefix from face. */
+    prefixrm: (face: FwFace, prefix: Name) => void;
+    /** Emitted before advertising prefix. */
+    annadd: (announcement: Name) => void;
+    /** Emitted before withdrawing prefix. */
+    annrm: (announcement: Name) => void;
+    /** Emitted after packet arrival. */
+    pktrx: (face: FwFace, pkt: FwPacket) => void;
+    /** Emitted before packet transmission. */
+    pkttx: (face: FwFace, pkt: FwPacket) => void;
+}
+export const ForwarderImpl_base: new () => TypedEventEmitter<Events$2>;
+export class ForwarderImpl extends ForwarderImpl_base implements Forwarder {
+    readonly options: Forwarder.Options;
+    /** Node names, used in forwarding hint processing. */
+    readonly nodeNames: Name[];
+    readonly faces: Set<FaceImpl>;
+    readonly fib: Fib;
+    readonly pit: Pit;
+    readonly readvertise: Readvertise;
+    constructor(options: Forwarder.Options);
+    /** Add a face to the forwarding plane. */
+    addFace(face: FwFace.RxTx | FwFace.RxTxTransform, attributes?: FwFace.Attributes): FwFace;
+    private pickInterestForwardingName;
+    /** Process incoming Interest. */
+    processInterest(face: FaceImpl, pkt: FwPacket<Interest>): void;
+    /** Process incoming cancel Interest request. */
+    cancelInterest(face: FaceImpl, pkt: FwPacket<Interest>): void;
+    /** Process incoming Data. */
+    processData(face: FaceImpl, pkt: FwPacket<Data>): void;
+    /** Process incoming Nack. */
+    processNack(face: FaceImpl, nack: FwPacket<Nack>): void;
+}
+/** Forwarding plane. */
+interface Forwarder extends Pick<ForwarderImpl, "nodeNames" | "addFace" | Exclude<keyof TypedEventEmitter<Events$2>, "emit">> {
+    readonly faces: Set<FwFace>;
+    readonly pit: Pick<Pit, "dataNoTokenMatch">;
+}
+export namespace Forwarder {
+    type Options = FaceImpl.Options;
+    /** Create a new forwarding plane. */
+    function create(options?: Options): Forwarder;
+    /** Access the default forwarding plane instance. */
+    function getDefault(): Forwarder;
+    /** Delete default instance (mainly for unit testing). */
+    function deleteDefault(): void;
+}
+
+interface Events$1 {
+    /** Emitted upon face closing. */
+    close: () => void;
+}
+export const FaceImpl_base: new () => TypedEventEmitter<Events$1>;
+export class FaceImpl extends FaceImpl_base {
+    readonly fw: ForwarderImpl;
+    readonly attributes: FwFace.Attributes;
+    private readonly routes;
+    private readonly announcements;
+    private readonly stopping;
+    running: boolean;
+    private readonly txQueue;
+    txQueueLength: number;
+    constructor(fw: ForwarderImpl, rxtx: FwFace.RxTx | FwFace.RxTxTransform, attributes: FwFace.Attributes);
+    /** Shutdown the face. */
+    close(): void;
+    toString(): string;
+    /** Determine if a route is present on the face. */
+    hasRoute(name: Name): boolean;
+    /** Add a route toward the face. */
+    addRoute(name: Name, announcement?: FwFace.RouteAnnouncement): void;
+    /** Remove a route toward the face. */
+    removeRoute(name: Name, announcement?: FwFace.RouteAnnouncement): void;
+    /** Add a prefix announcement associated with the face. */
+    addAnnouncement(name: Name): void;
+    /** Remove a prefix announcement associated with the face. */
+    removeAnnouncement(name: Name): void;
+    /** Transmit a packet on the face. */
+    send(pkt: FwPacket): void;
+    private rxLoop;
+    private txLoop;
+}
+export namespace FaceImpl {
+    interface Options {
+        faceRxBuffer: number;
+        faceTxBuffer: number;
+    }
+    const DefaultOptions: Options;
+}
+/** A socket or network interface associated with forwarding plane. */
+interface FwFace extends Pick<FaceImpl, "attributes" | "close" | "toString" | "hasRoute" | "addRoute" | "removeRoute" | "addAnnouncement" | "removeAnnouncement" | Exclude<keyof TypedEventEmitter<Events$1>, "emit">> {
+    readonly fw: Forwarder;
+    readonly running: boolean;
+    readonly txQueueLength: number;
+}
+export namespace FwFace {
+    export interface Attributes extends Record<string, any> {
+        /** Short string to identify the face. */
+        describe?: string;
+        /** Whether face is local. Default is false. */
+        local?: boolean;
+        /** Whether to readvertise registered routes. Default is true. */
+        advertiseFrom?: boolean;
+    }
+    export type RouteAnnouncement = boolean | number | Name;
+    interface RxTxBase {
+        readonly attributes?: Attributes;
+    }
+    export interface RxTx extends RxTxBase {
+        rx: AsyncIterable<FwPacket>;
+        tx: (iterable: AsyncIterable<FwPacket>) => void;
+    }
+    export interface RxTxTransform extends RxTxBase {
+        /**
+         * The transform function takes an iterable of packets sent by the forwarder,
+         * and returns an iterable of packets received by the forwarder.
+         */
+        transform: (iterable: AsyncIterable<FwPacket>) => AsyncIterable<FwPacket>;
+    }
+    export {};
+}
+
+/**
+ * `Event` interface.
+ * @see https://dom.spec.whatwg.org/#event
+ */
+interface Event {
+    /**
+     * The type of this event.
+     */
+    readonly type: string
+
+    /**
+     * The target of this event.
+     */
+    readonly target: EventTarget<{}, {}, "standard"> | null
+
+    /**
+     * The current target of this event.
+     */
+    readonly currentTarget: EventTarget<{}, {}, "standard"> | null
+
+    /**
+     * The target of this event.
+     * @deprecated
+     */
+    readonly srcElement: any | null
+
+    /**
+     * The composed path of this event.
+     */
+    composedPath(): EventTarget<{}, {}, "standard">[]
+
+    /**
+     * Constant of NONE.
+     */
+    readonly NONE: number
+
+    /**
+     * Constant of CAPTURING_PHASE.
+     */
+    readonly CAPTURING_PHASE: number
+
+    /**
+     * Constant of BUBBLING_PHASE.
+     */
+    readonly BUBBLING_PHASE: number
+
+    /**
+     * Constant of AT_TARGET.
+     */
+    readonly AT_TARGET: number
+
+    /**
+     * Indicates which phase of the event flow is currently being evaluated.
+     */
+    readonly eventPhase: number
+
+    /**
+     * Stop event bubbling.
+     */
+    stopPropagation(): void
+
+    /**
+     * Stop event bubbling.
+     */
+    stopImmediatePropagation(): void
+
+    /**
+     * Initialize event.
+     * @deprecated
+     */
+    initEvent(type: string, bubbles?: boolean, cancelable?: boolean): void
+
+    /**
+     * The flag indicating bubbling.
+     */
+    readonly bubbles: boolean
+
+    /**
+     * Stop event bubbling.
+     * @deprecated
+     */
+    cancelBubble: boolean
+
+    /**
+     * Set or get cancellation flag.
+     * @deprecated
+     */
+    returnValue: boolean
+
+    /**
+     * The flag indicating whether the event can be canceled.
+     */
+    readonly cancelable: boolean
+
+    /**
+     * Cancel this event.
+     */
+    preventDefault(): void
+
+    /**
+     * The flag to indicating whether the event was canceled.
+     */
+    readonly defaultPrevented: boolean
+
+    /**
+     * The flag to indicating if event is composed.
+     */
+    readonly composed: boolean
+
+    /**
+     * Indicates whether the event was dispatched by the user agent.
+     */
+    readonly isTrusted: boolean
+
+    /**
+     * The unix time of this event.
+     */
+    readonly timeStamp: number
+}
+
+/**
+ * The constructor of `EventTarget` interface.
+ */
+type EventTargetConstructor<
+    TEvents extends EventTarget.EventDefinition = {},
+    TEventAttributes extends EventTarget.EventDefinition = {},
+    TMode extends EventTarget.Mode = "loose"
+> = {
+    prototype: EventTarget<TEvents, TEventAttributes, TMode>
+    new(): EventTarget<TEvents, TEventAttributes, TMode>
+}
+
+/**
+ * `EventTarget` interface.
+ * @see https://dom.spec.whatwg.org/#interface-eventtarget
+ */
+type EventTarget<
+    TEvents extends EventTarget.EventDefinition = {},
+    TEventAttributes extends EventTarget.EventDefinition = {},
+    TMode extends EventTarget.Mode = "loose"
+> = EventTarget.EventAttributes<TEventAttributes> & {
+    /**
+     * Add a given listener to this event target.
+     * @param eventName The event name to add.
+     * @param listener The listener to add.
+     * @param options The options for this listener.
+     */
+    addEventListener<TEventType extends EventTarget.EventType<TEvents, TMode>>(
+        type: TEventType,
+        listener:
+            | EventTarget.Listener<EventTarget.PickEvent<TEvents, TEventType>>
+            | null,
+        options?: boolean | EventTarget.AddOptions
+    ): void
+
+    /**
+     * Remove a given listener from this event target.
+     * @param eventName The event name to remove.
+     * @param listener The listener to remove.
+     * @param options The options for this listener.
+     */
+    removeEventListener<TEventType extends EventTarget.EventType<TEvents, TMode>>(
+        type: TEventType,
+        listener:
+            | EventTarget.Listener<EventTarget.PickEvent<TEvents, TEventType>>
+            | null,
+        options?: boolean | EventTarget.RemoveOptions
+    ): void
+
+    /**
+     * Dispatch a given event.
+     * @param event The event to dispatch.
+     * @returns `false` if canceled.
+     */
+    dispatchEvent<TEventType extends EventTarget.EventType<TEvents, TMode>>(
+        event: EventTarget.EventData<TEvents, TEventType, TMode>
+    ): boolean
+}
+
+export const EventTarget: EventTargetConstructor & {
+    /**
+     * Create an `EventTarget` instance with detailed event definition.
+     *
+     * The detailed event definition requires to use `defineEventAttribute()`
+     * function later.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * const signal = new EventTarget<{ abort: Event }, { onabort: Event }>()
+     * defineEventAttribute(signal, "abort")
+     */
+    new <
+        TEvents extends EventTarget.EventDefinition,
+        TEventAttributes extends EventTarget.EventDefinition,
+        TMode extends EventTarget.Mode = "loose"
+    >(): EventTarget<TEvents, TEventAttributes, TMode>
+
+    /**
+     * Define an `EventTarget` constructor with attribute events and detailed event definition.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
+     *      abort(): void {}
+     * }
+     *
+     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
+     */
+    <
+        TEvents extends EventTarget.EventDefinition = {},
+        TEventAttributes extends EventTarget.EventDefinition = {},
+        TMode extends EventTarget.Mode = "loose"
+    >(events: string[]): EventTargetConstructor<
+        TEvents,
+        TEventAttributes,
+        TMode
+    >
+
+    /**
+     * Define an `EventTarget` constructor with attribute events and detailed event definition.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
+     *      abort(): void {}
+     * }
+     *
+     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
+     */
+    <
+        TEvents extends EventTarget.EventDefinition = {},
+        TEventAttributes extends EventTarget.EventDefinition = {},
+        TMode extends EventTarget.Mode = "loose"
+    >(event0: string, ...events: string[]): EventTargetConstructor<
+        TEvents,
+        TEventAttributes,
+        TMode
+    >
+}
+
+export namespace EventTarget {
+    /**
+     * Options of `removeEventListener()` method.
+     */
+    export interface RemoveOptions {
+        /**
+         * The flag to indicate that the listener is for the capturing phase.
+         */
+        capture?: boolean
+    }
+
+    /**
+     * Options of `addEventListener()` method.
+     */
+    export interface AddOptions extends RemoveOptions {
+        /**
+         * The flag to indicate that the listener doesn't support
+         * `event.preventDefault()` operation.
+         */
+        passive?: boolean
+        /**
+         * The flag to indicate that the listener will be removed on the first
+         * event.
+         */
+        once?: boolean
+    }
+
+    /**
+     * The type of regular listeners.
+     */
+    export interface FunctionListener<TEvent> {
+        (event: TEvent): void
+    }
+
+    /**
+     * The type of object listeners.
+     */
+    export interface ObjectListener<TEvent> {
+        handleEvent(event: TEvent): void
+    }
+
+    /**
+     * The type of listeners.
+     */
+    export type Listener<TEvent> =
+        | FunctionListener<TEvent>
+        | ObjectListener<TEvent>
+
+    /**
+     * Event definition.
+     */
+    export type EventDefinition = {
+        readonly [key: string]: Event
+    }
+
+    /**
+     * Mapped type for event attributes.
+     */
+    export type EventAttributes<TEventAttributes extends EventDefinition> = {
+        [P in keyof TEventAttributes]:
+            | FunctionListener<TEventAttributes[P]>
+            | null
+    }
+
+    /**
+     * The type of event data for `dispatchEvent()` method.
+     */
+    export type EventData<
+        TEvents extends EventDefinition,
+        TEventType extends keyof TEvents | string,
+        TMode extends Mode
+    > =
+        TEventType extends keyof TEvents
+            ? (
+                // Require properties which are not generated automatically.
+                & Pick<
+                    TEvents[TEventType],
+                    Exclude<keyof TEvents[TEventType], OmittableEventKeys>
+                >
+                // Properties which are generated automatically are optional.
+                & Partial<Pick<Event, OmittableEventKeys>>
+            )
+            : (
+                TMode extends "standard"
+                    ? Event
+                    : Event | NonStandardEvent
+            )
+
+    /**
+     * The string literal types of the properties which are generated
+     * automatically in `dispatchEvent()` method.
+     */
+    export type OmittableEventKeys = Exclude<keyof Event, "type">
+
+    /**
+     * The type of event data.
+     */
+    export type NonStandardEvent = {
+        [key: string]: any
+        type: string
+    }
+
+    /**
+     * The type of listeners.
+     */
+    export type PickEvent<
+        TEvents extends EventDefinition,
+        TEventType extends keyof TEvents | string,
+    > =
+        TEventType extends keyof TEvents
+            ? TEvents[TEventType]
+            : Event
+
+    /**
+     * Event type candidates.
+     */
+    export type EventType<
+        TEvents extends EventDefinition,
+        TMode extends Mode
+    > =
+        TMode extends "strict"
+            ? keyof TEvents
+            : keyof TEvents | string
+
+    /**
+     * - `"strict"` ..... Methods don't accept unknown events.
+     *                    `dispatchEvent()` accepts partial objects.
+     * - `"loose"` ...... Methods accept unknown events.
+     *                    `dispatchEvent()` accepts partial objects.
+     * - `"standard"` ... Methods accept unknown events.
+     *                    `dispatchEvent()` doesn't accept partial objects.
+     */
+    export type Mode = "strict" | "standard" | "loose"
+}
+
+type Events = {
+    abort: any
+}
+type EventAttributes = {
+    onabort: any
+}
+/**
+ * The signal class.
+ * @see https://dom.spec.whatwg.org/#abortsignal
+ */
+export class AbortSignal extends EventTarget<Events, EventAttributes> {
+    /**
+     * AbortSignal cannot be constructed directly.
+     */
+    constructor()
+    /**
+     * Returns `true` if this `AbortSignal`"s `AbortController` has signaled to abort, and `false` otherwise.
+     */
+    readonly aborted: boolean
+}
+
+interface Options$1 {
+    /** Description for debugging purpose. */
+    describe?: string;
+    /**
+     * Modify Interest according to specified options.
+     * Default is no modification.
+     */
+    modifyInterest?: Interest.Modify;
+    /**
+     * Retransmission policy.
+     * Default is disabling retransmission.
+     */
+    retx?: RetxPolicy;
+    /** AbortSignal that allows canceling the Interest via AbortController. */
+    signal?: AbortSignal | globalThis.AbortSignal;
+    /**
+     * Data verifier.
+     * Default is no verification.
+     */
+    verifier?: Verifier;
+}
+/**
+ * Progress of Data retrieval.
+ *
+ * This is a Promise that resolves with the retrieved Data, and rejects upon timeout.
+ * Calling .cancel() cancels Data retrieval and rejects the Promise.
+ */
+export type Context = Promise<Data> & {
+    readonly interest: Interest;
+    readonly nRetx: number;
+};
+
+/** Outgoing Data buffer for producer. */
+interface DataBuffer {
+    find: (interest: Interest) => Promise<Data | undefined>;
+    insert: (...pkts: Data[]) => Promise<void>;
+}
+
+/**
+ * Producer handler function.
+ *
+ * The handler can return a Data to respond to the Interest, or return `undefined` to cause a timeout.
+ *
+ * If Options.dataBuffer is provided, the handler can access the DataBuffer via producer.dataBuffer .
+ * The handler can return a Data to respond to the Interest, which is also inserted to the DataBuffer
+ * unless Options.autoBuffer is set to false. If the handler returns `undefined`, the Interest is used
+ * to query the DataBuffer, and any matching Data may be sent.
+ */
+export type Handler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
+interface Options {
+    /** Description for debugging purpose. */
+    describe?: string;
+    /**
+     * What name to be readvertised.
+     * Ignored if prefix is undefined.
+     */
+    announcement?: EndpointProducer.RouteAnnouncement;
+    /**
+     * How many Interests to process in parallel.
+     * Default is 1.
+     */
+    concurrency?: number;
+    /**
+     * If specified, automatically sign Data packets unless already signed.
+     * This does not apply to Data packets manually inserted to the dataBuffer.
+     */
+    dataSigner?: Signer;
+    /** Outgoing Data buffer. */
+    dataBuffer?: DataBuffer;
+    /**
+     * Whether to add handler return value to buffer.
+     * Default is true.
+     * Ignored when dataBuffer is not specified.
+     */
+    autoBuffer?: boolean;
+}
+/** A running producer. */
+interface Producer {
+    readonly prefix: Name | undefined;
+    readonly face: FwFace;
+    readonly dataBuffer?: DataBuffer;
+    /**
+     * Process an Interest received elsewhere.
+     *
+     * Use case of this function:
+     * 1. Producer A dynamically creates producer B upon receiving an Interest.
+     * 2. Producer A can invoke this function to let producer B generate a response.
+     * 3. The response should be sent by producer A.
+     */
+    processInterest: (interest: Interest) => Promise<Data | undefined>;
+    /** Close the producer. */
+    close: () => void;
+}
+/** Producer functionality of Endpoint. */
+export class EndpointProducer {
+    fw: Forwarder;
+    opts: Options;
+    /**
+     * Start a producer.
+     * @param prefixInput prefix registration; if undefined, prefixes may be added later.
+     * @param handler function to handle incoming Interest.
+     */
+    produce(prefixInput: NameLike | undefined, handler: Handler, opts?: Options): Producer;
+}
+export namespace EndpointProducer {
+    type RouteAnnouncement = FwFace.RouteAnnouncement;
+}
+
+export class NFW {
     private gs;
     /** ID of this node */
     private readonly nodeId;
@@ -5467,8 +7201,8 @@ declare class NFW {
     putData(data: IData): void;
     strsFIB(): string[];
     getEndpoint: () => Promise<{
-        consume: (interestInput: Interest | NameLike, opts?: Options$3 | undefined) => Context;
-        produce: (prefixInput: undefined | NameLike, handler: Handler, opts?: Options$2 | undefined) => Producer;
+        consume: (interestInput: Interest | NameLike, opts?: Options$1 | undefined) => Context;
+        produce: (prefixInput: undefined | NameLike, handler: Handler, opts?: Options | undefined) => Producer;
     }>;
 }
 
@@ -5496,11 +7230,9 @@ interface IData {
     freshness?: number;
 }
 
-declare const node: INode;
-declare const ndn: {
-    packet: typeof packet;
-    tlv: typeof tlv;
-    sync: typeof sync;
-};
+export const node: INode;
 
-export { ndn, node };
+}
+
+
+const node = ndn.play.node;\n\n

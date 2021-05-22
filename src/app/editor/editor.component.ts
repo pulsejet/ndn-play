@@ -8,7 +8,21 @@ export const monacoConfig = {
     const injectLib = async (url: string) => {
       const res = await fetch(url);
       let libSource = await res.text();
-      libSource = libSource.split('\n').filter((l: string) => (!l.startsWith('export { ndn'))).join('\n');
+      libSource = libSource.split('\n').map((l: string) => {
+        if (l.startsWith('export {')) {
+          return '';
+        } else if (l.startsWith('declare ')) {
+          return 'export' + l.slice('declare'.length);
+        }
+        return l;
+      }).join('\n');
+
+      libSource = `
+        declare namespace ndn {
+          ${libSource}
+        }
+        const node = ndn.node;
+      `;
 
       monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, url.replace('.out', ''));
     }

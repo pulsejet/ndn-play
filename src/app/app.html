@@ -201,8 +201,8 @@
                 [ngTemplateOutlet]="visTlvA"
                 [ngTemplateOutletContext]="{packets: tlv.v}">
             </ng-container>
-            <ng-container *ngIf="tlv.v.length == 0">
-                {{ tlv.vl.length }}B
+            <ng-container *ngIf="tlv.v.length == 0 && tlv.vl.length > 0">
+                {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }}
             </ng-container>
         </div>
     </ng-container>

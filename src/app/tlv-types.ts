@@ -1,4 +1,4 @@
-enum TlvV3 {
+export enum TlvV3 {
     Invalid                         = 0,
     Interest                        = 5,
     Data                            = 6,

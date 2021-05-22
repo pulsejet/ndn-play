@@ -1,14 +1,21 @@
 
 <ng-template #pane1>
     <div id="sidebar">
-        <div *ngIf="gs.selectedNode">
-            <h2 class="is-size-4 mb-3">On {{ gs.selectedNode.label }}</h2>
+        <ng-container
+            [ngTemplateOutlet]="sideBarInner"
+            [ngTemplateOutletContext]="{selnode: gs.getSelectedNode(), seledge: gs.getSelectedEdge()}">
+        </ng-container>
+    </div>
+
+    <ng-template #sideBarInner let-selnode="selnode" let-seledge="seledge">
+        <div *ngIf="selnode">
+            <h2 class="is-size-4 mb-3">On {{ selnode.label }}</h2>
 
             <div class="field">
                 <label class="label is-small">Node Name</label>
                 <input class="input is-small" type="text" placeholder="Alice"
-                    [(ngModel)]="gs.selectedNode.label"
-                    (input)="this.gs.nodes.update({ id: gs.selectedNode.id, label: gs.selectedNode.label })"
+                    [(ngModel)]="selnode.label"
+                    (input)="this.gs.nodes.update({ id: selnode.id, label: selnode.label })"
                     (change)="computeNFibs()">
             </div>
 
@@ -38,48 +45,44 @@
                 <label class="label is-small">Produced Prefixes:</label>
                 <textarea class="textarea full-width mb-3 is-small"
                           id="side-produced-prefixes" #prp
-                          [value]="gs.selectedNode.producedPrefixes.join('\n')"></textarea>
+                          [value]="selnode.producedPrefixes.join('\n')"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        (click)="gs.nodes.update({ id: gs.selectedNode.id, producedPrefixes: mlstrToArray(prp.value) }); computeNFibs()">
+                        (click)="gs.nodes.update({ id: selnode.id, producedPrefixes: mlstrToArray(prp.value) }); computeNFibs()">
                     Set
                 </button>
             </div>
 
             <div class="field">
                 <label class="label is-small">Execute Function:</label>
-                <button class="button is-link is-light is-small full-width mb-1 mt-1"
-                        (click)="showCodeEditor = true">
-                    Open Editor
-                </button>
                 <button class="button is-success is-light is-small full-width mb-1"
-                        (click)="runCode($any(gs.selectedNode).nfw.codeEdit);">
+                        (click)="runCode(selnode.nfw.codeEdit);">
                     Run
                 </button>
             </div>
 
             <div>
                 <label class="label is-small">Computed FIB:</label>
-                <pre>{{ gs.selectedNode.nfw.strsFIB().join('\n') }}</pre>
+                <pre>{{ selnode.nfw.strsFIB().join('\n') }}</pre>
                 <br/>
             </div>
 
             <hr/>
         </div>
 
-        <div *ngIf="gs.selectedEdge">
+        <div *ngIf="seledge">
             <h2 class="is-size-4 mb-3">
                 On
-                {{ $any(gs.nodes.get($any(gs.selectedEdge?.from))).label }}
+                {{ $any(gs.nodes.get(seledge.from)).label }}
                 &#8212;
-                {{ $any(gs.nodes.get($any(gs.selectedEdge?.to))).label }}
+                {{ $any(gs.nodes.get(seledge.to)).label }}
             </h2>
 
             <div class="field">
                 <label class="label is-small">Latency (ms)</label>
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="10"
-                           [(ngModel)]="gs.selectedEdge.latency"
-                           (input)="gs.edges.update(gs.selectedEdge); computeNFibs()">
+                           [(ngModel)]="seledge.latency"
+                           (input)="gs.edges.update(seledge); computeNFibs()">
                 </div>
                 <p class="help is-small">Negative for default latency</p>
             </div>
@@ -88,8 +91,8 @@
                 <label class="label is-small">Loss (%)</label>
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="0"
-                           [(ngModel)]="gs.selectedEdge.loss"
-                           (input)="gs.edges.update(gs.selectedEdge)">
+                           [(ngModel)]="seledge.loss"
+                           (input)="gs.edges.update(seledge)">
                 </div>
                 <p class="help is-small">Negative for default loss</p>
             </div>
@@ -149,36 +152,31 @@
                 </button>
             </div>
         </div>
-    </div>
+    </ng-template>
 </ng-template>
 
 <ng-template #pane2>
-    <div #networkContainer id="network"></div>
+    <div class="main-container">
+        <div class="tabs main-head">
+            <ul>
+                <li [class.is-active]="mainTab == mainTabs.Topology"
+                    (click)="mainTab = mainTabs.Topology"><a>Topology</a></li>
+                <li [class.is-active]="mainTab == mainTabs.Editor"
+                    *ngIf="gs.getSelectedNode()"
+                    (click)="mainTab = mainTabs.Editor"><a>Editor</a></li>
+            </ul>
+        </div>
+        <div class="main-space">
+            <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
+
+            <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.getSelectedNode()">
+                <app-editor [(code)]="$any(gs.getSelectedNode()).nfw.codeEdit"></app-editor>
+            </div>
+        </div>
+    </div>
 </ng-template>
 
 <app-pane [pane1]="pane1" [pane2]="pane2"></app-pane>
-
-<div class="modal is-active" *ngIf="showCodeEditor">
-    <div class="modal-background"></div>
-    <div class="modal-card" style="width: 85vw;">
-        <header class="modal-card-head">
-            <p class="modal-card-title">Function for {{ gs.selectedNode?.label }}</p>
-            <button class="delete" aria-label="close" (click)="showCodeEditor = false"></button>
-        </header>
-        <section class="modal-card-body">
-            <div class="field">
-                <app-editor [(code)]="$any(gs.selectedNode).nfw.codeEdit"></app-editor>
-            </div>
-        </section>
-        <footer class="modal-card-foot">
-            <button class="button is-success"
-                    (click)="runCode($any(gs.selectedNode).nfw.codeEdit);">
-                Run
-            </button>
-            <button class="button" (click)="showCodeEditor = false">Close</button>
-        </footer>
-    </div>
-</div>
 
 <div style="position: fixed; top: 5px; left:500px; max-width: 600px; font-family: monospace;" *ngIf="visualizedPacket">
     <ng-container

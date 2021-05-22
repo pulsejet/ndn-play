@@ -24,7 +24,7 @@ export const monacoConfig = {
 @Component({
   selector: 'app-editor',
   template: `
-    <div style="height: 65vh; width: 100%; max-height: 100%;">
+    <div style="height: 100%; width: 100%;">
       <ngx-monaco-editor [options]="editorOptions"
                          [(ngModel)]="code" (ngModelChange)="codeChange.emit(code)"
                          style="height: 100%; width: 100%;">

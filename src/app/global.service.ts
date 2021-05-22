@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { EventEmitter, Injectable } from '@angular/core';
 import { IEdge, INode } from './interfaces';
 import * as vis from 'vis-network/standalone';
 import { NFW } from './nfw';
@@ -36,8 +36,11 @@ export class GlobalService {
   public busiestLink?: IEdge;
 
   // Selected objects
-  public selectedNode?: INode;
-  public selectedEdge?: IEdge;
+  private selectedNode?: INode;
+  private selectedEdge?: IEdge;
+
+  // Emit on change
+  public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
 
   constructor() {
     // create an array with nodes
@@ -114,6 +117,23 @@ export class GlobalService {
     };
 
     this.network = new vis.Network(container, data, options);
+  }
+
+  getSelectedNode() {
+    return this.selectedNode;
+  }
+
+  selectNode(node?: INode) {
+    this.selectedNode = node;
+    this.selectedNodeChangeCallback.emit(node);
+  }
+
+  getSelectedEdge() {
+    return this.selectedEdge;
+  }
+
+  selectEdge(edge?: IEdge) {
+    this.selectedEdge = edge;
   }
 
   ensureInitialized() {

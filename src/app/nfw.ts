@@ -113,7 +113,7 @@ export class NFW {
         if (this.pendingTraffic > 0) {
             color = chroma.scale([this.gs.ACTIVE_NODE_COLOR, 'red'])
                                 (this.pendingTraffic / ((this.gs.busiestNode?.nfw.pendingTraffic || 0) + 5)).toString();
-        } else if (this.gs.selectedNode?.id == this.nodeId) {
+        } else if (this.gs.getSelectedNode()?.id == this.nodeId) {
             color = this.gs.SELECTED_NODE_COLOR;
         }
         this.gs.pendingUpdatesNodes[this.nodeId] = { id: this.nodeId, color: color };

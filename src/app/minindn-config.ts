@@ -2,8 +2,8 @@ import { GlobalService } from "./global.service";
 import { IEdge, INode } from "./interfaces";
 
 export function loadMiniNDNConfig(gs: GlobalService, confStr: string) {
-    gs.selectedNode = undefined;
-    gs.selectedEdge = undefined;
+    gs.selectEdge(undefined);
+    gs.selectNode(undefined);
 
     const config = confStr.split('\n');
     let mode = null;

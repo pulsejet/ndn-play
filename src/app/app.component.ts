@@ -11,6 +11,8 @@ import { getTlvTypeText, TlvV3 } from './tlv-types';
 
 interface visTlv { t: number; l: number; v: visTlv[]; vl: Uint8Array; vs?: string };
 
+enum mainTabs { Topology, Editor };
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.html',
@@ -19,13 +21,16 @@ interface visTlv { t: number; l: number; v: visTlv[]; vl: Uint8Array; vs?: strin
 export class AppComponent implements OnInit, AfterViewInit {
   title = 'ndn-play';
 
+  /** Which tabs are selected */
+  public mainTabs = mainTabs;
+  public mainTab = mainTabs.Topology;
+
   public pendingClickEvent?: (params: any) => void;
 
   @ViewChild('networkContainer') networkContainer?: ElementRef;
 
   public loadMiniNDNConfig = loadMiniNDNConfig;
 
-  public showCodeEditor = false;
   public visualizedPacket?: visTlv[];
   public getTlvTypeText = getTlvTypeText;
 
@@ -34,6 +39,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     (<any>window).ndn = ndnUserTypes;
+
+    this.gs.selectedNodeChangeCallback.subscribe((node) => {
+      if (!node) {
+        this.mainTab = mainTabs.Topology;
+      }
+    });
   }
 
   ngAfterViewInit() {
@@ -48,7 +59,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     computeFun();
 
     setTimeout(() => {
-      this.gs.selectedNode = <INode>this.gs.nodes.get('5');
+      this.gs.selectNode(<INode>this.gs.nodes.get('5'));
       (<any>window).visualize = (p: any) => {
         const decodeRecursive = (input: Uint8Array) => {
           let t: Decoder.Tlv;
@@ -102,13 +113,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     const id = this.gs.network?.getNodeAt(params.pointer.DOM);
-    this.gs.selectedNode = id ? <INode>this.gs.nodes.get(id) : undefined;
+    this.gs.selectNode(id ? <INode>this.gs.nodes.get(id) : undefined);
 
-    if (!this.gs.selectedNode) {
+    if (!this.gs.getSelectedNode()) {
         const edgeId = this.gs.network?.getEdgeAt(params.pointer.DOM);
-        this.gs.selectedEdge = edgeId ? <IEdge>this.gs.edges.get(edgeId) : undefined;
+        this.gs.selectEdge(edgeId ? <IEdge>this.gs.edges.get(edgeId) : undefined);
     } else {
-        this.gs.selectedEdge = undefined;
+        this.gs.selectEdge(undefined);
     }
 
     for (const node of this.gs.nodes.get()) {
@@ -133,7 +144,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (!id) return;
 
     const dest = <INode>this.gs.nodes.get(id);
-    const label = this.gs.selectedNode?.label;
+    const label = this.gs.getSelectedNode()?.label;
     const interest = {
         name: `/ndn/${label}-site/${label}/ping`,
         freshness: 3000,
@@ -149,7 +160,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
-    this.gs.selectedNode?.nfw.expressInterest({ name, content: 'blob' }, (data) => {
+    this.gs.getSelectedNode()?.nfw.expressInterest({ name, content: 'blob' }, (data) => {
       console.log(data.content);
     });
   }
@@ -180,6 +191,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
-    fun.call(this.gs.selectedNode);
+    fun.call(this.gs.getSelectedNode());
   }
 }

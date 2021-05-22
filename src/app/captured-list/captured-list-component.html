@@ -6,13 +6,13 @@
             <th>Length</th>
             <th>Name</th>
         </tr>
-        <tr *ngFor="let packet of node.nfw.capturedPackets" [ngClass]="packet.p.constructor.name"
+        <tr *ngFor="let packet of node.nfw.capturedPackets" [ngClass]="packet.type"
             (click)="packetClick.emit(packet.p)">
             <td>
                 {{ packet.t }} ms
             </td>
             <td>
-                {{ packet.p.constructor.name }}
+                {{ packet.type }}
             </td>
             <td>
                 {{ packet.length }}

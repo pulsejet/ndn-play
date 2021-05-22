@@ -96,16 +96,24 @@ export class NFW {
 
     capturePacket(p: any) {
         if (this.capture || this.gs.captureAll) {
-            if (p instanceof Interest || p instanceof Data) {
-                const encoder = new Encoder();
-                encoder.encode(p);
-
-                this.capturedPackets.push({
-                    t: performance.now(),
-                    p: p,
-                    length: encoder.output.length,
-                });
+            let type;
+            if (p instanceof Interest) {
+                type = 'Interest';
+            } else if (p instanceof Data) {
+                type = 'Data';
+            } else {
+                return;
             }
+
+            const encoder = new Encoder();
+            encoder.encode(p);
+
+            this.capturedPackets.push({
+                t: performance.now(),
+                p: p,
+                length: encoder.output.length,
+                type: type,
+            });
         }
     }
 

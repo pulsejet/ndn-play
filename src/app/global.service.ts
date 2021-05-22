@@ -2,7 +2,7 @@ import { EventEmitter, Injectable } from '@angular/core';
 import { IEdge, INode } from './interfaces';
 import * as vis from 'vis-network/standalone';
 import { NFW } from './nfw';
-import { AltUri, Name } from '@ndn/packet';
+import { AltUri, Data, Interest, Name } from '@ndn/packet';
 
 @Injectable({
   providedIn: 'root'
@@ -60,9 +60,11 @@ export class GlobalService {
           for (let i=0; i < args.length; i++) {
             const a = args[i];
             if (a instanceof Name) {
-              args[i] = `${a.constructor.name}=${AltUri.ofName(a)}`
-            } else if (a.name instanceof Name) {
-              args[i] = `${a.constructor.name}=${AltUri.ofName(a.name)}`
+              args[i] = `Name=${AltUri.ofName(a)}`
+            } else if (a instanceof Interest) {
+              args[i] = `Interest=${AltUri.ofName(a.name)}`
+            } else if (a instanceof Data) {
+              args[i] = `Data=${AltUri.ofName(a.name)}`
             }
           }
 

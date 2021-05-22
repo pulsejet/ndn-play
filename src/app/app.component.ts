@@ -114,14 +114,14 @@ export class AppComponent implements OnInit, AfterViewInit {
       const { fromUtf8, toUtf8 } = ndn.tlv;
 
       if (node.label === 'cathy') {
-        const endpoint = await node.nfw.getEndpoint();
+        const endpoint = node.nfw.getEndpoint();
         const producer = endpoint.produce('/ndn/cathy-site/cathy/test', async (interest) => {
           const data = new Data(interest.name, Data.FreshnessPeriod(500));
           data.content = toUtf8("Hello from NDNts");
           return data;
         });
       } else {
-        const endpoint = await node.nfw.getEndpoint();
+        const endpoint = node.nfw.getEndpoint();
         const interest = new Interest('/ndn/cathy-site/cathy/test');
         const data = await endpoint.consume(interest);
         alert(fromUtf8(data.content));

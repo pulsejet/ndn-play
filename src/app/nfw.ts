@@ -3,12 +3,19 @@ import { IData, IInterest, INode } from "./interfaces";
 import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
 
-import { ConsumerContext, ConsumerOptions, Producer, ProducerHandler, ProducerOptions } from "@ndn/endpoint";
-import { AltUri, Data, Interest, Name, NameLike } from "@ndn/packet";
+import { Endpoint } from "@ndn/endpoint";
+import { AltUri, Data, Interest } from "@ndn/packet";
+import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
+import pushable from "it-pushable";
 
 export class NFW {
     /** ID of this node */
     private readonly nodeId: vis.IdType;
+
+    /** NDNts forwarder */
+    public fw = Forwarder.create();
+    private face: FwFace;
+    private faceRx = pushable<FwPacket>();
 
     /** Forwarding table */
     public fib: any[] = [];
@@ -41,6 +48,34 @@ export class NFW {
     constructor(private gs: GlobalService, node: INode) {
         this.nodeId = <vis.IdType>node.id;
         this.nodeUpdated();
+
+        this.fw.on("pktrx", (face, pkt) => {
+            if (face == this.face) return;
+
+            if (pkt.l3 instanceof Interest) {
+                this.expressInterest({
+                    name: AltUri.ofName(pkt.l3.name),
+                    freshness: pkt.l3.lifetime,
+                    content: pkt.l3,
+                }, (data) => {
+                    this.faceRx.push(FwPacket.create(data.content));
+                });
+                return;
+            } else if (pkt.l3 instanceof Data) {
+                this.putData({
+                    name: AltUri.ofName(pkt.l3.name),
+                    freshness: pkt.l3.freshnessPeriod,
+                    content: pkt.l3,
+                });
+                return;
+            }
+            console.error("unknown pktrx", pkt);
+        });
+
+        this.face = this.fw.addFace({
+            rx: this.faceRx,
+            tx: async () => {},
+        });
     }
 
     node() {
@@ -171,6 +206,9 @@ export class NFW {
         const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.freshness || 0) > (new Date()).getTime());
         if (csEntry) return faceCallback(csEntry.data);
 
+        // Put to NDNts forwarder
+        this.faceRx.push(FwPacket.create(interest.content));
+
         // Do we already have this entry?
         const aggregate = this.pit.find(e => e.interest.name == interest.name);
         if (aggregate) {
@@ -279,6 +317,9 @@ export class NFW {
         const satisfy = this.pit.filter(e => data.name.startsWith(e.interest.name));
         this.pit = this.pit.filter(e => !data.name.startsWith(e.interest.name));
 
+        // Put to NDNts forwarder
+        this.faceRx.push(FwPacket.create(data.content));
+
         if (data.freshness) {
             this.cs.unshift({
                 recv: (new Date()).getTime(),
@@ -308,85 +349,7 @@ export class NFW {
         return text;
     }
 
-    getEndpoint = async () => {
-        return new Endpoint(this);
+    getEndpoint() {
+        return new Endpoint({ fw: this.fw });
     }
-}
-
-class Endpoint {
-    constructor(private nfw: NFW) {}
-
-    public fw = new DummyForwarder();
-
-    consume = (interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext => {
-        const interest = interestInput instanceof Interest ? interestInput : new Interest(interestInput);
-
-        let nRetx = -1;
-        const promise = new Promise<Data>((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new Error(`Interest timed out`))
-            }, interest.lifetime);
-
-            this.nfw.expressInterest({
-                name: AltUri.ofName(interest.name),
-                content: interest,
-                freshness: interest.lifetime,
-            }, (data) => {
-                resolve(data.content)
-                clearTimeout(timer);
-            });
-        });
-        return Object.defineProperties(promise, {
-            interest: { value: interest },
-            nRetx: { get() { return nRetx; } },
-        });
-    }
-    produce = (prefixInput: undefined | NameLike, handler: ProducerHandler, opts?: ProducerOptions): Producer => {
-        const prefix = typeof prefixInput === "undefined" ? undefined : new Name(prefixInput);
-
-        let producer: Producer;
-
-        const processInterestUnbuffered = async (interest: Interest) => {
-            const data = await handler(interest, producer);
-            if (!(data instanceof Data)) {
-                return undefined;
-            }
-            return data;
-        };
-
-        const reg = {
-            prefix: AltUri.ofName(<Name>prefix),
-            callback: (ii: IInterest) => {
-                processInterestUnbuffered(ii.content).then((data) => {
-                    if (data) {
-                        this.nfw.putData({
-                            name: AltUri.ofName(data.name),
-                            content: data,
-                            freshness: data.freshnessPeriod,
-                        });
-                    }
-                })
-            }
-        };
-        this.nfw.prefixRegistrations.push(reg);
-
-        producer = {
-            prefix,
-            face: <any>null,
-            dataBuffer: <any>null,
-            processInterest: processInterestUnbuffered,
-            close: () => {
-                this.nfw.prefixRegistrations.splice(this.nfw.prefixRegistrations.indexOf(reg), 1);
-            },
-        };
-
-        return producer;
-    }
-}
-
-class DummyForwarder {
-    public faces = [];
-
-    public on = () => {};
-    public off = () => {};
 }

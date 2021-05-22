@@ -4580,14 +4580,14 @@ interface Options extends Options$2, Options$1 {
  * Endpoint is the main entrypoint for an application to interact with the forwarding plane.
  * It provides basic consumer and producer functionality.
  */
-export class Endpoint$1 {
+export class Endpoint {
     readonly opts: Options;
     readonly fw: Forwarder;
     constructor(opts?: Options);
 }
-interface Endpoint$1 extends EndpointConsumer, EndpointProducer {
+interface Endpoint extends EndpointConsumer, EndpointProducer {
 }
-export namespace Endpoint$1 {
+export namespace Endpoint {
     /** Delete default Forwarder instance (mainly for unit testing). */
     const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
@@ -4597,6 +4597,10 @@ export class NFW {
     private gs;
     /** ID of this node */
     private readonly nodeId;
+    /** NDNts forwarder */
+    fw: Forwarder;
+    private face;
+    private faceRx;
     /** Forwarding table */
     fib: any[];
     /** Pending interest table */
@@ -4630,19 +4634,7 @@ export class NFW {
     expressInterest: (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: IdType | undefined) => void;
     putData(data: IData): void;
     strsFIB(): string[];
-    getEndpoint: () => Promise<Endpoint>;
-}
-export class Endpoint {
-    private nfw;
-    constructor(nfw: NFW);
-    fw: DummyForwarder;
-    consume: (interestInput: Interest | NameLike, opts?: Options$2 | undefined) => Context;
-    produce: (prefixInput: undefined | NameLike, handler: Handler, opts?: Options$1 | undefined) => Producer;
-}
-export class DummyForwarder {
-    faces: never[];
-    on: () => void;
-    off: () => void;
+    getEndpoint(): Endpoint;
 }
 
 interface INode extends Node$1 {
@@ -5023,7 +5015,7 @@ export namespace PSyncFull {
          */
         p: Parameters;
         /** Endpoint for communication. */
-        endpoint?: Endpoint$1;
+        endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
         /** Sync group prefix. */
@@ -5110,7 +5102,7 @@ export namespace PSyncPartialPublisher {
          */
         p: Parameters;
         /** Endpoint for communication. */
-        endpoint?: Endpoint$1;
+        endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
         /** Sync producer prefix. */
@@ -5189,7 +5181,7 @@ export namespace PSyncPartialSubscriber {
          */
         p: Parameters;
         /** Endpoint for communication. */
-        endpoint?: Endpoint$1;
+        endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
         /** Sync producer prefix. */
@@ -5384,7 +5376,7 @@ export namespace SyncpsPubsub {
          */
         p: Parameters;
         /** Endpoint for communication. */
-        endpoint?: Endpoint$1;
+        endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
         /** Sync group prefix. */

@@ -12,9 +12,9 @@
 }
 
 #pane2 {
-    flex-grow: 0;
-    flex-shrink: 1;
+    flex: 1;
     background-color: white;
+    overflow: auto;
 }
 
 #rpanrResize {

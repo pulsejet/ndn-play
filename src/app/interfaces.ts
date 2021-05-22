@@ -27,3 +27,11 @@ export interface IData {
     content: any;
     freshness?: number;
 }
+
+export interface visTlv {
+    t: number;
+    l: number;
+    v: visTlv[];
+    vl: Uint8Array;
+    vs?: string
+};

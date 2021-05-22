@@ -1,0 +1,32 @@
+<div class="outer" *ngIf="visualizedPacket">
+    <ng-container
+        [ngTemplateOutlet]="visTlvA"
+        [ngTemplateOutletContext]="{packets: visualizedPacket}">
+    </ng-container>
+</div>
+
+<div class="outer" *ngIf="!visualizedPacket">
+    No Packet Selected <br/>
+    Call <span class="has-text-danger">visualize(packet)</span> to visualize packet
+</div>
+
+<ng-template #visTlvA let-packets='packets'>
+    <ng-container *ngFor='let tlv of packets'>
+        <div class="tlv">
+            <span class="type" [title]="tlv.t">
+                {{ getTlvTypeText(tlv.t) }}
+            </span>
+            <span class="length">
+                {{ tlv.l }}
+            </span>
+            <ng-container
+                *ngIf="tlv.v.length > 0"
+                [ngTemplateOutlet]="visTlvA"
+                [ngTemplateOutletContext]="{packets: tlv.v}">
+            </ng-container>
+            <ng-container *ngIf="tlv.v.length == 0 && tlv.vl.length > 0">
+                {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }}
+            </ng-container>
+        </div>
+    </ng-container>
+</ng-template>

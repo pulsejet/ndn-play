@@ -30,3 +30,8 @@
     flex: 1;
     overflow: hidden;
 }
+
+.lower-pane .main-space {
+    overflow: auto;
+    overflow-y: scroll;
+}

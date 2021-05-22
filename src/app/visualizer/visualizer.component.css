@@ -1,0 +1,13 @@
+.outer {
+    font-family: monospace;
+}
+
+.tlv {
+    border: 2px solid black;
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 1px;
+    margin: 1px;
+}
+.tlv .type { color: red; }
+.tlv .length { color: blue; }

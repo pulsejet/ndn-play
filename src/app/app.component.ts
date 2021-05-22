@@ -4,12 +4,7 @@ import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
 import { loadMiniNDNConfig } from './minindn-config';
 import { ndn as ndnUserTypes } from './user-types';
-
-import { AltUri, Component as NameComponent } from "@ndn/packet";
-import { Encoder, Decoder } from "@ndn/tlv";
-import { getTlvTypeText, TlvV3 } from './tlv-types';
-
-interface visTlv { t: number; l: number; v: visTlv[]; vl: Uint8Array; vs?: string };
+import { Encodable } from '@ndn/tlv';
 
 enum mainTabs { Topology, Editor };
 enum lowerTabs { Inspector };
@@ -28,14 +23,17 @@ export class AppComponent implements OnInit, AfterViewInit {
   public lowerTabs = lowerTabs;
   public lowerTab = lowerTabs.Inspector;
 
+  /** Currently visualized packet */
+  public visualizedPacket?: Encodable;
+
+  /** Next click event */
   public pendingClickEvent?: (params: any) => void;
 
-  @ViewChild('networkContainer') networkContainer?: ElementRef;
-
+  /** Aliases */
   public loadMiniNDNConfig = loadMiniNDNConfig;
 
-  public visualizedPacket?: visTlv[];
-  public getTlvTypeText = getTlvTypeText;
+  /** Native Elements */
+  @ViewChild('networkContainer') networkContainer?: ElementRef;
 
   constructor(public gs: GlobalService)
   {}
@@ -63,44 +61,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     setTimeout(() => {
       this.gs.selectNode(<INode>this.gs.nodes.get('5'));
-      (<any>window).visualize = (p: any) => {
-        const decodeRecursive = (input: Uint8Array) => {
-          let t: Decoder.Tlv;
-          let decoder = new Decoder(input);
-          const arr: visTlv[] = [];
+      (<any>window).visualize = (p: Encodable) => { this.visualizedPacket = p; };
 
-          // Read all elements as array
-          while (true) {
-            try {
-              t = decoder.read()
-              const obj: visTlv = { t: t.type, l: t.length, v: decodeRecursive(t.value), vl: t.value };
-
-              // Creative visualization
-              switch (obj.t) {
-                // Don't show the entire name
-                case (TlvV3.GenericNameComponent): {
-                  obj.vs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
-                  break;
-                }
-
-                default:
-                  const maxlen = 16;
-                  const str = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
-                  obj.vs = '0x' + str.substr(0, maxlen) + (str.length > maxlen ? '...' : '');
-              }
-
-              arr.push(obj);
-            } catch { break; }
-          }
-
-          return arr;
-        }
-
-        const encoder = new Encoder();
-        encoder.encode(p);
-        this.visualizedPacket = decodeRecursive(encoder.output);
-        console.log(this.visualizedPacket);
-      }
       this.runCode(`
         const { Interest } = ndn.packet;
         const interest = new Interest('/ndn/cathy-site/cathy/test', Interest.MustBeFresh);

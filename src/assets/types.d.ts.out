@@ -2845,7 +2845,12 @@ export class GlobalService {
     busiestLink?: IEdge;
     private selectedNode?;
     private selectedEdge?;
+    captureAll: boolean;
     selectedNodeChangeCallback: EventEmitter<INode | undefined>;
+    consoleLog: EventEmitter<{
+        type: string;
+        msg: string;
+    }>;
     constructor();
     /** Update objects every animation frame */
     runAnimationFrame(): void;
@@ -5203,6 +5208,9 @@ export class NFW {
     fib: any[];
     /** Pending interest table */
     private pit;
+    /** Wireshark for this node */
+    readonly capturedPackets: any[];
+    capture: boolean;
     /** Content Store */
     private cs;
     /** Routing strategies */
@@ -5222,6 +5230,7 @@ export class NFW {
     constructor(gs: GlobalService, node: INode);
     node(): INode;
     nodeUpdated(): void;
+    capturePacket(p: any): void;
     setupPingServer(): void;
     updateColors(): void;
     /** Add traffic to link */

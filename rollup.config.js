@@ -4,7 +4,6 @@ const config = [];
 
 const files = [
   'src/app/user-types.ts',
-  'src/app/user-types-node.ts',
 ];
 
 files.forEach((f) => {

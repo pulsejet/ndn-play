@@ -28,6 +28,5 @@ process () {
 }
 
 process "src/assets/user-types.d.ts.out" "ndn"
-process "src/assets/user-types-node.d.ts.out" "ndn.play"
 
-echo "const node = ndn.play.node;\n\n" >> src/assets/types.d.ts.out
+echo "const node = ndn.node;\n\n" >> src/assets/types.d.ts.out

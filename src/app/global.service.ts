@@ -76,6 +76,13 @@ export class GlobalService {
     initConsole('warn');
     initConsole('error');
 
+    window.addEventListener("unhandledrejection", event => {
+      this.consoleLog.emit({
+        type: 'error',
+        msg: `Uncaught ${event.reason}`,
+      });
+    });
+
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "alice" },

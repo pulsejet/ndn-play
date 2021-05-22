@@ -40,6 +40,9 @@ export class GlobalService {
   private selectedNode?: INode;
   private selectedEdge?: IEdge;
 
+  // Capture packets on all nodes
+  public captureAll = false;
+
   // Emit on change
   public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
 

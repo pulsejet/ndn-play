@@ -149,6 +149,13 @@
                 </div>
             </div>
 
+            <div class="field is-size-7">
+                <label class="checkbox is-small">
+                    <input type="checkbox" [(ngModel)]="gs.captureAll">
+                    Enable Packet Capture (all nodes)
+                </label>
+            </div>
+
             <div class="field">
                 <label class="label is-small">MiniNDN Config:</label>
                 <textarea class="textarea full-width mb-1 is-small" #mnConf></textarea>

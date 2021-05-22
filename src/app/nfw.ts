@@ -56,7 +56,7 @@ export class NFW {
 
         this.fw.on("pktrx", (face, pkt) => {
             // Capture all packets
-            if (this.capture) {
+            if (this.capture || this.gs.captureAll) {
                 if (pkt.l3 instanceof Interest || pkt.l3 instanceof Data) {
                     const encoder = new Encoder();
                     encoder.encode(pkt.l3);

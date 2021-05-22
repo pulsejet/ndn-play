@@ -135,7 +135,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       return l;
     }).join('\n');
 
-    code = "try { (async () => {" + code + "})() } catch (e) { console.error(e); }";
+    code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
     fun.call(this.gs.selectedNode);
   }

@@ -60,6 +60,13 @@
                 </button>
             </div>
 
+            <div class="field is-size-7">
+                <label class="checkbox is-small">
+                    <input type="checkbox" [(ngModel)]="selnode.nfw.capture">
+                    Enable Packet Capture
+                </label>
+            </div>
+
             <div>
                 <label class="label is-small">Computed FIB:</label>
                 <pre>{{ selnode.nfw.strsFIB().join('\n') }}</pre>

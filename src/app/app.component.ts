@@ -154,7 +154,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     const start = performance.now();
     dest.nfw.expressInterest(interest, (data) => {
-        console.log("Received = " + data.content, 'in', Math.round(performance.now() - start), 'ms');
+      console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     });
     this.pendingClickEvent = undefined;
   }
@@ -162,7 +162,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
     this.gs.getSelectedNode()?.nfw.expressInterest({ name, content: new Interest(name) }, (data) => {
-      console.log(data.content);
+      console.log('Received data reply');
     });
   }
 

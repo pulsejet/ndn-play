@@ -6,6 +6,7 @@ import * as vis from 'vis-network/standalone';
 import { Endpoint } from "@ndn/endpoint";
 import { AltUri, Data, Interest } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
+import { Encoder } from '@ndn/tlv';
 import pushable from "it-pushable";
 
 export class NFW {
@@ -29,6 +30,7 @@ export class NFW {
 
     /** Wireshark for this node */
     public readonly capturedPackets: any[] = []
+    public capture = false;
 
     /** Content Store */
     private cs: { recv: number; data: IData}[] = [];
@@ -53,10 +55,24 @@ export class NFW {
         this.nodeUpdated();
 
         this.fw.on("pktrx", (face, pkt) => {
-            this.capturedPackets.push(pkt.l3);
+            // Capture all packets
+            if (this.capture) {
+                if (pkt.l3 instanceof Interest || pkt.l3 instanceof Data) {
+                    const encoder = new Encoder();
+                    encoder.encode(pkt.l3);
 
+                    this.capturedPackets.push({
+                        t: performance.now(),
+                        p: pkt.l3,
+                        length: encoder.output.length,
+                    });
+                }
+            }
+
+            // Do not go into loops
             if (face == this.face) return;
 
+            // Put on NFW
             if (pkt.l3 instanceof Interest) {
                 this.expressInterest({
                     name: AltUri.ofName(pkt.l3.name),

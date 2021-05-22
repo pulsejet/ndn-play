@@ -16,7 +16,7 @@
     cursor: pointer;
 }
 
-.packets td {
+.packets td, .packets th {
     padding: 1px 2px;
     border-bottom: 1px solid white;
 }

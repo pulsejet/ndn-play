@@ -55,22 +55,11 @@ export class NFW {
         this.nodeUpdated();
 
         this.fw.on("pktrx", (face, pkt) => {
-            // Capture all packets
-            if (this.capture || this.gs.captureAll) {
-                if (pkt.l3 instanceof Interest || pkt.l3 instanceof Data) {
-                    const encoder = new Encoder();
-                    encoder.encode(pkt.l3);
-
-                    this.capturedPackets.push({
-                        t: performance.now(),
-                        p: pkt.l3,
-                        length: encoder.output.length,
-                    });
-                }
-            }
-
             // Do not go into loops
-            if (face == this.face) return;
+            if (face == this.face) {
+                this.capturePacket(pkt.l3);
+                return;
+            }
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
@@ -78,9 +67,7 @@ export class NFW {
                     name: AltUri.ofName(pkt.l3.name),
                     freshness: pkt.l3.lifetime,
                     content: pkt.l3,
-                }, (data) => {
-                    this.faceRx.push(FwPacket.create(data.content));
-                });
+                }, () => {});
                 return;
             } else if (pkt.l3 instanceof Data) {
                 this.putData({
@@ -105,6 +92,21 @@ export class NFW {
 
     nodeUpdated() {
         this.setupPingServer();
+    }
+
+    capturePacket(p: any) {
+        if (this.capture || this.gs.captureAll) {
+            if (p instanceof Interest || p instanceof Data) {
+                const encoder = new Encoder();
+                encoder.encode(p);
+
+                this.capturedPackets.push({
+                    t: performance.now(),
+                    p: p,
+                    length: encoder.output.length,
+                });
+            }
+        }
     }
 
     setupPingServer() {
@@ -223,10 +225,6 @@ export class NFW {
             console.log(this.node().label, interest.name.substr(0, 20), interest.freshness);
         }
 
-        // Check content store
-        const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.freshness || 0) > (new Date()).getTime());
-        if (csEntry) return faceCallback(csEntry.data);
-
         // Put to NDNts forwarder
         this.faceRx.push(FwPacket.create(interest.content));
 
@@ -248,6 +246,10 @@ export class NFW {
             };
             this.pit.push(pitEntry);
         }
+
+        // Check content store
+        const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.freshness || 0) > (new Date()).getTime());
+        if (csEntry) return this.putData(csEntry.data);
 
         // Get forwarding strategy
         const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;

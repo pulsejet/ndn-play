@@ -91,19 +91,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       term.writeln(msg);
     });
     fitAddon.fit();
-
-    // Testing
-    setTimeout(() => {
-      this.gs.selectNode(<INode>this.gs.nodes.get('5'));
-      (<any>window).visualize = (p: Encodable) => { this.visualizedPacket = p; };
-
-      this.runCode(`
-        const { Interest } = ndn.packet;
-        const interest = new Interest('/ndn/cathy-site/cathy/test', Interest.MustBeFresh);
-        visualize(interest);
-        console.log('Initialized!');
-      `);
-    }, 300);
   }
 
   onNetworkClick(params: any) {

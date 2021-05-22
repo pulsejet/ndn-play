@@ -1,6 +1,7 @@
 
 <ng-template #pane1>
     <div id="sidebar">
+        <h1 class="is-size-3">NDN-Play</h1>
         <ng-container
             [ngTemplateOutlet]="sideBarInner"
             [ngTemplateOutletContext]="{selnode: gs.getSelectedNode(), seledge: gs.getSelectedEdge()}">
@@ -9,7 +10,7 @@
 
     <ng-template #sideBarInner let-selnode="selnode" let-seledge="seledge">
         <div *ngIf="selnode">
-            <h2 class="is-size-4 mb-3">On {{ selnode.label }}</h2>
+            <h2 class="is-size-5 mb-3">Node {{ selnode.label }}</h2>
 
             <div class="field">
                 <label class="label is-small">Node Name</label>
@@ -77,8 +78,8 @@
         </div>
 
         <div *ngIf="seledge">
-            <h2 class="is-size-4 mb-3">
-                On
+            <h2 class="is-size-5 mb-3">
+                Link
                 {{ $any(gs.nodes.get(seledge.from)).label }}
                 &#8212;
                 {{ $any(gs.nodes.get(seledge.to)).label }}
@@ -108,7 +109,7 @@
         </div>
 
         <div>
-            <h2 class="is-size-4">Global Operations</h2>
+            <h2 class="is-size-5">Global Operations</h2>
             <br/>
             <div class="field">
                 <button class="button is-link full-width is-light is-small full-width"

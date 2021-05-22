@@ -35,3 +35,14 @@
     overflow: auto;
     overflow-y: scroll;
 }
+
+.console {
+    font-family: monospace;
+    font-size: 0.8em;
+}
+.console div {
+    padding: 0.5px 6px;
+    border-bottom: 0.5px solid #EEE;
+}
+.console .warn { background-color: rgb(255, 251, 229); }
+.console .error { background-color: rgb(255, 240, 240); }

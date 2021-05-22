@@ -7,7 +7,7 @@ import { ndn as ndnUserTypes } from './user-types';
 import { Encodable } from '@ndn/tlv';
 
 enum mainTabs { Topology, Editor };
-enum lowerTabs { Visualizer };
+enum lowerTabs { Console, Visualizer };
 
 @Component({
   selector: 'app-root',
@@ -21,7 +21,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public mainTabs = mainTabs;
   public mainTab = mainTabs.Topology;
   public lowerTabs = lowerTabs;
-  public lowerTab = lowerTabs.Visualizer;
+  public lowerTab = lowerTabs.Console;
 
   /** Currently visualized packet */
   public visualizedPacket?: Encodable;
@@ -67,6 +67,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         const { Interest } = ndn.packet;
         const interest = new Interest('/ndn/cathy-site/cathy/test', Interest.MustBeFresh);
         visualize(interest);
+        console.log('hey!');
       `);
     }, 300);
   }

@@ -42,7 +42,26 @@ export class GlobalService {
   // Emit on change
   public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
 
+  // Console logs
+  public consoleLogs: { type: string, msg: string }[] = []
+
   constructor() {
+    // Initialize console logging
+    const initConsole = (type: string) => {
+      const c = (<any>console);
+      c['d' + type] = c[type].bind(console);
+      c[type] = (...args: any[]) => {
+          c['d' + type].apply(console, args);
+          this.consoleLogs.push({
+            type: type,
+            msg: args.join(' '),
+          });
+      }
+    }
+    initConsole('log');
+    initConsole('warn');
+    initConsole('error');
+
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "alice" },

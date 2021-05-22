@@ -48,6 +48,7 @@ export class VisualizerComponent implements OnInit {
           v: this.decodeRecursive(t.value),
           vl: t.value
         };
+        if (t.type == 0) break;
 
         // Creative visualization
         switch (obj.t) {
@@ -58,9 +59,12 @@ export class VisualizerComponent implements OnInit {
           }
 
           default:
-            const maxlen = 16;
-            const str = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
-            obj.vs = '0x' + str.substr(0, maxlen) + (str.length > maxlen ? '...' : '');
+            obj.vs = '0x' + [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        if (obj.vs) {
+          const maxlen = 32;
+          obj.vs =  obj.vs.substr(0, maxlen) + (obj.vs.length > maxlen ? ' ...' : '');
         }
 
         arr.push(obj);

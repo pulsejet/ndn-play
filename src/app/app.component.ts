@@ -101,6 +101,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         const interest = new Interest('/ndn/cathy-site/cathy/test', Interest.MustBeFresh);
         visualize(interest);
         console.log('hey!');
+        console.log(interest);
       `);
     }, 1000);
   }

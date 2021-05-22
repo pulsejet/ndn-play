@@ -1,5 +1,22 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
+export const monacoConfig = {
+  onMonacoLoad: async () => {
+    const monaco = (<any>window).monaco;
+
+    /** Inject library from HTTP */
+    const injectLib = async (url: string) => {
+      const res = await fetch(url);
+      let libSource = await res.text();
+      libSource = libSource.split('\n').filter((l: string) => (l !== ('export { ndn };'))).join('\n');
+
+      monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, url.replace('.out', ''));
+    }
+
+    await injectLib('/assets/types.d.ts.out')
+  }
+};
+
 @Component({
   selector: 'app-editor',
   template: `
@@ -20,6 +37,5 @@ export class EditorComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
-
   }
 }

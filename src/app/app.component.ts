@@ -3,10 +3,7 @@ import { GlobalService } from './global.service';
 import { IEdge, INode } from './interfaces';
 import { RoutingHelper } from './routing-helper';
 import { loadMiniNDNConfig } from './minindn-config';
-
-import * as packet from '@ndn/packet';
-import * as tlv from "@ndn/tlv";
-import * as sync from '@ndn/sync';
+import { ndn as ndnUserTypes } from './user-types';
 
 @Component({
   selector: 'app-root',
@@ -28,7 +25,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   {}
 
   ngOnInit() {
-    (<any>window).ndn = { packet, tlv, sync };
+    (<any>window).ndn = ndnUserTypes;
   }
 
   ngAfterViewInit() {

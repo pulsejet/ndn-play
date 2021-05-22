@@ -4,7 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build"
+    "build": "ng build",
+    "editor-types": "rimraf types.d.ts && rollup -c && mve types.d.ts src/assets/types.d.ts.out"
   },
   "private": true,
   "dependencies": {
@@ -16,7 +17,6 @@
     "@angular/platform-browser": "~12.0.1",
     "@angular/platform-browser-dynamic": "~12.0.1",
     "@angular/router": "~12.0.1",
-    "@materia-ui/ngx-monaco-editor": "^5.1.0",
     "@ndn/endpoint": "https://ndnts-nightly.ndn.today/endpoint.tgz",
     "@ndn/fw": "https://ndnts-nightly.ndn.today/fw.tgz",
     "@ndn/keychain": "https://ndnts-nightly.ndn.today/keychain.tgz",
@@ -27,10 +27,12 @@
     "bulma": "^0.9.2",
     "chroma-js": "^2.1.2",
     "dijkstrajs": "^1.0.1",
+    "dts-bundle": "^0.7.3",
     "event-iterator": "^2.0.0",
     "hammerjs": "^2.0.8",
     "keycharm": "^0.4.0",
     "monaco-editor": "^0.24.0",
+    "ngx-monaco-editor": "^12.0.0",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
     "vis-data": "^7.1.2",
@@ -43,6 +45,10 @@
     "@angular/cli": "~12.0.1",
     "@angular/compiler-cli": "~12.0.1",
     "@types/hammerjs": "^2.0.39",
+    "mve": "^0.1.2",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.48.0",
+    "rollup-plugin-dts": "^3.0.2",
     "typescript": "~4.2.4"
   }
 }

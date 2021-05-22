@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor';
 
 import { AppComponent } from './app.component';
 import { PaneComponent } from './pane/pane.component';
-import { EditorComponent } from './editor/editor.component';
+import { EditorComponent, monacoConfig } from './editor/editor.component';
 
 @NgModule({
   declarations: [
@@ -16,7 +16,7 @@ import { EditorComponent } from './editor/editor.component';
   imports: [
     BrowserModule,
     FormsModule,
-    MonacoEditorModule,
+    MonacoEditorModule.forRoot(monacoConfig),
   ],
   providers: [],
   bootstrap: [AppComponent]

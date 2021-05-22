@@ -110,8 +110,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   runCode(code: string) {
     const testcode = `
-      const { Data, Interest } = ndn.packet;
-      const { fromUtf8, toUtf8 } = ndn.tlv;
+      /// <import> { Data, Interest } = ndn.packet;
+      /// <import> { fromUtf8, toUtf8 } = ndn.tlv;
 
       if (this.label === 'cathy') {
         const endpoint = await this.nfw.getEndpoint();
@@ -127,6 +127,13 @@ export class AppComponent implements OnInit, AfterViewInit {
         alert(fromUtf8(data.content));
       }
     `;
+
+    code = code.split('\n').map((l) => {
+      if (l.trim().startsWith('///') && l.includes('<import>')) {
+        return l.replace('<import>', 'const').replace('///', '');
+      }
+      return l;
+    }).join('\n');
 
     code = "try { (async () => {" + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);

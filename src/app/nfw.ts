@@ -17,7 +17,7 @@ export class NFW {
     private pit: {
         interest: IInterest;
         removeTimer: number;
-        faceCallback: (data: IData) => void;
+        faceCallback: ((data: IData) => void)[];
     }[] = [];
 
     /** Content Store */
@@ -164,7 +164,7 @@ export class NFW {
 
     expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
         if (this.gs.LOG_INTERESTS) {
-            console.log(this.node().label, interest.name);
+            console.log(this.node().label, interest.name.substr(0, 20), interest.freshness);
         }
 
         // Check content store
@@ -173,18 +173,22 @@ export class NFW {
 
         // Do we already have this entry?
         const aggregate = this.pit.find(e => e.interest.name == interest.name);
-
-        // Add to PIT
-        const pitEntry = {
-            interest,
-            faceCallback: faceCallback,
-            removeTimer: window.setTimeout(() => {
-                // Interest expired
-                const i = this.pit.indexOf(pitEntry);
-                this.pit.splice(i, 1);
-            }, interest.freshness || 5000),
-        };
-        this.pit.push(pitEntry);
+        if (aggregate) {
+            // Add callback to existing entry
+            aggregate.faceCallback.push(faceCallback);
+        } else {
+            // Add to PIT
+            const pitEntry = {
+                interest,
+                faceCallback: [faceCallback],
+                removeTimer: window.setTimeout(() => {
+                    // Interest expired
+                    const i = this.pit.indexOf(pitEntry);
+                    this.pit.splice(i, 1);
+                }, interest.freshness || 5000),
+            };
+            this.pit.push(pitEntry);
+        }
 
         // Get forwarding strategy
         const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
@@ -272,8 +276,8 @@ export class NFW {
     }
 
     putData(data: IData) {
-        const satisfy = this.pit.filter(e => e.interest.name == data.name);
-        this.pit = this.pit.filter(e => e.interest.name !== data.name);
+        const satisfy = this.pit.filter(e => data.name.startsWith(e.interest.name));
+        this.pit = this.pit.filter(e => !data.name.startsWith(e.interest.name));
 
         if (data.freshness) {
             this.cs.unshift({
@@ -284,7 +288,7 @@ export class NFW {
         }
 
         for (const entry of satisfy) {
-            entry.faceCallback(data);
+            entry.faceCallback.forEach((cb) => cb(data));
             clearTimeout(entry.removeTimer);
         }
     }
@@ -305,71 +309,84 @@ export class NFW {
     }
 
     getEndpoint = async () => {
-        return {
-            consume: (interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext => {
-                const interest = interestInput instanceof Interest ? interestInput : new Interest(interestInput);
-
-                let nRetx = -1;
-                const promise = new Promise<Data>((resolve, reject) => {
-                    const timer = setTimeout(() => {
-                        reject(new Error(`Interest timed out`))
-                    }, interest.lifetime);
-
-                    this.expressInterest({
-                        name: AltUri.ofName(interest.name),
-                        content: interest,
-                        freshness: interest.lifetime,
-                    }, (data) => {
-                        resolve(data.content)
-                        clearTimeout(timer);
-                    });
-                });
-                return Object.defineProperties(promise, {
-                    interest: { value: interest },
-                    nRetx: { get() { return nRetx; } },
-                });
-            },
-            produce: (prefixInput: undefined | NameLike, handler: ProducerHandler, opts?: ProducerOptions): Producer => {
-                const prefix = typeof prefixInput === "undefined" ? undefined : new Name(prefixInput);
-
-                let producer: Producer;
-
-                const processInterestUnbuffered = async (interest: Interest) => {
-                    const data = await handler(interest, producer);
-                    if (!(data instanceof Data)) {
-                      return undefined;
-                    }
-                    return data;
-                };
-
-                const reg = {
-                    prefix: AltUri.ofName(<Name>prefix),
-                    callback: (ii: IInterest) => {
-                        processInterestUnbuffered(ii.content).then((data) => {
-                            if (data) {
-                                this.putData({
-                                    name: AltUri.ofName(data.name),
-                                    content: data,
-                                    freshness: data.freshnessPeriod,
-                                });
-                            }
-                        })
-                    }
-                };
-                this.prefixRegistrations.push(reg);
-
-                producer = {
-                    prefix,
-                    face: <any>null,
-                    dataBuffer: <any>null,
-                    processInterest: processInterestUnbuffered,
-                    close: () => {
-                        this.prefixRegistrations.splice(this.prefixRegistrations.indexOf(reg), 1);
-                    },
-                };
-
-                return producer;
-            },
-        }
+        return new Endpoint(this);
     }
+}
+
+class Endpoint {
+    constructor(private nfw: NFW) {}
+
+    public fw = new DummyForwarder();
+
+    consume = (interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext => {
+        const interest = interestInput instanceof Interest ? interestInput : new Interest(interestInput);
+
+        let nRetx = -1;
+        const promise = new Promise<Data>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                reject(new Error(`Interest timed out`))
+            }, interest.lifetime);
+
+            this.nfw.expressInterest({
+                name: AltUri.ofName(interest.name),
+                content: interest,
+                freshness: interest.lifetime,
+            }, (data) => {
+                resolve(data.content)
+                clearTimeout(timer);
+            });
+        });
+        return Object.defineProperties(promise, {
+            interest: { value: interest },
+            nRetx: { get() { return nRetx; } },
+        });
+    }
+    produce = (prefixInput: undefined | NameLike, handler: ProducerHandler, opts?: ProducerOptions): Producer => {
+        const prefix = typeof prefixInput === "undefined" ? undefined : new Name(prefixInput);
+
+        let producer: Producer;
+
+        const processInterestUnbuffered = async (interest: Interest) => {
+            const data = await handler(interest, producer);
+            if (!(data instanceof Data)) {
+                return undefined;
+            }
+            return data;
+        };
+
+        const reg = {
+            prefix: AltUri.ofName(<Name>prefix),
+            callback: (ii: IInterest) => {
+                processInterestUnbuffered(ii.content).then((data) => {
+                    if (data) {
+                        this.nfw.putData({
+                            name: AltUri.ofName(data.name),
+                            content: data,
+                            freshness: data.freshnessPeriod,
+                        });
+                    }
+                })
+            }
+        };
+        this.nfw.prefixRegistrations.push(reg);
+
+        producer = {
+            prefix,
+            face: <any>null,
+            dataBuffer: <any>null,
+            processInterest: processInterestUnbuffered,
+            close: () => {
+                this.nfw.prefixRegistrations.splice(this.nfw.prefixRegistrations.indexOf(reg), 1);
+            },
+        };
+
+        return producer;
+    }
+}
+
+class DummyForwarder {
+    public faces = [];
+
+    public on = () => {};
+    public off = () => {};
 }

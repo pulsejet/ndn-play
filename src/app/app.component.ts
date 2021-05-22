@@ -47,6 +47,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     (<any>window).ndn = ndnUserTypes;
+    (<any>window).visualize = (p: any) => this.visualizedPacket = p;
 
     this.gs.selectedNodeChangeCallback.subscribe((node) => {
       if (!node) {

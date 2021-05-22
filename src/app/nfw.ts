@@ -86,15 +86,15 @@ export class NFW {
         });
     }
 
-    node() {
+    public node() {
         return <INode>this.gs.nodes.get(this.nodeId);
     }
 
-    nodeUpdated() {
+    public nodeUpdated() {
         this.setupPingServer();
     }
 
-    capturePacket(p: any) {
+    public capturePacket(p: any) {
         let type;
         if (p instanceof Interest) {
             type = 'Interest';
@@ -115,7 +115,7 @@ export class NFW {
         });
     }
 
-    setupPingServer() {
+    private setupPingServer() {
         if (this.prefixRegistrations.length == 0) {
             this.prefixRegistrations.push(<any>{});
         }
@@ -132,7 +132,7 @@ export class NFW {
         };
     }
 
-    updateColors() {
+    public updateColors() {
         // Check busiest node
         if (this.pendingTraffic > (this.gs.busiestNode?.nfw.pendingTraffic || 0)) {
             this.gs.busiestNode = this.node();
@@ -149,7 +149,7 @@ export class NFW {
     }
 
     /** Add traffic to link */
-    addLinkTraffic(nextHop: vis.IdType, callback: (success: boolean) => void) {
+    private addLinkTraffic(nextHop: vis.IdType, callback: (success: boolean) => void) {
         // Get link to next hop
         const myEdges = this.gs.network.getConnectedEdges(this.nodeId);
         let link = this.gs.edges.get(myEdges).find(l => l.to == nextHop || l.from == nextHop);
@@ -182,7 +182,7 @@ export class NFW {
         }, latency)
     }
 
-    checkPrefixRegistrationMatches(interest: IInterest) {
+    private checkPrefixRegistrationMatches(interest: IInterest) {
         let matched = false;
 
         for (const entry of this.allMatches(this.prefixRegistrations, interest.name)) {
@@ -193,7 +193,7 @@ export class NFW {
         return matched;
     }
 
-    longestMatch(table: any[], name: string, identifier='prefix') {
+    private longestMatch(table: any[], name: string, identifier='prefix') {
         // Count number of components
         const numComponents = ((s: string) => ((s || '').match(/\//g)||[]).length);
 
@@ -212,7 +212,7 @@ export class NFW {
         return match;
     }
 
-    allMatches(table: any[], name: string, identifier='prefix') {
+    private allMatches(table: any[], name: string, identifier='prefix') {
         let matchName = name;
         if (!matchName.endsWith('/')) matchName += '/';
 
@@ -226,7 +226,7 @@ export class NFW {
         return matches;
     }
 
-    expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
+    public expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
         if (this.gs.LOG_INTERESTS) {
             console.log(this.node().label, interest.name.substr(0, 20), interest.freshness);
         }
@@ -342,7 +342,7 @@ export class NFW {
         }
     }
 
-    putData(data: IData) {
+    public putData(data: IData) {
         const satisfy = this.pit.filter(e => data.name.startsWith(e.interest.name));
         this.pit = this.pit.filter(e => !data.name.startsWith(e.interest.name));
 
@@ -363,7 +363,7 @@ export class NFW {
         }
     }
 
-    strsFIB() {
+    public strsFIB() {
         const text = [];
 
         for (const entry of this.fib) {
@@ -378,7 +378,7 @@ export class NFW {
         return text;
     }
 
-    getEndpoint() {
+    public getEndpoint() {
         return new Endpoint({ fw: this.fw });
     }
 }

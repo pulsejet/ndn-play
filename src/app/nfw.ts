@@ -57,7 +57,7 @@ export class NFW {
         this.fw.on("pktrx", (face, pkt) => {
             // Do not go into loops
             if (face == this.face) {
-                this.capturePacket(pkt.l3);
+                if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
                 return;
             }
 
@@ -95,26 +95,24 @@ export class NFW {
     }
 
     capturePacket(p: any) {
-        if (this.capture || this.gs.captureAll) {
-            let type;
-            if (p instanceof Interest) {
-                type = 'Interest';
-            } else if (p instanceof Data) {
-                type = 'Data';
-            } else {
-                return;
-            }
-
-            const encoder = new Encoder();
-            encoder.encode(p);
-
-            this.capturedPackets.push({
-                t: performance.now(),
-                p: p,
-                length: encoder.output.length,
-                type: type,
-            });
+        let type;
+        if (p instanceof Interest) {
+            type = 'Interest';
+        } else if (p instanceof Data) {
+            type = 'Data';
+        } else {
+            return;
         }
+
+        const encoder = new Encoder();
+        encoder.encode(p);
+
+        this.capturedPackets.push({
+            t: performance.now(),
+            p: p,
+            length: encoder.output.length,
+            type: type,
+        });
     }
 
     setupPingServer() {

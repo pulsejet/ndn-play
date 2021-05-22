@@ -190,7 +190,7 @@
 <ng-template #visTlvA let-packets='packets'>
     <ng-container *ngFor='let tlv of packets'>
         <div style="border: 2px solid black; display: inline-block; box-sizing: border-box; padding: 1px; margin: 1px;">
-            <span style="color: red;">
+            <span style="color: red;" [title]="tlv.t">
                 {{ getTlvTypeText(tlv.t) }}
             </span>
             <span style="color: blue;">

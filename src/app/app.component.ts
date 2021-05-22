@@ -91,6 +91,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       term.writeln(msg);
     });
     fitAddon.fit();
+
+    window.addEventListener('resize', this.consoleResize);
   }
 
   onNetworkClick(params: any) {

@@ -1,0 +1,17 @@
+<ng-template #main let-node="node">
+    <table class="packets">
+        <tr *ngFor="let packet of node.nfw.capturedPackets" [ngClass]="packet.constructor.name"
+            (click)="packetClick.emit(packet)">
+            <td>
+                {{ packet.constructor.name }}
+            </td>
+            <td>
+                {{ packet.name ? AltUri.ofName(packet.name).substr(0, 48) : '' }}
+            </td>
+        </tr>
+    </table>
+</ng-template>
+
+<ng-container [ngTemplateOutlet]="main"
+              [ngTemplateOutletContext]="{node: gs.getSelectedNode()}">
+</ng-container>

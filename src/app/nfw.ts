@@ -27,6 +27,9 @@ export class NFW {
         faceCallback: ((data: IData) => void)[];
     }[] = [];
 
+    /** Wireshark for this node */
+    public readonly capturedPackets: any[] = []
+
     /** Content Store */
     private cs: { recv: number; data: IData}[] = [];
 
@@ -50,6 +53,8 @@ export class NFW {
         this.nodeUpdated();
 
         this.fw.on("pktrx", (face, pkt) => {
+            this.capturedPackets.push(pkt.l3);
+
             if (face == this.face) return;
 
             if (pkt.l3 instanceof Interest) {
@@ -97,7 +102,7 @@ export class NFW {
             callback: (interest) => {
                 this.putData({
                     name: interest.name,
-                    content: `Reply to ${interest.name} from ${label}`,
+                    content: new Data(interest.name),
                 });
             }
         };

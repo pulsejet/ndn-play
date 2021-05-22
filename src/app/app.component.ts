@@ -7,9 +7,10 @@ import { ndn as ndnUserTypes } from './user-types';
 import { Encodable } from '@ndn/tlv';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { Interest } from '@ndn/packet';
 
 enum mainTabs { Topology, Editor };
-enum lowerTabs { Console, Visualizer };
+enum lowerTabs { Console, Visualizer, Captured };
 
 @Component({
   selector: 'app-root',
@@ -100,10 +101,9 @@ export class AppComponent implements OnInit, AfterViewInit {
         const { Interest } = ndn.packet;
         const interest = new Interest('/ndn/cathy-site/cathy/test', Interest.MustBeFresh);
         visualize(interest);
-        console.log('hey!');
-        console.log(interest);
+        console.log('Initialized!');
       `);
-    }, 1000);
+    }, 300);
   }
 
   onNetworkClick(params: any) {
@@ -145,10 +145,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     const dest = <INode>this.gs.nodes.get(id);
     const label = this.gs.getSelectedNode()?.label;
+    const name = `/ndn/${label}-site/${label}/ping`;
     const interest = {
-        name: `/ndn/${label}-site/${label}/ping`,
+        name: name,
         freshness: 3000,
-        content: 'blob',
+        content: new Interest(name),
     };
 
     const start = performance.now();
@@ -160,7 +161,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
-    this.gs.getSelectedNode()?.nfw.expressInterest({ name, content: 'blob' }, (data) => {
+    this.gs.getSelectedNode()?.nfw.expressInterest({ name, content: new Interest(name) }, (data) => {
       console.log(data.content);
     });
   }

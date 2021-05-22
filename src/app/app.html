@@ -194,6 +194,11 @@
                         (click)="lowerTab = lowerTabs.Visualizer">
                         <a>Packet Visualizer</a>
                     </li>
+                    <li [class.is-active]="lowerTab == lowerTabs.Captured"
+                        *ngIf="gs.getSelectedNode()"
+                        (click)="lowerTab = lowerTabs.Captured">
+                        <a>Packet Capture</a>
+                    </li>
                 </ul>
             </div>
             <div class="main-space">
@@ -206,13 +211,21 @@
                         <app-visualizer [packet]="visualizedPacket"></app-visualizer>
                     </div>
                 </div>
+
+                <div>
+                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Captured && gs.getSelectedNode()">
+                        <app-captured-list
+                            (packetClick)="this.visualizedPacket = $event; lowerTab = lowerTabs.Visualizer"
+                        ></app-captured-list>
+                    </div>
+                </div>
             </div>
         </div>
     </ng-template>
 
     <div class="full-width">
         <app-pane [pane1]="mainPane" [pane2]="lowerPane"
-                  [vertical]="true" [basis]="75"
+                  [vertical]="true" [basis]="70"
                   (resize)="consoleResize()">
         </app-pane>
     </div>

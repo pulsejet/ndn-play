@@ -156,27 +156,38 @@
 </ng-template>
 
 <ng-template #pane2>
-    <div class="main-container">
-        <div class="tabs main-head">
-            <ul>
-                <li [class.is-active]="mainTab == mainTabs.Topology"
-                    (click)="mainTab = mainTabs.Topology"><a>Topology</a></li>
-                <li [class.is-active]="mainTab == mainTabs.Editor"
-                    *ngIf="gs.getSelectedNode()"
-                    (click)="mainTab = mainTabs.Editor"><a>Editor</a></li>
-            </ul>
-        </div>
-        <div class="main-space">
-            <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
+    <ng-template #mainPane>
+        <div class="main-container">
+            <div class="tabs main-head">
+                <ul>
+                    <li [class.is-active]="mainTab == mainTabs.Topology"
+                        (click)="mainTab = mainTabs.Topology"><a>Topology</a></li>
+                    <li [class.is-active]="mainTab == mainTabs.Editor"
+                        *ngIf="gs.getSelectedNode()"
+                        (click)="mainTab = mainTabs.Editor"><a>Editor</a></li>
+                </ul>
+            </div>
+            <div class="main-space">
+                <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
 
-            <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.getSelectedNode()">
-                <app-editor [(code)]="$any(gs.getSelectedNode()).nfw.codeEdit"></app-editor>
+                <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.getSelectedNode()">
+                    <app-editor [(code)]="$any(gs.getSelectedNode()).nfw.codeEdit"></app-editor>
+                </div>
             </div>
         </div>
+    </ng-template>
+
+
+    <ng-template #lowerPane>
+        Hahaha
+    </ng-template>
+
+    <div class="full-width">
+        <app-pane [pane1]="mainPane" [pane2]="lowerPane" [vertical]="true" [basis]="75"></app-pane>
     </div>
 </ng-template>
 
-<app-pane [pane1]="pane1" [pane2]="pane2"></app-pane>
+<app-pane [pane1]="pane1" [pane2]="pane2" [basis]="20"></app-pane>
 
 <div style="position: fixed; top: 5px; left:500px; max-width: 600px; font-family: monospace;" *ngIf="visualizedPacket">
     <ng-container

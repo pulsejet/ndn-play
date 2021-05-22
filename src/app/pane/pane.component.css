@@ -20,9 +20,23 @@
 #rpanrResize {
     flex-grow: 0;
     flex-shrink: 0;
-    background: gray;
+    background: #333;
     opacity: 0.6;
-    width: 0.15rem;
+    width: 2px;
     cursor: col-resize;
     margin: 0 0 0 auto;
+}
+
+#pane-container.vertical {
+    flex-direction: column;
+}
+
+#pane-container.vertical #pane1, #pane-container.vertical #pane2 {
+    height: unset;
+}
+
+#pane-container.vertical #rpanrResize {
+    width: 100%;
+    height: 2px;
+    cursor: row-resize;
 }

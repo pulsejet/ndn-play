@@ -197,22 +197,24 @@
                 </ul>
             </div>
             <div class="main-space">
-                <div class="console"
+                <div class="console" #console
                      [hidden]="lowerTab !== lowerTabs.Console">
-                    <div *ngFor="let lm of gs.consoleLogs" [ngClass]="lm.type">
-                        {{ lm.msg }} <br/>
-                    </div>
                 </div>
 
-                <div class="m-2" *ngIf="lowerTab == lowerTabs.Visualizer">
-                    <app-visualizer [packet]="visualizedPacket"></app-visualizer>
+                <div>
+                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Visualizer">
+                        <app-visualizer [packet]="visualizedPacket"></app-visualizer>
+                    </div>
                 </div>
             </div>
         </div>
     </ng-template>
 
     <div class="full-width">
-        <app-pane [pane1]="mainPane" [pane2]="lowerPane" [vertical]="true" [basis]="75"></app-pane>
+        <app-pane [pane1]="mainPane" [pane2]="lowerPane"
+                  [vertical]="true" [basis]="75"
+                  (resize)="consoleResize()">
+        </app-pane>
     </div>
 </ng-template>
 

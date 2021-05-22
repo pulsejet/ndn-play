@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-pane',
@@ -11,6 +11,8 @@ export class PaneComponent implements OnInit, AfterViewInit {
   @Input() public pane2: any;
   @Input() public vertical = false;
   @Input() public basis = 25;
+
+  @Output() public resize = new EventEmitter<void>();
 
   @ViewChild('pane1e') pane1e?: ElementRef;
   @ViewChild('resizer') resizer?: ElementRef;
@@ -47,5 +49,6 @@ export class PaneComponent implements OnInit, AfterViewInit {
     this.paneIsmdwn = 0
     document.body.removeEventListener('mouseup', this.paneEnd.bind(this))
     this.resizer?.nativeElement.removeEventListener('mousemove', this.paneMove.bind(this))
+    this.resize.emit();
   }
 }

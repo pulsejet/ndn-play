@@ -38,6 +38,8 @@
     "vis-data": "^7.1.2",
     "vis-network": "^9.0.4",
     "vis-util": "^5.0.2",
+    "xterm": "^4.12.0",
+    "xterm-addon-fit": "^0.5.0",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

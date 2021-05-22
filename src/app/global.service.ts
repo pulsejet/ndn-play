@@ -43,7 +43,7 @@ export class GlobalService {
   public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
 
   // Console logs
-  public consoleLogs: { type: string, msg: string }[] = []
+  public consoleLog = new EventEmitter<{ type: string, msg: string }>();
 
   constructor() {
     // Initialize console logging
@@ -52,7 +52,7 @@ export class GlobalService {
       c['d' + type] = c[type].bind(console);
       c[type] = (...args: any[]) => {
           c['d' + type].apply(console, args);
-          this.consoleLogs.push({
+          this.consoleLog.emit({
             type: type,
             msg: args.join(' '),
           });

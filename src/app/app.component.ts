@@ -5,6 +5,8 @@ import { RoutingHelper } from './routing-helper';
 import { loadMiniNDNConfig } from './minindn-config';
 import { ndn as ndnUserTypes } from './user-types';
 import { Encodable } from '@ndn/tlv';
+import { Terminal } from 'xterm';
+import { FitAddon } from 'xterm-addon-fit';
 
 enum mainTabs { Topology, Editor };
 enum lowerTabs { Console, Visualizer };
@@ -32,8 +34,12 @@ export class AppComponent implements OnInit, AfterViewInit {
   /** Aliases */
   public loadMiniNDNConfig = loadMiniNDNConfig;
 
+  /** Call on console resize */
+  consoleResize: () => void = <any>undefined;
+
   /** Native Elements */
   @ViewChild('networkContainer') networkContainer?: ElementRef;
+  @ViewChild('console') console?: ElementRef;
 
   constructor(public gs: GlobalService)
   {}
@@ -49,9 +55,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    // Setup
     this.gs.createNetwork(this.networkContainer?.nativeElement);
     this.gs.network?.on("click", this.onNetworkClick.bind(this));
 
+    // Routing
     const computeFun = this.computeNFibs.bind(this);
     this.gs.nodes.on('add', computeFun);
     this.gs.nodes.on('remove', computeFun);
@@ -59,6 +67,31 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.gs.edges.on('remove', computeFun);
     computeFun();
 
+    // Terminal
+    var term = new Terminal({
+      theme: {
+        background: 'white',
+        foreground: 'black',
+        selection: '#ddd',
+      },
+      fontSize: 13,
+    });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    this.consoleResize = fitAddon.fit.bind(fitAddon);
+    term.open(this.console?.nativeElement);
+    this.gs.consoleLog.subscribe((e) => {
+      let msg = e.msg;
+      if (e.type == 'error') {
+        msg = `\u001b[31m${msg}\u001b[0m`;
+      } else if (e.type == 'warn') {
+        msg = `\u001b[33m${msg}\u001b[0m`;
+      }
+      term.writeln(msg);
+    });
+    fitAddon.fit();
+
+    // Testing
     setTimeout(() => {
       this.gs.selectNode(<INode>this.gs.nodes.get('5'));
       (<any>window).visualize = (p: Encodable) => { this.visualizedPacket = p; };
@@ -69,7 +102,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         visualize(interest);
         console.log('hey!');
       `);
-    }, 300);
+    }, 1000);
   }
 
   onNetworkClick(params: any) {

@@ -10,7 +10,7 @@ export class PaneComponent implements OnInit, AfterViewInit {
   @Input() public pane1: any;
   @Input() public pane2: any;
   @Input() public vertical = false;
-  @Input() public basis = 25;
+  @Input() public basis = '25%';
 
   @Output() public resize = new EventEmitter<void>();
 
@@ -27,7 +27,7 @@ export class PaneComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     if (this.pane1e) {
-      this.pane1e.nativeElement.style.flexBasis = `${this.basis}%`;
+      this.pane1e.nativeElement.style.flexBasis = `${this.basis}`;
     }
 
     this.resizer?.nativeElement.addEventListener('mousedown', (event: any) => {

@@ -240,10 +240,10 @@
 
     <div class="full-width">
         <app-pane [pane1]="mainPane" [pane2]="lowerPane"
-                  [vertical]="true" [basis]="70"
+                  [vertical]="true" basis="70%"
                   (resize)="consoleResize()">
         </app-pane>
     </div>
 </ng-template>
 
-<app-pane [pane1]="pane1" [pane2]="pane2" [basis]="20"></app-pane>
+<app-pane [pane1]="pane1" [pane2]="pane2" basis="300px"></app-pane>

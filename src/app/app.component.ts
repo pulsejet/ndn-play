@@ -12,6 +12,7 @@ import { getTlvTypeText, TlvV3 } from './tlv-types';
 interface visTlv { t: number; l: number; v: visTlv[]; vl: Uint8Array; vs?: string };
 
 enum mainTabs { Topology, Editor };
+enum lowerTabs { Inspector };
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   /** Which tabs are selected */
   public mainTabs = mainTabs;
   public mainTab = mainTabs.Topology;
+  public lowerTabs = lowerTabs;
+  public lowerTab = lowerTabs.Inspector;
 
   public pendingClickEvent?: (params: any) => void;
 

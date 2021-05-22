@@ -158,13 +158,17 @@
 <ng-template #pane2>
     <ng-template #mainPane>
         <div class="main-container">
-            <div class="tabs main-head">
+            <div class="is-small tabs main-head">
                 <ul>
                     <li [class.is-active]="mainTab == mainTabs.Topology"
-                        (click)="mainTab = mainTabs.Topology"><a>Topology</a></li>
+                        (click)="mainTab = mainTabs.Topology">
+                        <a>Topology</a>
+                    </li>
                     <li [class.is-active]="mainTab == mainTabs.Editor"
                         *ngIf="gs.getSelectedNode()"
-                        (click)="mainTab = mainTabs.Editor"><a>Editor</a></li>
+                        (click)="mainTab = mainTabs.Editor">
+                        <a>Editor</a>
+                    </li>
                 </ul>
             </div>
             <div class="main-space">
@@ -179,7 +183,19 @@
 
 
     <ng-template #lowerPane>
-        Hahaha
+        <div class="main-container">
+            <div class="is-small tabs main-head">
+                <ul>
+                    <li [class.is-active]="lowerTab == lowerTabs.Inspector"
+                        (click)="lowerTab = lowerTabs.Inspector">
+                        <a>Packet Inspector</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="main-space">
+                <div></div>
+            </div>
+        </div>
     </ng-template>
 
     <div class="full-width">

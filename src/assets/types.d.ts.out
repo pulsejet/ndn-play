@@ -1,4 +1,4 @@
-declare namespace ndn {
+declare namespace t {
 /// <reference types="node" />
 /**
  * Use this symbol to delete properies in deepObjectAssign.
@@ -5508,4 +5508,9 @@ export const ndn: {
 }
 
 
-const node = ndn.node;\n\n
+const node = t.node;
+
+
+const ndn = t.ndn;
+
+

@@ -27,6 +27,7 @@ process () {
     rm $1
 }
 
-process "src/assets/user-types.d.ts.out" "ndn"
+process "src/assets/user-types.d.ts.out" "t"
 
-echo "const node = ndn.node;\n\n" >> src/assets/types.d.ts.out
+echo -e "const node = t.node;\n\n" >> src/assets/types.d.ts.out
+echo -e "const ndn = t.ndn;\n\n" >> src/assets/types.d.ts.out

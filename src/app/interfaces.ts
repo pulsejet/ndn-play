@@ -1,3 +1,4 @@
+import { Data, Interest } from '@ndn/packet';
 import * as vis from 'vis-network';
 import { NFW } from './nfw';
 
@@ -18,13 +19,13 @@ export interface IEdge extends vis.Edge {
 
 export interface IInterest {
     name: string;
-    content: any;
+    content: Interest;
     freshness?: number;
 }
 
 export interface IData {
     name: string;
-    content: any;
+    content: Data;
     freshness?: number;
 }
 

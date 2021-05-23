@@ -59,9 +59,6 @@ export class NFW {
     /** Packets pending to be forwarded */
     public pendingTraffic = 0;
 
-    /** Registered producer prefixes */
-    public prefixRegistrations: { prefix: string; callback: (interest: IInterest) => void }[] = [];
-
     /** Server for ping */
     private pingServer?: Producer;
 
@@ -207,14 +204,12 @@ export class NFW {
     }
 
     private checkPrefixRegistrationMatches(interest: IInterest) {
-        let matched = false;
-
-        for (const entry of this.allMatches(this.prefixRegistrations, interest.name)) {
-            entry.callback(interest);
-            matched = true;
+        for (const face of this.fw.faces) {
+            if (face.hasRoute(interest.content.name)) {
+                return true;
+            }
         }
-
-        return matched;
+        return false;
     }
 
     private longestMatch(table: any[], name: string, identifier='prefix') {

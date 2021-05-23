@@ -38,6 +38,9 @@ For example, go to `node D`'s configuration page, and check the `enable packet c
 Checking out the` packet visualizer` section will give the packet structure of captured packet.
 You can try to capture and visualize the Data packets generated during `ping` in a similar way.
 
+### Future Work
+In order to help NDN beginners better understand the security primitives in NDN, we plan to visualize the ceritificate chain and signing relationships in the future.
+
 ## Build
 
 To run the project

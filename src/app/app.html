@@ -16,8 +16,8 @@
                 <label class="label is-small">Node Name</label>
                 <input class="input is-small" type="text" placeholder="Alice"
                     [(ngModel)]="selnode.label"
-                    (input)="this.gs.nodes.update({ id: selnode.id, label: selnode.label })"
-                    (change)="computeNFibs()">
+                    (input)="gs.nodes.update({ id: selnode.id, label: selnode.label })"
+                    (change)="gs.scheduleRouteRefresh()">
             </div>
 
             <label class="label is-small">Express Interest</label>
@@ -48,7 +48,7 @@
                           id="side-produced-prefixes" #prp
                           [value]="selnode.producedPrefixes.join('\n')"></textarea>
                 <button class="button is-link is-light is-small full-width"
-                        (click)="gs.nodes.update({ id: selnode.id, producedPrefixes: mlstrToArray(prp.value) }); computeNFibs()">
+                        (click)="gs.nodes.update({ id: selnode.id, producedPrefixes: mlstrToArray(prp.value) }); gs.scheduleRouteRefresh()">
                     Set
                 </button>
             </div>
@@ -88,7 +88,7 @@
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="10"
                            [(ngModel)]="seledge.latency"
-                           (input)="gs.edges.update(seledge); computeNFibs()">
+                           (input)="gs.edges.update(seledge); gs.scheduleRouteRefresh()">
                 </div>
                 <p class="help is-small">Negative for default latency</p>
             </div>
@@ -109,7 +109,7 @@
             <br/>
             <div class="field">
                 <button class="button is-link full-width is-light is-small full-width"
-                        (click)="computeNFibs()">Compute Routes</button>
+                        (click)="gs.scheduleRouteRefresh()">Compute Routes</button>
             </div>
 
             <div class="field">
@@ -117,7 +117,7 @@
                 <div class="control">
                     <input class="input is-small" type="number" placeholder="10"
                            [(ngModel)]="this.gs.defaultLatency"
-                           (change)="computeNFibs()">
+                           (change)="gs.scheduleRouteRefresh()">
                 </div>
             </div>
 

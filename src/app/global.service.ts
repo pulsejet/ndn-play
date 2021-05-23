@@ -1,8 +1,9 @@
 import { EventEmitter, Injectable } from '@angular/core';
 import { IEdge, INode } from './interfaces';
-import * as vis from 'vis-network/standalone';
 import { NFW } from './nfw';
+import { RoutingHelper } from './routing-helper';
 import { AltUri, Data, Interest, Name } from '@ndn/packet';
+import * as vis from 'vis-network/standalone';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +50,9 @@ export class GlobalService {
   // Console logs
   public consoleLog = new EventEmitter<{ type: string, msg: string }>();
 
+  // Event of route refresh
+  private scheduledRouteRefresh: number = 0;
+
   constructor() {
     // Initialize console logging
     const initConsole = (type: string) => {
@@ -88,7 +92,7 @@ export class GlobalService {
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "A" },
-      { id: "2", label: "B" },
+      { id: "2", label: "M" },
       { id: "3", label: "E" },
       { id: "4", label: "B" },
       { id: "5", label: "C" },
@@ -142,6 +146,7 @@ export class GlobalService {
     requestAnimationFrame(this.runAnimationFrame.bind(this));
   }
 
+  /** Initialize the network */
   createNetwork(container: HTMLElement) {
     const data = {
       nodes: this.nodes,
@@ -159,6 +164,36 @@ export class GlobalService {
     };
 
     this.network = new vis.Network(container, data, options);
+
+    // Routing
+    const computeFun = this.scheduleRouteRefresh.bind(this);
+    this.nodes.on('add', computeFun);
+    this.nodes.on('remove', computeFun);
+    this.edges.on('add', computeFun);
+    this.edges.on('remove', computeFun);
+  }
+
+  /** Compute static routes */
+  private computeRoutes() {
+    console.warn('Computing routes');
+    const rh = new RoutingHelper(this);
+    const fibs = rh.calculateNPossibleRoutes();
+    for (const nodeId in fibs) {
+        const node = this.nodes.get(nodeId);
+        if (!node) continue;
+        node.nfw.fib = fibs[nodeId];
+        node.nfw.nodeUpdated();
+    }
+  }
+
+  /** Schedule a refresh of static routes */
+  scheduleRouteRefresh() {
+    if (this.scheduledRouteRefresh) return;
+
+    this.scheduledRouteRefresh = window.setTimeout(() => {
+      this.computeRoutes();
+      this.scheduledRouteRefresh = 0;
+    }, 500);
   }
 
   getSelectedNode() {

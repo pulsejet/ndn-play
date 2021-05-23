@@ -61,14 +61,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.gs.createNetwork(this.networkContainer?.nativeElement);
     this.gs.network?.on("click", this.onNetworkClick.bind(this));
 
-    // Routing
-    const computeFun = this.computeNFibs.bind(this);
-    this.gs.nodes.on('add', computeFun);
-    this.gs.nodes.on('remove', computeFun);
-    this.gs.edges.on('add', computeFun);
-    this.gs.edges.on('remove', computeFun);
-    computeFun();
-
     // Terminal
     var term = new Terminal({
       theme: {
@@ -119,18 +111,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  computeNFibs() {
-    console.warn('Computing routes');
-    const rh = new RoutingHelper(this.gs);
-    const fibs = rh.calculateNPossibleRoutes();
-    for (const nodeId in fibs) {
-        const node = this.gs.nodes.get(nodeId);
-        if (!node) continue;
-        node.nfw.fib = fibs[nodeId];
-        node.nfw.nodeUpdated();
-    }
-  }
-
   sendPingClick(params: any) {
     const id = this.gs.network.getNodeAt(params.pointer.DOM);
     if (!id) return;
@@ -165,7 +145,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       const { Data, Interest } = ndn.packet;
       const { fromUtf8, toUtf8 } = ndn.tlv;
 
-      if (node.label === 'cathy') {
+      if (node.label === 'C') {
         const endpoint = node.nfw.getEndpoint();
         const producer = endpoint.produce('/ndn/cathy-site/cathy/test', async (interest) => {
           const data = new Data(interest.name, Data.FreshnessPeriod(500));

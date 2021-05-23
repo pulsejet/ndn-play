@@ -126,8 +126,7 @@ export class RoutingHelper {
                 const destNode = this.gs.nodes.get(dest);
                 if (!destNode) continue;
 
-                const defaultPrefix = `/ndn/${destNode.label}-site/${destNode.label}`
-                const prefixes = [defaultPrefix]
+                const prefixes = []
                 prefixes.push(...(this.namePrefixes[dest] || []));
                 prefixes.push(...(destNode.producedPrefixes) || []);
 

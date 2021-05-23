@@ -97,6 +97,23 @@ export class NFW {
             tx: async () => {},
         });
 
+        // Add routes
+        this.fw.on("annadd", (prefix) => {
+            const pfxs = this.node().producedPrefixes
+            pfxs.push(AltUri.ofName(prefix));
+            this.gs.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
+            this.gs.scheduleRouteRefresh();
+        });
+
+        // Remove routes
+        this.fw.on("annrm", (prefix) => {
+            const pfxs = this.node().producedPrefixes
+            const i = pfxs.indexOf(AltUri.ofName(prefix));
+            if (i !== -1) pfxs.splice(i, 1);
+            this.gs.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
+            this.gs.scheduleRouteRefresh();
+        });
+
         // Setup security
         (async () => {
             const sKey = await RSA.cryptoGenerate({}, true);
@@ -116,6 +133,9 @@ export class NFW {
     }
 
     public nodeUpdated() {
+        // Not before initialization
+        if (!this.security) return;
+
         this.setupPingServer();
     }
 
@@ -148,7 +168,7 @@ export class NFW {
         const label = this.node().label;
         this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/${label}/ping`, async (interest) => {
             return new Data(interest.name, toUtf8('Ping Reply'));
-        })
+        });
     }
 
     public updateColors() {

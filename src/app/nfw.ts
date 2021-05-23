@@ -166,7 +166,7 @@ export class NFW {
 
         // Start new server
         const label = this.node().label;
-        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/${label}/ping`, async (interest) => {
+        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/ping`, async (interest) => {
             return new Data(interest.name, toUtf8('Ping Reply'));
         });
     }

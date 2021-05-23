@@ -17,7 +17,7 @@
                 <input class="input is-small" type="text" placeholder="Alice"
                     [(ngModel)]="selnode.label"
                     (input)="gs.nodes.update({ id: selnode.id, label: selnode.label })"
-                    (change)="gs.scheduleRouteRefresh()">
+                    (change)="selnode.nfw.nodeUpdated()">
             </div>
 
             <label class="label is-small">Express Interest</label>
@@ -43,17 +43,6 @@
             </div>
 
             <div class="field">
-                <label class="label is-small">Produced Prefixes:</label>
-                <textarea class="textarea full-width mb-3 is-small"
-                          id="side-produced-prefixes" #prp
-                          [value]="selnode.producedPrefixes.join('\n')"></textarea>
-                <button class="button is-link is-light is-small full-width"
-                        (click)="gs.nodes.update({ id: selnode.id, producedPrefixes: mlstrToArray(prp.value) }); gs.scheduleRouteRefresh()">
-                    Set
-                </button>
-            </div>
-
-            <div class="field">
                 <label class="label is-small">Execute Function:</label>
                 <button class="button is-success is-light is-small full-width mb-1"
                         (click)="runCode(selnode.nfw.codeEdit);">
@@ -68,10 +57,14 @@
                 </label>
             </div>
 
+            <div class="field">
+                <label class="label is-small">Registered Prefixes:</label>
+                <pre>{{ selnode.producedPrefixes.join('\n') }}</pre>
+            </div>
+
             <div>
                 <label class="label is-small">Computed FIB:</label>
                 <pre>{{ selnode.nfw.strsFIB().join('\n') }}</pre>
-                <br/>
             </div>
         </div>
 

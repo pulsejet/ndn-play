@@ -117,7 +117,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     const dest = <INode>this.gs.nodes.get(id);
     const label = this.gs.getSelectedNode()?.label;
-    const name = `/ndn/${label}-site/${label}/ping`;
+    const name = `/ndn/${label}-site/ping`;
     const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();

@@ -182,7 +182,6 @@ export class GlobalService {
         const node = this.nodes.get(nodeId);
         if (!node) continue;
         node.nfw.fib = fibs[nodeId];
-        node.nfw.nodeUpdated();
     }
   }
 

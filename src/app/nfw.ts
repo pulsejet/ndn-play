@@ -267,7 +267,7 @@ export class NFW {
         const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
 
         // Check if interest has a local face
-        if (this.checkPrefixRegistrationMatches(interest) && strategy !== 'multicast') return;
+        if (strategy !== 'multicast' && this.checkPrefixRegistrationMatches(interest)) return;
 
         // Update colors
         this.pendingTraffic++;
@@ -278,7 +278,7 @@ export class NFW {
             this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
 
         // Make sure the next hop is not the previous one
-        const prevHop = (<any>pkt.token || {}).hop;
+        const prevHop = (<any>pkt).hop;
         const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== prevHop)).flat(1);
 
         // Drop packet if not matching
@@ -355,7 +355,7 @@ export class NFW {
                         this.connections[nextHop] = { face, tx };
                     }
 
-                    pkt.token = { hop: this.nodeId };
+                    (<any>pkt).hop = this.nodeId;
                     this.connections[nextHop].tx.push(pkt);
                 }
             });

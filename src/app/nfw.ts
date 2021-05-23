@@ -4,7 +4,7 @@ import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
 
 import { Endpoint, Producer } from "@ndn/endpoint";
-import { AltUri, Data, Interest, Signer, Verifier } from "@ndn/packet";
+import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
@@ -52,8 +52,8 @@ export class NFW {
 
     /** Routing strategies */
     public readonly strategies = [
-        { prefix: '/', strategy: 'best-route' },
-        { prefix: '/ndn/multicast', strategy: 'multicast' },
+        { prefix: new Name('/'), strategy: 'best-route' },
+        { prefix: new Name('/ndn/multicast'), strategy: 'multicast' },
     ];
 
     /** Packets pending to be forwarded */
@@ -78,13 +78,11 @@ export class NFW {
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
                 this.expressInterest({
-                    name: AltUri.ofName(pkt.l3.name),
                     content: pkt.l3,
                 }, () => {});
                 return;
             } else if (pkt.l3 instanceof Data) {
                 this.putData({
-                    name: AltUri.ofName(pkt.l3.name),
                     content: pkt.l3,
                 });
                 return;
@@ -230,17 +228,12 @@ export class NFW {
         return false;
     }
 
-    private longestMatch(table: any[], name: string, identifier='prefix') {
-        // Count number of components
-        const numComponents = ((s: string) => ((s || '').match(/\//g)||[]).length);
-
-        let matchName = name;
-        if (!matchName.endsWith('/')) matchName += '/';
-
+    private longestMatch(table: any[], name: Name, identifier='prefix') {
         let match = undefined;
+
         for (const entry of table) {
-            if (matchName.startsWith(entry[identifier] + (entry[identifier].endsWith('/') ? '' : '/'))) {
-                if (numComponents(match?.[identifier]) < numComponents(entry?.[identifier])) {
+            if (entry[identifier].isPrefixOf(name)) {
+                if ((match?.[identifier].length || -1) < entry[identifier].length) {
                     match = entry;
                 }
             }
@@ -249,13 +242,11 @@ export class NFW {
         return match;
     }
 
-    private allMatches(table: any[], name: string, identifier='prefix') {
-        let matchName = name;
-        if (!matchName.endsWith('/')) matchName += '/';
-
+    private allMatches(table: any[], name: Name, identifier='prefix') {
         let matches: any[] = [];
+
         for (const entry of table) {
-            if (matchName.startsWith(entry[identifier] + (entry[identifier].endsWith('/') ? '' : '/'))) {
+            if (entry[identifier].isPrefixOf(name)) {
                 matches.push(entry);
             }
         }
@@ -265,14 +256,14 @@ export class NFW {
 
     public expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
         if (this.gs.LOG_INTERESTS) {
-            console.log(this.node().label, interest.name.substr(0, 20));
+            console.log(this.node().label, AltUri.ofName(interest.content.name).substr(0, 20));
         }
 
         // Put to NDNts forwarder
         this.faceRx.push(FwPacket.create(interest.content));
 
         // Do we already have this entry?
-        const aggregate = this.pit.find(e => e.interest.name == interest.name);
+        const aggregate = this.pit.find(e => e.interest.content.name == interest.content.name);
         if (aggregate) {
             // Add callback to existing entry
             aggregate.faceCallback.push(faceCallback);
@@ -291,11 +282,11 @@ export class NFW {
         }
 
         // Check content store
-        const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.content.freshnessPeriod || 0) > (new Date()).getTime());
+        const csEntry = this.cs.find(e => e.data.content.canSatisfy(interest.content) && e.recv + (e.data.content.freshnessPeriod || 0) > (new Date()).getTime());
         if (csEntry) return this.putData(csEntry.data);
 
         // Get forwarding strategy
-        const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
+        const strategy = this.longestMatch(this.strategies, interest.content.name)?.strategy;
 
         // Check if interest has a local face
         if (this.checkPrefixRegistrationMatches(interest) && strategy !== 'multicast') return;
@@ -309,7 +300,7 @@ export class NFW {
 
         // Get longest prefix match
         const fibMatches = (strategy == 'multicast' ?
-            this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
+            this.allMatches(this.fib, interest.content.name) : [this.longestMatch(this.fib, interest.content.name)]).filter(m => m);
 
         // Make sure the next hop is not the previous one
         const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== fromFace)).flat(1);
@@ -380,8 +371,8 @@ export class NFW {
     }
 
     public putData(data: IData) {
-        const satisfy = this.pit.filter(e => data.name.startsWith(e.interest.name));
-        this.pit = this.pit.filter(e => !data.name.startsWith(e.interest.name));
+        const satisfy = this.pit.filter(e => e.interest.content.name.isPrefixOf(data.content.name));
+        this.pit = this.pit.filter(e => !e.interest.content.name.isPrefixOf(data.content.name));
 
         // Put to NDNts forwarder
         this.faceRx.push(FwPacket.create(data.content));

@@ -181,7 +181,13 @@ export class GlobalService {
     for (const nodeId in fibs) {
         const node = this.nodes.get(nodeId);
         if (!node) continue;
-        node.nfw.fib = fibs[nodeId];
+
+        node.nfw.fib = fibs[nodeId].map((e: any) => {
+          return {
+            ...e,
+            prefix: new Name(e.prefix),
+          };
+        });
     }
   }
 

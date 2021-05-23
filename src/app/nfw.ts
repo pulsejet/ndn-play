@@ -99,7 +99,7 @@ export class NFW {
 
         // Add routes
         this.fw.on("annadd", (prefix) => {
-            const pfxs = this.node().producedPrefixes
+            const pfxs = this.node().producedPrefixes;
             pfxs.push(AltUri.ofName(prefix));
             this.gs.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
             this.gs.scheduleRouteRefresh();

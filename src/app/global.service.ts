@@ -240,7 +240,7 @@ export class GlobalService {
           init: true,
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
-          producedPrefixes: ['/ndn/multicast'],
+          producedPrefixes: ['/ndn/multicast/test'],
           nfw: new NFW(this, node),
         });
       }

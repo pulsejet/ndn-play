@@ -141,25 +141,6 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   runCode(code: string) {
-    const testcode = `
-      const { Data, Interest } = ndn.packet;
-      const { fromUtf8, toUtf8 } = ndn.tlv;
-
-      if (node.label === 'C') {
-        const endpoint = node.nfw.getEndpoint();
-        const producer = endpoint.produce('/ndn/cathy-site/cathy/test', async (interest) => {
-          const data = new Data(interest.name, Data.FreshnessPeriod(500));
-          data.content = toUtf8("Hello from NDNts");
-          return data;
-        });
-      } else {
-        const endpoint = node.nfw.getEndpoint();
-        const interest = new Interest('/ndn/cathy-site/cathy/test');
-        const data = await endpoint.consume(interest);
-        alert(fromUtf8(data.content));
-      }
-    `;
-
     code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
     fun.call(this.gs.getSelectedNode());

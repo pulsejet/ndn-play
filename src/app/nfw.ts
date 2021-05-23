@@ -37,19 +37,12 @@ export class NFW {
     /** Forwarding table */
     public fib: any[] = [];
 
-    /** Pending interest table */
-    private pit: {
-        interest: Interest;
-        removeTimer: number;
-        faceCallback: ((data: Data) => void)[];
-    }[] = [];
-
     /** Wireshark for this node */
     public readonly capturedPackets: any[] = []
     public capture = false;
 
     /** Content Store */
-    private cs: { recv: number; data: Data}[] = [];
+    private cs = new ContentStore(this.gs);
 
     /** Routing strategies */
     public readonly strategies = [
@@ -79,15 +72,11 @@ export class NFW {
             // Wireshark
             if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
 
-            // Do not go into loops
-            if (face == this.face) {
-                return;
-            }
-
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
                 this.expressInterest(<any>pkt);
-                return;
+            } else if (pkt.l3 instanceof Data) {
+                this.cs.push(pkt.l3);
             }
         });
 
@@ -268,8 +257,11 @@ export class NFW {
         }
 
         // Check content store
-        //const csEntry = this.cs.find(e => e.data.canSatisfy(interest) && e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime());
-        //if (csEntry) return this.putData(csEntry.data);
+        const csEntry = this.cs.get(interest);
+        if (csEntry) {
+            this.faceRx.push(FwPacket.create(csEntry));
+            return;
+        }
 
         // Get forwarding strategy
         const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
@@ -370,29 +362,6 @@ export class NFW {
         }
     }
 
-    public putData(data: Data) {
-        console.log('putdata', this.node().label)
-
-        const satisfy = this.pit.filter(e => e.interest.name.isPrefixOf(data.name));
-        this.pit = this.pit.filter(e => !e.interest.name.isPrefixOf(data.name));
-
-        // Put to NDNts forwarder
-        this.faceRx.push(FwPacket.create(data));
-
-        if (data.freshnessPeriod) {
-            this.cs.unshift({
-                recv: (new Date()).getTime(),
-                data: data,
-            });
-            this.cs = this.cs.slice(0, this.gs.contentStoreSize);
-        }
-
-        for (const entry of satisfy) {
-            entry.faceCallback.forEach((cb) => cb(data));
-            clearTimeout(entry.removeTimer);
-        }
-    }
-
     public strsFIB() {
         const text = [];
 
@@ -413,5 +382,41 @@ export class NFW {
             fw: this.fw,
             dataSigner: this.security?.signer,
         });
+    }
+}
+
+class ContentStore {
+    private cs: { recv: number; data: Data}[] = [];
+
+    constructor(private gs: GlobalService) {}
+
+    public push(data: Data): void {
+        if (!data.freshnessPeriod) return;
+
+        // CS object
+        const obj = {
+            recv: (new Date()).getTime(),
+            data: data,
+        };
+
+        // Replace old object
+        const i = this.cs.findIndex((e) => e.data.name.equals(data.name));
+        if (i) {
+            this.cs[i] = obj;
+        } else {
+            this.cs.unshift();
+        }
+
+        // Trim CS
+        if (this.cs.length > this.gs.contentStoreSize) {
+            this.cs = this.cs.slice(0, this.gs.contentStoreSize);
+        }
+    }
+
+    public get(interest: Interest): Data | undefined {
+        return this.cs.find(e => {
+            return e.data.canSatisfy(interest) &&
+                   e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime();
+        })?.data;
     }
 }

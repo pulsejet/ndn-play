@@ -3,10 +3,11 @@ import { IData, IInterest, INode } from "./interfaces";
 import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
 
-import { Endpoint } from "@ndn/endpoint";
-import { AltUri, Data, Interest } from "@ndn/packet";
+import { Endpoint, Producer } from "@ndn/endpoint";
+import { AltUri, Data, Interest, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
-import { Encoder } from '@ndn/tlv';
+import { Encoder, toUtf8 } from '@ndn/tlv';
+import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
 import pushable from "it-pushable";
 
 export class NFW {
@@ -17,6 +18,20 @@ export class NFW {
     public fw = Forwarder.create();
     private face: FwFace;
     private faceRx = pushable<FwPacket>();
+
+    /** Security options */
+    public security?: {
+        /** Signer object */
+        signer: Signer,
+        /** Verifier object */
+        verifier: Verifier,
+        /** Private key */
+        privKey: CryptoKey,
+        /** Public key */
+        pubKey: CryptoKey,
+        /** Generated key pair */
+        keyPair: CryptoAlgorithm.GeneratedKeyPair;
+    };
 
     /** Forwarding table */
     public fib: any[] = [];
@@ -47,12 +62,14 @@ export class NFW {
     /** Registered producer prefixes */
     public prefixRegistrations: { prefix: string; callback: (interest: IInterest) => void }[] = [];
 
+    /** Server for ping */
+    private pingServer?: Producer;
+
     /** Code the user is currently editing */
     public codeEdit = '';
 
     constructor(private gs: GlobalService, node: INode) {
         this.nodeId = <vis.IdType>node.id;
-        this.nodeUpdated();
 
         this.fw.on("pktrx", (face, pkt) => {
             // Do not go into loops
@@ -84,6 +101,19 @@ export class NFW {
             rx: this.faceRx,
             tx: async () => {},
         });
+
+        // Setup security
+        (async () => {
+            const sKey = await RSA.cryptoGenerate({}, true);
+            this.security = {
+                keyPair: sKey,
+                privKey: sKey.privateKey,
+                pubKey: sKey.publicKey,
+                signer: createSigner(RSA, sKey),
+                verifier: createVerifier(RSA, sKey),
+            }
+            this.nodeUpdated();
+        })();
     }
 
     public node() {
@@ -116,20 +146,14 @@ export class NFW {
     }
 
     private setupPingServer() {
-        if (this.prefixRegistrations.length == 0) {
-            this.prefixRegistrations.push(<any>{});
-        }
+        // Close existing server
+        this.pingServer?.close();
 
+        // Start new server
         const label = this.node().label;
-        this.prefixRegistrations[0] = {
-            prefix: `/ndn/${label}-site/${label}/ping`,
-            callback: (interest) => {
-                this.putData({
-                    name: interest.name,
-                    content: new Data(interest.name),
-                });
-            }
-        };
+        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/${label}/ping`, async (interest) => {
+            return new Data(interest.name, toUtf8('Ping Reply'));
+        })
     }
 
     public updateColors() {
@@ -379,6 +403,9 @@ export class NFW {
     }
 
     public getEndpoint() {
-        return new Endpoint({ fw: this.fw });
+        return new Endpoint({
+            fw: this.fw,
+            dataSigner: this.security?.signer,
+        });
     }
 }

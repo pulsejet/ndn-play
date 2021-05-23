@@ -2851,10 +2851,16 @@ export class GlobalService {
         type: string;
         msg: string;
     }>;
+    private scheduledRouteRefresh;
     constructor();
     /** Update objects every animation frame */
     runAnimationFrame(): void;
+    /** Initialize the network */
     createNetwork(container: HTMLElement): void;
+    /** Compute static routes */
+    private computeRoutes;
+    /** Schedule a refresh of static routes */
+    scheduleRouteRefresh(): void;
     getSelectedNode(): INode | undefined;
     selectNode(node?: INode): void;
     getSelectedEdge(): IEdge | undefined;
@@ -5196,6 +5202,76 @@ export namespace Endpoint {
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
 }
 
+// Type definitions for @root/asn1 1.0
+
+
+interface Element$1<V extends string|Uint8Array> {
+    type: number;
+    lengthSize: number;
+    length: number;
+    value?: V;
+    children?: Array<Element$1<V>>;
+}
+
+type ElementBuffer = Element$1<Uint8Array>;
+
+export type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
+/** WebCrypto based algorithm implementation. */
+interface CryptoAlgorithm<I = any, Asym extends boolean = any, G = any> {
+    /**
+     * Identifies an algorithm in storage.
+     * This should be changed when the serialization format changes.
+     */
+    readonly uuid: string;
+    readonly keyUsages: If<Asym, Record<"private" | "public", KeyUsage[]>, Record<"secret", KeyUsage[]>, {}>;
+    /** Generate key pair or secret key. */
+    cryptoGenerate: (params: G, extractable: boolean) => Promise<Asym extends true ? CryptoAlgorithm.GeneratedKeyPair<I> : Asym extends false ? CryptoAlgorithm.GeneratedSecretKey<I> : never>;
+    /**
+     * Import public key from SPKI.
+     *
+     * This should only appear on asymmetric algorithm.
+     */
+    importSpki?: (spki: Uint8Array, der: ElementBuffer) => Promise<CryptoAlgorithm.PublicKey<I>>;
+}
+export namespace CryptoAlgorithm {
+    function isAsym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, true, G>;
+    function isSym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, false, G>;
+    function isSigning<I, Asym extends boolean = any, G = any>(algo: CryptoAlgorithm<I, Asym, G>): algo is SigningAlgorithm<I, Asym, G>;
+    function isEncryption<I, Asym extends boolean = any, G = any>(algo: CryptoAlgorithm<I, Asym, G>): algo is EncryptionAlgorithm<I, Asym, G>;
+    interface PrivateKey<I = any> {
+        privateKey: CryptoKey;
+        info: I;
+    }
+    interface PublicKey<I = any> {
+        publicKey: CryptoKey;
+        spki: Uint8Array;
+        info: I;
+    }
+    interface SecretKey<I = any> {
+        secretKey: CryptoKey;
+        info: I;
+    }
+    type PrivateSecretKey<I = any, Asym extends boolean = any> = If<Asym, PrivateKey<I>, SecretKey<I>>;
+    type PublicSecretKey<I = any, Asym extends boolean = any> = If<Asym, PublicKey<I>, SecretKey<I>>;
+    interface GeneratedKeyPair<I = any> extends PrivateKey<I>, PublicKey<I> {
+        jwkImportParams: AlgorithmIdentifier;
+    }
+    interface GeneratedSecretKey<I = any> extends SecretKey<I> {
+        jwkImportParams: AlgorithmIdentifier;
+    }
+}
+/** WebCrypto based signing algorithm implementation. */
+interface SigningAlgorithm<I = any, Asym extends boolean = any, G = any> extends CryptoAlgorithm<I, Asym, G> {
+    readonly sigType: number;
+    makeLLSign: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLSign, (key: CryptoAlgorithm.SecretKey<I>) => LLSign, unknown>;
+    makeLLVerify: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLVerify, (key: CryptoAlgorithm.SecretKey<I>) => LLVerify, unknown>;
+}
+/** WebCrypto based encryption algorithm implementation. */
+interface EncryptionAlgorithm<I = any, Asym extends boolean = any, G = any> extends CryptoAlgorithm<I, Asym, G> {
+    makeLLEncrypt: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLEncrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLEncrypt, unknown>;
+    makeLLDecrypt: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLDecrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLDecrypt, unknown>;
+}
+
 export class NFW {
     private gs;
     /** ID of this node */
@@ -5204,10 +5280,21 @@ export class NFW {
     fw: Forwarder;
     private face;
     private faceRx;
+    /** Security options */
+    security?: {
+        /** Signer object */
+        signer: Signer;
+        /** Verifier object */
+        verifier: Verifier;
+        /** Private key */
+        privKey: CryptoKey;
+        /** Public key */
+        pubKey: CryptoKey;
+        /** Generated key pair */
+        keyPair: CryptoAlgorithm.GeneratedKeyPair;
+    };
     /** Forwarding table */
     fib: any[];
-    /** Pending interest table */
-    private pit;
     /** Wireshark for this node */
     readonly capturedPackets: any[];
     capture: boolean;
@@ -5215,18 +5302,19 @@ export class NFW {
     private cs;
     /** Routing strategies */
     readonly strategies: {
-        prefix: string;
+        prefix: Name;
         strategy: string;
     }[];
     /** Packets pending to be forwarded */
     pendingTraffic: number;
-    /** Registered producer prefixes */
-    prefixRegistrations: {
-        prefix: string;
-        callback: (interest: IInterest) => void;
-    }[];
+    /** Server for ping */
+    private pingServer?;
     /** Code the user is currently editing */
     codeEdit: string;
+    /** Connections to other NFWs */
+    private connections;
+    /** Aggregate of sent interests */
+    private pit;
     constructor(gs: GlobalService, node: INode);
     node(): INode;
     nodeUpdated(): void;
@@ -5238,8 +5326,7 @@ export class NFW {
     private checkPrefixRegistrationMatches;
     private longestMatch;
     private allMatches;
-    expressInterest: (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: IdType | undefined) => void;
-    putData(data: IData): void;
+    expressInterest(pkt: FwPacket<Interest>): void;
     strsFIB(): string[];
     getEndpoint(): Endpoint;
 }
@@ -5256,16 +5343,6 @@ interface IEdge extends Edge {
     controller: {
         pendingTraffic: number;
     };
-}
-interface IInterest {
-    name: string;
-    content: any;
-    freshness?: number;
-}
-interface IData {
-    name: string;
-    content: any;
-    freshness?: number;
 }
 
 /** Invertible Bloom Lookup Table. */

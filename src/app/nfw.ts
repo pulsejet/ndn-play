@@ -6,6 +6,7 @@ import * as vis from 'vis-network/standalone';
 import { Endpoint, Producer } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
+import { Pit } from "@ndn/fw/lib/pit";
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
 import pushable from "it-pushable";
@@ -65,25 +66,29 @@ export class NFW {
     /** Code the user is currently editing */
     public codeEdit = '';
 
+    /** Connections to other NFWs */
+    private connections: { [nodeId: string]: {
+        face: FwFace,
+        tx: pushable.Pushable<FwPacket>,
+    }} = {};
+
     constructor(private gs: GlobalService, node: INode) {
         this.nodeId = <vis.IdType>node.id;
 
         this.fw.on("pktrx", (face, pkt) => {
+            // Wireshark
+            if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
+
             // Do not go into loops
             if (face == this.face) {
-                if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
                 return;
             }
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
-                this.expressInterest(pkt.l3, () => {});
-                return;
-            } else if (pkt.l3 instanceof Data) {
-                this.putData(pkt.l3);
+                this.expressInterest(<any>pkt);
                 return;
             }
-            console.error("unknown pktrx", pkt);
         });
 
         this.face = this.fw.addFace({
@@ -250,45 +255,27 @@ export class NFW {
         return matches;
     }
 
-    public expressInterest = (interest: Interest, faceCallback: (data: Data) => void, fromFace?: vis.IdType) => {
+    public expressInterest(pkt: FwPacket<Interest>) {
+        const interest = pkt.l3;
+
         if (this.gs.LOG_INTERESTS) {
             console.log(this.node().label, AltUri.ofName(interest.name).substr(0, 20));
         }
 
-        // Put to NDNts forwarder
-        this.faceRx.push(FwPacket.create(interest));
-
-        // Do we already have this entry?
-        const aggregate = this.pit.find(e => e.interest.name == interest.name);
-        if (aggregate) {
-            // Add callback to existing entry
-            aggregate.faceCallback.push(faceCallback);
-        } else {
-            // Add to PIT
-            const pitEntry = {
-                interest,
-                faceCallback: [faceCallback],
-                removeTimer: window.setTimeout(() => {
-                    // Interest expired
-                    const i = this.pit.indexOf(pitEntry);
-                    this.pit.splice(i, 1);
-                }, interest.lifetime || 5000),
-            };
-            this.pit.push(pitEntry);
+        // Aggregate
+        if ((<Pit>this.fw.pit).lookup(pkt, false)) {
+            return;
         }
 
         // Check content store
-        const csEntry = this.cs.find(e => e.data.canSatisfy(interest) && e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime());
-        if (csEntry) return this.putData(csEntry.data);
+        //const csEntry = this.cs.find(e => e.data.canSatisfy(interest) && e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime());
+        //if (csEntry) return this.putData(csEntry.data);
 
         // Get forwarding strategy
         const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
 
         // Check if interest has a local face
         if (this.checkPrefixRegistrationMatches(interest) && strategy !== 'multicast') return;
-
-        // Aggregate if we had it already
-        if (aggregate) return;
 
         // Update colors
         this.pendingTraffic++;
@@ -299,7 +286,8 @@ export class NFW {
             this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
 
         // Make sure the next hop is not the previous one
-        const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== fromFace)).flat(1);
+        const prevHop = (<any>pkt.token || {}).hop;
+        const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== prevHop)).flat(1);
 
         // Drop packet if not matching
         // TODO: NACK
@@ -345,28 +333,46 @@ export class NFW {
 
             // Add traffic to link
             this.addLinkTraffic(nextHop, (success) => {
-                if (success) {
-                    nextNFW.expressInterest(interest, (data) => {
-                        nextNFW.pendingTraffic++;
-                        nextNFW.updateColors();
-                        nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
-                            nextNFW.pendingTraffic--;
-                            nextNFW.updateColors();
-
-                            if (revSuccess) {
-                                this.putData(data);
-                            }
-                        });
-                    }, this.nodeId);
-                }
-
                 this.pendingTraffic--;
                 this.updateColors();
+
+                if (success) {
+                    if (!this.connections[nextHop]?.face.running) {
+                        const tx = pushable<FwPacket>();
+                        const face = nextNFW.fw.addFace({
+                            rx: tx,
+                            tx: async (iterable) => {
+                                for await (const rpkt of iterable) {
+                                    if (!(rpkt.l3 instanceof Data)) {
+                                        return;
+                                    }
+
+                                    nextNFW.pendingTraffic++;
+                                    nextNFW.updateColors();
+                                    nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
+                                        nextNFW.pendingTraffic--;
+                                        nextNFW.updateColors();
+
+                                        if (revSuccess) {
+                                            this.faceRx.push(rpkt);
+                                        }
+                                    });
+                                }
+                            },
+                        });
+                        this.connections[nextHop] = { face, tx };
+                    }
+
+                    pkt.token = { hop: this.nodeId };
+                    this.connections[nextHop].tx.push(pkt);
+                }
             });
         }
     }
 
     public putData(data: Data) {
+        console.log('putdata', this.node().label)
+
         const satisfy = this.pit.filter(e => e.interest.name.isPrefixOf(data.name));
         this.pit = this.pit.filter(e => !e.interest.name.isPrefixOf(data.name));
 

@@ -87,16 +87,16 @@ export class GlobalService {
 
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
-      { id: "1", label: "alice" },
-      { id: "2", label: "mallory" },
-      { id: "3", label: "eve" },
-      { id: "4", label: "bob" },
-      { id: "5", label: "cathy" },
+      { id: "1", label: "A" },
+      { id: "2", label: "B" },
+      { id: "3", label: "E" },
+      { id: "4", label: "B" },
+      { id: "5", label: "C" },
 
-      { id: "d1", label: "dup" },
-      { id: "d2", label: "dup" },
-      { id: "d3", label: "dup" },
-      { id: "d4", label: "dup" },
+      { id: "d1", label: "D" },
+      { id: "d2", label: "D" },
+      { id: "d3", label: "D" },
+      { id: "d4", label: "D" },
     ]);
 
     // create an array with edges

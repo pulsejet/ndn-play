@@ -73,8 +73,6 @@
                 <pre>{{ selnode.nfw.strsFIB().join('\n') }}</pre>
                 <br/>
             </div>
-
-            <hr/>
         </div>
 
         <div *ngIf="seledge">
@@ -104,11 +102,9 @@
                 </div>
                 <p class="help is-small">Negative for default loss</p>
             </div>
-
-            <hr/>
         </div>
 
-        <div>
+        <div *ngIf="!gs.getSelectedEdge() && !gs.getSelectedNode()">
             <h2 class="is-size-5">Global Operations</h2>
             <br/>
             <div class="field">

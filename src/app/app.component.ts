@@ -84,6 +84,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     term.open(this.console?.nativeElement);
     this.gs.consoleLog.subscribe((e) => {
       let msg = e.msg;
+      msg = msg.replace('\n', '\r\n');
+
       if (e.type == 'error') {
         msg = `\u001b[31m${msg}\u001b[0m`;
       } else if (e.type == 'warn') {
@@ -136,22 +138,20 @@ export class AppComponent implements OnInit, AfterViewInit {
     const dest = <INode>this.gs.nodes.get(id);
     const label = this.gs.getSelectedNode()?.label;
     const name = `/ndn/${label}-site/${label}/ping`;
-    const interest = {
-        name: name,
-        freshness: 3000,
-        content: new Interest(name),
-    };
+    const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();
-    dest.nfw.expressInterest(interest, (data) => {
+    dest.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     });
+
     this.pendingClickEvent = undefined;
   }
 
   selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
-    this.gs.getSelectedNode()?.nfw.expressInterest({ name, content: new Interest(name) }, (data) => {
+    const interest = new Interest(name, Interest.Lifetime(3000))
+    this.gs.getSelectedNode()?.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received data reply');
     });
   }

@@ -1,5 +1,5 @@
 import { GlobalService } from "./global.service";
-import { IData, IInterest, INode } from "./interfaces";
+import { INode } from "./interfaces";
 import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
 
@@ -38,9 +38,9 @@ export class NFW {
 
     /** Pending interest table */
     private pit: {
-        interest: IInterest;
+        interest: Interest;
         removeTimer: number;
-        faceCallback: ((data: IData) => void)[];
+        faceCallback: ((data: Data) => void)[];
     }[] = [];
 
     /** Wireshark for this node */
@@ -48,7 +48,7 @@ export class NFW {
     public capture = false;
 
     /** Content Store */
-    private cs: { recv: number; data: IData}[] = [];
+    private cs: { recv: number; data: Data}[] = [];
 
     /** Routing strategies */
     public readonly strategies = [
@@ -77,14 +77,10 @@ export class NFW {
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
-                this.expressInterest({
-                    content: pkt.l3,
-                }, () => {});
+                this.expressInterest(pkt.l3, () => {});
                 return;
             } else if (pkt.l3 instanceof Data) {
-                this.putData({
-                    content: pkt.l3,
-                });
+                this.putData(pkt.l3);
                 return;
             }
             console.error("unknown pktrx", pkt);
@@ -219,9 +215,9 @@ export class NFW {
         }, latency)
     }
 
-    private checkPrefixRegistrationMatches(interest: IInterest) {
+    private checkPrefixRegistrationMatches(interest: Interest) {
         for (const face of this.fw.faces) {
-            if (face.hasRoute(interest.content.name)) {
+            if (face.hasRoute(interest.name)) {
                 return true;
             }
         }
@@ -254,16 +250,16 @@ export class NFW {
         return matches;
     }
 
-    public expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
+    public expressInterest = (interest: Interest, faceCallback: (data: Data) => void, fromFace?: vis.IdType) => {
         if (this.gs.LOG_INTERESTS) {
-            console.log(this.node().label, AltUri.ofName(interest.content.name).substr(0, 20));
+            console.log(this.node().label, AltUri.ofName(interest.name).substr(0, 20));
         }
 
         // Put to NDNts forwarder
-        this.faceRx.push(FwPacket.create(interest.content));
+        this.faceRx.push(FwPacket.create(interest));
 
         // Do we already have this entry?
-        const aggregate = this.pit.find(e => e.interest.content.name == interest.content.name);
+        const aggregate = this.pit.find(e => e.interest.name == interest.name);
         if (aggregate) {
             // Add callback to existing entry
             aggregate.faceCallback.push(faceCallback);
@@ -276,17 +272,17 @@ export class NFW {
                     // Interest expired
                     const i = this.pit.indexOf(pitEntry);
                     this.pit.splice(i, 1);
-                }, interest.content.lifetime || 5000),
+                }, interest.lifetime || 5000),
             };
             this.pit.push(pitEntry);
         }
 
         // Check content store
-        const csEntry = this.cs.find(e => e.data.content.canSatisfy(interest.content) && e.recv + (e.data.content.freshnessPeriod || 0) > (new Date()).getTime());
+        const csEntry = this.cs.find(e => e.data.canSatisfy(interest) && e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime());
         if (csEntry) return this.putData(csEntry.data);
 
         // Get forwarding strategy
-        const strategy = this.longestMatch(this.strategies, interest.content.name)?.strategy;
+        const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
 
         // Check if interest has a local face
         if (this.checkPrefixRegistrationMatches(interest) && strategy !== 'multicast') return;
@@ -300,7 +296,7 @@ export class NFW {
 
         // Get longest prefix match
         const fibMatches = (strategy == 'multicast' ?
-            this.allMatches(this.fib, interest.content.name) : [this.longestMatch(this.fib, interest.content.name)]).filter(m => m);
+            this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
 
         // Make sure the next hop is not the previous one
         const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== fromFace)).flat(1);
@@ -370,14 +366,14 @@ export class NFW {
         }
     }
 
-    public putData(data: IData) {
-        const satisfy = this.pit.filter(e => e.interest.content.name.isPrefixOf(data.content.name));
-        this.pit = this.pit.filter(e => !e.interest.content.name.isPrefixOf(data.content.name));
+    public putData(data: Data) {
+        const satisfy = this.pit.filter(e => e.interest.name.isPrefixOf(data.name));
+        this.pit = this.pit.filter(e => !e.interest.name.isPrefixOf(data.name));
 
         // Put to NDNts forwarder
-        this.faceRx.push(FwPacket.create(data.content));
+        this.faceRx.push(FwPacket.create(data));
 
-        if (data.content.freshnessPeriod) {
+        if (data.freshnessPeriod) {
             this.cs.unshift({
                 recv: (new Date()).getTime(),
                 data: data,

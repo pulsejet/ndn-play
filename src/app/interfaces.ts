@@ -17,14 +17,6 @@ export interface IEdge extends vis.Edge {
     },
 }
 
-export interface IInterest {
-    content: Interest;
-}
-
-export interface IData {
-    content: Data;
-}
-
 export interface visTlv {
     t: number;
     l: number;

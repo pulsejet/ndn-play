@@ -48,7 +48,7 @@ export class VisualizerComponent implements OnInit {
           v: this.decodeRecursive(t.value),
           vl: t.value
         };
-        if (t.type == 0) break;
+        if (t.type == 0 || !getTlvTypeText(t.type)) break;
 
         // Creative visualization
         switch (obj.t) {

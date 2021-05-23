@@ -5,7 +5,7 @@ import * as vis from 'vis-network/standalone';
 
 import { Endpoint, Producer } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
-import { Forwarder, FwFace, FwPacket } from "@ndn/fw";
+import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 import { Pit } from "@ndn/fw/lib/pit";
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
@@ -65,10 +65,19 @@ export class NFW {
         tx: pushable.Pushable<FwPacket>,
     }} = {};
 
+    /** Aggregate of sent interests */
+    private pit: {[token: string]: {
+        count: number;
+        timer: number;
+    }} = {};
+
     constructor(private gs: GlobalService, node: INode) {
         this.nodeId = <vis.IdType>node.id;
 
         this.fw.on("pktrx", (face, pkt) => {
+            // Not useful stuff
+            if (pkt.cancel || pkt.reject) return;
+
             // Wireshark
             if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
 
@@ -310,6 +319,16 @@ export class NFW {
         // Which hops sent to (prevent dupulicate sending)
         const sentHops: vis.IdType[] = [];
 
+        // Token when sending to others
+        const upstreamToken = Math.round(Math.random()*1000000000);
+        this.pit[upstreamToken] = {
+            count: 0,
+            timer: window.setTimeout(() => {
+                this.faceRx.push(new RejectInterest("expire", interest))
+                delete this.pit[upstreamToken]
+            }, interest.lifetime || 4000),
+        };
+
         // Add all hops
         for (const nextHop of nextHops) {
             // Prevent duplicates
@@ -323,6 +342,9 @@ export class NFW {
             const nextNFW = this.gs.nodes.get(<vis.IdType>nextHop)?.nfw;
             if (!nextNFW) continue;
 
+            // Sent one
+            this.pit[upstreamToken].count++;
+
             // Add traffic to link
             this.addLinkTraffic(nextHop, (success) => {
                 this.pendingTraffic--;
@@ -335,18 +357,45 @@ export class NFW {
                             rx: tx,
                             tx: async (iterable) => {
                                 for await (const rpkt of iterable) {
-                                    if (!(rpkt.l3 instanceof Data)) {
-                                        return;
+                                    // Flash nodes only for data
+                                    if (rpkt.l3 instanceof Data) {
+                                        nextNFW.pendingTraffic++;
+                                        nextNFW.updateColors();
                                     }
 
-                                    nextNFW.pendingTraffic++;
-                                    nextNFW.updateColors();
                                     nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
-                                        nextNFW.pendingTraffic--;
-                                        nextNFW.updateColors();
-
                                         if (revSuccess) {
-                                            this.faceRx.push(rpkt);
+                                            // Get and get rid of token
+                                            const t = <any>rpkt.token;
+                                            rpkt.token = undefined;
+
+                                            // Remove PIT entry
+                                            const clear = () => {
+                                                if (!this.pit[t]) return;
+                                                clearTimeout(this.pit[t].timer);
+                                                delete this.pit[t];
+                                            };
+
+                                            if (rpkt.l3 instanceof Data) {
+                                                nextNFW.pendingTraffic--;
+                                                nextNFW.updateColors();
+                                                this.faceRx.push(rpkt);
+
+                                                // Remove PIT entry
+                                                clear();
+                                            } else if (rpkt instanceof RejectInterest) {
+                                                if (!this.pit[t]) return;
+
+                                                this.pit[t].count--;
+
+                                                if (this.pit[t].count > 0) {
+                                                    this.pit[t].count--;
+                                                } else {
+                                                    // Reject the PIT entry
+                                                    this.faceRx.push(rpkt);
+                                                    clear();
+                                                }
+                                            }
                                         }
                                     });
                                 }
@@ -355,8 +404,9 @@ export class NFW {
                         this.connections[nextHop] = { face, tx };
                     }
 
-                    (<any>pkt).hop = this.nodeId;
-                    this.connections[nextHop].tx.push(pkt);
+                    const newPkt = FwPacket.create(pkt.l3, upstreamToken);
+                    (<any>newPkt).hop = this.nodeId;
+                    this.connections[nextHop].tx.push(newPkt);
                 }
             });
         }
@@ -371,7 +421,7 @@ export class NFW {
                 nexthops.push(`face=${this.gs.nodes.get(<vis.IdType>route.hop)?.label} (cost=${route.cost})`);
             }
 
-            text.push(`${entry.prefix} nexthops={${nexthops.join(', ')}}`);
+            text.push(`${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`);
         }
 
         return text;

@@ -79,14 +79,12 @@ export class NFW {
             if (pkt.l3 instanceof Interest) {
                 this.expressInterest({
                     name: AltUri.ofName(pkt.l3.name),
-                    freshness: pkt.l3.lifetime,
                     content: pkt.l3,
                 }, () => {});
                 return;
             } else if (pkt.l3 instanceof Data) {
                 this.putData({
                     name: AltUri.ofName(pkt.l3.name),
-                    freshness: pkt.l3.freshnessPeriod,
                     content: pkt.l3,
                 });
                 return;
@@ -247,7 +245,7 @@ export class NFW {
 
     public expressInterest = (interest: IInterest, faceCallback: (data: IData) => void, fromFace?: vis.IdType) => {
         if (this.gs.LOG_INTERESTS) {
-            console.log(this.node().label, interest.name.substr(0, 20), interest.freshness);
+            console.log(this.node().label, interest.name.substr(0, 20));
         }
 
         // Put to NDNts forwarder
@@ -267,13 +265,13 @@ export class NFW {
                     // Interest expired
                     const i = this.pit.indexOf(pitEntry);
                     this.pit.splice(i, 1);
-                }, interest.freshness || 5000),
+                }, interest.content.lifetime || 5000),
             };
             this.pit.push(pitEntry);
         }
 
         // Check content store
-        const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.freshness || 0) > (new Date()).getTime());
+        const csEntry = this.cs.find(e => e.data.name == interest.name && e.recv + (e.data.content.freshnessPeriod || 0) > (new Date()).getTime());
         if (csEntry) return this.putData(csEntry.data);
 
         // Get forwarding strategy
@@ -368,7 +366,7 @@ export class NFW {
         // Put to NDNts forwarder
         this.faceRx.push(FwPacket.create(data.content));
 
-        if (data.freshness) {
+        if (data.content.freshnessPeriod) {
             this.cs.unshift({
                 recv: (new Date()).getTime(),
                 data: data,

@@ -20,13 +20,11 @@ export interface IEdge extends vis.Edge {
 export interface IInterest {
     name: string;
     content: Interest;
-    freshness?: number;
 }
 
 export interface IData {
     name: string;
     content: Data;
-    freshness?: number;
 }
 
 export interface visTlv {

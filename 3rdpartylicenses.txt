@@ -16,6 +16,9 @@ ISC
 @ndn/fw
 ISC
 
+@ndn/keychain
+ISC
+
 @ndn/naming-convention1
 ISC
 

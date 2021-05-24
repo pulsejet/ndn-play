@@ -35,8 +35,11 @@ You can define your own functions with JS code there and click `run` on the left
 ### Packet Capture and Visualizer
 Turning on the packet capture will enable the NDN Play to capture and parse every packet received and sent by selected nodes.
 For example, go to `node D`'s configuration page, and check the `enable packet capture` option, then click the `express interest`, you will see the sent Interest captured in the `packet capture` section in the visualizer below the topology graph.
-Checking out the` packet visualizer` section will give the packet structure of captured packet.
+Checking out the `packet visualizer` section will give the packet structure of captured packet.
 You can try to capture and visualize the Data packets generated during `ping` in a similar way.
+
+### Future Work
+In order to help NDN beginners better understand the security primitives in NDN, we plan to visualize the ceritificate chain and signing relationships in the future.
 
 ## Build
 

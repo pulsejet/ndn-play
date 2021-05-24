@@ -227,7 +227,7 @@ export class GlobalService {
           color: this.DEFAULT_LINK_COLOR,
           latency: edge.latency || -1,
           loss: edge.loss || -1,
-          controller: {
+          extra: {
               pendingTraffic: 0,
           },
         });
@@ -242,6 +242,9 @@ export class GlobalService {
           color: this.DEFAULT_NODE_COLOR,
           producedPrefixes: ['/ndn/multicast/test'],
           nfw: new NFW(this, node),
+          extra: {
+            codeEdit: '',
+          },
         });
       }
     }

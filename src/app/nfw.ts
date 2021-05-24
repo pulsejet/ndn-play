@@ -37,8 +37,9 @@ export class NFW {
     /** Forwarding table */
     public fib: any[] = [];
 
-    /** Wireshark for this node */
+    /** Captured packets for this node */
     public readonly capturedPackets: any[] = []
+    /** Enable packet capture */
     public capture = false;
 
     /** Content Store */
@@ -51,13 +52,10 @@ export class NFW {
     ];
 
     /** Packets pending to be forwarded */
-    public pendingTraffic = 0;
+    private pendingTraffic = 0;
 
     /** Server for ping */
     private pingServer?: Producer;
-
-    /** Code the user is currently editing */
-    public codeEdit = '';
 
     /** Connections to other NFWs */
     private connections: { [nodeId: string]: {
@@ -195,21 +193,21 @@ export class NFW {
         latency *= this.gs.latencySlowdown;
 
         // Flash link
-        link.controller.pendingTraffic++;
+        link.extra.pendingTraffic++;
 
         // Check busiest link
-        if (link.controller.pendingTraffic > (this.gs.busiestLink?.controller.pendingTraffic || 0)) {
+        if (link.extra.pendingTraffic > (this.gs.busiestLink?.extra.pendingTraffic || 0)) {
             this.gs.busiestLink = link;
         }
         const color = chroma.scale([this.gs.ACTIVE_NODE_COLOR, 'red'])
-                                  (link.controller.pendingTraffic / (this.gs.busiestLink?.controller.pendingTraffic || 0) + 5).toString();
+                                  (link.extra.pendingTraffic / (this.gs.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
         this.gs.pendingUpdatesEdges[link.id] = { id: link.id, color: color };
 
         // Forward after latency
         setTimeout(() => {
             if (!link) return;
 
-            if (--link.controller.pendingTraffic === 0) {
+            if (--link.extra.pendingTraffic === 0) {
                 this.gs.pendingUpdatesEdges[link.id] = { id: link.id, color: this.gs.DEFAULT_LINK_COLOR };
             }
 
@@ -253,7 +251,7 @@ export class NFW {
         return matches;
     }
 
-    public expressInterest(pkt: FwPacket<Interest>) {
+    private expressInterest(pkt: FwPacket<Interest>) {
         const interest = pkt.l3;
 
         if (this.gs.LOG_INTERESTS) {

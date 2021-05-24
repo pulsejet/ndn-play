@@ -45,7 +45,7 @@
             <div class="field">
                 <label class="label is-small">Execute Function:</label>
                 <button class="button is-success is-light is-small full-width mb-1"
-                        (click)="runCode(selnode.nfw.codeEdit);">
+                        (click)="runCode(selnode.extra.codeEdit);">
                     Run
                 </button>
             </div>
@@ -179,7 +179,7 @@
                 <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
 
                 <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.getSelectedNode()">
-                    <app-editor [(code)]="$any(gs.getSelectedNode()).nfw.codeEdit"></app-editor>
+                    <app-editor [(code)]="$any(gs.getSelectedNode()).extra.codeEdit"></app-editor>
                 </div>
             </div>
         </div>

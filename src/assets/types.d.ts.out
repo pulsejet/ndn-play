@@ -5295,8 +5295,9 @@ export class NFW {
     };
     /** Forwarding table */
     fib: any[];
-    /** Wireshark for this node */
+    /** Captured packets for this node */
     readonly capturedPackets: any[];
+    /** Enable packet capture */
     capture: boolean;
     /** Content Store */
     private cs;
@@ -5306,11 +5307,9 @@ export class NFW {
         strategy: string;
     }[];
     /** Packets pending to be forwarded */
-    pendingTraffic: number;
+    private pendingTraffic;
     /** Server for ping */
     private pingServer?;
-    /** Code the user is currently editing */
-    codeEdit: string;
     /** Connections to other NFWs */
     private connections;
     /** Aggregate of sent interests */
@@ -5326,7 +5325,7 @@ export class NFW {
     private checkPrefixRegistrationMatches;
     private longestMatch;
     private allMatches;
-    expressInterest(pkt: FwPacket<Interest>): void;
+    private expressInterest;
     strsFIB(): string[];
     getEndpoint(): Endpoint;
 }
@@ -5335,12 +5334,15 @@ interface INode extends Node$1 {
     init?: boolean;
     producedPrefixes: string[];
     nfw: NFW;
+    extra: {
+        codeEdit: string;
+    };
 }
 interface IEdge extends Edge {
     init?: boolean;
     latency: number;
     loss: number;
-    controller: {
+    extra: {
         pendingTraffic: number;
     };
 }

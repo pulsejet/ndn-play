@@ -6,13 +6,16 @@ export interface INode extends vis.Node {
     init?: boolean;
     producedPrefixes: string[];
     nfw: NFW;
+    extra: {
+        codeEdit: string;
+    };
 }
 
 export interface IEdge extends vis.Edge {
     init?: boolean;
     latency: number;
     loss: number;
-    controller: {
+    extra: {
         pendingTraffic: number;
     },
 }

@@ -35,6 +35,7 @@
             <app-tab name="Packet Capture" *ngIf="gs.topo.getSelectedNode()">
                 <div class="m-2">
                     <app-captured-list
+                        [node]="$any(gs.topo.getSelectedNode())"
                         (packetClick)="this.visualizedPacket = $event; lowerTabs.selection = lowerVisTab"
                     ></app-captured-list>
                 </div>

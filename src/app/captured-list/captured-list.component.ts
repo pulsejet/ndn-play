@@ -1,20 +1,19 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AltUri } from '@ndn/packet';
-import { GlobalService } from '../global.service';
+import { INode } from '../interfaces';
 
 @Component({
-  selector: 'app-captured-list',
+  selector: 'app-captured-list[node]',
   templateUrl: 'captured-list-component.html',
   styleUrls: ['captured-list-component.css']
 })
 export class CapturedListComponent implements OnInit {
   public AltUri = AltUri;
 
+  @Input() public node!: INode;
   @Output() public packetClick = new EventEmitter<any>()
 
-  constructor(
-    public gs: GlobalService,
-  ) { }
+  constructor() { }
 
   ngOnInit(): void {
   }

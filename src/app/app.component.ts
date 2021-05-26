@@ -1,13 +1,10 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from './global.service';
 import { IEdge, INode } from './interfaces';
-import { RoutingHelper } from './routing-helper';
-import { loadMiniNDNConfig } from './minindn-config';
 import { ndn as ndnUserTypes } from './user-types';
 import { Encodable } from '@ndn/tlv';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { Interest } from '@ndn/packet';
 
 enum mainTabs { Topology, Editor };
 enum lowerTabs { Console, Visualizer, Captured };
@@ -28,12 +25,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   /** Currently visualized packet */
   public visualizedPacket?: Encodable;
-
-  /** Next click event */
-  public pendingClickEvent?: (params: any) => void;
-
-  /** Aliases */
-  public loadMiniNDNConfig = loadMiniNDNConfig;
 
   /** Call on console resize */
   consoleResize: () => void = <any>undefined;
@@ -91,8 +82,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   onNetworkClick(params: any) {
-    if (this.pendingClickEvent) {
-      this.pendingClickEvent?.(params);
+    if (this.gs.topoPendingClickEvent) {
+      this.gs.topoPendingClickEvent(params);
       return;
     }
 
@@ -111,38 +102,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  sendPingClick(params: any) {
-    const id = this.gs.network.getNodeAt(params.pointer.DOM);
-    if (!id) return;
-
-    const dest = <INode>this.gs.nodes.get(id);
-    const label = this.gs.getSelectedNode()?.label;
-    const name = `/ndn/${label}-site/ping`;
-    const interest = new Interest(name, Interest.Lifetime(3000))
-
-    const start = performance.now();
-    dest.nfw.getEndpoint().consume(interest).then(() => {
-      console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
-    });
-
-    this.pendingClickEvent = undefined;
-  }
-
-  selExpressInterest(name: string) {
-    name = name.replace('$time', (new Date).getTime().toString());
-    const interest = new Interest(name, Interest.Lifetime(3000))
-    this.gs.getSelectedNode()?.nfw.getEndpoint().consume(interest).then(() => {
-      console.log('Received data reply');
-    });
-  }
-
   mlstrToArray(str: string) {
     return str.split('\n').map(v => v.trim()).filter(v => v);
-  }
-
-  runCode(code: string) {
-    code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
-    const fun = new Function(code);
-    fun.call(this.gs.getSelectedNode());
   }
 }

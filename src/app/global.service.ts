@@ -47,6 +47,9 @@ export class GlobalService {
   // Emit on change
   public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
 
+  /** Next click event */
+  public topoPendingClickEvent?: (params: any) => void;
+
   // Console logs
   public consoleLog = new EventEmitter<{ type: string, msg: string }>();
 

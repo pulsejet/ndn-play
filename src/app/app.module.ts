@@ -8,6 +8,9 @@ import { PaneComponent } from './pane/pane.component';
 import { EditorComponent, monacoConfig } from './editor/editor.component';
 import { VisualizerComponent } from './visualizer/visualizer.component';
 import { CapturedListComponent } from './captured-list/captured-list.component';
+import { TopoNodeComponent } from './topo/node.component';
+import { TopoEdgeComponent } from './topo/edge.component';
+import { TopoGlobalComponent } from './topo/global.component';
 
 @NgModule({
   declarations: [
@@ -16,6 +19,9 @@ import { CapturedListComponent } from './captured-list/captured-list.component';
     EditorComponent,
     VisualizerComponent,
     CapturedListComponent,
+    TopoNodeComponent,
+    TopoEdgeComponent,
+    TopoGlobalComponent,
   ],
   imports: [
     BrowserModule,

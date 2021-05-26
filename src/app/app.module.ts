@@ -11,6 +11,7 @@ import { CapturedListComponent } from './captured-list/captured-list.component';
 import { TopoNodeComponent } from './topo/node.component';
 import { TopoEdgeComponent } from './topo/edge.component';
 import { TopoGlobalComponent } from './topo/global.component';
+import { TopoSidebarComponent } from './topo/sidebar.component';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { TopoGlobalComponent } from './topo/global.component';
     TopoNodeComponent,
     TopoEdgeComponent,
     TopoGlobalComponent,
+    TopoSidebarComponent,
   ],
   imports: [
     BrowserModule,

@@ -2,17 +2,8 @@
 <ng-template #pane1>
     <div id="sidebar">
         <h1 class="is-size-3">NDN-Play</h1>
-        <ng-container
-            [ngTemplateOutlet]="sideBarInner"
-            [ngTemplateOutletContext]="{selnode: gs.topo.getSelectedNode(), seledge: gs.topo.getSelectedEdge()}">
-        </ng-container>
+        <topo-sidebar [topo]="topo"></topo-sidebar>
     </div>
-
-    <ng-template #sideBarInner let-selnode="selnode" let-seledge="seledge">
-        <topo-node *ngIf="selnode" [node]="selnode" [topo]="topo"></topo-node>
-        <topo-edge *ngIf="seledge" [edge]="seledge" [topo]="topo"></topo-edge>
-        <topo-global *ngIf="!selnode && !seledge" [topo]="topo"></topo-global>
-    </ng-template>
 </ng-template>
 
 <ng-template #pane2>

@@ -1,13 +1,13 @@
 
-<ng-template #pane1>
+<ng-template #sidebarPane>
     <div id="sidebar">
         <h1 class="is-size-3">NDN-Play</h1>
         <topo-sidebar [topo]="topo"></topo-sidebar>
     </div>
 </ng-template>
 
-<ng-template #pane2>
-    <ng-template #mainPane>
+<ng-template #mainPane>
+    <ng-template #mainUpperPane>
         <app-tabs class="tab-container">
             <app-tab name="Topology">
                 <div #networkContainer id="network"></div>
@@ -20,7 +20,7 @@
         </app-tabs>
     </ng-template>
 
-    <ng-template #lowerPane>
+    <ng-template #mainLowerPane>
         <app-tabs class="tab-container" [vOverflow]="true" #lowerTabs>
             <app-tab name="Console">
                 <div class="console" #console></div>
@@ -43,11 +43,11 @@
     </ng-template>
 
     <div class="full-width">
-        <app-pane [pane1]="mainPane" [pane2]="lowerPane"
+        <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
                   [vertical]="true" basis="70%"
                   (resize)="consoleResize()">
         </app-pane>
     </div>
 </ng-template>
 
-<app-pane [pane1]="pane1" [pane2]="pane2" basis="300px"></app-pane>
+<app-pane [pane1]="sidebarPane" [pane2]="mainPane" basis="300px"></app-pane>

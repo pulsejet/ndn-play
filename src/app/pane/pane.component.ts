@@ -46,9 +46,10 @@ export class PaneComponent implements OnInit, AfterViewInit {
   }
 
   paneEnd() {
+    if (this.paneIsmdwn) this.resize.emit();
+
     this.paneIsmdwn = 0
     document.body.removeEventListener('mouseup', this.paneEnd.bind(this))
     this.resizer?.nativeElement.removeEventListener('mousemove', this.paneMove.bind(this))
-    this.resize.emit();
   }
 }

@@ -20,11 +20,6 @@
     width: 100%;
 }
 
-.lower-pane .main-space {
-    overflow: auto;
-    overflow-y: scroll;
-}
-
 .console {
     padding: 1px 4px;
     height: 100%;

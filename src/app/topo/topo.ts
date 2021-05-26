@@ -23,7 +23,7 @@ export class Topology {
   public readonly edges: vis.DataSet<IEdge, "id">;
 
   // Global network
-  public network: vis.Network;
+  public network!: vis.Network;
 
   // Global defaults
   public defaultLatency = 10;
@@ -83,22 +83,6 @@ export class Topology {
     // Initialize always
     this.nodes.on('add', this.ensureInitialized.bind(this));
     this.edges.on('add', this.ensureInitialized.bind(this));
-
-    // Temporary init
-    this.network = <any>null;
-  }
-
-  /** Update objects every animation frame */
-  public runAnimationFrame() {
-    if (Object.keys(this.pendingUpdatesNodes).length > 0) {
-        this.nodes.update(Object.values(this.pendingUpdatesNodes));
-        this.pendingUpdatesNodes = {};
-    }
-
-    if (Object.keys(this.pendingUpdatesEdges).length > 0) {
-        this.edges.update(Object.values(this.pendingUpdatesEdges));
-        this.pendingUpdatesEdges = {};
-    }
   }
 
   /** Initialize the network */
@@ -131,8 +115,21 @@ export class Topology {
     this.network?.on("click", this.onNetworkClick.bind(this));
   }
 
+  /** Update objects every animation frame */
+  public runAnimationFrame() {
+    if (Object.keys(this.pendingUpdatesNodes).length > 0) {
+        this.nodes.update(Object.values(this.pendingUpdatesNodes));
+        this.pendingUpdatesNodes = {};
+    }
 
-  onNetworkClick(params: any) {
+    if (Object.keys(this.pendingUpdatesEdges).length > 0) {
+        this.edges.update(Object.values(this.pendingUpdatesEdges));
+        this.pendingUpdatesEdges = {};
+    }
+  }
+
+  /** Handler */
+  private onNetworkClick(params: any) {
     if (this.pendingClickEvent) {
       this.pendingClickEvent(params);
       return;

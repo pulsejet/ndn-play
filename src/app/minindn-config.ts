@@ -2,8 +2,8 @@ import { IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
 export function loadMiniNDNConfig(topo: Topology, confStr: string) {
-    topo.selectEdge(undefined);
-    topo.selectNode(undefined);
+    topo.selectedEdge = undefined;
+    topo.selectedNode = undefined;
 
     const config = confStr.split('\n');
     let mode = null;

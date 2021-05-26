@@ -12,9 +12,9 @@
             <app-tab name="Topology">
                 <div #topoContainer id="network"></div>
             </app-tab>
-            <app-tab name="Editor" *ngIf="gs.topo.getSelectedNode()">
+            <app-tab name="Editor" *ngIf="gs.topo.selectedNode">
                 <div id="editor">
-                    <app-editor [(code)]="$any(gs.topo.getSelectedNode()).extra.codeEdit"></app-editor>
+                    <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit"></app-editor>
                 </div>
             </app-tab>
         </app-tabs>
@@ -32,10 +32,10 @@
                 </div>
             </app-tab>
 
-            <app-tab name="Packet Capture" *ngIf="gs.topo.getSelectedNode()">
+            <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode">
                 <div class="m-2">
                     <app-captured-list
-                        [node]="$any(gs.topo.getSelectedNode())"
+                        [node]="gs.topo.selectedNode"
                         (packetClick)="this.visualizedPacket = $event; lowerTabs.selection = lowerVisTab"
                     ></app-captured-list>
                 </div>

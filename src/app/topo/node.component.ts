@@ -81,7 +81,7 @@ export class TopoNodeComponent implements OnInit {
   public selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
     const interest = new Interest(name, Interest.Lifetime(3000))
-    this.topo.getSelectedNode()?.nfw.getEndpoint().consume(interest).then(() => {
+    this.topo.selectedNode?.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received data reply');
     });
   }
@@ -89,7 +89,7 @@ export class TopoNodeComponent implements OnInit {
   public runCode(code: string) {
     code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
-    fun.call(this.topo.getSelectedNode());
+    fun.call(this.topo.selectedNode);
   }
 
   public sendPingClick = (params: any) => {
@@ -97,7 +97,7 @@ export class TopoNodeComponent implements OnInit {
     if (!id) return;
 
     const dest = <INode>this.topo.nodes.get(id);
-    const label = this.topo.getSelectedNode()?.label;
+    const label = this.topo.selectedNode?.label;
     const name = `/ndn/${label}-site/ping`;
     const interest = new Interest(name, Interest.Lifetime(3000))
 

@@ -6,13 +6,13 @@ import { Topology } from './topo';
   template: `
     <ng-container
         [ngTemplateOutlet]="sideBarInner"
-        [ngTemplateOutletContext]="{selnode: topo.getSelectedNode(), seledge: topo.getSelectedEdge()}">
+        [ngTemplateOutletContext]="{node: topo.selectedNode, edge: topo.selectedEdge}">
     </ng-container>
 
-    <ng-template #sideBarInner let-selnode="selnode" let-seledge="seledge">
-        <topo-node *ngIf="selnode" [node]="selnode" [topo]="topo"></topo-node>
-        <topo-edge *ngIf="seledge" [edge]="seledge" [topo]="topo"></topo-edge>
-        <topo-global *ngIf="!selnode && !seledge" [topo]="topo"></topo-global>
+    <ng-template #sideBarInner let-node="node" let-edge="edge">
+        <topo-node *ngIf="node" [node]="node" [topo]="topo"></topo-node>
+        <topo-edge *ngIf="edge" [edge]="edge" [topo]="topo"></topo-edge>
+        <topo-global *ngIf="!node && !edge" [topo]="topo"></topo-global>
     </ng-template>
   `,
   styles: [

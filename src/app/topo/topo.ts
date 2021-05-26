@@ -34,8 +34,8 @@ export class Topology {
   public busiestLink?: IEdge;
 
   // Selected objects
-  private selectedNode?: INode;
-  private selectedEdge?: IEdge;
+  public selectedNode?: INode;
+  public selectedEdge?: IEdge;
 
   // Capture packets on all nodes
   public captureAll = false;
@@ -134,13 +134,13 @@ export class Topology {
     }
 
     const id = this.network?.getNodeAt(params.pointer.DOM);
-    this.selectNode(id ? <INode>this.nodes.get(id) : undefined);
+    this.selectedNode = id ? <INode>this.nodes.get(id) : undefined;
 
-    if (!this.getSelectedNode()) {
+    if (!this.selectedNode) {
         const edgeId = this.network?.getEdgeAt(params.pointer.DOM);
-        this.selectEdge(edgeId ? <IEdge>this.edges.get(edgeId) : undefined);
+        this.selectedEdge = edgeId ? <IEdge>this.edges.get(edgeId) : undefined;
     } else {
-        this.selectEdge(undefined);
+        this.selectedEdge = undefined;
     }
 
     for (const node of this.nodes.get()) {
@@ -174,26 +174,6 @@ export class Topology {
       this.computeRoutes();
       this.scheduledRouteRefresh = 0;
     }, 500);
-  }
-
-  /** Get currently selected node */
-  public getSelectedNode() {
-    return this.selectedNode;
-  }
-
-  /** Select a given node */
-  public selectNode(node?: INode) {
-    this.selectedNode = node;
-  }
-
-  /** Get currently selected edge */
-  public getSelectedEdge() {
-    return this.selectedEdge;
-  }
-
-  /** Select a given edge */
-  public selectEdge(edge?: IEdge) {
-    this.selectedEdge = edge;
   }
 
   /** Ensure all nodes and edges are initialized */

@@ -26,12 +26,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   /** Currently visualized packet */
   public visualizedPacket?: Encodable;
 
-  /** Call on console resize */
-  consoleResize: () => void = <any>undefined;
-
   /** Native Elements */
-  @ViewChild('networkContainer') networkContainer?: ElementRef;
-  @ViewChild('console') console?: ElementRef;
+  @ViewChild('networkContainer') networkContainer!: ElementRef;
+  @ViewChild('console') console!: ElementRef;
 
   /** Global Topology */
   public topo = this.gs.topo;
@@ -54,37 +51,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     // Setup
     this.topo.createNetwork(this.networkContainer?.nativeElement);
     this.topo.network?.on("click", this.onNetworkClick.bind(this));
-
-    // Terminal
-    var term = new Terminal({
-      theme: {
-        background: 'white',
-        foreground: 'black',
-        selection: '#ddd',
-      },
-      fontSize: 13,
-    });
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    this.consoleResize = fitAddon.fit.bind(fitAddon);
-    term.open(this.console?.nativeElement);
-    this.gs.consoleLog.subscribe((e) => {
-      let msg = e.msg;
-      msg = msg.replace('\n', '\r\n');
-
-      if (e.type == 'error') {
-        msg = `\u001b[31m${msg}\u001b[0m`;
-      } else if (e.type == 'warn') {
-        msg = `\u001b[33m${msg}\u001b[0m`;
-      }
-      term.writeln(msg);
-    });
-
-    setTimeout(() => {
-      fitAddon.fit();
-    }, 500);
-
-    window.addEventListener('resize', this.consoleResize);
   }
 
   onNetworkClick(params: any) {

@@ -14,6 +14,7 @@ import { TopoGlobalComponent } from './topo/global.component';
 import { TopoSidebarComponent } from './topo/sidebar.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { TabComponent } from './tabs/tab.component';
+import { ConsoleComponent } from './console/console.component';
 
 @NgModule({
   declarations: [
@@ -28,6 +29,7 @@ import { TabComponent } from './tabs/tab.component';
     TopoSidebarComponent,
     TabsComponent,
     TabComponent,
+    ConsoleComponent,
   ],
   imports: [
     BrowserModule,

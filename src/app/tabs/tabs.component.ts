@@ -40,7 +40,6 @@ import { TabComponent } from './tab.component';
 
       .main-space.v-overflow {
         overflow: auto;
-        overflow-y: scroll;
       }
     `
   ]

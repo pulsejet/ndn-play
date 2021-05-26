@@ -23,7 +23,7 @@
     <ng-template #mainLowerPane>
         <app-tabs class="tab-container" [vOverflow]="true" #lowerTabs>
             <app-tab name="Console">
-                <div class="console" #console></div>
+                <div class="console"> <console #console></console> </div>
             </app-tab>
 
             <app-tab name="Packet Visualizer" #lowerVisTab>
@@ -45,7 +45,7 @@
     <div class="full-width">
         <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
                   [vertical]="true" basis="70%"
-                  (resize)="consoleResize()">
+                  (resize)="$any(console).resize()">
         </app-pane>
     </div>
 </ng-template>

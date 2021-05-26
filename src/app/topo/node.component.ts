@@ -83,7 +83,7 @@ export class TopoNodeComponent implements OnInit {
     const interest = new Interest(name, Interest.Lifetime(3000))
     this.topo.selectedNode?.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received data reply');
-    });
+    }).catch(console.error);
   }
 
   public runCode(code: string) {
@@ -104,7 +104,7 @@ export class TopoNodeComponent implements OnInit {
     const start = performance.now();
     dest.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
-    });
+    }).catch(console.error);
 
     this.topo.pendingClickEvent = undefined;
   }

@@ -38,7 +38,7 @@ export function loadMiniNDNConfig(topo: Topology, confStr: string) {
             const obj: Partial<IEdge> = { from: linkNodes[0], to: linkNodes[1] };
             for (const p of params) {
                 const pa = p.split('=');
-                if (p[0] === 'delay') {
+                if (pa[0] === 'delay') {
                     obj.latency = Number(pa[1].replace('ms', ''));
                 }
             }

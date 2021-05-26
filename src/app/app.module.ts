@@ -12,6 +12,8 @@ import { TopoNodeComponent } from './topo/node.component';
 import { TopoEdgeComponent } from './topo/edge.component';
 import { TopoGlobalComponent } from './topo/global.component';
 import { TopoSidebarComponent } from './topo/sidebar.component';
+import { TabsComponent } from './tabs/tabs.component';
+import { TabComponent } from './tabs/tab.component';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,8 @@ import { TopoSidebarComponent } from './topo/sidebar.component';
     TopoEdgeComponent,
     TopoGlobalComponent,
     TopoSidebarComponent,
+    TabsComponent,
+    TabComponent,
   ],
   imports: [
     BrowserModule,

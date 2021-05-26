@@ -79,7 +79,10 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
       term.writeln(msg);
     });
-    fitAddon.fit();
+
+    setTimeout(() => {
+      fitAddon.fit();
+    }, 500);
 
     window.addEventListener('resize', this.consoleResize);
   }

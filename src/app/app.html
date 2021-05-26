@@ -8,70 +8,38 @@
 
 <ng-template #pane2>
     <ng-template #mainPane>
-        <div class="main-container">
-            <div class="is-small tabs main-head">
-                <ul>
-                    <li [class.is-active]="mainTab == mainTabs.Topology"
-                        (click)="mainTab = mainTabs.Topology">
-                        <a>Topology</a>
-                    </li>
-                    <li [class.is-active]="mainTab == mainTabs.Editor"
-                        *ngIf="gs.topo.getSelectedNode()"
-                        (click)="mainTab = mainTabs.Editor">
-                        <a>Editor</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="main-space">
-                <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
-
-                <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.topo.getSelectedNode()">
+        <app-tabs class="tab-container">
+            <app-tab name="Topology">
+                <div #networkContainer id="network"></div>
+            </app-tab>
+            <app-tab name="Editor" *ngIf="gs.topo.getSelectedNode()">
+                <div id="editor">
                     <app-editor [(code)]="$any(gs.topo.getSelectedNode()).extra.codeEdit"></app-editor>
                 </div>
-            </div>
-        </div>
+            </app-tab>
+        </app-tabs>
     </ng-template>
 
-
     <ng-template #lowerPane>
-        <div class="lower-pane main-container">
-            <div class="is-small tabs main-head">
-                <ul>
-                    <li [class.is-active]="lowerTab == lowerTabs.Console"
-                        (click)="lowerTab = lowerTabs.Console">
-                        <a>Console</a>
-                    </li>
-                    <li [class.is-active]="lowerTab == lowerTabs.Visualizer"
-                        (click)="lowerTab = lowerTabs.Visualizer">
-                        <a>Packet Visualizer</a>
-                    </li>
-                    <li [class.is-active]="lowerTab == lowerTabs.Captured"
-                        *ngIf="gs.topo.getSelectedNode()"
-                        (click)="lowerTab = lowerTabs.Captured">
-                        <a>Packet Capture</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="main-space">
-                <div class="console" #console
-                     [hidden]="lowerTab !== lowerTabs.Console">
-                </div>
+        <app-tabs class="tab-container" [vOverflow]="true" #lowerTabs>
+            <app-tab name="Console">
+                <div class="console" #console></div>
+            </app-tab>
 
-                <div>
-                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Visualizer">
-                        <app-visualizer [packet]="visualizedPacket"></app-visualizer>
-                    </div>
+            <app-tab name="Packet Visualizer" #lowerVisTab>
+                <div class="m-2">
+                    <app-visualizer [packet]="visualizedPacket"></app-visualizer>
                 </div>
+            </app-tab>
 
-                <div>
-                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Captured && gs.topo.getSelectedNode()">
-                        <app-captured-list
-                            (packetClick)="this.visualizedPacket = $event; lowerTab = lowerTabs.Visualizer"
-                        ></app-captured-list>
-                    </div>
+            <app-tab name="Packet Capture" *ngIf="gs.topo.getSelectedNode()">
+                <div class="m-2">
+                    <app-captured-list
+                        (packetClick)="this.visualizedPacket = $event; lowerTabs.selection = lowerVisTab"
+                    ></app-captured-list>
                 </div>
-            </div>
-        </div>
+            </app-tab>
+        </app-tabs>
     </ng-template>
 
     <div class="full-width">

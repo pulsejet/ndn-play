@@ -15,20 +15,9 @@
     scrollbar-width: thin;
 }
 
-.main-container {
-    display: flex;
-    flex-flow: column;
-    height: 100%; width: 100%;
-}
-
-.main-head {
-    display: block;
-    margin-bottom: 0;
-}
-
-.main-space {
-    flex: 1;
-    overflow: hidden;
+.tab-container {
+    height: 100%;
+    width: 100%;
 }
 
 .lower-pane .main-space {

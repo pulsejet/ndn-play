@@ -46,9 +46,10 @@ export class VisualizerComponent implements OnInit {
           t: t.type,
           l: t.length,
           v: this.decodeRecursive(t.value),
-          vl: t.value
+          vl: t.value,
+          tl: t.tlv.length,
         };
-        if (t.type == 0 || !getTlvTypeText(t.type)) break;
+        if (t.type == 0 || !getTlvTypeText(t.type)) return [];
 
         // Creative visualization
         switch (obj.t) {
@@ -71,6 +72,10 @@ export class VisualizerComponent implements OnInit {
       } catch {
         break;
       }
+    }
+
+    if (input.length !== arr.map((t) => t.tl).reduce((a, b) => a + b, 0)) {
+      return [];
     }
 
     return arr;

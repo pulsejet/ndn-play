@@ -1,4 +1,3 @@
-import { Data, Interest } from '@ndn/packet';
 import * as vis from 'vis-network';
 import { NFW } from './nfw';
 
@@ -26,4 +25,5 @@ export interface visTlv {
     v: visTlv[];
     vl: Uint8Array;
     vs?: string
+    tl: number;
 };

@@ -1,4 +1,3 @@
-import { GlobalService } from "./global.service";
 import { INode } from "./interfaces";
 import * as chroma from 'chroma-js';
 import * as vis from 'vis-network/standalone';
@@ -10,6 +9,7 @@ import { Pit } from "@ndn/fw/lib/pit";
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
 import pushable from "it-pushable";
+import { Topology } from "./topo/topo";
 
 export class NFW {
     /** ID of this node */
@@ -43,7 +43,7 @@ export class NFW {
     public capture = false;
 
     /** Content Store */
-    private cs = new ContentStore(this.gs);
+    private cs = new ContentStore(this.topo);
 
     /** Routing strategies */
     public readonly strategies = [
@@ -69,7 +69,7 @@ export class NFW {
         timer: number;
     }} = {};
 
-    constructor(private gs: GlobalService, node: INode) {
+    constructor(private topo: Topology, node: INode) {
         this.nodeId = <vis.IdType>node.id;
 
         this.fw.on("pktrx", (face, pkt) => {
@@ -77,7 +77,7 @@ export class NFW {
             if (pkt.cancel || pkt.reject) return;
 
             // Wireshark
-            if (this.capture || this.gs.captureAll) this.capturePacket(pkt.l3);
+            if (this.capture || this.topo.captureAll) this.capturePacket(pkt.l3);
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
@@ -96,8 +96,8 @@ export class NFW {
         this.fw.on("annadd", (prefix) => {
             const pfxs = this.node().producedPrefixes;
             pfxs.push(AltUri.ofName(prefix));
-            this.gs.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
-            this.gs.scheduleRouteRefresh();
+            this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
+            this.topo.scheduleRouteRefresh();
         });
 
         // Remove routes
@@ -105,8 +105,8 @@ export class NFW {
             const pfxs = this.node().producedPrefixes
             const i = pfxs.indexOf(AltUri.ofName(prefix));
             if (i !== -1) pfxs.splice(i, 1);
-            this.gs.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
-            this.gs.scheduleRouteRefresh();
+            this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
+            this.topo.scheduleRouteRefresh();
         });
 
         // Setup security
@@ -124,7 +124,7 @@ export class NFW {
     }
 
     public node() {
-        return <INode>this.gs.nodes.get(this.nodeId);
+        return <INode>this.topo.nodes.get(this.nodeId);
     }
 
     public nodeUpdated() {
@@ -168,50 +168,50 @@ export class NFW {
 
     public updateColors() {
         // Check busiest node
-        if (this.pendingTraffic > (this.gs.busiestNode?.nfw.pendingTraffic || 0)) {
-            this.gs.busiestNode = this.node();
+        if (this.pendingTraffic > (this.topo.busiestNode?.nfw.pendingTraffic || 0)) {
+            this.topo.busiestNode = this.node();
         }
 
-        let color = this.gs.DEFAULT_NODE_COLOR
+        let color = this.topo.DEFAULT_NODE_COLOR
         if (this.pendingTraffic > 0) {
-            color = chroma.scale([this.gs.ACTIVE_NODE_COLOR, 'red'])
-                                (this.pendingTraffic / ((this.gs.busiestNode?.nfw.pendingTraffic || 0) + 5)).toString();
-        } else if (this.gs.getSelectedNode()?.id == this.nodeId) {
-            color = this.gs.SELECTED_NODE_COLOR;
+            color = chroma.scale([this.topo.ACTIVE_NODE_COLOR, 'red'])
+                                (this.pendingTraffic / ((this.topo.busiestNode?.nfw.pendingTraffic || 0) + 5)).toString();
+        } else if (this.topo.getSelectedNode()?.id == this.nodeId) {
+            color = this.topo.SELECTED_NODE_COLOR;
         }
-        this.gs.pendingUpdatesNodes[this.nodeId] = { id: this.nodeId, color: color };
+        this.topo.pendingUpdatesNodes[this.nodeId] = { id: this.nodeId, color: color };
     }
 
     /** Add traffic to link */
     private addLinkTraffic(nextHop: vis.IdType, callback: (success: boolean) => void) {
         // Get link to next hop
-        const myEdges = this.gs.network.getConnectedEdges(this.nodeId);
-        let link = this.gs.edges.get(myEdges).find(l => l.to == nextHop || l.from == nextHop);
+        const myEdges = this.topo.network.getConnectedEdges(this.nodeId);
+        let link = this.topo.edges.get(myEdges).find(l => l.to == nextHop || l.from == nextHop);
         if (!link) return;
 
-        let latency = link.latency >= 0 ? link.latency : this.gs.defaultLatency;
-        latency *= this.gs.latencySlowdown;
+        let latency = link.latency >= 0 ? link.latency : this.topo.defaultLatency;
+        latency *= this.topo.latencySlowdown;
 
         // Flash link
         link.extra.pendingTraffic++;
 
         // Check busiest link
-        if (link.extra.pendingTraffic > (this.gs.busiestLink?.extra.pendingTraffic || 0)) {
-            this.gs.busiestLink = link;
+        if (link.extra.pendingTraffic > (this.topo.busiestLink?.extra.pendingTraffic || 0)) {
+            this.topo.busiestLink = link;
         }
-        const color = chroma.scale([this.gs.ACTIVE_NODE_COLOR, 'red'])
-                                  (link.extra.pendingTraffic / (this.gs.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
-        this.gs.pendingUpdatesEdges[link.id] = { id: link.id, color: color };
+        const color = chroma.scale([this.topo.ACTIVE_NODE_COLOR, 'red'])
+                                  (link.extra.pendingTraffic / (this.topo.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
+        this.topo.pendingUpdatesEdges[link.id] = { id: link.id, color: color };
 
         // Forward after latency
         setTimeout(() => {
             if (!link) return;
 
             if (--link.extra.pendingTraffic === 0) {
-                this.gs.pendingUpdatesEdges[link.id] = { id: link.id, color: this.gs.DEFAULT_LINK_COLOR };
+                this.topo.pendingUpdatesEdges[link.id] = { id: link.id, color: this.topo.DEFAULT_LINK_COLOR };
             }
 
-            const loss = link.loss >= 0 ? link.loss : this.gs.defaultLoss;
+            const loss = link.loss >= 0 ? link.loss : this.topo.defaultLoss;
             callback(Math.random() >= loss / 100);
         }, latency)
     }
@@ -254,7 +254,7 @@ export class NFW {
     private expressInterest(pkt: FwPacket<Interest>) {
         const interest = pkt.l3;
 
-        if (this.gs.LOG_INTERESTS) {
+        if (this.topo.LOG_INTERESTS) {
             console.log(this.node().label, AltUri.ofName(interest.name).substr(0, 20));
         }
 
@@ -337,7 +337,7 @@ export class NFW {
             this.pendingTraffic++;
 
             // Forward to next NFW
-            const nextNFW = this.gs.nodes.get(<vis.IdType>nextHop)?.nfw;
+            const nextNFW = this.topo.nodes.get(<vis.IdType>nextHop)?.nfw;
             if (!nextNFW) continue;
 
             // Sent one
@@ -416,7 +416,7 @@ export class NFW {
         for (const entry of this.fib) {
             const nexthops = [];
             for (const route of entry.routes) {
-                nexthops.push(`face=${this.gs.nodes.get(<vis.IdType>route.hop)?.label} (cost=${route.cost})`);
+                nexthops.push(`face=${this.topo.nodes.get(<vis.IdType>route.hop)?.label} (cost=${route.cost})`);
             }
 
             text.push(`${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`);
@@ -436,7 +436,7 @@ export class NFW {
 class ContentStore {
     private cs: { recv: number; data: Data}[] = [];
 
-    constructor(private gs: GlobalService) {}
+    constructor(private topo: Topology) {}
 
     public push(data: Data): void {
         if (!data.freshnessPeriod) return;
@@ -456,8 +456,8 @@ class ContentStore {
         }
 
         // Trim CS
-        if (this.cs.length > this.gs.contentStoreSize) {
-            this.cs = this.cs.slice(0, this.gs.contentStoreSize);
+        if (this.cs.length > this.topo.contentStoreSize) {
+            this.cs = this.cs.slice(0, this.topo.contentStoreSize);
         }
     }
 

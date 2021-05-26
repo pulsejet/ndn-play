@@ -33,6 +33,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   @ViewChild('networkContainer') networkContainer?: ElementRef;
   @ViewChild('console') console?: ElementRef;
 
+  /** Global Topology */
+  public topo = this.gs.topo;
+
   constructor(public gs: GlobalService)
   {}
 
@@ -40,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     (<any>window).ndn = ndnUserTypes;
     (<any>window).visualize = (p: any) => this.visualizedPacket = p;
 
-    this.gs.selectedNodeChangeCallback.subscribe((node) => {
+    this.topo.selectedNodeChangeCallback.subscribe((node) => {
       if (!node) {
         this.mainTab = mainTabs.Topology;
       }
@@ -49,8 +52,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     // Setup
-    this.gs.createNetwork(this.networkContainer?.nativeElement);
-    this.gs.network?.on("click", this.onNetworkClick.bind(this));
+    this.topo.createNetwork(this.networkContainer?.nativeElement);
+    this.topo.network?.on("click", this.onNetworkClick.bind(this));
 
     // Terminal
     var term = new Terminal({
@@ -82,22 +85,22 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   onNetworkClick(params: any) {
-    if (this.gs.topoPendingClickEvent) {
-      this.gs.topoPendingClickEvent(params);
+    if (this.topo.pendingClickEvent) {
+      this.topo.pendingClickEvent(params);
       return;
     }
 
-    const id = this.gs.network?.getNodeAt(params.pointer.DOM);
-    this.gs.selectNode(id ? <INode>this.gs.nodes.get(id) : undefined);
+    const id = this.topo.network?.getNodeAt(params.pointer.DOM);
+    this.topo.selectNode(id ? <INode>this.topo.nodes.get(id) : undefined);
 
-    if (!this.gs.getSelectedNode()) {
-        const edgeId = this.gs.network?.getEdgeAt(params.pointer.DOM);
-        this.gs.selectEdge(edgeId ? <IEdge>this.gs.edges.get(edgeId) : undefined);
+    if (!this.topo.getSelectedNode()) {
+        const edgeId = this.topo.network?.getEdgeAt(params.pointer.DOM);
+        this.topo.selectEdge(edgeId ? <IEdge>this.topo.edges.get(edgeId) : undefined);
     } else {
-        this.gs.selectEdge(undefined);
+        this.topo.selectEdge(undefined);
     }
 
-    for (const node of this.gs.nodes.get()) {
+    for (const node of this.topo.nodes.get()) {
       node.nfw.updateColors();
     }
   }

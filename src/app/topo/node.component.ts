@@ -1,19 +1,19 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Interest } from '@ndn/packet';
-import { GlobalService } from '../global.service';
 import { INode } from '../interfaces';
+import { Topology } from './topo';
 
 @Component({
-  selector: 'app-topo-node',
+  selector: 'topo-node[topo][node]',
   template: `
-    <div *ngIf="node">
+    <div>
         <h2 class="is-size-5 mb-3">Node {{ node.label }}</h2>
 
         <div class="field">
             <label class="label is-small">Node Name</label>
             <input class="input is-small" type="text" placeholder="Alice"
                 [(ngModel)]="node.label"
-                (input)="gs.nodes.update({ id: node.id, label: node.label })"
+                (input)="topo.nodes.update({ id: node.id, label: node.label })"
                 (change)="node.nfw.nodeUpdated()">
         </div>
 
@@ -33,8 +33,8 @@ import { INode } from '../interfaces';
 
         <div class="field">
             <button class="button is-link full-width is-light is-small full-width"
-                    [disabled]="gs.topoPendingClickEvent == sendPingClick"
-                    (click)="gs.topoPendingClickEvent = sendPingClick">
+                    [disabled]="topo.pendingClickEvent == sendPingClick"
+                    (click)="topo.pendingClickEvent = sendPingClick">
                 Ping Node
             </button>
         </div>
@@ -70,11 +70,10 @@ import { INode } from '../interfaces';
 })
 export class TopoNodeComponent implements OnInit {
 
-  @Input() public node?: INode = undefined;
+  @Input() public node: INode = <any>undefined;
+  @Input() public topo: Topology = <any>undefined;
 
-  constructor(
-    public gs: GlobalService,
-  ) { }
+  constructor() { }
 
   ngOnInit(): void {
   }
@@ -82,7 +81,7 @@ export class TopoNodeComponent implements OnInit {
   public selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
     const interest = new Interest(name, Interest.Lifetime(3000))
-    this.gs.getSelectedNode()?.nfw.getEndpoint().consume(interest).then(() => {
+    this.topo.getSelectedNode()?.nfw.getEndpoint().consume(interest).then(() => {
       console.log('Received data reply');
     });
   }
@@ -90,15 +89,15 @@ export class TopoNodeComponent implements OnInit {
   public runCode(code: string) {
     code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
-    fun.call(this.gs.getSelectedNode());
+    fun.call(this.topo.getSelectedNode());
   }
 
   public sendPingClick = (params: any) => {
-    const id = this.gs.network.getNodeAt(params.pointer.DOM);
+    const id = this.topo.network.getNodeAt(params.pointer.DOM);
     if (!id) return;
 
-    const dest = <INode>this.gs.nodes.get(id);
-    const label = this.gs.getSelectedNode()?.label;
+    const dest = <INode>this.topo.nodes.get(id);
+    const label = this.topo.getSelectedNode()?.label;
     const name = `/ndn/${label}-site/ping`;
     const interest = new Interest(name, Interest.Lifetime(3000))
 
@@ -107,6 +106,6 @@ export class TopoNodeComponent implements OnInit {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     });
 
-    this.gs.topoPendingClickEvent = undefined;
+    this.topo.pendingClickEvent = undefined;
   }
 }

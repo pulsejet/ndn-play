@@ -4,14 +4,14 @@
         <h1 class="is-size-3">NDN-Play</h1>
         <ng-container
             [ngTemplateOutlet]="sideBarInner"
-            [ngTemplateOutletContext]="{selnode: gs.getSelectedNode(), seledge: gs.getSelectedEdge()}">
+            [ngTemplateOutletContext]="{selnode: gs.topo.getSelectedNode(), seledge: gs.topo.getSelectedEdge()}">
         </ng-container>
     </div>
 
     <ng-template #sideBarInner let-selnode="selnode" let-seledge="seledge">
-        <app-topo-node *ngIf="selnode" [node]="selnode"></app-topo-node>
-        <app-topo-edge *ngIf="seledge" [edge]="seledge"></app-topo-edge>
-        <app-topo-global *ngIf="!selnode && !seledge"></app-topo-global>
+        <topo-node *ngIf="selnode" [node]="selnode" [topo]="topo"></topo-node>
+        <topo-edge *ngIf="seledge" [edge]="seledge" [topo]="topo"></topo-edge>
+        <topo-global *ngIf="!selnode && !seledge" [topo]="topo"></topo-global>
     </ng-template>
 </ng-template>
 
@@ -25,7 +25,7 @@
                         <a>Topology</a>
                     </li>
                     <li [class.is-active]="mainTab == mainTabs.Editor"
-                        *ngIf="gs.getSelectedNode()"
+                        *ngIf="gs.topo.getSelectedNode()"
                         (click)="mainTab = mainTabs.Editor">
                         <a>Editor</a>
                     </li>
@@ -34,8 +34,8 @@
             <div class="main-space">
                 <div #networkContainer id="network" [hidden]="mainTab != mainTabs.Topology"></div>
 
-                <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.getSelectedNode()">
-                    <app-editor [(code)]="$any(gs.getSelectedNode()).extra.codeEdit"></app-editor>
+                <div id="editor" *ngIf="mainTab == mainTabs.Editor && gs.topo.getSelectedNode()">
+                    <app-editor [(code)]="$any(gs.topo.getSelectedNode()).extra.codeEdit"></app-editor>
                 </div>
             </div>
         </div>
@@ -55,7 +55,7 @@
                         <a>Packet Visualizer</a>
                     </li>
                     <li [class.is-active]="lowerTab == lowerTabs.Captured"
-                        *ngIf="gs.getSelectedNode()"
+                        *ngIf="gs.topo.getSelectedNode()"
                         (click)="lowerTab = lowerTabs.Captured">
                         <a>Packet Capture</a>
                     </li>
@@ -73,7 +73,7 @@
                 </div>
 
                 <div>
-                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Captured && gs.getSelectedNode()">
+                    <div class="m-2" *ngIf="lowerTab == lowerTabs.Captured && gs.topo.getSelectedNode()">
                         <app-captured-list
                             (packetClick)="this.visualizedPacket = $event; lowerTab = lowerTabs.Visualizer"
                         ></app-captured-list>

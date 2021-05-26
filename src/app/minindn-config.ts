@@ -1,9 +1,9 @@
-import { GlobalService } from "./global.service";
 import { IEdge, INode } from "./interfaces";
+import { Topology } from "./topo/topo";
 
-export function loadMiniNDNConfig(gs: GlobalService, confStr: string) {
-    gs.selectEdge(undefined);
-    gs.selectNode(undefined);
+export function loadMiniNDNConfig(topo: Topology, confStr: string) {
+    topo.selectEdge(undefined);
+    topo.selectNode(undefined);
 
     const config = confStr.split('\n');
     let mode = null;
@@ -46,9 +46,9 @@ export function loadMiniNDNConfig(gs: GlobalService, confStr: string) {
         }
     }
 
-    gs.nodes.clear();
-    gs.edges.clear();
+    topo.nodes.clear();
+    topo.edges.clear();
 
-    gs.nodes.add(<any>readNodes);
-    gs.edges.add(<any>readLinks);
+    topo.nodes.add(<any>readNodes);
+    topo.edges.add(<any>readLinks);
 }

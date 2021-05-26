@@ -1,16 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { GlobalService } from '../global.service';
 import { IEdge } from '../interfaces';
+import { Topology } from './topo';
 
 @Component({
-  selector: 'app-topo-edge',
+  selector: 'topo-edge[topo][edge]',
   template: `
-    <div *ngIf="edge">
+    <div>
         <h2 class="is-size-5 mb-3">
             Link
-            {{ $any(gs.nodes.get($any(edge.from))).label }}
+            {{ $any(topo.nodes.get($any(edge.from))).label }}
             &#8212;
-            {{ $any(gs.nodes.get($any(edge.to))).label }}
+            {{ $any(topo.nodes.get($any(edge.to))).label }}
         </h2>
 
         <div class="field">
@@ -18,7 +18,7 @@ import { IEdge } from '../interfaces';
             <div class="control">
                 <input class="input is-small" type="number" placeholder="10"
                         [(ngModel)]="edge.latency"
-                        (input)="gs.edges.update(edge); gs.scheduleRouteRefresh()">
+                        (input)="topo.edges.update(edge); topo.scheduleRouteRefresh()">
             </div>
             <p class="help is-small">Negative for default latency</p>
         </div>
@@ -28,7 +28,7 @@ import { IEdge } from '../interfaces';
             <div class="control">
                 <input class="input is-small" type="number" placeholder="0"
                         [(ngModel)]="edge.loss"
-                        (input)="gs.edges.update(edge)">
+                        (input)="topo.edges.update(edge)">
             </div>
             <p class="help is-small">Negative for default loss</p>
         </div>
@@ -39,11 +39,10 @@ import { IEdge } from '../interfaces';
 })
 export class TopoEdgeComponent implements OnInit {
 
-  @Input() public edge?: IEdge = undefined;
+  @Input() public edge: IEdge = <any>undefined;
+  @Input() public topo: Topology = <any>undefined;
 
-  constructor(
-    public gs: GlobalService,
-  ) { }
+  constructor() { }
 
   ngOnInit(): void {
   }

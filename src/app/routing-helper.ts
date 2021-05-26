@@ -1,5 +1,5 @@
 import * as vis from 'vis-network/standalone';
-import { GlobalService } from './global.service';
+import { Topology } from './topo/topo';
 
 declare var dijkstra: any;
 
@@ -7,9 +7,9 @@ class _CalculateRoutes {
     private network: vis.Network;
 
     constructor(
-        private gs: GlobalService,
+        private topo: Topology,
     ) {
-        this.network = <vis.Network>this.gs.network;
+        this.network = <vis.Network>this.topo.network;
     }
 
     dijkstra(graph: any) {
@@ -60,11 +60,11 @@ class _CalculateRoutes {
     }
 
     getLatency(n1: vis.IdType, n2: vis.IdType) {
-        const edge = this.gs.edges.get(this.network.getConnectedEdges(n1)).find(e => e.from === n2 || e.to === n2);
+        const edge = this.topo.edges.get(this.network.getConnectedEdges(n1)).find(e => e.from === n2 || e.to === n2);
         if (!edge) return 0;
 
         const latency = edge.latency || 0;
-        return latency >= 0 ? latency : this.gs.defaultLatency;
+        return latency >= 0 ? latency : this.topo.defaultLatency;
     }
 
     getRouteLatency(route: string[]) {
@@ -77,7 +77,7 @@ class _CalculateRoutes {
 
     getRoutes(nFaces: number) {
         const graph: any = {};
-        for (const node of this.gs.nodes.getIds()) {
+        for (const node of this.topo.nodes.getIds()) {
             graph[node] = {};
             for (const cn of this.network.getConnectedNodes(node)) {
                 const nid = <vis.IdType>cn;
@@ -98,9 +98,9 @@ export class RoutingHelper {
     private routes: any = {};
 
     constructor(
-        private gs: GlobalService,
+        private topo: Topology,
     ) {
-        this.routeObject = new _CalculateRoutes(gs);
+        this.routeObject = new _CalculateRoutes(topo);
     }
 
     addOrigin(nodes: vis.IdType[], prefix: string) {
@@ -119,11 +119,11 @@ export class RoutingHelper {
         this.routes = this.routeObject.getRoutes(nFaces)
         const fib: any = {};
 
-        for (const node of this.gs.nodes.getIds()) {
+        for (const node of this.topo.nodes.getIds()) {
             fib[node] = [];
 
             for (const dest in this.routes[node]) {
-                const destNode = this.gs.nodes.get(dest);
+                const destNode = this.topo.nodes.get(dest);
                 if (!destNode) continue;
 
                 const prefixes = []

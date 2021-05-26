@@ -20,7 +20,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
   public consoleLog = new EventEmitter<{ type: string, msg: string }>();
 
   /** Call on console resize */
-  resize!: () => void;
+  public resize!: () => void;
 
   constructor() { }
 
@@ -71,10 +71,11 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       },
       fontSize: 13,
     });
+
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     this.resize = fitAddon.fit.bind(fitAddon);
-    term.open(this.console?.nativeElement);
+    term.open(this.console.nativeElement);
 
     this.consoleLog.subscribe((e) => {
       let msg = e.msg;

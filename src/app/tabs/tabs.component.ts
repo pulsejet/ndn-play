@@ -4,7 +4,7 @@ import { TabComponent } from './tab.component';
 @Component({
   selector: 'app-tabs',
   template: `
-    <div class="main-container" *ngIf="children">
+    <div class="main-container" *ngIf="children && selection">
       <div class="is-small tabs main-head">
         <ul>
           <li *ngFor="let tab of children"
@@ -15,8 +15,9 @@ import { TabComponent } from './tab.component';
         </ul>
       </div>
 
-      <div class="main-space" [class.v-overflow]="vOverflow">
-        <ng-container *ngIf="selection" [ngTemplateOutlet]="selection.template"></ng-container>
+      <div *ngFor="let tab of children" [hidden]="tab !== selection"
+            class="main-space" [class.v-overflow]="vOverflow">
+          <ng-container [ngTemplateOutlet]="tab.template"></ng-container>
       </div>
     </div>
   `,
@@ -25,7 +26,8 @@ import { TabComponent } from './tab.component';
       .main-container {
         display: flex;
         flex-flow: column;
-        height: 100%; width: 100%;
+        height: 100%;
+        width: 100%;
       }
 
       .main-head {

@@ -1,8 +1,6 @@
 import { IEdge, INode } from "../interfaces";
-import { EventEmitter } from "@angular/core";
 import { RoutingHelper } from "../routing-helper";
 import { Name } from "@ndn/packet";
-import { GlobalService } from "../global.service";
 import { NFW } from "../nfw";
 import * as vis from 'vis-network/standalone';
 

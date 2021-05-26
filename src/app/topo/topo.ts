@@ -42,9 +42,6 @@ export class Topology {
   // Capture packets on all nodes
   public captureAll = false;
 
-  // Emit on change
-  public selectedNodeChangeCallback = new EventEmitter<INode | undefined>();
-
   // Next click event
   public pendingClickEvent?: (params: any) => void;
 
@@ -129,6 +126,31 @@ export class Topology {
     this.nodes.on('remove', computeFun);
     this.edges.on('add', computeFun);
     this.edges.on('remove', computeFun);
+
+    // Bind functions
+    this.network?.on("click", this.onNetworkClick.bind(this));
+  }
+
+
+  onNetworkClick(params: any) {
+    if (this.pendingClickEvent) {
+      this.pendingClickEvent(params);
+      return;
+    }
+
+    const id = this.network?.getNodeAt(params.pointer.DOM);
+    this.selectNode(id ? <INode>this.nodes.get(id) : undefined);
+
+    if (!this.getSelectedNode()) {
+        const edgeId = this.network?.getEdgeAt(params.pointer.DOM);
+        this.selectEdge(edgeId ? <IEdge>this.edges.get(edgeId) : undefined);
+    } else {
+        this.selectEdge(undefined);
+    }
+
+    for (const node of this.nodes.get()) {
+      node.nfw.updateColors();
+    }
   }
 
   /** Compute static routes */
@@ -167,7 +189,6 @@ export class Topology {
   /** Select a given node */
   public selectNode(node?: INode) {
     this.selectedNode = node;
-    this.selectedNodeChangeCallback.emit(node);
   }
 
   /** Get currently selected edge */

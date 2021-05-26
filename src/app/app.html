@@ -2,7 +2,7 @@
 <ng-template #sidebarPane>
     <div id="sidebar">
         <h1 class="is-size-3">NDN-Play</h1>
-        <topo-sidebar [topo]="topo"></topo-sidebar>
+        <topo-sidebar [topo]="gs.topo"></topo-sidebar>
     </div>
 </ng-template>
 
@@ -10,7 +10,7 @@
     <ng-template #mainUpperPane>
         <app-tabs class="tab-container">
             <app-tab name="Topology">
-                <div #networkContainer id="network"></div>
+                <div #topoContainer id="network"></div>
             </app-tab>
             <app-tab name="Editor" *ngIf="gs.topo.getSelectedNode()">
                 <div id="editor">

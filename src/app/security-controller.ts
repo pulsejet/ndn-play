@@ -3,7 +3,7 @@ import { Endpoint } from "@ndn/endpoint";
 import { Certificate, generateSigningKey, KeyChain, ValidityPeriod } from "@ndn/keychain";
 import { Component } from "@ndn/packet";
 import { TrustSchema, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
-import { INode } from "./interfaces";
+import { NFW } from "./nfw";
 
 export class SecurityController {
     // Need a refresh of security
@@ -29,7 +29,7 @@ export class SecurityController {
         this.init = true;
     }
 
-    public getNodeOptions = async (node: INode) => {
+    public getNodeOptions = async (nfw: NFW) => {
         const policy = versec2019.load(`
             site = ndn
             root = <site>/<_KEY>
@@ -45,7 +45,7 @@ export class SecurityController {
         const schema = new TrustSchema(policy, [this.rootCertificate]);
         const signer = new TrustSchemaSigner({ keyChain, schema });
 
-        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${node.label}-site`);
+        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${nfw.node().label}-site`);
         const pingCert = await Certificate.issue({
             publicKey: pingPub,
             validity: ValidityPeriod.daysFromNow(30),
@@ -59,7 +59,7 @@ export class SecurityController {
             schema,
             offline: false,
             endpoint: new Endpoint({
-                fw: node.nfw.fw,
+                fw: nfw.fw,
             }),
         });
 

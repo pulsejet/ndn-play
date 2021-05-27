@@ -133,7 +133,7 @@ export class NFW {
     }
 
     private setupSecurity = async () => {
-        this.securityOptions = await this.topo.security.getNodeOptions(this.node());
+        this.securityOptions = await this.topo.security.getNodeOptions(this);
         this.nodeUpdated();
     }
 

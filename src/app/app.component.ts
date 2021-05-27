@@ -15,6 +15,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
+  @ViewChild('secContainer') secContainer!: ElementRef;
   @ViewChild('console') console!: ElementRef;
 
   constructor(public gs: GlobalService) {}
@@ -26,5 +27,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.gs.topo.createNetwork(this.topoContainer?.nativeElement);
+    this.gs.topo.security.createNetwork(this.secContainer?.nativeElement);
   }
 }

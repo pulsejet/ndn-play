@@ -2,7 +2,7 @@
     height: 50px;
 }
 
-#network, #editor {
+.main-tab {
     height: 100%; width: 100%;
     background-color: white;
 }

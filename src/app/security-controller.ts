@@ -1,9 +1,10 @@
 import { Endpoint } from "@ndn/endpoint";
 import { Certificate, generateSigningKey, KeyChain, ValidityPeriod } from "@ndn/keychain";
-import { Component } from "@ndn/packet";
+import { AltUri, Component } from "@ndn/packet";
 import { TrustSchema, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
 import { NFW } from "./nfw";
 import { Topology } from "./topo/topo";
+import * as vis from 'vis-network/standalone';
 
 export class SecurityController {
     // Global keychain
@@ -13,12 +14,40 @@ export class SecurityController {
     // Don't refresh too often
     private refreshTimer = 0
 
+    // Network
+    public readonly nodes: vis.DataSet<vis.Node, "id">;
+    public readonly edges: vis.DataSet<vis.Edge, "id">;
+    public network!: vis.Network;
+
     constructor(
         private topo: Topology,
     ) {
+        this.nodes = new vis.DataSet<vis.Node, "id">([]);
+        this.edges = new vis.DataSet<vis.Edge, "id">([]);
+
         topo.nodes.on('add', this.computeSecurity.bind(this));
         topo.nodes.on('remove', this.computeSecurity.bind(this));
         this.computeSecurity();
+    }
+
+    private addCertNode(cert: Certificate, issuer?: Certificate, args?: any) {
+        this.nodes.add({
+            id: cert.name.toString(),
+            color: issuer ? '#64dd17' : '#ff5252',
+            title: AltUri.ofName(cert.name),
+            font: {
+                color: 'black',
+            },
+            ... args,
+        });
+
+        if (issuer) {
+            this.edges.add({
+                from: issuer.name.toString(),
+                to: cert.name.toString(),
+                color: '#64dd17',
+            });
+        }
     }
 
     private refresh = async () => {
@@ -26,9 +55,10 @@ export class SecurityController {
         const [rootPvt, rootPub] = await generateSigningKey(this.rootKeychain, "/ndn");
         this.rootCertificate = await Certificate.selfSign({ publicKey: rootPub, privateKey: rootPvt });
         await this.rootKeychain.insertCert(this.rootCertificate);
+        this.addCertNode(this.rootCertificate);
     }
 
-    private getNodeOptions = async (nfw: NFW) => {
+    private setNodeOpts = async (nfw: NFW) => {
         const policy = versec2019.load(`
             site = ndn
             root = <site>/<_KEY>
@@ -43,7 +73,8 @@ export class SecurityController {
         const schema = new TrustSchema(policy, [this.rootCertificate]);
         const signer = new TrustSchemaSigner({ keyChain, schema });
 
-        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${nfw.node().label}/cert/node`);
+        const label = nfw.node().label;
+        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${label}/cert/node`);
         const pingCert = await Certificate.issue({
             publicKey: pingPub,
             validity: ValidityPeriod.daysFromNow(30),
@@ -53,6 +84,9 @@ export class SecurityController {
 
         await keyChain.insertCert(pingCert);
 
+        // Add to visualizer
+        this.addCertNode(pingCert, this.rootCertificate, { label });
+
         const verifier = new TrustSchemaVerifier({
             schema,
             offline: false,
@@ -61,7 +95,8 @@ export class SecurityController {
             }),
         });
 
-        return { signer, verifier, keyChain, };
+        // Put into NFW
+        nfw.securityOptions = { signer, verifier, keyChain };
     }
 
     /** Compute static routes */
@@ -71,6 +106,8 @@ export class SecurityController {
         this.refreshTimer = window.setTimeout(async () => {
             // Reset
             this.refreshTimer = 0;
+            this.nodes.clear();
+            this.edges.clear();
 
             // Keep this log for the user
             console.warn('Computing security');
@@ -79,11 +116,40 @@ export class SecurityController {
             await this.refresh();
 
             // Set for all nodes
-            for (const node of this.topo.nodes.get()) {
-                this.getNodeOptions(node.nfw).then((opts) => {
-                    node.nfw.securityOptions = opts;
-                });
-            }
+            await Promise.all(this.topo.nodes.get().map((n) => this.setNodeOpts(n.nfw)));
+
+            // Fit network
+            this.fitLazy();
         }, 500);
+    }
+
+    /** Initialize the network */
+    public createNetwork(container: HTMLElement) {
+        const data = {
+            nodes: this.nodes,
+            edges: this.edges,
+        };
+
+        const options = {
+            interaction: { hover: false },
+            layout: {
+                randomSeed: 2,
+            },
+            edges:{
+                arrows: {
+                  to: {
+                    enabled: true,
+                    type: "arrow"
+                  },
+                }
+            },
+        };
+
+        this.network = new vis.Network(container, data, options);
+    }
+
+    public fitLazy() {
+        this.network.stabilize();
+        setTimeout(() => this.network.fit(), 200);
     }
 }

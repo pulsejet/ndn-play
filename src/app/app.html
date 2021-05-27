@@ -10,12 +10,15 @@
     <ng-template #mainUpperPane>
         <app-tabs class="tab-container">
             <app-tab name="Topology">
-                <div #topoContainer id="network"></div>
+                <div #topoContainer class="main-tab"></div>
             </app-tab>
             <app-tab name="Editor" *ngIf="gs.topo.selectedNode">
-                <div id="editor">
+                <div class="main-tab">
                     <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit"></app-editor>
                 </div>
+            </app-tab>
+            <app-tab name="Security" (select)="gs.topo.security.fitLazy()">
+                <div #secContainer class="main-tab"></div>
             </app-tab>
         </app-tabs>
     </ng-template>

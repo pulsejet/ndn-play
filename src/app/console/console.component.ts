@@ -89,9 +89,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       term.writeln(msg);
     });
 
-    setTimeout(() => {
-      this.resize();
-    }, 500);
+    setTimeout(() => { this.resize(); }, 500);
+    this.resize();
 
     window.addEventListener('resize', this.resize);
   }

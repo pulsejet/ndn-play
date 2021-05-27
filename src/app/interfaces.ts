@@ -2,7 +2,6 @@ import * as vis from 'vis-network';
 import { NFW } from './nfw';
 
 export interface INode extends vis.Node {
-    init?: boolean;
     producedPrefixes: string[];
     nfw: NFW;
     extra: {
@@ -11,7 +10,6 @@ export interface INode extends vis.Node {
 }
 
 export interface IEdge extends vis.Edge {
-    init?: boolean;
     latency: number;
     loss: number;
     extra: {

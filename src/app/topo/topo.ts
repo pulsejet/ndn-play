@@ -187,9 +187,8 @@ export class Topology {
   private ensureInitialized() {
     // Initilize edges
     for (const edge of this.edges.get()) {
-      if (!edge.init) {
+      if (!edge.extra) {
         this.edges.update({
-          init: true,
           id: edge.id,
           color: this.DEFAULT_LINK_COLOR,
           latency: edge.latency || -1,
@@ -203,17 +202,18 @@ export class Topology {
 
     // Initialize nodes
     for (const node of this.nodes.get()) {
-      if (!node.init) {
+      if (!node.extra) {
         this.nodes.update({
-          init: true,
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
           producedPrefixes: ['/ndn/multicast/test'],
-          nfw: new NFW(this, node),
           extra: {
             codeEdit: '',
           },
         });
+
+        const nfw = new NFW(this, node.id);
+        this.nodes.update({ id: node.id, nfw });
       }
     }
   }

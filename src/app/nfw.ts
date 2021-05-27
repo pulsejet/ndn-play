@@ -12,9 +12,6 @@ import { Topology } from "./topo/topo";
 import pushable from "it-pushable";
 
 export class NFW {
-    /** ID of this node */
-    private readonly nodeId: vis.IdType;
-
     /** NDNts forwarder */
     public fw = Forwarder.create();
     private face: FwFace;
@@ -73,10 +70,8 @@ export class NFW {
 
     constructor(
         private readonly topo: Topology,
-        node: INode,
+        public readonly nodeId: vis.IdType,
     ) {
-        this.nodeId = <vis.IdType>node.id;
-
         this.fw.on("pktrx", (face, pkt) => {
             // Not useful stuff
             if (pkt.cancel || pkt.reject) return;
@@ -119,10 +114,8 @@ export class NFW {
             if (i !== -1) this.announcements.splice(i, 1);
         });
 
-        // Initial setup
-        setTimeout(() => {
-            this.nodeUpdated();
-        }, 500);
+        // Initial server setup
+        this.nodeUpdated();
     }
 
     public node() {

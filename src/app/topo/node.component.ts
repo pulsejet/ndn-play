@@ -81,7 +81,7 @@ export class TopoNodeComponent implements OnInit {
   public selExpressInterest(name: string) {
     name = name.replace('$time', (new Date).getTime().toString());
     const interest = new Interest(name, Interest.Lifetime(3000))
-    this.topo.selectedNode?.nfw.getEndpoint().consume(interest).then(() => {
+    this.topo.selectedNode?.nfw.getEndpoint({ secure: false }).consume(interest).then(() => {
       console.log('Received data reply');
     }).catch(console.error);
   }
@@ -102,7 +102,7 @@ export class TopoNodeComponent implements OnInit {
     const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();
-    dest.nfw.getEndpoint().consume(interest).then(() => {
+    dest.nfw.getEndpoint({ secure: true }).consume(interest).then(() => {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     }).catch(console.error);
 

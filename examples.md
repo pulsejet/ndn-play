@@ -2,7 +2,7 @@
 
 You can run JavaScript code using NDNts on nodes in NDN-Play. The `Node` object is available in the variable `node` and NDNts imports must be done from `ndn.<package-name>`.
 
-You can get a configured NDNts `Endpoint` with `node.nfw.getEndpoint()`.
+You can get a configured NDNts `Endpoint` with `node::nfw::getEndpoint`.
 
 ## Visualize Packet
 On any node, run `visualize(packet)` to visualize an Encodable TLV.
@@ -35,7 +35,7 @@ A simple ping program is described below.
 const { Data, Interest } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint();
+const endpoint = node.nfw.getEndpoint({ secure: false });
 var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
     const data = new Data(interest.name, Data.FreshnessPeriod(500));
     data.content = toUtf8("Hello from NDNts Producer");
@@ -46,7 +46,7 @@ var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
 const { Data, Interest } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint();
+const endpoint = node.nfw.getEndpoint({ secure: false });
 const interest = new Interest('/ndn/producer/test');
 const data = await endpoint.consume(interest);
 alert(fromUtf8(data.content));
@@ -60,7 +60,7 @@ A sample application running PSync (run this code on multiple nodes)
 const { Data, Interest, Name } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint();
+const endpoint = node.nfw.getEndpoint({ secure: false });
 
 const opts = {
     p: ndn.sync.makePSyncCompatParam({ expectedEntries: 40 }),

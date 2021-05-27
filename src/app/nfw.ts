@@ -436,11 +436,11 @@ export class NFW {
         return text;
     }
 
-    public getEndpoint() {
+    public getEndpoint(opts?: { secure?: boolean }) {
         return new Endpoint({
             fw: this.fw,
-            dataSigner: this.securityOptions?.signer,
-            verifier: this.securityOptions?.verifier,
+            dataSigner: opts?.secure ? this.securityOptions?.signer : undefined,
+            verifier: opts?.secure ? this.securityOptions?.verifier : undefined,
         });
     }
 }

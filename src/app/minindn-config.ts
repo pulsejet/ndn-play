@@ -51,4 +51,6 @@ export function loadMiniNDNConfig(topo: Topology, confStr: string) {
 
     topo.nodes.add(<any>readNodes);
     topo.edges.add(<any>readLinks);
+
+    topo.network.stabilize();
 }

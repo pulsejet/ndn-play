@@ -92,7 +92,7 @@ export class SecurityController {
         const certs: {[id: string]: Certificate} = {};
 
         for (const p of policy.listPatterns()) {
-            if (p[0].includes('root')) {
+            if (p[0].startsWith('root')) {
                 let name: Name;
 
                 const pt = (<any>p[1])?.parts?.[0];

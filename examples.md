@@ -90,7 +90,7 @@ window.sync[node.label] = sync;
 
 ## Trust Visualization
 
-A keypair and certificate is generated for each node from the schema, when the prefix of the certificate is `/ndn/<_node>`. All root certificates are configured as trust anchors.
+A keypair and certificate is generated for each node from the schema, when the prefix of the certificate is `/ndn/<_node>`. All root certificates (starting with `root`) are configured as trust anchors.
 
 * One certificate directly signed by the trust anchor for each node
     ```

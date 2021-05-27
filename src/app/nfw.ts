@@ -119,28 +119,17 @@ export class NFW {
             if (i !== -1) this.announcements.splice(i, 1);
         });
 
-        // Setup security
-        this.topo.security.refreshEvent.subscribe(() => {
-            this.setupSecurity();
-        });
-        if (this.topo.security.init) {
-            this.setupSecurity();
-        }
+        // Initial setup
+        setTimeout(() => {
+            this.nodeUpdated();
+        }, 500);
     }
 
     public node() {
         return <INode>this.topo.nodes.get(this.nodeId);
     }
 
-    private setupSecurity = async () => {
-        this.securityOptions = await this.topo.security.getNodeOptions(this);
-        this.nodeUpdated();
-    }
-
     public nodeUpdated() {
-        // Not before initialization
-        if (!this.securityOptions) return;
-
         this.setupPingServer();
         this.setupCertServer();
     }
@@ -151,8 +140,10 @@ export class NFW {
 
         // Start new server
         const label = this.node().label;
-        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/ping`, async (interest) => {
-            return new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
+        this.pingServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}-site/ping`, async (interest) => {
+            const data = new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
+            this.securityOptions?.signer.sign(data);
+            return data;
         });
     }
 
@@ -162,7 +153,7 @@ export class NFW {
 
         // Start new server
         const label = this.node().label;
-        this.certServer = this.getEndpoint().produce(`/ndn/${label}-site/KEY`, async (interest) => {
+        this.certServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}-site/KEY`, async (interest) => {
             try {
                 const cert = await this.securityOptions?.keyChain.getCert(interest.name);
                 return cert?.data;

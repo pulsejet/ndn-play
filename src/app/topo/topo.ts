@@ -51,9 +51,6 @@ export class Topology {
   public security: SecurityController;
 
   constructor() {
-    // Initialize security
-    this.security = new SecurityController();
-
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "A" },
@@ -88,6 +85,9 @@ export class Topology {
     // Initialize always
     this.nodes.on('add', this.ensureInitialized.bind(this));
     this.edges.on('add', this.ensureInitialized.bind(this));
+
+    // Initialize security
+    this.security = new SecurityController(this);
   }
 
   /** Initialize the network */

@@ -1,35 +1,31 @@
-import { EventEmitter } from "@angular/core";
 import { Endpoint } from "@ndn/endpoint";
 import { Certificate, generateSigningKey, KeyChain, ValidityPeriod } from "@ndn/keychain";
 import { Component } from "@ndn/packet";
 import { TrustSchema, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
 import { NFW } from "./nfw";
+import { Topology } from "./topo/topo";
 
 export class SecurityController {
-    // Need a refresh of security
-    public refreshEvent = new EventEmitter<void>();
-
     // Global keychain
     private rootKeychain!: KeyChain;
     private rootCertificate!: Certificate;
 
-    // Already initialized
-    public init = false;
-
-    constructor() {
-        this.refresh();
+    constructor(
+        private topo: Topology,
+    ) {
+        topo.nodes.on('add', this.computeSecurity.bind(this));
+        topo.nodes.on('remove', this.computeSecurity.bind(this));
+        this.computeSecurity();
     }
 
-    public refresh = async () => {
+    private refresh = async () => {
         this.rootKeychain = KeyChain.createTemp();
         const [rootPvt, rootPub] = await generateSigningKey(this.rootKeychain, "/ndn");
         this.rootCertificate = await Certificate.selfSign({ publicKey: rootPub, privateKey: rootPvt });
         await this.rootKeychain.insertCert(this.rootCertificate);
-        this.refreshEvent.emit();
-        this.init = true;
     }
 
-    public getNodeOptions = async (nfw: NFW) => {
+    private getNodeOptions = async (nfw: NFW) => {
         const policy = versec2019.load(`
             site = ndn
             root = <site>/<_KEY>
@@ -41,7 +37,6 @@ export class SecurityController {
         `);
 
         const keyChain = KeyChain.createTemp();
-
         const schema = new TrustSchema(policy, [this.rootCertificate]);
         const signer = new TrustSchemaSigner({ keyChain, schema });
 
@@ -64,5 +59,20 @@ export class SecurityController {
         });
 
         return { signer, verifier, keyChain, };
+    }
+
+    /** Compute static routes */
+    public computeSecurity = async () => {
+        console.warn('Computing security');
+
+        // Recalculate
+        await this.refresh();
+
+        // Set for all nodes
+        for (const node of this.topo.nodes.get()) {
+            this.getNodeOptions(node.nfw).then((opts) => {
+                node.nfw.securityOptions = opts;
+            });
+        }
     }
 }

@@ -16,7 +16,7 @@ import { TabComponent } from './tab.component';
       </div>
 
       <div *ngFor="let tab of children" [hidden]="tab !== selection"
-            class="main-space" [class.v-overflow]="vOverflow">
+            class="main-space">
           <ng-container [ngTemplateOutlet]="tab.template"></ng-container>
       </div>
     </div>
@@ -39,17 +39,12 @@ import { TabComponent } from './tab.component';
         flex: 1;
         overflow: hidden;
       }
-
-      .main-space.v-overflow {
-        overflow: auto;
-      }
     `
   ]
 })
 export class TabsComponent implements OnInit, AfterContentInit   {
 
   @ContentChildren(TabComponent) children!: QueryList<TabComponent>;
-  @Input() vOverflow = false;
   public selection!: TabComponent;
 
   constructor() { }

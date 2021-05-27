@@ -148,8 +148,8 @@ export class NFW {
         const label = this.node().label;
         this.certServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}/cert`, async (interest) => {
             try {
-                const cert = await this.securityOptions?.keyChain.getCert(interest.name);
-                return cert?.data;
+                const certName = (await this.securityOptions?.keyChain.listCerts(interest.name))?.[0];
+                return certName ? (await this.securityOptions?.keyChain.getCert(certName))?.data : undefined;
             } catch {
                 return undefined;
             }

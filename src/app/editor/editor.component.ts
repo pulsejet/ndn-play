@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
 
 export const monacoConfig = {
   onMonacoLoad: async () => {
@@ -39,8 +39,16 @@ export class EditorComponent implements OnInit {
   @Input() public code: string = '';
   @Output() public codeChange = new EventEmitter<string>();
 
+  @Input() public language = 'javascript';
+
   constructor() { }
 
   ngOnInit(): void {
+  }
+
+  ngOnChanges(changes: { [propName: string]: SimpleChange }) {
+    if (changes.language) {
+      this.editorOptions.language = this.language;
+    }
   }
 }

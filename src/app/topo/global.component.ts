@@ -11,6 +11,8 @@ import { Topology } from './topo';
         <div class="field">
             <button class="button is-link full-width is-light is-small full-width"
                     (click)="topo.scheduleRouteRefresh()">Compute Routes</button>
+            <button class="button is-link full-width is-light is-small full-width mt-1"
+                    (click)="topo.security.computeSecurity()">Compute Trust</button>
         </div>
 
         <div class="field">

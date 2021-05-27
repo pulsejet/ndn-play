@@ -1,15 +1,15 @@
 import { Endpoint } from "@ndn/endpoint";
-import { Certificate, generateSigningKey, KeyChain, ValidityPeriod } from "@ndn/keychain";
-import { AltUri, Component } from "@ndn/packet";
+import { Certificate, generateSigningKey, KeyChain, NamedSigner, NamedVerifier, ValidityPeriod } from "@ndn/keychain";
+import { AltUri, Component, Name } from "@ndn/packet";
 import { TrustSchema, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
-import { NFW } from "./nfw";
 import { Topology } from "./topo/topo";
 import * as vis from 'vis-network/standalone';
 
 export class SecurityController {
     // Global keychain
     private rootKeychain!: KeyChain;
-    private rootCertificate!: Certificate;
+    private rootKeys: {[id: string]: [NamedSigner.PrivateKey, NamedVerifier.PublicKey, Certificate]} = {};
+    private issuerKeys: {[id: string]: [NamedSigner.PrivateKey, NamedVerifier.PublicKey, Certificate][]} = {};
 
     // Don't refresh too often
     private refreshTimer = 0
@@ -18,6 +18,18 @@ export class SecurityController {
     public readonly nodes: vis.DataSet<vis.Node, "id">;
     public readonly edges: vis.DataSet<vis.Edge, "id">;
     public network!: vis.Network;
+
+    // Schema text
+    public schemaText = `site = ndn
+        root = <site>/<_KEY>
+
+        a = <site>/A/cert/bigroot/<_KEY>
+        netnode = <site>/<_node>/cert/net/<_KEY>
+        atreenode = <site>/<_node>/cert/atree/<_KEY>
+        ping = <site>/<_node>/ping/<_time>
+
+        ping <= atreenode <= a <= root`
+    .split('\n').map((l) => l.trimStart()).join('\n'); // Remove space at start
 
     constructor(
         private topo: Topology,
@@ -33,7 +45,7 @@ export class SecurityController {
     private addCertNode(cert: Certificate, issuer?: Certificate, args?: any) {
         this.nodes.add({
             id: cert.name.toString(),
-            color: issuer ? '#64dd17' : '#ff5252',
+            color: issuer ? '#64dd17' : 'pink',
             title: AltUri.ofName(cert.name),
             font: {
                 color: 'black',
@@ -51,52 +63,136 @@ export class SecurityController {
     }
 
     private refresh = async () => {
+        this.nodes.clear();
+        this.edges.clear();
         this.rootKeychain = KeyChain.createTemp();
-        const [rootPvt, rootPub] = await generateSigningKey(this.rootKeychain, "/ndn");
-        this.rootCertificate = await Certificate.selfSign({ publicKey: rootPub, privateKey: rootPvt });
-        await this.rootKeychain.insertCert(this.rootCertificate);
-        this.addCertNode(this.rootCertificate);
-    }
+        this.issuerKeys = {};
+        this.rootKeys = {};
 
-    private setNodeOpts = async (nfw: NFW) => {
-        const policy = versec2019.load(`
-            site = ndn
-            root = <site>/<_KEY>
+        // Clear security options
+        for (const node of this.topo.nodes.get()) {
+            node.nfw.securityOptions = <any>{
+                keyChain: KeyChain.createTemp(),
+            };
+        }
 
-            node = <site>/<_label>/cert/node/<_KEY>
-            ping = <site>/<_label>/ping/<_time>
+        const policy = versec2019.load(this.schemaText);
 
-            ping <= node <= root
-        `);
+        const signers: {[c: string]: string} = {};
+        for (const r of policy.listRules()) {
+            signers[r[0]] = r[1];
+        }
 
-        const keyChain = KeyChain.createTemp();
-        const schema = new TrustSchema(policy, [this.rootCertificate]);
-        const signer = new TrustSchemaSigner({ keyChain, schema });
+        const certs: {[id: string]: Certificate} = {};
 
-        const label = nfw.node().label;
-        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${label}/cert/node`);
-        const pingCert = await Certificate.issue({
-            publicKey: pingPub,
-            validity: ValidityPeriod.daysFromNow(30),
-            issuerId: Component.from("root"),
-            issuerPrivateKey: new TrustSchemaSigner({ keyChain: this.rootKeychain, schema }),
-        });
+        for (const p of policy.listPatterns()) {
+            if (p[0].includes('root')) {
+                let name: Name;
 
-        await keyChain.insertCert(pingCert);
+                const pt = (<any>p[1])?.parts?.[0];
+                if (pt?.name) {
+                    name = pt.name;
+                } else {
+                    console.error('Only const pattern supported for root certificate, got', pt);
+                    break;
+                }
 
-        // Add to visualizer
-        this.addCertNode(pingCert, this.rootCertificate, { label });
+                const [rootPvt, rootPub] = await generateSigningKey(this.rootKeychain, name);
+                const rootCert = await Certificate.selfSign({ publicKey: rootPub, privateKey: rootPvt });
+                this.issuerKeys[p[0]] = [[rootPvt, rootPub, rootCert]];
+                this.rootKeys[p[0]] = [rootPvt, rootPub, rootCert];
+                certs[p[0]] = rootCert;
+                await this.rootKeychain.insertCert(rootCert);
+                this.addCertNode(rootCert, undefined, { label: p[0] });
+            } else {
+                // Check if it's a certificate
+                let pts = (<any>p[1])?.parts;
+                if (!pts) continue;
+                pts = [...pts];
 
-        const verifier = new TrustSchemaVerifier({
-            schema,
-            offline: false,
-            endpoint: new Endpoint({
-                fw: nfw.fw,
-            }),
-        });
+                const ptl = pts.pop();
+                if (ptl.name || ptl.id) {
+                    // Guess it's not a certificate :-/
+                    continue;
+                }
 
-        // Put into NFW
-        nfw.securityOptions = { signer, verifier, keyChain };
+                // Get all name components
+                let nameTempl: Name | undefined = new Name();
+                let labelled = [];
+                for (const pt of pts) {
+                    if (pt.name) {
+                        nameTempl = nameTempl.append(... (<Name>pt.name).comps);
+                        continue;
+                    }
+
+                    if (pt.id.startsWith('node')) {
+                        labelled.push(nameTempl.length);
+                        nameTempl = nameTempl.append('_node');
+                        continue;
+                    }
+
+                    // Unknown variable? - can't issue this
+                    nameTempl = undefined;
+                    break;
+                }
+
+                // Create certificate for all nodes
+                if (nameTempl) {
+                    for (const node of this.topo.nodes.get()) {
+                        if (!node?.label) continue;
+
+                        let certName = nameTempl;
+                        for (const li of labelled) {
+                            certName = nameTempl.replaceAt(li, node.label);
+                        }
+
+                        const servePrefix = new Name(`/ndn/${node.label}/cert`);
+                        if (servePrefix.isPrefixOf(certName)) {
+                            // Issue certificate
+                            const keyChain = <KeyChain>node.nfw.securityOptions?.keyChain;
+                            const issuers = this.issuerKeys[signers[p[0]]];
+
+                            if (!issuers || issuers.length == 0) continue;
+
+                            for (const issuer of issuers) {
+                                const [pvtKey, pubKey] = await generateSigningKey(keyChain, certName);
+                                const cert = await Certificate.issue({
+                                    publicKey: pubKey,
+                                    validity: ValidityPeriod.daysFromNow(30),
+                                    issuerId: Component.from(signers[p[0]]),
+                                    issuerPrivateKey: issuer[0],
+                                });
+
+                                await keyChain.insertCert(cert);
+                                this.addCertNode(cert, issuer[2], { label: node.label });
+
+                                if (!this.issuerKeys[p[0]]) this.issuerKeys[p[0]] = [];
+                                this.issuerKeys[p[0]].push([pvtKey, pubKey, cert]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Setup security options in NFW
+        for (const node of this.topo.nodes.get()) {
+            const keyChain = <KeyChain>node.nfw.securityOptions?.keyChain;
+            const rootCerts = Object.values(this.rootKeys).map((c) => c[2]);
+            const schema = new TrustSchema(policy, rootCerts);
+            const signer = new TrustSchemaSigner({ keyChain, schema });
+
+            const verifier = new TrustSchemaVerifier({
+                schema,
+                offline: false,
+                endpoint: new Endpoint({
+                    fw: node.nfw.fw,
+                }),
+            });
+
+            // Put into NFW
+            node.nfw.securityOptions = { signer, verifier, keyChain };
+        }
     }
 
     /** Compute static routes */
@@ -106,17 +202,12 @@ export class SecurityController {
         this.refreshTimer = window.setTimeout(async () => {
             // Reset
             this.refreshTimer = 0;
-            this.nodes.clear();
-            this.edges.clear();
 
             // Keep this log for the user
-            console.warn('Computing security');
+            console.warn('Computing trust');
 
             // Recalculate
             await this.refresh();
-
-            // Set for all nodes
-            await Promise.all(this.topo.nodes.get().map((n) => this.setNodeOpts(n.nfw)));
 
             // Fit network
             this.fitLazy();

@@ -35,7 +35,7 @@ export class SecurityController {
             root = <site>/<_KEY>
 
             node = <site>/<_label>-site/<_KEY>
-            ping = <site>/<_label>-site/ping
+            ping = <site>/<_label>-site/ping/<_time>
 
             ping <= node <= root
         `);

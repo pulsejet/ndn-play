@@ -98,7 +98,7 @@ export class TopoNodeComponent implements OnInit {
 
     const dest = <INode>this.topo.nodes.get(id);
     const label = this.topo.selectedNode?.label;
-    const name = `/ndn/${label}-site/ping`;
+    const name = `/ndn/${label}-site/ping/${new Date().getTime()}`;
     const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();

@@ -68,6 +68,9 @@ export class NFW {
         timer: number;
     }} = {};
 
+    /** Announcements current */
+    private announcements: Name[] = [];
+
     constructor(
         private readonly topo: Topology,
         node: INode,
@@ -100,15 +103,20 @@ export class NFW {
             pfxs.push(AltUri.ofName(prefix));
             this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
             this.topo.scheduleRouteRefresh();
+
+            this.announcements.push(prefix);
         });
 
         // Remove routes
         this.fw.on("annrm", (prefix) => {
             const pfxs = this.node().producedPrefixes
-            const i = pfxs.indexOf(AltUri.ofName(prefix));
+            let i = pfxs.indexOf(AltUri.ofName(prefix));
             if (i !== -1) pfxs.splice(i, 1);
             this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
             this.topo.scheduleRouteRefresh();
+
+            i = this.announcements.findIndex((a) => a.equals(prefix));
+            if (i !== -1) this.announcements.splice(i, 1);
         });
 
         // Setup security
@@ -236,8 +244,8 @@ export class NFW {
     }
 
     private checkPrefixRegistrationMatches(interest: Interest) {
-        for (const face of this.fw.faces) {
-            if (face.hasRoute(interest.name)) {
+        for (const ann of this.announcements) {
+            if (ann.isPrefixOf(interest.name)) {
                 return true;
             }
         }

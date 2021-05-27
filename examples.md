@@ -105,10 +105,8 @@ A keypair and certificate is generated for each node from the schema, when the p
     ```
     site = ndn
     root = <site>/<_KEY>
-
     a = <site>/A/cert/my-tree/<_KEY>
     a-node = <site>/<_node>/cert/my-tree/<_KEY>
     ping = <site>/<_node>/ping/<_time>
-
     ping <= a-node <= a <= root
     ```

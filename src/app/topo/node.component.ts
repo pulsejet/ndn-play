@@ -14,7 +14,7 @@ import { Topology } from './topo';
             <input class="input is-small" type="text" placeholder="Alice"
                 [(ngModel)]="node.label"
                 (input)="topo.nodes.update({ id: node.id, label: node.label })"
-                (change)="node.nfw.nodeUpdated()">
+                (change)="node.nfw.nodeUpdated(); topo.security.computeSecurity();">
         </div>
 
         <label class="label is-small">Express Interest</label>

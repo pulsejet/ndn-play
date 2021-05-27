@@ -30,8 +30,8 @@ export class SecurityController {
             site = ndn
             root = <site>/<_KEY>
 
-            node = <site>/<_label>-site/<_KEY>
-            ping = <site>/<_label>-site/ping/<_time>
+            node = <site>/<_label>/cert/node/<_KEY>
+            ping = <site>/<_label>/ping/<_time>
 
             ping <= node <= root
         `);
@@ -40,7 +40,7 @@ export class SecurityController {
         const schema = new TrustSchema(policy, [this.rootCertificate]);
         const signer = new TrustSchemaSigner({ keyChain, schema });
 
-        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${nfw.node().label}-site`);
+        const [pingPvt, pingPub] = await generateSigningKey(keyChain, `/ndn/${nfw.node().label}/cert/node`);
         const pingCert = await Certificate.issue({
             publicKey: pingPub,
             validity: ValidityPeriod.daysFromNow(30),

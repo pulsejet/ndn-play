@@ -133,7 +133,7 @@ export class NFW {
 
         // Start new server
         const label = this.node().label;
-        this.pingServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}-site/ping`, async (interest) => {
+        this.pingServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}/ping`, async (interest) => {
             const data = new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
             this.securityOptions?.signer.sign(data);
             return data;
@@ -146,7 +146,7 @@ export class NFW {
 
         // Start new server
         const label = this.node().label;
-        this.certServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}-site/KEY`, async (interest) => {
+        this.certServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}/cert`, async (interest) => {
             try {
                 const cert = await this.securityOptions?.keyChain.getCert(interest.name);
                 return cert?.data;

@@ -16,7 +16,7 @@ visualize(i);
 
 Example with signed data
 
-```
+```js
 const { Data, Interest, Name } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 

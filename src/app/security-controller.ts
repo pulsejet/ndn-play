@@ -10,6 +10,9 @@ export class SecurityController {
     private rootKeychain!: KeyChain;
     private rootCertificate!: Certificate;
 
+    // Don't refresh too often
+    private refreshTimer = 0
+
     constructor(
         private topo: Topology,
     ) {
@@ -63,16 +66,24 @@ export class SecurityController {
 
     /** Compute static routes */
     public computeSecurity = async () => {
-        console.warn('Computing security');
+        if (this.refreshTimer) return;
 
-        // Recalculate
-        await this.refresh();
+        this.refreshTimer = window.setTimeout(async () => {
+            // Reset
+            this.refreshTimer = 0;
 
-        // Set for all nodes
-        for (const node of this.topo.nodes.get()) {
-            this.getNodeOptions(node.nfw).then((opts) => {
-                node.nfw.securityOptions = opts;
-            });
-        }
+            // Keep this log for the user
+            console.warn('Computing security');
+
+            // Recalculate
+            await this.refresh();
+
+            // Set for all nodes
+            for (const node of this.topo.nodes.get()) {
+                this.getNodeOptions(node.nfw).then((opts) => {
+                    node.nfw.securityOptions = opts;
+                });
+            }
+        }, 500);
     }
 }

@@ -449,10 +449,10 @@ class ContentStore {
 
         // Replace old object
         const i = this.cs.findIndex((e) => e.data.name.equals(data.name));
-        if (i) {
+        if (i !== -1) {
             this.cs[i] = obj;
         } else {
-            this.cs.unshift();
+            this.cs.unshift(obj);
         }
 
         // Trim CS
@@ -462,9 +462,10 @@ class ContentStore {
     }
 
     public get(interest: Interest): Data | undefined {
-        return this.cs.find(e => {
-            return e.data.canSatisfy(interest) &&
+        const entry = this.cs.find(e => {
+            return interest.name.isPrefixOf(e.data.name) &&
                    e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime();
-        })?.data;
+        });
+        return entry?.data;
     }
 }

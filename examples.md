@@ -87,3 +87,28 @@ window.sync[node.label] = sync;
 // To stop all nodes, run
 // Object.values(window.sync).forEach((e) => e.close())
 ```
+
+## Trust Visualization
+
+A keypair and certificate is generated for each node from the schema, when the prefix of the certificate is `/ndn/<_node>`. All root certificates are configured as trust anchors.
+
+* One certificate directly signed by the trust anchor for each node
+    ```
+    site = ndn
+    root = <site>/<_KEY>
+    node = <site>/<_node>/cert/node/<_KEY>
+    ping = <site>/<_node>/ping/<_time>
+    ping <= node <= root
+    ```
+
+* One certificate for node A, signed by the trust anchor. All other certificates are signed by A. A's certificate is distributed by A only.
+    ```
+    site = ndn
+    root = <site>/<_KEY>
+
+    a = <site>/A/cert/my-tree/<_KEY>
+    a-node = <site>/<_node>/cert/my-tree/<_KEY>
+    ping = <site>/<_node>/ping/<_time>
+
+    ping <= a-node <= a <= root
+    ```

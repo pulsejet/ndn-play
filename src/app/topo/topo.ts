@@ -2,6 +2,7 @@ import { IEdge, INode } from "../interfaces";
 import { RoutingHelper } from "../routing-helper";
 import { Name } from "@ndn/packet";
 import { NFW } from "../nfw";
+import { SecurityController } from "../security-controller";
 import * as vis from 'vis-network/standalone';
 
 export class Topology {
@@ -46,7 +47,13 @@ export class Topology {
   // Event of route refresh
   private scheduledRouteRefresh: number = 0;
 
+  // Security
+  public security: SecurityController;
+
   constructor() {
+    // Initialize security
+    this.security = new SecurityController();
+
     // create an array with nodes
     this.nodes = new vis.DataSet<INode, "id">(<any>[
       { id: "1", label: "A" },

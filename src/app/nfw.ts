@@ -7,9 +7,9 @@ import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 import { Pit } from "@ndn/fw/lib/pit";
 import { Encoder, toUtf8 } from '@ndn/tlv';
-import { createSigner, createVerifier, CryptoAlgorithm, RSA } from "@ndn/keychain";
-import pushable from "it-pushable";
+import { KeyChain } from "@ndn/keychain";
 import { Topology } from "./topo/topo";
+import pushable from "it-pushable";
 
 export class NFW {
     /** ID of this node */
@@ -21,17 +21,13 @@ export class NFW {
     private faceRx = pushable<FwPacket>();
 
     /** Security options */
-    public security?: {
+    public securityOptions?: {
         /** Signer object */
         signer: Signer,
         /** Verifier object */
         verifier: Verifier,
-        /** Private key */
-        privKey: CryptoKey,
-        /** Public key */
-        pubKey: CryptoKey,
-        /** Generated key pair */
-        keyPair: CryptoAlgorithm.GeneratedKeyPair;
+        /** Keychain */
+        keyChain: KeyChain;
     };
 
     /** Forwarding table */
@@ -57,6 +53,9 @@ export class NFW {
     /** Server for ping */
     private pingServer?: Producer;
 
+    /** Server for certificates */
+    private certServer?: Producer;
+
     /** Connections to other NFWs */
     private connections: { [nodeId: string]: {
         face: FwFace,
@@ -69,7 +68,10 @@ export class NFW {
         timer: number;
     }} = {};
 
-    constructor(private topo: Topology, node: INode) {
+    constructor(
+        private readonly topo: Topology,
+        node: INode,
+    ) {
         this.nodeId = <vis.IdType>node.id;
 
         this.fw.on("pktrx", (face, pkt) => {
@@ -110,28 +112,56 @@ export class NFW {
         });
 
         // Setup security
-        (async () => {
-            const sKey = await RSA.cryptoGenerate({}, true);
-            this.security = {
-                keyPair: sKey,
-                privKey: sKey.privateKey,
-                pubKey: sKey.publicKey,
-                signer: createSigner(RSA, sKey),
-                verifier: createVerifier(RSA, sKey),
-            }
-            this.nodeUpdated();
-        })();
+        this.topo.security.refreshEvent.subscribe(() => {
+            this.setupSecurity();
+        });
+        if (this.topo.security.init) {
+            this.setupSecurity();
+        }
     }
 
     public node() {
         return <INode>this.topo.nodes.get(this.nodeId);
     }
 
+    private setupSecurity = async () => {
+        this.securityOptions = await this.topo.security.getNodeOptions(this.node());
+        this.nodeUpdated();
+    }
+
     public nodeUpdated() {
         // Not before initialization
-        if (!this.security) return;
+        if (!this.securityOptions) return;
 
         this.setupPingServer();
+        this.setupCertServer();
+    }
+
+    private setupPingServer() {
+        // Close existing server
+        this.pingServer?.close();
+
+        // Start new server
+        const label = this.node().label;
+        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/ping`, async (interest) => {
+            return new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
+        });
+    }
+
+    private setupCertServer() {
+        // Close existing server
+        this.certServer?.close();
+
+        // Start new server
+        const label = this.node().label;
+        this.certServer = this.getEndpoint().produce(`/ndn/${label}/KEY`, async (interest) => {
+            try {
+                const cert = await this.securityOptions?.keyChain.getCert(interest.name);
+                return cert?.data;
+            } catch {
+                return undefined;
+            }
+        });
     }
 
     public capturePacket(p: any) {
@@ -152,17 +182,6 @@ export class NFW {
             p: p,
             length: encoder.output.length,
             type: type,
-        });
-    }
-
-    private setupPingServer() {
-        // Close existing server
-        this.pingServer?.close();
-
-        // Start new server
-        const label = this.node().label;
-        this.pingServer = this.getEndpoint().produce(`/ndn/${label}-site/ping`, async (interest) => {
-            return new Data(interest.name, toUtf8('Ping Reply'));
         });
     }
 
@@ -428,7 +447,8 @@ export class NFW {
     public getEndpoint() {
         return new Endpoint({
             fw: this.fw,
-            dataSigner: this.security?.signer,
+            dataSigner: this.securityOptions?.signer,
+            verifier: this.securityOptions?.verifier,
         });
     }
 }

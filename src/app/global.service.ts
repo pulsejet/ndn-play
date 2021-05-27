@@ -13,7 +13,7 @@ export class GlobalService {
   }
 
   /** Update objects every animation frame */
-  runAnimationFrame() {
+  public runAnimationFrame() {
     this.topo.runAnimationFrame();
     requestAnimationFrame(this.runAnimationFrame.bind(this));
   }

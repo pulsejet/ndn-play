@@ -22,7 +22,7 @@
 
     <ng-template #mainLowerPane>
         <app-tabs class="tab-container main-lower" #lowerTabs>
-            <app-tab name="Console">
+            <app-tab name="Console" (select)="console.resize()">
                 <div class="console"> <console #console></console> </div>
             </app-tab>
 

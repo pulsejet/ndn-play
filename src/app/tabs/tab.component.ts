@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-tab[name]',
@@ -12,8 +12,8 @@ import { Component, Input, OnInit, TemplateRef, ViewChild } from '@angular/core'
 })
 export class TabComponent implements OnInit {
   @ViewChild('tabTemplate', { read: TemplateRef }) public template!: TemplateRef<any>;
-
-  @Input() name!: string;
+  @Output() public select = new EventEmitter<void>();
+  @Input() public name!: string;
 
   constructor() { }
 

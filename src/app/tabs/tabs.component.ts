@@ -9,7 +9,7 @@ import { TabComponent } from './tab.component';
         <ul>
           <li *ngFor="let tab of children"
               [class.is-active]="selection === tab"
-              (click)="selection = tab">
+              (click)="selection = tab; tab.select.emit()">
               <a>{{ tab.name }}</a>
           </li>
         </ul>
@@ -54,6 +54,7 @@ export class TabsComponent implements OnInit, AfterContentInit   {
   ngAfterContentInit(): void {
     setTimeout(() => {
       this.selection = this.children.first;
+      this.selection.select.emit();
     }, 0);
   }
 }

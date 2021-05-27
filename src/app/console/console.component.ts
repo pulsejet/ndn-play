@@ -21,6 +21,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
 
   /** Call on console resize */
   public resize!: () => void;
+  public resizeTimer = 0;
 
   constructor() { }
 
@@ -72,9 +73,21 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       fontSize: 13,
     });
 
+    // Fit to size
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
-    this.resize = fitAddon.fit.bind(fitAddon);
+
+    // Resize after wait
+    this.resize = () => {
+      if (this.resizeTimer) return;
+
+      this.resizeTimer = window.setTimeout(() => {
+        fitAddon.fit();
+        this.resizeTimer = 0;
+      }, 500);
+    };
+
+    // Start terminal
     term.open(this.console.nativeElement);
 
     this.consoleLog.subscribe((e) => {
@@ -89,7 +102,6 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       term.writeln(msg);
     });
 
-    setTimeout(() => { this.resize(); }, 500);
     this.resize();
 
     window.addEventListener('resize', this.resize);

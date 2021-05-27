@@ -1,7 +1,7 @@
 import { Endpoint } from "@ndn/endpoint";
 import { Certificate, generateSigningKey, KeyChain, NamedSigner, NamedVerifier, ValidityPeriod } from "@ndn/keychain";
 import { AltUri, Component, Name } from "@ndn/packet";
-import { TrustSchema, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
+import { TrustSchema, TrustSchemaPolicy, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
 import { Topology } from "./topo/topo";
 import * as vis from 'vis-network/standalone';
 
@@ -63,6 +63,14 @@ export class SecurityController {
     }
 
     private refresh = async () => {
+        let policy!: TrustSchemaPolicy;
+        try {
+            policy = versec2019.load(this.schemaText);
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+
         this.nodes.clear();
         this.edges.clear();
         this.rootKeychain = KeyChain.createTemp();
@@ -75,8 +83,6 @@ export class SecurityController {
                 keyChain: KeyChain.createTemp(),
             };
         }
-
-        const policy = versec2019.load(this.schemaText);
 
         const signers: {[c: string]: string} = {};
         for (const r of policy.listRules()) {

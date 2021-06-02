@@ -38,6 +38,9 @@ export class NFW {
     /** Content Store */
     private cs = new ContentStore(this.topo);
 
+    /** Dead Nonce List */
+    private dnl: number[] = [];
+
     /** Routing strategies */
     public readonly strategies = [
         { prefix: new Name('/'), strategy: 'best-route' },
@@ -338,6 +341,9 @@ export class NFW {
             }, interest.lifetime || 4000),
         };
 
+        // Make sure nonce exists (huh)
+        interest.nonce ||= Interest.generateNonce();
+
         // Add all hops
         for (const nextHop of nextHops) {
             // Prevent duplicates
@@ -413,7 +419,19 @@ export class NFW {
                         this.connections[nextHop] = { face, tx };
                     }
 
-                    const newPkt = FwPacket.create(pkt.l3, upstreamToken);
+                    // Cheat cause we're not really a network
+                    // Put the nonce in the DNL of the _next_ NFW,
+                    // so it refuses any duplicate interests later
+                    if (nextNFW.dnl.includes(<number>interest.nonce)) {
+                        return;
+                    } else {
+                        nextNFW.dnl.push(<number>interest.nonce);
+                        if (this.dnl.length > 1500) {
+                            this.dnl.splice(0, 500);
+                        }
+                    }
+
+                    const newPkt = FwPacket.create(interest, upstreamToken);
                     (<any>newPkt).hop = this.nodeId;
                     this.connections[nextHop].tx.push(newPkt);
                 }

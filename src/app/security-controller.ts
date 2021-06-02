@@ -20,16 +20,13 @@ export class SecurityController {
     public network!: vis.Network;
 
     // Schema text
-    public schemaText = `site = ndn
+    public schemaText = `
+        site = ndn
         root = <site>/<_KEY>
-
-        a = <site>/A/cert/bigroot/<_KEY>
-        netnode = <site>/<_node>/cert/net/<_KEY>
-        atreenode = <site>/<_node>/cert/atree/<_KEY>
+        node = <site>/<_node>/cert/node/<_KEY>
         ping = <site>/<_node>/ping/<_time>
-
-        ping <= atreenode <= a <= root`
-    .split('\n').map((l) => l.trimStart()).join('\n'); // Remove space at start
+        ping <= node <= root`
+    .trim().split('\n').map((l) => l.trimStart()).join('\n'); // Remove space at start
 
     constructor(
         private topo: Topology,

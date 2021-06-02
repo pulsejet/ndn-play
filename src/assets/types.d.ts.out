@@ -4577,6 +4577,62 @@ interface Element$1<V extends string|Uint8Array> {
 type ElementBuffer = Element$1<Uint8Array>;
 
 export type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
+/** Identify kind of key. */
+export type KeyKind = "private" | "public" | "secret";
+export namespace KeyKind {
+    /** Pick "private" or "secret" based on whether the algorithm is asymmetric. */
+    type PrivateSecret<Asym extends boolean> = If<Asym, "private", "secret">;
+    /** Pick "public" or "secret" based on whether the algorithm is asymmetric. */
+    type PublicSecret<Asym extends boolean> = If<Asym, "public", "secret">;
+}
+export const KeyKind: unique symbol;
+interface Key<K extends KeyKind> {
+    readonly name: Name;
+    readonly [KeyKind]: K;
+    readonly spki?: "public" extends K ? Uint8Array : never;
+}
+/** Named public key. */
+export type PublicKey = Key<"public">;
+/** Named private key or secret key signer. */
+interface NamedSigner<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, Signer {
+    readonly sigType: number;
+    /** Create a Signer that signs with this private key but a different KeyLocator. */
+    withKeyLocator: (keyLocator: KeyLocator.CtorArg) => Signer;
+}
+export namespace NamedSigner {
+    /** Named private key signer. */
+    type PrivateKey = NamedSigner<true>;
+    /** Named secret key signer. */
+    type SecretKey = NamedSigner<false>;
+}
+/** Named public key or secret key verifier. */
+interface NamedVerifier<Asym extends boolean = any> extends Key<KeyKind.PublicSecret<Asym>>, Verifier {
+    readonly sigType: number;
+}
+export namespace NamedVerifier {
+    /** Named public key verifier. */
+    type PublicKey = NamedVerifier<true>;
+    /** Named secret key verifier. */
+    type SecretKey = NamedVerifier<false>;
+}
+/** Named public key or secret key encrypter. */
+interface NamedEncrypter<Asym extends boolean = any> extends Key<KeyKind.PublicSecret<Asym>>, LLEncrypt.Key {
+}
+export namespace NamedEncrypter {
+    /** Named public key encrypter. */
+    type PublicKey = NamedEncrypter<true>;
+    /** Named secret key encrypter. */
+    type SecretKey = NamedEncrypter<false>;
+}
+/** Named private key or secret key decrypter. */
+interface NamedDecrypter<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, LLDecrypt.Key {
+}
+export namespace NamedDecrypter {
+    /** Named private key decrypter. */
+    type PrivateKey = NamedDecrypter<true>;
+    /** Named secret key decrypter. */
+    type SecretKey = NamedDecrypter<false>;
+}
 /** WebCrypto based algorithm implementation. */
 interface CryptoAlgorithm<I = any, Asym extends boolean = any, G = any> {
     /**
@@ -4633,6 +4689,267 @@ interface EncryptionAlgorithm<I = any, Asym extends boolean = any, G = any> exte
     makeLLDecrypt: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLDecrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLDecrypt, unknown>;
 }
 
+/** Underlying storage provider. */
+interface StoreProvider<T> {
+    /**
+     * Indicate whether the storage provider supports the structured clone algorithm.
+     * If false, values must be serialized as JSON.
+     */
+    readonly canSClone: boolean;
+    list: () => Promise<string[]>;
+    get: (key: string) => Promise<T>;
+    insert: (key: string, value: T) => Promise<void>;
+    erase: (key: string) => Promise<void>;
+}
+
+export abstract class StoreBase<T> {
+    private readonly provider;
+    private throttle;
+    constructor(provider: StoreProvider<T>);
+    get canSClone(): boolean;
+    /** List item names. */
+    list(): Promise<Name[]>;
+    /** Erase item by name. */
+    erase(name: Name): Promise<void>;
+    protected getValue(name: Name): Promise<T>;
+    protected insertValue(name: Name, value: T): Promise<void>;
+    protected bufferToStorable(input: Uint8Array | string): Uint8Array | string;
+}
+export namespace StoreBase {
+    function bufferFromStorable(input: Uint8Array | string): Uint8Array;
+}
+
+export class KeyLoader {
+    private readonly extractable;
+    constructor(extractable?: boolean);
+    loadKey(name: Name, stored: KeyStore.StoredKey): Promise<KeyStore.KeyPair>;
+    private loadAsymmetric;
+    private loadSymmetric;
+}
+/** Storage of key pairs. */
+export class KeyStore extends StoreBase<KeyStore.StoredKey> {
+    private loader;
+    get(name: Name): Promise<KeyStore.KeyPair>;
+    insert(name: Name, stored: KeyStore.StoredKey): Promise<void>;
+}
+export namespace KeyStore {
+    const Loader: typeof KeyLoader;
+    class KeyPair<Asym extends boolean = any, I = any> {
+        readonly name: Name;
+        readonly algo: CryptoAlgorithm<I, Asym>;
+        readonly pvt: CryptoAlgorithm.PrivateSecretKey<I, Asym>;
+        readonly pub: CryptoAlgorithm.PublicSecretKey<I, Asym>;
+        constructor(name: Name, algo: CryptoAlgorithm<I, Asym>, pvt: CryptoAlgorithm.PrivateSecretKey<I, Asym>, pub: CryptoAlgorithm.PublicSecretKey<I, Asym>);
+        get signer(): NamedSigner<Asym>;
+        get verifier(): NamedVerifier<Asym>;
+        get encrypter(): NamedEncrypter<Asym>;
+        get decrypter(): NamedDecrypter<Asym>;
+        get publicKey(): PublicKey;
+    }
+    interface StoredKey {
+        algo: string;
+        info: any;
+        jwkImportParams?: AlgorithmIdentifier;
+        privateKey?: CryptoKey | JsonWebKey;
+        publicKey?: CryptoKey | JsonWebKey;
+        publicKeySpki?: Uint8Array | string;
+        secretKey?: CryptoKey | JsonWebKey;
+    }
+}
+
+/** Certificate validity period. */
+export class ValidityPeriod {
+    static decodeFrom(decoder: Decoder): ValidityPeriod;
+    constructor();
+    constructor(notBefore: ValidityPeriod.TimestampInput, notAfter: ValidityPeriod.TimestampInput);
+    notBefore: number;
+    notAfter: number;
+    encodeTo(encoder: Encoder): void;
+    /** Determine whether the specified timestamp is within validity period. */
+    includes(t: ValidityPeriod.TimestampInput): boolean;
+    /** Determine whether this validity period equals another. */
+    equals({ notBefore, notAfter }: ValidityPeriod): boolean;
+    /** Compute the intersection of this and other validity periods. */
+    intersect(...validityPeriods: ValidityPeriod[]): ValidityPeriod;
+    toString(): string;
+}
+export namespace ValidityPeriod {
+    type TimestampInput = number | Date;
+    const MAX: ValidityPeriod;
+    function daysFromNow(n: number): ValidityPeriod;
+    function get(si: SigInfo): ValidityPeriod | undefined;
+    function set(si: SigInfo, v?: ValidityPeriod): void;
+}
+
+/**
+ * NDN Certificate v2.
+ * This type is immutable.
+ */
+export class Certificate {
+    readonly data: Data;
+    readonly validity: ValidityPeriod;
+    static fromData(data: Data): Certificate;
+    private constructor();
+    get name(): Name;
+    get issuer(): Name | undefined;
+    get isSelfSigned(): boolean;
+    /** Public key in SubjectPublicKeyInfo (SPKI) binary format. */
+    get publicKeySpki(): Uint8Array;
+    /** Import SPKI as public key. */
+    importPublicKey<I, A extends CryptoAlgorithm<I>>(algoList: readonly A[]): Promise<[A, CryptoAlgorithm.PublicKey<I>]>;
+    /** Create verifier from SPKI. */
+    createVerifier(): Promise<NamedVerifier.PublicKey>;
+    /** Create encrypter from SPKI. */
+    createEncrypter(): Promise<NamedEncrypter.PublicKey>;
+    private verifier?;
+    private encrypter?;
+}
+export namespace Certificate {
+    interface BuildOptions {
+        name: Name;
+        freshness?: number;
+        validity: ValidityPeriod;
+        publicKeySpki: Uint8Array;
+        signer: Signer;
+    }
+    function build({ name, freshness, validity, publicKeySpki, signer, }: BuildOptions): Promise<Certificate>;
+    interface IssueOptions {
+        freshness?: number;
+        validity: ValidityPeriod;
+        issuerId: Component;
+        issuerPrivateKey: Signer;
+        publicKey: PublicKey;
+    }
+    function issue(options: IssueOptions): Promise<Certificate>;
+    interface SelfSignOptions {
+        freshness?: number;
+        validity?: ValidityPeriod;
+        privateKey: NamedSigner;
+        publicKey: PublicKey;
+    }
+    function selfSign(options: SelfSignOptions): Promise<Certificate>;
+}
+
+interface StoredCert {
+    certBuffer: Uint8Array | string;
+}
+/** Storage of certificates. */
+export class CertStore extends StoreBase<StoredCert> {
+    get(name: Name): Promise<Certificate>;
+    insert(cert: Certificate): Promise<void>;
+}
+
+/** Storage of own private keys and certificates. */
+export abstract class KeyChain {
+    /** Return whether insertKey function expects JsonWebKey instead of CryptoKey. */
+    abstract readonly needJwk: boolean;
+    /** List keys, filtered by name prefix. */
+    abstract listKeys(prefix?: Name): Promise<Name[]>;
+    /** Retrieve key pair by key name. */
+    abstract getKeyPair(name: Name): Promise<KeyChain.KeyPair>;
+    /**
+     * Retrieve key by key name.
+     * @param typ "signer", "verifier", etc
+     */
+    getKey<K extends keyof KeyChain.KeyPair>(name: Name, typ: K): Promise<KeyChain.KeyPair[K]>;
+    /** Insert key pair. */
+    abstract insertKey(name: Name, stored: KeyStore.StoredKey): Promise<void>;
+    /** Delete key pair and associated certificates. */
+    abstract deleteKey(name: Name): Promise<void>;
+    /** List certificates, filtered by name prefix. */
+    abstract listCerts(prefix?: Name): Promise<Name[]>;
+    /** Retrieve certificate by cert name. */
+    abstract getCert(name: Name): Promise<Certificate>;
+    /** Insert certificate; key must exist. */
+    abstract insertCert(cert: Certificate): Promise<void>;
+    /** Delete certificate. */
+    abstract deleteCert(name: Name): Promise<void>;
+    /**
+     * Create a signer from keys and certificates in the KeyChain.
+     * @param name subject name, key name, or certificate name.
+     *
+     * @li If name is a certificate name, sign with the corresponding private key,
+     *     and use the specified certificate name as KeyLocator.
+     * @li If name is a key name, sign with the specified private key.
+     *     If a non-self-signed certificate exists for this key, use the certificate name as KeyLocator.
+     *     Otherwise, use the key name as KeyLocator.
+     * @li If name is neither certificate name nor key name, it is interpreted as a subject name.
+     *     A non-self-signed certificate of this subject name is preferred.
+     *     If such a certificate does not exist, use any key of this subject name.
+     * @li If prefixMatch is true, name can also be interpreted as a prefix of the subject name.
+     */
+    getSigner(name: Name, { prefixMatch, fallback, useKeyNameKeyLocator }?: KeyChain.GetSignerOptions): Promise<Signer>;
+    private findSignerCertName;
+}
+export namespace KeyChain {
+    type KeyPair<Asym extends boolean = any> = KeyStore.KeyPair<Asym>;
+    /**
+     * Create a signer from keys and certificates in the KeyChain.
+     * @param name subject name, key name, or certificate name.
+     * @param fallback invoked when no matching key or certificate is found.
+     * @param useKeyNameKeyLocator force KeyLocator to be key name instead of certificate name.
+     *
+     * @li If name is a certificate name, sign with the corresponding private key,
+     *     and use the specified certificate name as KeyLocator.
+     * @li If name is a key name, sign with the specified private key.
+     *     If a non-self-signed certificate exists for this key, use the certificate name as KeyLocator.
+     *     Otherwise, use the key name as KeyLocator.
+     * @li If name is neither certificate name nor key name, it is interpreted as a subject name.
+     *     A non-self-signed certificate of this subject name is preferred.
+     *     If such a certificate does not exist, use any key of this subject name.
+     * @li If prefixMatch is true, name can also be interpreted as a prefix of the subject name.
+     */
+    interface GetSignerOptions {
+        /**
+         * If false, name argument must equal subject name, key name, or certificate name.
+         * If true, name argument may be a prefix of subject name.
+         * Default is false.
+         */
+        prefixMatch?: boolean;
+        /**
+         * If a function, it is invoked when no matching key or certificate is found, and should
+         * either return a fallback Signer or reject the promise.
+         * If a Signer, it is used when no matching key or certificate is found.
+         */
+        fallback?: Signer | ((name: Name, keyChain: KeyChain, err?: Error) => Promise<Signer>);
+        /**
+         * If false, KeyLocator is a certificate name when a non-self-signed certificate exists.
+         * If true, KeyLocator is the key name.
+         * Default is false.
+         */
+        useKeyNameKeyLocator?: boolean;
+    }
+    /**
+     * Open a persistent keychain.
+     * @param locator in Node.js, a filesystem directory; in browser, a database name.
+     */
+    function open(locator: string): KeyChain;
+    /** Open a keychain from given KeyStore and CertStore. */
+    function open(keys: KeyStore, certs: CertStore): KeyChain;
+    /** Create an in-memory ephemeral keychain. */
+    function createTemp(): KeyChain;
+}
+
+export class SecurityController {
+    private topo;
+    private rootKeychain;
+    private rootKeys;
+    private issuerKeys;
+    private refreshTimer;
+    readonly nodes: DataSet<Node$1, "id">;
+    readonly edges: DataSet<Edge, "id">;
+    network: Network;
+    schemaText: string;
+    constructor(topo: Topology);
+    private addCertNode;
+    private refresh;
+    /** Compute static routes */
+    computeSecurity: () => Promise<void>;
+    /** Initialize the network */
+    createNetwork(container: HTMLElement): void;
+    fitLazy(): void;
+}
+
 export class Topology {
     readonly DEFAULT_LINK_COLOR = "#3583ea";
     readonly DEFAULT_NODE_COLOR = "#a4b7fc";
@@ -4654,11 +4971,12 @@ export class Topology {
     latencySlowdown: number;
     busiestNode?: INode;
     busiestLink?: IEdge;
-    private selectedNode?;
-    private selectedEdge?;
+    selectedNode?: INode;
+    selectedEdge?: IEdge;
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
     private scheduledRouteRefresh;
+    security: SecurityController;
     constructor();
     /** Initialize the network */
     createNetwork(container: HTMLElement): void;
@@ -4670,38 +4988,25 @@ export class Topology {
     private computeRoutes;
     /** Schedule a refresh of static routes */
     scheduleRouteRefresh(): void;
-    /** Get currently selected node */
-    getSelectedNode(): INode | undefined;
-    /** Select a given node */
-    selectNode(node?: INode): void;
-    /** Get currently selected edge */
-    getSelectedEdge(): IEdge | undefined;
-    /** Select a given edge */
-    selectEdge(edge?: IEdge): void;
     /** Ensure all nodes and edges are initialized */
     private ensureInitialized;
 }
 
 export class NFW {
-    private topo;
-    /** ID of this node */
-    private readonly nodeId;
+    private readonly topo;
+    readonly nodeId: IdType;
     /** NDNts forwarder */
     fw: Forwarder;
     private face;
     private faceRx;
     /** Security options */
-    security?: {
+    securityOptions?: {
         /** Signer object */
         signer: Signer;
         /** Verifier object */
         verifier: Verifier;
-        /** Private key */
-        privKey: CryptoKey;
-        /** Public key */
-        pubKey: CryptoKey;
-        /** Generated key pair */
-        keyPair: CryptoAlgorithm.GeneratedKeyPair;
+        /** Keychain */
+        keyChain: KeyChain;
     };
     /** Forwarding table */
     fib: any[];
@@ -4711,6 +5016,8 @@ export class NFW {
     capture: boolean;
     /** Content Store */
     private cs;
+    /** Dead Nonce List */
+    private dnl;
     /** Routing strategies */
     readonly strategies: {
         prefix: Name;
@@ -4720,15 +5027,20 @@ export class NFW {
     private pendingTraffic;
     /** Server for ping */
     private pingServer?;
+    /** Server for certificates */
+    private certServer?;
     /** Connections to other NFWs */
     private connections;
     /** Aggregate of sent interests */
     private pit;
-    constructor(topo: Topology, node: INode);
+    /** Announcements current */
+    private announcements;
+    constructor(topo: Topology, nodeId: IdType);
     node(): INode;
     nodeUpdated(): void;
-    capturePacket(p: any): void;
     private setupPingServer;
+    private setupCertServer;
+    capturePacket(p: any): void;
     updateColors(): void;
     /** Add traffic to link */
     private addLinkTraffic;
@@ -4737,11 +5049,12 @@ export class NFW {
     private allMatches;
     private expressInterest;
     strsFIB(): string[];
-    getEndpoint(): Endpoint;
+    getEndpoint(opts?: {
+        secure?: boolean;
+    }): Endpoint;
 }
 
 interface INode extends Node$1 {
-    init?: boolean;
     producedPrefixes: string[];
     nfw: NFW;
     extra: {
@@ -4749,7 +5062,6 @@ interface INode extends Node$1 {
     };
 }
 interface IEdge extends Edge {
-    init?: boolean;
     latency: number;
     loss: number;
     extra: {

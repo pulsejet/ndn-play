@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { loadMiniNDNConfig } from '../minindn-config';
+import * as miniNDN from '../minindn-config';
 import { Topology } from './topo';
 
 @Component({
@@ -57,11 +57,13 @@ import { Topology } from './topo';
 
         <div class="field">
             <label class="label is-small">MiniNDN Config:</label>
-            <textarea class="textarea full-width mb-1 is-small" #mnConf></textarea>
-            <button class="button is-danger is-light is-small full-width" (click)="loadMiniNDNConfig(topo, mnConf.value)">
+            <textarea class="textarea full-width mb-1 is-small" #mnConf style="white-space: nowrap"></textarea>
+            <button class="button is-danger is-light is-small full-width"
+                    (click)="miniNDN.load(topo, mnConf.value)">
                 Load
             </button>
-            <button class="button is-link is-light is-small full-width mt-1">
+            <button class="button is-link is-light is-small full-width mt-1"
+                    (click)="mnConf.value = miniNDN.generate(topo)">
                 Generate
             </button>
         </div>
@@ -73,7 +75,8 @@ import { Topology } from './topo';
 export class TopoGlobalComponent implements OnInit {
 
   /** Aliases */
-  public loadMiniNDNConfig = loadMiniNDNConfig;
+  public miniNDN = miniNDN;
+
   /** Global Topology */
   @Input() public topo: Topology = <any>undefined;
 

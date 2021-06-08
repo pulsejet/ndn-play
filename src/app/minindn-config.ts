@@ -1,7 +1,7 @@
 import { IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
-export function loadMiniNDNConfig(topo: Topology, confStr: string) {
+export function load(topo: Topology, confStr: string) {
     topo.selectedEdge = undefined;
     topo.selectedNode = undefined;
 
@@ -51,4 +51,51 @@ export function loadMiniNDNConfig(topo: Topology, confStr: string) {
 
     topo.nodes.add(<any>readNodes);
     topo.edges.add(<any>readLinks);
+}
+
+export function generate(topo: Topology): string {
+    const out: string[] = [];
+
+    const nodes = topo.nodes.get();
+
+    // Construct node names
+    const nodeNames: {[id: string]: string} = {};
+    for (const node of nodes) {
+        const nid = node.id.toString();
+        const sameLabelNodes = nodes.filter((n) => n.label == node.label);
+
+        // Check if duplicates present
+        if (node.label && sameLabelNodes.length > 1) {
+            nodeNames[nid] = `${node.label}_${(sameLabelNodes.indexOf(node) + 1)}`
+        } else {
+            nodeNames[nid] = node.label || nid;
+        }
+    }
+
+    // Nodes
+    out.push('[nodes]');
+    for (const node of nodes) {
+        const name = nodeNames[node.id];
+        out.push(`${name}: _ network=/world router=/${name}.Router/`);
+    }
+
+    // Edges
+    out.push('[links]');
+    for (const edge of topo.edges.get()) {
+        const params: string[] = [];
+
+        // Nodes
+        params.push(`${nodeNames[edge.from || '']}:${nodeNames[edge.to || '']}`)
+
+        // Latency
+        params.push(`delay=${edge.latency >= 0 ? edge.latency : topo.defaultLatency}ms`)
+
+        // Loss
+        const loss = edge.loss >= 0 ? edge.loss : topo.defaultLoss;
+        if (loss > 0) params.push(`loss=${loss}`);
+
+        out.push(params.join(' '));
+    }
+
+    return out.join('\n');
 }

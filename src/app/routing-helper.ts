@@ -146,11 +146,11 @@ export class RoutingHelper {
                             if (hopEntry) {
                                 hopEntry.cost = Math.min(hopEntry.cost, route.cost);
                             } else {
-                                entry.routes.push(route);
+                                entry.routes.push(JSON.parse(JSON.stringify(route)));
                             }
                         }
                     } else {
-                        fib[node].push({ prefix, routes });
+                        fib[node].push({ prefix, routes: JSON.parse(JSON.stringify(routes)) });
                     }
                 }
             }

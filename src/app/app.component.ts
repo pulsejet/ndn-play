@@ -22,10 +22,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     (<any>window).ndn = ndnUserTypes;
-    (<any>window).visualize = (packet: any, guessTlv: boolean = false) => {
-      (<any>packet.guessTlv) = guessTlv;
-      this.visualizedPacket = packet;
-    };
+    (<any>window).visualize = (p: any) => this.visualizedPacket = p;
   }
 
   ngAfterViewInit() {

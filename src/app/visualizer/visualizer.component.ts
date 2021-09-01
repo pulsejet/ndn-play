@@ -30,10 +30,10 @@ export class VisualizerComponent implements OnInit {
   visualize(packet: Encodable): visTlv[] {
     const encoder = new Encoder();
     encoder.encode(packet);
-    return this.decodeRecursive(encoder.output, (<any>packet).guessTlv);
+    return this.decodeRecursive(encoder.output);
   }
 
-  decodeRecursive(input: Uint8Array, guessTlv: boolean): visTlv[] {
+  decodeRecursive(input: Uint8Array): visTlv[] {
     let t: Decoder.Tlv;
     let decoder = new Decoder(input);
     const arr: visTlv[] = [];
@@ -45,11 +45,11 @@ export class VisualizerComponent implements OnInit {
         const obj: visTlv = {
           t: t.type,
           l: t.length,
-          v: this.decodeRecursive(t.value, guessTlv),
+          v: this.decodeRecursive(t.value),
           vl: t.value,
           tl: t.tlv.length,
         };
-        if (t.type == 0 || (!guessTlv && getTlvTypeText(t.type).startsWith('T='))) return [];
+        if (t.type == 0 || !getTlvTypeText(t.type)) return [];
 
         // Creative visualization
         switch (obj.t) {

@@ -89,5 +89,5 @@ enum TlvContentInfo {
 export function getTlvTypeText(type: number) {
     return TlvV3[type] || TlvV2[type] || TlvNC[type] ||
            TlvSign[type] || TlvSignInfo[type] || TlvContentInfo[type] ||
-           `T=${type}`;
+           undefined;
 }

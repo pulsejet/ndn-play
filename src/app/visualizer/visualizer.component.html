@@ -3,6 +3,9 @@
         [ngTemplateOutlet]="visTlvA"
         [ngTemplateOutletContext]="{packets: visualizedPacket}">
     </ng-container>
+    <div class="guess-box">
+        <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
+    </div>
 </div>
 
 <div class="outer" *ngIf="!visualizedPacket">

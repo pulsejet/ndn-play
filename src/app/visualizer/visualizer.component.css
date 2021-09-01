@@ -3,6 +3,14 @@
     font-size: 0.9em;
 }
 
+.guess-box {
+    margin: 2px;
+    font-size: 0.95em;
+}
+.guess-box * {
+    vertical-align: middle;
+}
+
 .tlv {
     border: 2px solid black;
     display: inline-block;

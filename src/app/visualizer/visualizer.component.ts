@@ -15,6 +15,7 @@ export class VisualizerComponent implements OnInit {
 
   @Input() public packet?: Encodable;
   public visualizedPacket?: visTlv[];
+  public attemptUnknownDecode: boolean = false;
 
   constructor() { }
 
@@ -49,7 +50,7 @@ export class VisualizerComponent implements OnInit {
           vl: t.value,
           tl: t.tlv.length,
         };
-        if (t.type == 0 || !getTlvTypeText(t.type)) return [];
+        if (t.type == 0 || (!this.attemptUnknownDecode && getTlvTypeText(t.type).startsWith('T='))) return [];
 
         // Creative visualization
         switch (obj.t) {

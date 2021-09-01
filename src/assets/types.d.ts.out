@@ -5923,6 +5923,6 @@ const node = t.node;
 const ndn = t.ndn;
 
 
-declare function visualize(packet: any): void;
+declare function visualize(packet: any, guessTlv?: boolean): void;
 
 

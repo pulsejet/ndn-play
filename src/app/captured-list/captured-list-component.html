@@ -5,7 +5,7 @@
         <th>Length</th>
         <th>Name</th>
     </tr>
-    <tr *ngFor="let packet of node.nfw.capturedPackets" [ngClass]="packet.type"
+    <tr *ngFor="let packet of node.nfw!.capturedPackets" [ngClass]="packet.type"
         (click)="packetClick.emit(packet.p)">
         <td>
             {{ packet.t }} ms

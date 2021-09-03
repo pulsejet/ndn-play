@@ -76,7 +76,7 @@ export class SecurityController {
 
         // Clear security options
         for (const node of this.topo.nodes.get()) {
-            node.nfw.securityOptions = <any>{
+            node.nfw!.securityOptions = <any>{
                 keyChain: KeyChain.createTemp(),
             };
         }
@@ -152,7 +152,7 @@ export class SecurityController {
                         const servePrefix = new Name(`/ndn/${node.label}/cert`);
                         if (servePrefix.isPrefixOf(certName)) {
                             // Issue certificate
-                            const keyChain = <KeyChain>node.nfw.securityOptions?.keyChain;
+                            const keyChain = <KeyChain>node.nfw!.securityOptions?.keyChain;
                             const issuers = this.issuerKeys[signers[p[0]]];
 
                             if (!issuers || issuers.length == 0) continue;
@@ -180,7 +180,7 @@ export class SecurityController {
 
         // Setup security options in NFW
         for (const node of this.topo.nodes.get()) {
-            const keyChain = <KeyChain>node.nfw.securityOptions?.keyChain;
+            const keyChain = <KeyChain>node.nfw!.securityOptions?.keyChain;
             const rootCerts = Object.values(this.rootKeys).map((c) => c[2]);
             const schema = new TrustSchema(policy, rootCerts);
             const signer = new TrustSchemaSigner({ keyChain, schema });
@@ -189,12 +189,12 @@ export class SecurityController {
                 schema,
                 offline: false,
                 endpoint: new Endpoint({
-                    fw: node.nfw.fw,
+                    fw: node.nfw!.fw,
                 }),
             });
 
             // Put into NFW
-            node.nfw.securityOptions = { signer, verifier, keyChain };
+            node.nfw!.securityOptions = { signer, verifier, keyChain };
         }
     }
 

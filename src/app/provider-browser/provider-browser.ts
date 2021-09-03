@@ -1,4 +1,4 @@
-import { Name } from "@ndn/packet";
+import { Interest, Name } from "@ndn/packet";
 import { ForwardingProvider } from "../forwarding-provider";
 import { IEdge, INode } from "../interfaces";
 import { NFW } from "./nfw";
@@ -81,14 +81,35 @@ export class ProviderBrowser implements ForwardingProvider {
     this.security.computeSecurity();
 
     if (node) {
-      node.nfw.nodeUpdated();
+      node.nfw!.nodeUpdated();
     }
   }
 
   public onNetworkClick = async () => {
     for (const node of this.topo.nodes.get()) {
-      node.nfw.updateColors();
+      node.nfw!.updateColors();
     }
+  }
+
+  public sendPingInterest(from: INode, to: INode) {
+    const label = to?.label;
+    const name = `/ndn/${label}/ping/${new Date().getTime()}`;
+    const interest = new Interest(name, Interest.Lifetime(3000))
+
+    const start = performance.now();
+    from.nfw!.getEndpoint({ secure: true }).consume(interest).then(() => {
+      console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
+    }).catch(console.error);
+
+    this.topo.pendingClickEvent = undefined;
+  };
+
+  public sendInterest(name: string, node: INode) {
+    name = name.replace('$time', (new Date).getTime().toString());
+    const interest = new Interest(name, Interest.Lifetime(3000))
+    node.nfw!.getEndpoint({ secure: false }).consume(interest).then(() => {
+      console.log('Received data reply');
+    }).catch(console.error);
   }
 
   /** Schedule a refresh of static routes */
@@ -112,14 +133,14 @@ export class ProviderBrowser implements ForwardingProvider {
       const node = this.topo.nodes.get(nodeId);
       if (!node) continue;
 
-      node.nfw.fib = fibs[nodeId].map((e: any) => {
+      node.nfw!.fib = fibs[nodeId].map((e: any) => {
         return {
           ...e,
           prefix: new Name(e.prefix),
         };
       });
 
-      node.extra.fibStr = node.nfw.strsFIB().join('\n');
+      node.extra.fibStr = node.nfw!.strsFIB().join('\n');
     }
   }
 

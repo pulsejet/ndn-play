@@ -9,7 +9,7 @@ export interface INodeExtra {
 }
 
 export interface INode extends vis.Node {
-    nfw: NFW;
+    nfw?: NFW;
     extra: INodeExtra;
 }
 

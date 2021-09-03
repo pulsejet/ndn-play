@@ -27,4 +27,8 @@ export interface ForwardingProvider {
 
   // Callback when network is clicked
   onNetworkClick: () => Promise<void>;
+
+  // Send test interests
+  sendPingInterest: (from: INode, to: INode) => void;
+  sendInterest: (name: string, node: INode) => void;
 }

@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Interest } from '@ndn/packet';
 import { INode } from '../interfaces';
 import { Topology } from './topo';
 
@@ -47,7 +46,7 @@ import { Topology } from './topo';
             </button>
         </div>
 
-        <div class="field is-size-7">
+        <div class="field is-size-7" *ngIf="node.nfw">
             <label class="checkbox is-small">
                 <input type="checkbox" [(ngModel)]="node.nfw.capture">
                 Enable Packet Capture
@@ -79,11 +78,7 @@ export class TopoNodeComponent implements OnInit {
   }
 
   public selExpressInterest(name: string) {
-    name = name.replace('$time', (new Date).getTime().toString());
-    const interest = new Interest(name, Interest.Lifetime(3000))
-    this.topo.selectedNode?.nfw.getEndpoint({ secure: false }).consume(interest).then(() => {
-      console.log('Received data reply');
-    }).catch(console.error);
+    this.topo.provider.sendInterest(name, this.topo.selectedNode!);
   }
 
   public runCode(code: string) {
@@ -96,16 +91,6 @@ export class TopoNodeComponent implements OnInit {
     const id = this.topo.network.getNodeAt(params.pointer.DOM);
     if (!id) return;
 
-    const dest = <INode>this.topo.nodes.get(id);
-    const label = this.topo.selectedNode?.label;
-    const name = `/ndn/${label}/ping/${new Date().getTime()}`;
-    const interest = new Interest(name, Interest.Lifetime(3000))
-
-    const start = performance.now();
-    dest.nfw.getEndpoint({ secure: true }).consume(interest).then(() => {
-      console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
-    }).catch(console.error);
-
-    this.topo.pendingClickEvent = undefined;
+    this.topo.provider.sendPingInterest(<INode>this.topo.nodes.get(id), this.topo.selectedNode!);
   }
 }

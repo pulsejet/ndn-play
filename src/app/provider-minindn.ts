@@ -6,6 +6,7 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
   DEL_LINK: 'del_link',
+  ADD_LINK: 'add_link',
 }
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -14,6 +15,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   // Parent topology
   public topo!: Topology;
+  public initialized = false;
 
   // Animation updates
   public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
@@ -50,24 +52,45 @@ export class ProviderMiniNDN implements ForwardingProvider {
     console.log(msg);
 
     // Refresh topology
-    if (msg?.fun == WS_FUNCTIONS.GET_TOPO) {
-      this.topo.nodes.clear();
-      this.topo.edges.clear();
-      this.topo.nodes.add(msg?.res?.nodes);
-      this.topo.edges.add(msg?.res?.links);
-      this.topo.network.fit();
+    switch (msg?.fun) {
+      case WS_FUNCTIONS.GET_TOPO:
+        this.topo.nodes.clear();
+        this.topo.edges.clear();
+        this.topo.nodes.add(msg?.res?.nodes);
+        this.topo.edges.add(msg?.res?.links);
+        this.topo.network.fit();
+
+        if (!this.initialized) this.setTopoManipulationCallbacks();
+        this.initialized = true;
+        break;
+
+      case WS_FUNCTIONS.ADD_LINK:
+        this.topo.edges.updateOnly(msg?.res);
     }
   }
 
   public initializePostNetwork = async () => {
     this.wsFun(WS_FUNCTIONS.GET_TOPO);
+  }
 
+  private setTopoManipulationCallbacks() {
     // Call on removing link
     this.topo.edges.on('remove', (_, removedEdges) => {
       for (const edge of removedEdges?.oldData || []) {
-        this.wsFun(WS_FUNCTIONS.DEL_LINK, edge.from, edge.to, edge.id);
+        this.wsFun(WS_FUNCTIONS.DEL_LINK, edge.from, edge.to, (<any>edge).mnId);
       }
-    })
+    });
+
+    // Call on adding link
+    this.topo.edges.on('add', (_, edges) => {
+      for (const edgeId of edges?.items || []) {
+        const edge = this.topo.edges.get(edgeId);
+        this.wsFun(WS_FUNCTIONS.ADD_LINK, edge?.from, edge?.to, edge?.id, {
+          latency: this.defaultLatency,
+          loss: this.defaultLoss,
+        });
+      }
+    });
   }
 
   public edgeUpdated = async (edge?: IEdge) => {
@@ -101,11 +124,5 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   /** Ensure all nodes and edges are initialized */
   private ensureInitialized = () => {
-    // Start NFW
-    for (const node of this.topo.nodes.get()) {
-      if (!node.nfw) {
-        node.extra.producedPrefixes = [];
-      }
-    }
   }
 }

@@ -34,7 +34,8 @@ export class VisualizerComponent implements OnInit {
     let buffer: Uint8Array;
 
     if (typeof tlv == 'string') {
-      buffer = new Uint8Array((tlv.match(/.{1,2}/ig) || []).map(byte => parseInt(byte, 16)));
+      const matches = tlv.replace(/\s/g, '').match(/.{1,2}/ig);
+      buffer = new Uint8Array((matches || []).map(byte => parseInt(byte, 16)));
     } else if (tlv instanceof Uint8Array) {
       buffer = tlv;
     } else {

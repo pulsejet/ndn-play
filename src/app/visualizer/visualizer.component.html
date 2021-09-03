@@ -1,8 +1,12 @@
 <div class="outer" *ngIf="visualizedTlv">
-    <ng-container
+    <ng-container *ngIf="visualizedTlv.length > 0; else noTlvs"
         [ngTemplateOutlet]="visTlvA"
         [ngTemplateOutletContext]="{tlvs: visualizedTlv}">
     </ng-container>
+    <ng-template #noTlvs>
+        No valid TLV blocks could be decoded <br/>
+    </ng-template>
+
     <div class="guess-box">
         <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
     </div>

@@ -10,8 +10,8 @@ import { ndn as ndnUserTypes } from './user-types';
 export class AppComponent implements OnInit, AfterViewInit {
   title = 'ndn-play';
 
-  /** Currently visualized packet */
-  public visualizedPacket: any;
+  /** Currently visualized tlv */
+  public visualizedTlv: any;
 
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
@@ -22,7 +22,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     (<any>window).ndn = ndnUserTypes;
-    (<any>window).visualize = (p: any) => this.visualizedPacket = p;
+    (<any>window).visualize = (p: any) => this.visualizedTlv = p;
   }
 
   ngAfterViewInit() {

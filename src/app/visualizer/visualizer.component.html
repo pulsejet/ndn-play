@@ -1,20 +1,21 @@
-<div class="outer" *ngIf="visualizedPacket">
+<div class="outer" *ngIf="visualizedTlv">
     <ng-container
         [ngTemplateOutlet]="visTlvA"
-        [ngTemplateOutletContext]="{packets: visualizedPacket}">
+        [ngTemplateOutletContext]="{tlvs: visualizedTlv}">
     </ng-container>
     <div class="guess-box">
         <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
     </div>
 </div>
 
-<div class="outer" *ngIf="!visualizedPacket">
-    No Packet Selected <br/>
-    Call <span class="has-text-danger">visualize(packet)</span> to visualize packet
+<div class="outer" *ngIf="!visualizedTlv">
+    No TLV Selected <br/>
+    Call <span class="has-text-danger">visualize(tlv)</span> to visualize a TLV block <br/>
+    Input may be an encodable, wire byte array or hex string
 </div>
 
-<ng-template #visTlvA let-packets='packets'>
-    <ng-container *ngFor='let tlv of packets'>
+<ng-template #visTlvA let-tlvs='tlvs'>
+    <ng-container *ngFor='let tlv of tlvs'>
         <div class="tlv">
             <span class="type" [title]="tlv.t">
                 {{ getTlvTypeText(tlv.t) }}
@@ -25,7 +26,7 @@
             <ng-container
                 *ngIf="tlv.v.length > 0"
                 [ngTemplateOutlet]="visTlvA"
-                [ngTemplateOutletContext]="{packets: tlv.v}">
+                [ngTemplateOutletContext]="{tlvs: tlv.v}">
             </ng-container>
             <ng-container *ngIf="tlv.v.length == 0 && tlv.vl.length > 0">
                 {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }}

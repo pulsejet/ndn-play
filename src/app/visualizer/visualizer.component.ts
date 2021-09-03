@@ -13,8 +13,8 @@ export class VisualizerComponent implements OnInit {
 
   public getTlvTypeText = getTlvTypeText;
 
-  @Input() public packet?: Encodable;
-  public visualizedPacket?: visTlv[];
+  @Input() public tlv?: any;
+  public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
 
   constructor() { }
@@ -23,15 +23,27 @@ export class VisualizerComponent implements OnInit {
   }
 
   ngOnChanges() {
-    if (this.packet) {
-      this.visualizedPacket = this.visualize(this.packet);
+    if (this.tlv) {
+      this.visualizedTlv = this.visualize(this.tlv);
     }
   }
 
-  visualize(packet: Encodable): visTlv[] {
-    const encoder = new Encoder();
-    encoder.encode(packet);
-    return this.decodeRecursive(encoder.output);
+  visualize(tlv: string | Uint8Array | Encodable): visTlv[] {
+    if (!tlv) return [];
+
+    let buffer: Uint8Array;
+
+    if (typeof tlv == 'string') {
+      buffer = new Uint8Array((tlv.match(/.{1,2}/ig) || []).map(byte => parseInt(byte, 16)));
+    } else if (tlv instanceof Uint8Array) {
+      buffer = tlv;
+    } else {
+      const encoder = new Encoder();
+      encoder.encode(tlv);
+      buffer = encoder.output;
+    }
+
+    return this.decodeRecursive(buffer);
   }
 
   decodeRecursive(input: Uint8Array): visTlv[] {

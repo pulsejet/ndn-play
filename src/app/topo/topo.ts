@@ -48,17 +48,17 @@ export class Topology {
     this.nodes.on('add', this.ensureInitialized.bind(this));
     this.edges.on('add', this.ensureInitialized.bind(this));
 
-    // Initialize provider
-    this.provider.initialize();
-
     // Initialize security for browser provider
     if (this.provider instanceof ProviderBrowser) {
       this.provider.security = new SecurityController(this);
     }
+
+    // Initialize provider
+    this.provider.initialize();
   }
 
   /** Initialize the network */
-  public createNetwork(container: HTMLElement) {
+  public createNetwork = async (container: HTMLElement) => {
     const data = {
       nodes: this.nodes,
       edges: this.edges,
@@ -78,6 +78,8 @@ export class Topology {
 
     // Bind functions
     this.network?.on("click", this.onNetworkClick.bind(this));
+
+    await this.provider.initializePostNetwork();
   }
 
   /** Update objects every animation frame */

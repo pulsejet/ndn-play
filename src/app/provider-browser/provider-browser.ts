@@ -31,7 +31,7 @@ export class ProviderBrowser implements ForwardingProvider {
 
   constructor() {}
 
-  public initialize() {
+  public initialize = async () => {
     // Initialize new nodes
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
 
@@ -64,7 +64,7 @@ export class ProviderBrowser implements ForwardingProvider {
     ]);
   }
 
-  public initializePostNetwork() {
+  public initializePostNetwork = async () => {
     // Routing
     const computeFun = this.scheduleRouteRefresh.bind(this);
     this.topo.nodes.on('add', computeFun);
@@ -73,11 +73,11 @@ export class ProviderBrowser implements ForwardingProvider {
     this.topo.edges.on('remove', computeFun);
   }
 
-  public edgeUpdated(edge?: IEdge) {
+  public edgeUpdated = async (edge?: IEdge) => {
     this.scheduleRouteRefresh();
   }
 
-  public nodeUpdated(node?: INode) {
+  public nodeUpdated = async (node?: INode) => {
     this.security.computeSecurity();
 
     if (node) {
@@ -85,14 +85,14 @@ export class ProviderBrowser implements ForwardingProvider {
     }
   }
 
-  public onNetworkClick() {
+  public onNetworkClick = async () => {
     for (const node of this.topo.nodes.get()) {
       node.nfw.updateColors();
     }
   }
 
   /** Schedule a refresh of static routes */
-  public scheduleRouteRefresh() {
+  public scheduleRouteRefresh = () => {
     if (this.scheduledRouteRefresh) return;
 
     this.scheduledRouteRefresh = window.setTimeout(() => {
@@ -102,7 +102,7 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   /** Compute static routes */
-  private computeRoutes() {
+  private computeRoutes = () => {
     if (!this.topo) return;
 
     console.warn('Computing routes');
@@ -122,7 +122,7 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   /** Ensure all nodes and edges are initialized */
-  private ensureInitialized() {
+  private ensureInitialized = () => {
     // Start NFW
     for (const node of this.topo.nodes.get()) {
       if (!node.nfw) {

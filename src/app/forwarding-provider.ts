@@ -16,15 +16,15 @@ export interface ForwardingProvider {
   latencySlowdown?: number;
 
   // Initialize the topology
-  initialize: () => void;
+  initialize: () => Promise<void>;
 
   // Initialize post network creation
-  initializePostNetwork: () => void;
+  initializePostNetwork: () => Promise<void>;
 
   // Callback when edge/node is updated manually
-  edgeUpdated: (edge?: IEdge) => void;
-  nodeUpdated: (node?: INode) => void;
+  edgeUpdated: (edge?: IEdge) => Promise<void>;
+  nodeUpdated: (node?: INode) => Promise<void>;
 
   // Callback when network is clicked
-  onNetworkClick: () => void;
+  onNetworkClick: () => Promise<void>;
 }

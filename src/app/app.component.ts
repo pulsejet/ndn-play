@@ -27,10 +27,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.gs.topo.createNetwork(this.topoContainer?.nativeElement);
-
-    if (this.gs.topo.provider instanceof ProviderBrowser) {
-      this.gs.topo.provider.security.createNetwork(this.secContainer?.nativeElement);
-    }
+    this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {
+      if (this.gs.topo.provider instanceof ProviderBrowser) {
+        this.gs.topo.provider.security.createNetwork(this.secContainer?.nativeElement);
+      }
+    });
   }
 }

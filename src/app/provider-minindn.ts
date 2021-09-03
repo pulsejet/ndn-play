@@ -7,6 +7,7 @@ const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
   DEL_LINK: 'del_link',
   ADD_LINK: 'add_link',
+  UPD_LINK: 'upd_link',
 }
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -85,7 +86,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.topo.edges.on('add', (_, edges) => {
       for (const edgeId of edges?.items || []) {
         const edge = this.topo.edges.get(edgeId);
-        this.wsFun(WS_FUNCTIONS.ADD_LINK, edge?.from, edge?.to, edge?.id, {
+        if (!edge) continue;
+
+        this.wsFun(WS_FUNCTIONS.ADD_LINK, edge.from, edge.to, edge.id, {
           latency: this.defaultLatency,
           loss: this.defaultLoss,
         });
@@ -94,7 +97,12 @@ export class ProviderMiniNDN implements ForwardingProvider {
   }
 
   public edgeUpdated = async (edge?: IEdge) => {
+    if (!edge) return;
 
+    this.wsFun(WS_FUNCTIONS.UPD_LINK, edge.from, edge.to, (<any>edge).mnId, {
+      latency: edge?.latency,
+      loss: edge?.loss,
+    });
   }
 
   public nodeUpdated = async (node?: INode) => {

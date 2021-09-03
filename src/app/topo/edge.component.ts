@@ -28,7 +28,7 @@ import { Topology } from './topo';
             <div class="control">
                 <input class="input is-small" type="number" placeholder="0"
                         [(ngModel)]="edge.loss"
-                        (input)="topo.edges.update(edge)">
+                        (input)="topo.edges.update(edge); topo.provider.edgeUpdated(edge)">
             </div>
             <p class="help is-small">Negative for default loss</p>
         </div>

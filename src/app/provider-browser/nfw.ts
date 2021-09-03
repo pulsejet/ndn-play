@@ -106,20 +106,16 @@ export class NFW {
 
         // Add routes
         this.fw.on("annadd", (prefix) => {
-            const pfxs = this.node().producedPrefixes;
-            pfxs.push(AltUri.ofName(prefix));
-            this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
+            this.nodeExtra.producedPrefixes.push(AltUri.ofName(prefix));
             this.provider.scheduleRouteRefresh();
-
             this.announcements.push(prefix);
         });
 
         // Remove routes
         this.fw.on("annrm", (prefix) => {
-            const pfxs = this.node().producedPrefixes
+            const pfxs = this.nodeExtra.producedPrefixes;
             let i = pfxs.indexOf(AltUri.ofName(prefix));
             if (i !== -1) pfxs.splice(i, 1);
-            this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
             this.provider.scheduleRouteRefresh();
 
             i = this.announcements.findIndex((a) => a.equals(prefix));

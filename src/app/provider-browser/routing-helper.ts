@@ -131,7 +131,7 @@ export class RoutingHelper {
 
                 const prefixes = []
                 prefixes.push(...(this.namePrefixes[dest] || []));
-                prefixes.push(...(destNode.producedPrefixes) || []);
+                prefixes.push(...(destNode.extra.producedPrefixes) || []);
 
                 const routes = [];
                 for (const route of this.routes[node][dest]) {

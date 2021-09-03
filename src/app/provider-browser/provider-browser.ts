@@ -126,10 +126,7 @@ export class ProviderBrowser implements ForwardingProvider {
     // Start NFW
     for (const node of this.topo.nodes.get()) {
       if (!node.nfw) {
-        this.topo.nodes.update({
-          id: node.id,
-          producedPrefixes: ['/ndn/multicast/test'],
-        });
+        node.extra.producedPrefixes = ['/ndn/multicast/test'];
 
         this.topo.nodes.update({
           id: node.id,

@@ -56,7 +56,7 @@ import { Topology } from './topo';
 
         <div class="field">
             <label class="label is-small">Registered Prefixes:</label>
-            <pre>{{ node.producedPrefixes.join('\n') }}</pre>
+            <pre>{{ node.extra.producedPrefixes.join('\n') }}</pre>
         </div>
 
         <div>

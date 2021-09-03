@@ -4,10 +4,10 @@ import { NFW } from './provider-browser/nfw';
 export interface INodeExtra {
     pendingTraffic: number;
     codeEdit: string;
+    producedPrefixes: string[];
 }
 
 export interface INode extends vis.Node {
-    producedPrefixes: string[];
     nfw: NFW;
     extra: INodeExtra;
 }

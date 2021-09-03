@@ -138,8 +138,8 @@ export class Topology {
         this.nodes.update({
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
-          producedPrefixes: [],
           extra: {
+            producedPrefixes: [],
             pendingTraffic: 0,
             codeEdit: '',
           },

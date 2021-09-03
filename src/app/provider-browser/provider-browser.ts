@@ -112,6 +112,12 @@ export class ProviderBrowser implements ForwardingProvider {
     }).catch(console.error);
   }
 
+  public runCode(code: string, node: INode) {
+    code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
+    const fun = new Function(code);
+    fun.call(node);
+  }
+
   /** Schedule a refresh of static routes */
   public scheduleRouteRefresh = () => {
     if (this.scheduledRouteRefresh) return;

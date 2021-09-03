@@ -82,9 +82,7 @@ export class TopoNodeComponent implements OnInit {
   }
 
   public runCode(code: string) {
-    code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
-    const fun = new Function(code);
-    fun.call(this.topo.selectedNode);
+    this.topo.provider.runCode(code, this.topo.selectedNode!);
   }
 
   public sendPingClick = (params: any) => {

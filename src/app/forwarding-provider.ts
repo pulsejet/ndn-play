@@ -31,4 +31,7 @@ export interface ForwardingProvider {
   // Send test interests
   sendPingInterest: (from: INode, to: INode) => void;
   sendInterest: (name: string, node: INode) => void;
+
+  // Code execution
+  runCode: (code: string, node: INode) => void;
 }

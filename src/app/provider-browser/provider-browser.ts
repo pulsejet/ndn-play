@@ -86,9 +86,7 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public onNetworkClick = async () => {
-    for (const node of this.topo.nodes.get()) {
-      node.nfw!.updateColors();
-    }
+
   }
 
   public sendPingInterest(from: INode, to: INode) {

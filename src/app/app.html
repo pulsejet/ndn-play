@@ -43,7 +43,7 @@
                 </div>
             </app-tab>
 
-            <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode">
+            <app-tab name="Packet Capture" *ngIf="$any(gs.topo.provider).BROWSER && gs.topo.selectedNode">
                 <div class="m-2">
                     <app-captured-list
                         [node]="gs.topo.selectedNode"

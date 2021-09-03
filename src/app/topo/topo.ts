@@ -112,6 +112,10 @@ export class Topology {
         this.selectedEdge = undefined;
     }
 
+    for (const node of this.nodes.get()) {
+      this.updateNodeColor(node.id, node.extra);
+    }
+
     this.provider.onNetworkClick();
   }
 
@@ -123,8 +127,8 @@ export class Topology {
         this.edges.update({
           id: edge.id,
           color: this.DEFAULT_LINK_COLOR,
-          latency: edge.latency || -1,
-          loss: edge.loss || -1,
+          latency: edge.latency ?? -1,
+          loss: edge.loss ?? -1,
           extra: {
               pendingTraffic: 0,
           },

@@ -8,6 +8,8 @@ const WS_FUNCTIONS = {
   DEL_LINK: 'del_link',
   ADD_LINK: 'add_link',
   UPD_LINK: 'upd_link',
+  DEL_NODE: 'del_node',
+  ADD_NODE: 'add_node',
 }
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -67,6 +69,11 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.ADD_LINK:
         this.topo.edges.updateOnly(msg?.res);
+        break;
+
+      case WS_FUNCTIONS.ADD_NODE:
+        this.topo.nodes.updateOnly(msg?.res);
+        break;
     }
   }
 
@@ -74,11 +81,19 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.wsFun(WS_FUNCTIONS.GET_TOPO);
   }
 
+  private getEdgeEnds(edge: IEdge) {
+    return {
+      from: this.topo.nodes.get(<string>edge.from)!.label,
+      to: this.topo.nodes.get(<string>edge.to)!.label,
+    };
+  }
+
   private setTopoManipulationCallbacks() {
     // Call on removing link
     this.topo.edges.on('remove', (_, removedEdges) => {
       for (const edge of removedEdges?.oldData || []) {
-        this.wsFun(WS_FUNCTIONS.DEL_LINK, edge.from, edge.to, (<any>edge).mnId);
+        const e = this.getEdgeEnds(edge);
+        this.wsFun(WS_FUNCTIONS.DEL_LINK, e.from, e.to, (<any>edge).mnId);
       }
     });
 
@@ -87,11 +102,27 @@ export class ProviderMiniNDN implements ForwardingProvider {
       for (const edgeId of edges?.items || []) {
         const edge = this.topo.edges.get(edgeId);
         if (!edge) continue;
+        const e = this.getEdgeEnds(edge);
 
-        this.wsFun(WS_FUNCTIONS.ADD_LINK, edge.from, edge.to, edge.id, {
+        this.wsFun(WS_FUNCTIONS.ADD_LINK, e.from, e.to, edge.id, {
           latency: this.defaultLatency,
           loss: this.defaultLoss,
         });
+      }
+    });
+
+    // Call on removing node
+    this.topo.nodes.on('remove', (_, removedNodes) => {
+      for (const node of removedNodes?.oldData || []) {
+        this.wsFun(WS_FUNCTIONS.DEL_NODE, node.label);
+      }
+    });
+
+    // Call on adding node
+    this.topo.nodes.on('add', (_, nodes) => {
+      for (const nodeId of nodes?.items || []) {
+        const label = window.prompt('Enter name for new node');
+        this.wsFun(WS_FUNCTIONS.ADD_NODE, nodeId, label);
       }
     });
   }
@@ -99,7 +130,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public edgeUpdated = async (edge?: IEdge) => {
     if (!edge) return;
 
-    this.wsFun(WS_FUNCTIONS.UPD_LINK, edge.from, edge.to, (<any>edge).mnId, {
+    const e = this.getEdgeEnds(edge);
+    this.wsFun(WS_FUNCTIONS.UPD_LINK, e.from, e.to, (<any>edge).mnId, {
       latency: edge?.latency,
       loss: edge?.loss,
     });

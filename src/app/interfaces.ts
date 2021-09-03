@@ -1,20 +1,25 @@
 import * as vis from 'vis-network';
-import { NFW } from './nfw';
+import { NFW } from './provider-browser/nfw';
+
+export interface INodeExtra {
+    pendingTraffic: number;
+    codeEdit: string;
+}
 
 export interface INode extends vis.Node {
     producedPrefixes: string[];
     nfw: NFW;
-    extra: {
-        codeEdit: string;
-    };
+    extra: INodeExtra;
+}
+
+export interface ILinkExtra {
+    pendingTraffic: number;
 }
 
 export interface IEdge extends vis.Edge {
     latency: number;
     loss: number;
-    extra: {
-        pendingTraffic: number;
-    },
+    extra: ILinkExtra,
 }
 
 export interface visTlv {

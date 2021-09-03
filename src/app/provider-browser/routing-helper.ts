@@ -1,5 +1,6 @@
 import * as vis from 'vis-network/standalone';
-import { Topology } from './topo/topo';
+import { ForwardingProvider } from '../forwarding-provider';
+import { Topology } from '../topo/topo';
 
 declare var dijkstra: any;
 
@@ -8,6 +9,7 @@ class _CalculateRoutes {
 
     constructor(
         private topo: Topology,
+        private provider: ForwardingProvider,
     ) {
         this.network = <vis.Network>this.topo.network;
     }
@@ -64,7 +66,7 @@ class _CalculateRoutes {
         if (!edge) return 0;
 
         const latency = edge.latency || 0;
-        return latency >= 0 ? latency : this.topo.defaultLatency;
+        return latency >= 0 ? latency : this.provider.defaultLatency;
     }
 
     getRouteLatency(route: string[]) {
@@ -99,8 +101,9 @@ export class RoutingHelper {
 
     constructor(
         private topo: Topology,
+        provider: ForwardingProvider,
     ) {
-        this.routeObject = new _CalculateRoutes(topo);
+        this.routeObject = new _CalculateRoutes(topo, provider);
     }
 
     addOrigin(nodes: vis.IdType[], prefix: string) {

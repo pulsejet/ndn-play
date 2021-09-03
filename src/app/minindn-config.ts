@@ -88,10 +88,10 @@ export function generate(topo: Topology): string {
         params.push(`${nodeNames[edge.from || '']}:${nodeNames[edge.to || '']}`)
 
         // Latency
-        params.push(`delay=${edge.latency >= 0 ? edge.latency : topo.defaultLatency}ms`)
+        params.push(`delay=${edge.latency >= 0 ? edge.latency : topo.provider.defaultLatency}ms`)
 
         // Loss
-        const loss = edge.loss >= 0 ? edge.loss : topo.defaultLoss;
+        const loss = edge.loss >= 0 ? edge.loss : topo.provider.defaultLoss;
         if (loss > 0) params.push(`loss=${loss}`);
 
         out.push(params.join(' '));

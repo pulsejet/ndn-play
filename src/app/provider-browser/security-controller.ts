@@ -2,7 +2,7 @@ import { Endpoint } from "@ndn/endpoint";
 import { Certificate, generateSigningKey, KeyChain, NamedSigner, NamedVerifier, ValidityPeriod } from "@ndn/keychain";
 import { AltUri, Component, Name } from "@ndn/packet";
 import { TrustSchema, TrustSchemaPolicy, TrustSchemaSigner, TrustSchemaVerifier, versec2019 } from "@ndn/trust-schema";
-import { Topology } from "./topo/topo";
+import { Topology } from "../topo/topo";
 import * as vis from 'vis-network/standalone';
 
 export class SecurityController {

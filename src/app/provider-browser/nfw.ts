@@ -1,5 +1,4 @@
-import { INode } from "./interfaces";
-import * as chroma from 'chroma-js';
+import { INode, INodeExtra } from "../interfaces";
 import * as vis from 'vis-network/standalone';
 
 import { Endpoint, Producer } from "@ndn/endpoint";
@@ -8,14 +7,18 @@ import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 import { Pit } from "@ndn/fw/lib/pit";
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { KeyChain } from "@ndn/keychain";
-import { Topology } from "./topo/topo";
+import { Topology } from "../topo/topo";
 import pushable from "it-pushable";
+import { ProviderBrowser } from "./provider-browser";
 
 export class NFW {
     /** NDNts forwarder */
     public fw = Forwarder.create();
     private face: FwFace;
     private faceRx = pushable<FwPacket>();
+
+    /** Browser Forwarding Provider */
+    public provider: ProviderBrowser;
 
     /** Security options */
     public securityOptions?: {
@@ -36,7 +39,7 @@ export class NFW {
     public capture = false;
 
     /** Content Store */
-    private cs = new ContentStore(this.topo);
+    private cs: ContentStore;
 
     /** Dead Nonce List */
     private dnl: number[] = [];
@@ -46,9 +49,6 @@ export class NFW {
         { prefix: new Name('/'), strategy: 'best-route' },
         { prefix: new Name('/ndn/multicast'), strategy: 'multicast' },
     ];
-
-    /** Packets pending to be forwarded */
-    private pendingTraffic = 0;
 
     /** Server for ping */
     private pingServer?: Producer;
@@ -71,10 +71,19 @@ export class NFW {
     /** Announcements current */
     private announcements: Name[] = [];
 
+    /** Extra parameters of node */
+    private nodeExtra: INodeExtra;
+
     constructor(
         private readonly topo: Topology,
         public readonly nodeId: vis.IdType,
     ) {
+        this.provider = <ProviderBrowser>topo.provider;
+        this.cs = new ContentStore(this.provider);
+
+        // Set extra
+        this.nodeExtra = this.node().extra;
+
         this.fw.on("pktrx", (face, pkt) => {
             // Not useful stuff
             if (pkt.cancel || pkt.reject) return;
@@ -100,7 +109,7 @@ export class NFW {
             const pfxs = this.node().producedPrefixes;
             pfxs.push(AltUri.ofName(prefix));
             this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
-            this.topo.scheduleRouteRefresh();
+            this.provider.scheduleRouteRefresh();
 
             this.announcements.push(prefix);
         });
@@ -111,7 +120,7 @@ export class NFW {
             let i = pfxs.indexOf(AltUri.ofName(prefix));
             if (i !== -1) pfxs.splice(i, 1);
             this.topo.nodes.update({ id: this.nodeId, producedPrefixes: pfxs });
-            this.topo.scheduleRouteRefresh();
+            this.provider.scheduleRouteRefresh();
 
             i = this.announcements.findIndex((a) => a.equals(prefix));
             if (i !== -1) this.announcements.splice(i, 1);
@@ -180,20 +189,9 @@ export class NFW {
         });
     }
 
+    /** Update color of current node */
     public updateColors() {
-        // Check busiest node
-        if (this.pendingTraffic > (this.topo.busiestNode?.nfw.pendingTraffic || 0)) {
-            this.topo.busiestNode = this.node();
-        }
-
-        let color = this.topo.DEFAULT_NODE_COLOR
-        if (this.pendingTraffic > 0) {
-            color = chroma.scale([this.topo.ACTIVE_NODE_COLOR, 'red'])
-                                (this.pendingTraffic / ((this.topo.busiestNode?.nfw.pendingTraffic || 0) + 5)).toString();
-        } else if (this.topo.selectedNode?.id == this.nodeId) {
-            color = this.topo.SELECTED_NODE_COLOR;
-        }
-        this.topo.pendingUpdatesNodes[this.nodeId] = { id: this.nodeId, color: color };
+        this.topo.updateNodeColor(this.nodeId, this.nodeExtra);
     }
 
     /** Add traffic to link */
@@ -203,29 +201,22 @@ export class NFW {
         let link = this.topo.edges.get(myEdges).find(l => l.to == nextHop || l.from == nextHop);
         if (!link) return;
 
-        let latency = link.latency >= 0 ? link.latency : this.topo.defaultLatency;
-        latency *= this.topo.latencySlowdown;
+        let latency = link.latency >= 0 ? link.latency : this.provider.defaultLatency;
+        latency *= this.provider.latencySlowdown;
 
         // Flash link
         link.extra.pendingTraffic++;
-
-        // Check busiest link
-        if (link.extra.pendingTraffic > (this.topo.busiestLink?.extra.pendingTraffic || 0)) {
-            this.topo.busiestLink = link;
-        }
-        const color = chroma.scale([this.topo.ACTIVE_NODE_COLOR, 'red'])
-                                  (link.extra.pendingTraffic / (this.topo.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
-        this.topo.pendingUpdatesEdges[link.id] = { id: link.id, color: color };
+        this.topo.updateEdgeColor(link);
 
         // Forward after latency
         setTimeout(() => {
             if (!link) return;
 
             if (--link.extra.pendingTraffic === 0) {
-                this.topo.pendingUpdatesEdges[link.id] = { id: link.id, color: this.topo.DEFAULT_LINK_COLOR };
+                this.topo.updateEdgeColor(link);
             }
 
-            const loss = link.loss >= 0 ? link.loss : this.topo.defaultLoss;
+            const loss = link.loss >= 0 ? link.loss : this.provider.defaultLoss;
             callback(Math.random() >= loss / 100);
         }, latency)
     }
@@ -268,7 +259,7 @@ export class NFW {
     private expressInterest(pkt: FwPacket<Interest>) {
         const interest = pkt.l3;
 
-        if (this.topo.LOG_INTERESTS) {
+        if (this.provider.LOG_INTERESTS) {
             console.log(this.node().label, AltUri.ofName(interest.name).substr(0, 20));
         }
 
@@ -291,7 +282,7 @@ export class NFW {
         if (strategy !== 'multicast' && this.checkPrefixRegistrationMatches(interest)) return;
 
         // Update colors
-        this.pendingTraffic++;
+        this.nodeExtra.pendingTraffic++;
         this.updateColors();
 
         // Get longest prefix match
@@ -305,7 +296,7 @@ export class NFW {
         // Drop packet if not matching
         // TODO: NACK
         if (!allNextHops?.length) {
-            this.pendingTraffic--;
+            this.nodeExtra.pendingTraffic--;
             setTimeout(() => this.updateColors(), 100);
             return;
         }
@@ -326,7 +317,7 @@ export class NFW {
         }
 
         // This will be added in the first iteration
-        this.pendingTraffic--;
+        this.nodeExtra.pendingTraffic--;
 
         // Which hops sent to (prevent dupulicate sending)
         const sentHops: vis.IdType[] = [];
@@ -351,7 +342,7 @@ export class NFW {
             sentHops.push(nextHop);
 
             // Add overhead signal
-            this.pendingTraffic++;
+            this.nodeExtra.pendingTraffic++;
 
             // Forward to next NFW
             const nextNFW = this.topo.nodes.get(<vis.IdType>nextHop)?.nfw;
@@ -362,7 +353,7 @@ export class NFW {
 
             // Add traffic to link
             this.addLinkTraffic(nextHop, (success) => {
-                this.pendingTraffic--;
+                this.nodeExtra.pendingTraffic--;
                 this.updateColors();
 
                 if (success) {
@@ -374,7 +365,7 @@ export class NFW {
                                 for await (const rpkt of iterable) {
                                     // Flash nodes only for data
                                     if (rpkt.l3 instanceof Data) {
-                                        nextNFW.pendingTraffic++;
+                                        nextNFW.node().extra.pendingTraffic++;
                                         nextNFW.updateColors();
                                     }
 
@@ -392,7 +383,7 @@ export class NFW {
                                             };
 
                                             if (rpkt.l3 instanceof Data) {
-                                                nextNFW.pendingTraffic--;
+                                                nextNFW.node().extra.pendingTraffic--;
                                                 nextNFW.updateColors();
                                                 this.faceRx.push(rpkt);
 
@@ -466,7 +457,7 @@ export class NFW {
 class ContentStore {
     private cs: { recv: number; data: Data}[] = [];
 
-    constructor(private topo: Topology) {}
+    constructor(private provider: ProviderBrowser) {}
 
     public push(data: Data): void {
         if (!data.freshnessPeriod) return;
@@ -486,8 +477,8 @@ class ContentStore {
         }
 
         // Trim CS
-        if (this.cs.length > this.topo.contentStoreSize) {
-            this.cs = this.cs.slice(0, this.topo.contentStoreSize);
+        if (this.cs.length > this.provider.contentStoreSize) {
+            this.cs = this.cs.slice(0, this.provider.contentStoreSize);
         }
     }
 

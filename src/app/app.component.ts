@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from './global.service';
+import { ProviderBrowser } from './provider-browser/provider-browser';
 import { ndn as ndnUserTypes } from './user-types';
 
 @Component({
@@ -27,6 +28,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.gs.topo.createNetwork(this.topoContainer?.nativeElement);
-    this.gs.topo.security.createNetwork(this.secContainer?.nativeElement);
+
+    if (this.gs.topo.provider instanceof ProviderBrowser) {
+      this.gs.topo.provider.security.createNetwork(this.secContainer?.nativeElement);
+    }
   }
 }

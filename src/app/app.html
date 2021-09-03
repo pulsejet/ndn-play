@@ -17,14 +17,17 @@
                     <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit" language="javascript"></app-editor>
                 </div>
             </app-tab>
-            <app-tab name="Trust Schema">
-                <div class="main-tab">
-                    <app-editor [(code)]="gs.topo.security.schemaText" language="trust-schema"></app-editor>
-                </div>
-            </app-tab>
-            <app-tab name="Trust Visualizer" (select)="gs.topo.security.fitLazy()">
-                <div #secContainer class="main-tab"></div>
-            </app-tab>
+
+            <ng-container *ngIf="$any(gs.topo.provider).security">
+                <app-tab name="Trust Schema">
+                    <div class="main-tab">
+                        <app-editor [(code)]="$any(gs.topo.provider).security.schemaText" language="trust-schema"></app-editor>
+                    </div>
+                </app-tab>
+                <app-tab name="Trust Visualizer" (select)="$any(gs.topo.provider).security.fitLazy()">
+                    <div #secContainer class="main-tab"></div>
+                </app-tab>
+            </ng-container>
         </app-tabs>
     </ng-template>
 

@@ -8,19 +8,19 @@ import { Topology } from './topo';
     <div>
         <h2 class="is-size-5">Global Operations</h2>
         <br/>
-        <div class="field">
+        <div class="field" *ngIf="$any(topo.provider).BROWSER">
             <button class="button is-link full-width is-light is-small full-width"
-                    (click)="topo.scheduleRouteRefresh()">Compute Routes</button>
+                    (click)="$any(topo.provider).scheduleRouteRefresh()">Compute Routes</button>
             <button class="button is-link full-width is-light is-small full-width mt-1"
-                    (click)="topo.security.computeSecurity()">Compute Trust</button>
+                    (click)="$any(topo.provider).security.computeSecurity()">Compute Trust</button>
         </div>
 
         <div class="field">
             <label class="label is-small">Default Latency (ms)</label>
             <div class="control">
                 <input class="input is-small" type="number" placeholder="10"
-                        [(ngModel)]="this.topo.defaultLatency"
-                        (change)="topo.scheduleRouteRefresh()">
+                        [(ngModel)]="this.topo.provider.defaultLatency"
+                        (change)="topo.provider.edgeUpdated()">
             </div>
         </div>
 
@@ -28,23 +28,23 @@ import { Topology } from './topo';
             <label class="label is-small">Default Loss (%)</label>
             <div class="control">
                 <input class="input is-small" type="number" placeholder="0"
-                        [(ngModel)]="topo.defaultLoss">
+                        [(ngModel)]="topo.provider.defaultLoss">
             </div>
         </div>
 
-        <div class="field">
+        <div class="field" *ngIf="topo.provider.contentStoreSize !== undefined">
             <label class="label is-small">Content Store Size</label>
             <div class="control">
                 <input class="input is-small" type="number" placeholder="100"
-                        [(ngModel)]="topo.contentStoreSize">
+                        [(ngModel)]="topo.provider.contentStoreSize">
             </div>
         </div>
 
-        <div class="field">
+        <div class="field" *ngIf="topo.provider.latencySlowdown !== undefined">
             <label class="label is-small">Latency Slowdown Multiplier</label>
             <div class="control">
                 <input class="input is-small" type="number" placeholder="100"
-                        [(ngModel)]="topo.latencySlowdown">
+                        [(ngModel)]="topo.provider.latencySlowdown">
             </div>
         </div>
 

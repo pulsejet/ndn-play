@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { ProviderBrowser } from './provider-browser/provider-browser';
 import { Topology } from './topo/topo';
 
 @Injectable({
@@ -6,7 +7,7 @@ import { Topology } from './topo/topo';
 })
 export class GlobalService {
   // Topology
-  public topo = new Topology();
+  public topo = new Topology(new ProviderBrowser());
 
   constructor() {
     requestAnimationFrame(this.runAnimationFrame.bind(this));

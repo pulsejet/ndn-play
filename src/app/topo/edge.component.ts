@@ -18,7 +18,7 @@ import { Topology } from './topo';
             <div class="control">
                 <input class="input is-small" type="number" placeholder="10"
                         [(ngModel)]="edge.latency"
-                        (input)="topo.edges.update(edge); topo.scheduleRouteRefresh()">
+                        (input)="topo.edges.update(edge); topo.provider.edgeUpdated(edge)">
             </div>
             <p class="help is-small">Negative for default latency</p>
         </div>

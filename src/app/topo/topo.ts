@@ -1,8 +1,8 @@
-import { IEdge, INode } from "../interfaces";
-import { RoutingHelper } from "../routing-helper";
-import { Name } from "@ndn/packet";
-import { NFW } from "../nfw";
-import { SecurityController } from "../security-controller";
+import { IEdge, INode, INodeExtra } from "../interfaces";
+import { SecurityController } from "../provider-browser/security-controller";
+import { ForwardingProvider } from "../forwarding-provider";
+import { ProviderBrowser } from "../provider-browser/provider-browser";
+import chroma from "chroma-js";
 import * as vis from 'vis-network/standalone';
 
 export class Topology {
@@ -11,11 +11,6 @@ export class Topology {
   public readonly DEFAULT_NODE_COLOR = '#a4b7fc';
   public readonly SELECTED_NODE_COLOR = '#4ee44e';
   public readonly ACTIVE_NODE_COLOR = '#ffcccb';
-  public readonly LOG_INTERESTS = false;
-
-  // Animation updates
-  public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
-  public pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
 
   // Global Dataset
   public readonly nodes: vis.DataSet<INode, "id">;
@@ -23,12 +18,6 @@ export class Topology {
 
   // Global network
   public network!: vis.Network;
-
-  // Global defaults
-  public defaultLatency = 10;
-  public defaultLoss = 0;
-  public contentStoreSize = 500;
-  public latencySlowdown = 10;
 
   // Animation color busiest
   public busiestNode?: INode;
@@ -44,50 +33,28 @@ export class Topology {
   // Next click event
   public pendingClickEvent?: (params: any) => void;
 
-  // Event of route refresh
-  private scheduledRouteRefresh: number = 0;
+  constructor(public provider: ForwardingProvider) {
+    // Pass back to provider
+    this.provider.topo = this;
 
-  // Security
-  public security: SecurityController;
+    // Initialize empty graph
+    this.nodes = new vis.DataSet<INode, "id">();
+    this.edges = new vis.DataSet<IEdge, "id">();
 
-  constructor() {
-    // create an array with nodes
-    this.nodes = new vis.DataSet<INode, "id">(<any>[
-      { id: "1", label: "A" },
-      { id: "2", label: "M" },
-      { id: "3", label: "E" },
-      { id: "4", label: "B" },
-      { id: "5", label: "C" },
-
-      { id: "d1", label: "D" },
-      { id: "d2", label: "D" },
-      { id: "d3", label: "D" },
-      { id: "d4", label: "D" },
-    ]);
-
-    // create an array with edges
-    this.edges = new vis.DataSet<IEdge, "id">(<any>[
-      { from: "1", to: "3" },
-      { from: "1", to: "2" },
-      { from: "2", to: "4" },
-      { from: "2", to: "5" },
-
-      { from: "3", to: "d3" },
-      { from: "d3", to: "d2" },
-      { from: "d3", to: "d1" },
-      { from: "d1", to: "d4" },
-      { from: "d4", to: "1" },
-    ]);
-
-    // Initialize
+    // Initialize the graph
     this.ensureInitialized();
 
     // Initialize always
     this.nodes.on('add', this.ensureInitialized.bind(this));
     this.edges.on('add', this.ensureInitialized.bind(this));
 
-    // Initialize security
-    this.security = new SecurityController(this);
+    // Initialize provider
+    this.provider.initialize();
+
+    // Initialize security for browser provider
+    if (this.provider instanceof ProviderBrowser) {
+      this.provider.security = new SecurityController(this);
+    }
   }
 
   /** Initialize the network */
@@ -109,27 +76,20 @@ export class Topology {
 
     this.network = new vis.Network(container, data, options);
 
-    // Routing
-    const computeFun = this.scheduleRouteRefresh.bind(this);
-    this.nodes.on('add', computeFun);
-    this.nodes.on('remove', computeFun);
-    this.edges.on('add', computeFun);
-    this.edges.on('remove', computeFun);
-
     // Bind functions
     this.network?.on("click", this.onNetworkClick.bind(this));
   }
 
   /** Update objects every animation frame */
   public runAnimationFrame() {
-    if (Object.keys(this.pendingUpdatesNodes).length > 0) {
-        this.nodes.update(Object.values(this.pendingUpdatesNodes));
-        this.pendingUpdatesNodes = {};
+    if (Object.keys(this.provider.pendingUpdatesNodes).length > 0) {
+        this.nodes.update(Object.values(this.provider.pendingUpdatesNodes));
+        this.provider.pendingUpdatesNodes = {};
     }
 
-    if (Object.keys(this.pendingUpdatesEdges).length > 0) {
-        this.edges.update(Object.values(this.pendingUpdatesEdges));
-        this.pendingUpdatesEdges = {};
+    if (Object.keys(this.provider.pendingUpdatesEdges).length > 0) {
+        this.edges.update(Object.values(this.provider.pendingUpdatesEdges));
+        this.provider.pendingUpdatesEdges = {};
     }
   }
 
@@ -150,37 +110,7 @@ export class Topology {
         this.selectedEdge = undefined;
     }
 
-    for (const node of this.nodes.get()) {
-      node.nfw.updateColors();
-    }
-  }
-
-  /** Compute static routes */
-  private computeRoutes() {
-    console.warn('Computing routes');
-    const rh = new RoutingHelper(this);
-    const fibs = rh.calculateNPossibleRoutes();
-    for (const nodeId in fibs) {
-        const node = this.nodes.get(nodeId);
-        if (!node) continue;
-
-        node.nfw.fib = fibs[nodeId].map((e: any) => {
-          return {
-            ...e,
-            prefix: new Name(e.prefix),
-          };
-        });
-    }
-  }
-
-  /** Schedule a refresh of static routes */
-  public scheduleRouteRefresh() {
-    if (this.scheduledRouteRefresh) return;
-
-    this.scheduledRouteRefresh = window.setTimeout(() => {
-      this.computeRoutes();
-      this.scheduledRouteRefresh = 0;
-    }, 500);
+    this.provider.onNetworkClick();
   }
 
   /** Ensure all nodes and edges are initialized */
@@ -206,15 +136,50 @@ export class Topology {
         this.nodes.update({
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
-          producedPrefixes: ['/ndn/multicast/test'],
+          producedPrefixes: [],
           extra: {
+            pendingTraffic: 0,
             codeEdit: '',
           },
         });
-
-        const nfw = new NFW(this, node.id);
-        this.nodes.update({ id: node.id, nfw });
       }
     }
+  }
+
+  public updateNodeColor(nodeId: vis.IdType, nodeExtra?: INodeExtra) {
+    // Get object if not passed
+    if (!nodeExtra) {
+      nodeExtra = this.nodes.get(nodeId)!.extra;
+    }
+
+    // Check busiest node
+    if (nodeExtra.pendingTraffic > (this.busiestNode?.extra.pendingTraffic || 0)) {
+      this.busiestNode = <any>this.nodes.get(nodeId);
+    }
+
+    let color = this.DEFAULT_NODE_COLOR
+    if (nodeExtra.pendingTraffic > 0) {
+        color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
+                            (nodeExtra.pendingTraffic / ((this.busiestNode?.extra.pendingTraffic || 0) + 5)).toString();
+    } else if (this.selectedNode?.id == nodeId) {
+        color = this.SELECTED_NODE_COLOR;
+    }
+    this.provider.pendingUpdatesNodes[nodeId] = { id: nodeId, color: color };
+  }
+
+  public updateEdgeColor(edge: IEdge) {
+    // No traffic
+    if (edge.extra.pendingTraffic === 0) {
+      this.provider.pendingUpdatesEdges[<vis.IdType>edge.id] = { id: edge.id, color: this.DEFAULT_LINK_COLOR };
+      return;
+    }
+
+    // Check busiest link
+    if (edge.extra.pendingTraffic > (this.busiestLink?.extra.pendingTraffic || 0)) {
+      this.busiestLink = edge;
+    }
+    const color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
+                              (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
+    this.provider.pendingUpdatesEdges[<vis.IdType>edge.id] = { id: edge.id, color: color };
   }
 }

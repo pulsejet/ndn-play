@@ -118,6 +118,8 @@ export class ProviderBrowser implements ForwardingProvider {
           prefix: new Name(e.prefix),
         };
       });
+
+      node.extra.fibStr = node.nfw.strsFIB().join('\n');
     }
   }
 
@@ -132,8 +134,6 @@ export class ProviderBrowser implements ForwardingProvider {
           id: node.id,
           nfw: new NFW(this.topo, node.id),
         });
-
-        console.log(node)
       }
     }
   }

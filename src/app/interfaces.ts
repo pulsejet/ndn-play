@@ -5,6 +5,7 @@ export interface INodeExtra {
     pendingTraffic: number;
     codeEdit: string;
     producedPrefixes: string[];
+    fibStr: string;
 }
 
 export interface INode extends vis.Node {

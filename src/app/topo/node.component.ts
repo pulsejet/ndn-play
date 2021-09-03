@@ -61,7 +61,7 @@ import { Topology } from './topo';
 
         <div>
             <label class="label is-small">Computed FIB:</label>
-            <pre>{{ node.nfw.strsFIB().join('\n') }}</pre>
+            <pre>{{ node.extra.fibStr }}</pre>
         </div>
     </div>
   `,

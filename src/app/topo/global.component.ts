@@ -67,6 +67,20 @@ import { Topology } from './topo';
                 Generate
             </button>
         </div>
+
+        <div class="field">
+            <label class="label is-small">Experiment Dump:</label>
+            <button class="button is-danger is-light is-small full-width"
+                    *ngIf="topo.provider.downloadExperimentDump"
+                    (click)="topo.provider.downloadExperimentDump()">
+                Download
+            </button>
+            <button class="button is-link is-light is-small full-width mt-1"
+                    *ngIf="topo.provider.loadExperimentDump"
+                    (click)="topo.provider.loadExperimentDump('ew')">
+                Load
+            </button>
+        </div>
     </div>
   `,
   styles: [

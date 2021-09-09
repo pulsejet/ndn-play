@@ -2,6 +2,7 @@ import { ForwardingProvider } from "./forwarding-provider";
 import { ICapturedPacket, IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { downloadString } from "./helper";
 
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
@@ -33,6 +34,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   // Websocket connection
   public ws!: WebSocketSubject<any>;
+
+  // Dump of data
+  public dump?: { nodes: INode[]; edges: IEdge[]; }
 
   constructor() {}
 
@@ -96,6 +100,18 @@ export class ProviderMiniNDN implements ForwardingProvider {
               to: p[6],
               p: p[7] || undefined,
             } as ICapturedPacket });
+
+        // Creating dump
+        if (this.dump) {
+          this.dump.nodes.push(this.topo.nodes.get(<string>msg?.res.id)!);
+
+          // Did we get everything?
+          if (this.dump.nodes.length == this.topo.nodes.length) {
+            downloadString(JSON.stringify(this.dump), 'JSON', 'experiment.json');
+            this.dump = undefined;
+          }
+        }
+
         break;
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
@@ -194,9 +210,12 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, packet.node, packet.fn);
   }
 
-  /** Schedule a refresh of static routes */
-  public scheduleRouteRefresh = () => {
-
+  /** Download a dump of experiment */
+  public downloadExperimentDump(): void {
+    this.dump = { nodes: [], edges: this.topo.edges.get() };
+    this.topo.nodes.forEach((node) => {
+      this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, true);
+    });
   }
 
   /** Ensure all nodes and edges are initialized */

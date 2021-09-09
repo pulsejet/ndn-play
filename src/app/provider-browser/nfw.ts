@@ -175,9 +175,12 @@ export class NFW {
         const encoder = new Encoder();
         encoder.encode(p);
 
+        // Store hex so we can dump later
+        const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
+
         this.nodeExtra.capturedPackets.push({
             t: performance.now(),
-            p: encoder.output,
+            p: hex,
             l: encoder.output.length,
             type: type,
             name: AltUri.ofName(p.name).substr(0, 48),

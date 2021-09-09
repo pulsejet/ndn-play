@@ -36,6 +36,10 @@ export interface ForwardingProvider {
   fetchCapturedPackets?: (node: INode) => void;
   visualizeCaptured?: (packet: any) => void;
 
+  // Dump of experiment
+  downloadExperimentDump?: () => void;
+  loadExperimentDump?: () => void;
+
   // Code execution
   runCode: (code: string, node: INode) => void;
 }

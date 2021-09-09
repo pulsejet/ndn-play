@@ -5,6 +5,7 @@ import { NFW } from "./nfw";
 import { SecurityController } from "./security-controller";
 import { Topology } from "../topo/topo";
 import { RoutingHelper } from "./routing-helper";
+import { downloadString, loadFileString } from "../helper";
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -161,5 +162,35 @@ export class ProviderBrowser implements ForwardingProvider {
         });
       }
     }
+  }
+
+  public downloadExperimentDump() {
+    const nodes = this.topo.nodes.get().map((n) => {
+      const copy = {... n};
+      copy.nfw = undefined;
+      return copy;
+    });
+
+    const dump = JSON.stringify({
+      nodes: nodes,
+      edges: this.topo.edges.get(),
+    });
+    downloadString(dump, 'JSON', 'experiment.json');
+  }
+
+  public loadExperimentDump() {
+    loadFileString().then((val) => {
+      try {
+        const dump = JSON.parse(val);
+        this.topo.edges.clear();
+        this.topo.nodes.clear();
+        this.topo.nodes.add(dump.nodes);
+        this.topo.edges.add(dump.edges);
+      } catch (err) {
+        console.error('Failed to parse dump file', err);
+      }
+    }).catch(() => {
+      console.error('Failed to read dump file');
+    });
   }
 }

@@ -58,6 +58,8 @@ export class CapturedReplayComponent implements OnInit {
     this.gs.topo.nodes.forEach((node) => {
       node.extra.replayWindow = 0;
       node.extra.replayWindowF = 0;
+      node.extra.pendingTraffic = 0;
+      this.gs.topo.updateNodeColor(node.id!, node.extra);
 
       if (!node.extra.capturedPackets?.length) {
         return;
@@ -66,6 +68,11 @@ export class CapturedReplayComponent implements OnInit {
       this.startTime = Math.min(this.startTime, node.extra.capturedPackets[0].t);
       this.endTime = Math.max(this.endTime, node.extra.capturedPackets[node.extra.capturedPackets.length - 1].t);
     });
+
+    this.gs.topo.edges.forEach((edge) => {
+      edge.extra.pendingTraffic = 0;
+      this.gs.topo.updateEdgeColor(edge);
+    })
 
     this.t = this.startTime;
     this.endTime += 1000;
@@ -111,7 +118,7 @@ export class CapturedReplayComponent implements OnInit {
       {
         const pType = node.extra.capturedPackets[cwf].type.toLocaleLowerCase();
         if (showTypes.includes(pType)) {
-          node.extra.pendingTraffic--;
+          node.extra.pendingTraffic -= node.extra.capturedPackets[cwf].l;
 
           const link = this.getLink(node.extra.capturedPackets[cwf]);
           if (link) {
@@ -145,7 +152,7 @@ export class CapturedReplayComponent implements OnInit {
       {
         const pType = node.extra.capturedPackets[cw].type.toLocaleLowerCase();
         if (showTypes.includes(pType)) {
-          node.extra.pendingTraffic++;
+          node.extra.pendingTraffic += node.extra.capturedPackets[cw].l;
 
           const link = this.getLink(node.extra.capturedPackets[cw]);
           if (link) {

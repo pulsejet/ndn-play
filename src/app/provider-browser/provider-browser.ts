@@ -174,6 +174,7 @@ export class ProviderBrowser implements ForwardingProvider {
     const dump = JSON.stringify({
       nodes: nodes,
       edges: this.topo.edges.get(),
+      positions: this.topo.network.getPositions(),
     });
     downloadString(dump, 'JSON', 'experiment.json');
   }
@@ -184,6 +185,15 @@ export class ProviderBrowser implements ForwardingProvider {
         const dump = JSON.parse(val);
         this.topo.edges.clear();
         this.topo.nodes.clear();
+
+        if (dump.positions) {
+          dump.nodes.forEach((n: INode) => {
+            console.log(dump.positions[n.id!])
+            n.x = dump.positions[n.id!].x;
+            n.y = dump.positions[n.id!].y;
+          })
+        }
+
         this.topo.nodes.add(dump.nodes);
         this.topo.edges.add(dump.edges);
       } catch (err) {

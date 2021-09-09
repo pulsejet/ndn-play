@@ -36,7 +36,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public ws!: WebSocketSubject<any>;
 
   // Dump of data
-  public dump?: { nodes: INode[]; edges: IEdge[]; }
+  public dump?: { nodes: INode[]; edges: IEdge[]; positions?: any; }
 
   constructor() {}
 
@@ -104,6 +104,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         // Creating dump
         if (this.dump) {
           this.dump.nodes.push(this.topo.nodes.get(<string>msg?.res.id)!);
+          this.dump.positions = this.topo.network.getPositions();
 
           // Did we get everything?
           if (this.dump.nodes.length == this.topo.nodes.length) {

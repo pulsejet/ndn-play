@@ -90,12 +90,15 @@ export class CapturedReplayComponent implements OnInit {
       while (cwf < cw &&
              node.extra.capturedPackets[cwf].t <= this.t - this.transferTime)
       {
-        node.extra.pendingTraffic--;
+        const pType = node.extra.capturedPackets[cwf].type.toLocaleLowerCase();
+        if (pType == 'interest' || pType == 'data') {
+          node.extra.pendingTraffic--;
 
-        const link = this.getLink(node.extra.capturedPackets[cwf]);
-        if (link) {
-          link.extra.pendingTraffic--;
-          this.gs.topo.updateEdgeColor(link);
+          const link = this.getLink(node.extra.capturedPackets[cwf]);
+          if (link) {
+            link.extra.pendingTraffic--;
+            this.gs.topo.updateEdgeColor(link);
+          }
         }
 
         cwf++;
@@ -121,12 +124,15 @@ export class CapturedReplayComponent implements OnInit {
              node.extra.capturedPackets[cw].t >= this.t &&
              node.extra.capturedPackets[cw].t <= this.t + this.transferTime)
       {
-        node.extra.pendingTraffic++;
+        const pType = node.extra.capturedPackets[cw].type.toLocaleLowerCase();
+        if (pType == 'interest' || pType == 'data') {
+          node.extra.pendingTraffic++;
 
-        const link = this.getLink(node.extra.capturedPackets[cw]);
-        if (link) {
-          link.extra.pendingTraffic++;
-          this.gs.topo.updateEdgeColor(link);
+          const link = this.getLink(node.extra.capturedPackets[cw]);
+          if (link) {
+            link.extra.pendingTraffic++;
+            this.gs.topo.updateEdgeColor(link);
+          }
         }
 
         cw++;

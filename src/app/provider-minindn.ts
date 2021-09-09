@@ -1,5 +1,5 @@
 import { ForwardingProvider } from "./forwarding-provider";
-import { IEdge, INode } from "./interfaces";
+import { ICapturedPacket, IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
@@ -87,14 +87,14 @@ export class ProviderMiniNDN implements ForwardingProvider {
           msg?.res.packets.map((p: any) => {
             return {
               node: msg?.res.id,
-              fn: p[0],
-              t: p[1],
-              length: p[2],
+              fn: Number(p[0]),
+              t: Number(p[1]),
+              l: Number(p[2]),
               type: p[3],
               name: p[4],
               from: p[5],
               to: p[6],
-            }});
+            } as ICapturedPacket });
         break;
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:

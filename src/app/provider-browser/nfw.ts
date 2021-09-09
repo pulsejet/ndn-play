@@ -178,7 +178,7 @@ export class NFW {
         this.nodeExtra.capturedPackets.push({
             t: performance.now(),
             p: encoder.output,
-            length: encoder.output.length,
+            l: encoder.output.length,
             type: type,
             name: AltUri.ofName(p.name).substr(0, 48),
         });

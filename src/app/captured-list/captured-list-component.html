@@ -12,6 +12,9 @@
         </td>
         <td>
             {{ packet.type }}
+            <ng-container *ngIf="packet.from">
+                [{{ packet.from }} &#8594; {{ packet.to }}]
+            </ng-container>
         </td>
         <td>
             {{ packet.length }}

@@ -92,6 +92,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
               length: p[2],
               type: p[3],
               name: p[4],
+              from: p[5],
+              to: p[6],
             }});
         break;
 

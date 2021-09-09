@@ -188,7 +188,6 @@ export class ProviderBrowser implements ForwardingProvider {
 
         if (dump.positions) {
           dump.nodes.forEach((n: INode) => {
-            console.log(dump.positions[n.id!])
             n.x = dump.positions[n.id!].x;
             n.y = dump.positions[n.id!].y;
           })
@@ -196,6 +195,9 @@ export class ProviderBrowser implements ForwardingProvider {
 
         this.topo.nodes.add(dump.nodes);
         this.topo.edges.add(dump.edges);
+
+        this.topo.network.stabilize();
+        setTimeout(() => this.topo.network.fit(), 200);
       } catch (err) {
         console.error('Failed to parse dump file', err);
       }

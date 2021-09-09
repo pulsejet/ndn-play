@@ -68,7 +68,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
         this.topo.edges.clear();
         this.topo.nodes.add(msg?.res?.nodes);
         this.topo.edges.add(msg?.res?.links);
-        this.topo.network.fit();
+        this.topo.network.stabilize();
+        setTimeout(() => this.topo.network.fit(), 200);
 
         if (!this.initialized) this.setTopoManipulationCallbacks();
         this.initialized = true;

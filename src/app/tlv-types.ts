@@ -86,8 +86,29 @@ enum TlvContentInfo {
     ContentType_Flic      = 1024, ///< File-Like ICN Collection
 }
 
+enum NDNLPv2 {
+    LpPacket = 100,
+    Fragment = 80,
+    Sequence = 81,
+    FragIndex = 82,
+    FragCount = 83,
+    PitToken = 98,
+    Nack = 800,
+    NackReason = 801,
+    NextHopFaceId = 816,
+    IncomingFaceId = 817,
+    CachePolicy = 820,
+    CachePolicyType = 821,
+    CongestionMark = 832,
+    Ack = 836,
+    TxSequence = 840,
+    NonDiscovery = 844,
+    PrefixAnnouncement = 848,
+}
+
 export function getTlvTypeText(type: number) {
     return TlvV3[type] || TlvV2[type] || TlvNC[type] ||
            TlvSign[type] || TlvSignInfo[type] || TlvContentInfo[type] ||
+           NDNLPv2[type] ||
            `T=${type}`;
 }

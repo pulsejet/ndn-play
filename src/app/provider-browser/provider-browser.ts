@@ -129,7 +129,7 @@ export class ProviderBrowser implements ForwardingProvider {
 
   /** Compute static routes */
   private computeRoutes = () => {
-    if (!this.topo) return;
+    if (!this.topo || this.topo.imported == 'MININDN') return;
 
     console.warn('Computing routes');
     const rh = new RoutingHelper(this.topo, this);
@@ -172,6 +172,7 @@ export class ProviderBrowser implements ForwardingProvider {
     });
 
     const dump = JSON.stringify({
+      exporter: 'BROWSER',
       nodes: nodes,
       edges: this.topo.edges.get(),
       positions: this.topo.network.getPositions(),
@@ -190,8 +191,10 @@ export class ProviderBrowser implements ForwardingProvider {
           dump.nodes.forEach((n: INode) => {
             n.x = dump.positions[n.id!].x;
             n.y = dump.positions[n.id!].y;
-          })
+          });
         }
+
+        this.topo.imported = dump.exporter;
 
         this.topo.nodes.add(dump.nodes);
         this.topo.edges.add(dump.edges);

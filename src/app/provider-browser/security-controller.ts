@@ -200,6 +200,7 @@ export class SecurityController {
 
     /** Compute static routes */
     public computeSecurity = async () => {
+        if (this.topo.imported == 'MININDN') return;
         if (this.refreshTimer) return;
 
         this.refreshTimer = window.setTimeout(async () => {

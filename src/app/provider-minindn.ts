@@ -36,7 +36,11 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public ws!: WebSocketSubject<any>;
 
   // Dump of data
-  public dump?: { nodes: INode[]; edges: IEdge[]; positions?: any; }
+  public dump?: {
+    exporter: 'MININDN',
+    nodes: INode[]; edges: IEdge[];
+    positions?: any;
+  }
 
   constructor() {}
 
@@ -214,7 +218,11 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   /** Download a dump of experiment */
   public downloadExperimentDump(): void {
-    this.dump = { nodes: [], edges: this.topo.edges.get() };
+    this.dump = {
+      exporter: 'MININDN',
+      nodes: [],
+      edges: this.topo.edges.get(),
+    };
     this.topo.nodes.forEach((node) => {
       this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, true);
     });

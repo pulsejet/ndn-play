@@ -19,6 +19,9 @@ export class Topology {
   // Global network
   public network!: vis.Network;
 
+  // If imported from an experiment
+  public imported?: 'MININDN' | 'BROWSER';
+
   // Animation color busiest
   public busiestNode?: INode;
   public busiestLink?: IEdge;

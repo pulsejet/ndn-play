@@ -37,6 +37,10 @@ export class CapturedReplayComponent implements OnInit {
   }
 
   public replay() {
+    if (this.handle) {
+      window.clearInterval(this.handle);
+    }
+
     this.startTime = 99999999999999999999999999999999999;
     this.endTime = 0;
 

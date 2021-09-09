@@ -4930,6 +4930,61 @@ export namespace KeyChain {
     function createTemp(): KeyChain;
 }
 
+interface ForwardingProvider {
+    topo: Topology;
+    pendingUpdatesNodes: {
+        [id: string]: Partial<INode>;
+    };
+    pendingUpdatesEdges: {
+        [id: string]: Partial<IEdge>;
+    };
+    defaultLatency: number;
+    defaultLoss: number;
+    contentStoreSize?: number;
+    latencySlowdown?: number;
+    initialize: () => Promise<void>;
+    initializePostNetwork: () => Promise<void>;
+    edgeUpdated: (edge?: IEdge) => Promise<void>;
+    nodeUpdated: (node?: INode) => Promise<void>;
+    onNetworkClick: () => Promise<void>;
+    sendPingInterest: (from: INode, to: INode) => void;
+    sendInterest: (name: string, node: INode) => void;
+    fetchCapturedPackets?: (node: INode) => void;
+    visualizeCaptured?: (packet: any) => void;
+    downloadExperimentDump?: () => void;
+    loadExperimentDump?: () => void;
+    runCode: (code: string, node: INode) => void;
+}
+
+export class Topology {
+    provider: ForwardingProvider;
+    readonly DEFAULT_LINK_COLOR = "#3583ea";
+    readonly DEFAULT_NODE_COLOR = "#a4b7fc";
+    readonly SELECTED_NODE_COLOR = "#4ee44e";
+    readonly ACTIVE_NODE_COLOR = "#ffcccb";
+    readonly nodes: DataSet<INode, "id">;
+    readonly edges: DataSet<IEdge, "id">;
+    network: Network;
+    imported?: 'MININDN' | 'BROWSER';
+    busiestNode?: INode;
+    busiestLink?: IEdge;
+    selectedNode?: INode;
+    selectedEdge?: IEdge;
+    captureAll: boolean;
+    pendingClickEvent?: (params: any) => void;
+    constructor(provider: ForwardingProvider);
+    /** Initialize the network */
+    createNetwork: (container: HTMLElement) => Promise<void>;
+    /** Update objects every animation frame */
+    runAnimationFrame(): void;
+    /** Handler */
+    private onNetworkClick;
+    /** Ensure all nodes and edges are initialized */
+    private ensureInitialized;
+    updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra): void;
+    updateEdgeColor(edge: IEdge): void;
+}
+
 export class SecurityController {
     private topo;
     private rootKeychain;
@@ -4950,46 +5005,39 @@ export class SecurityController {
     fitLazy(): void;
 }
 
-export class Topology {
-    readonly DEFAULT_LINK_COLOR = "#3583ea";
-    readonly DEFAULT_NODE_COLOR = "#a4b7fc";
-    readonly SELECTED_NODE_COLOR = "#4ee44e";
-    readonly ACTIVE_NODE_COLOR = "#ffcccb";
+export class ProviderBrowser implements ForwardingProvider {
     readonly LOG_INTERESTS = false;
+    readonly BROWSER = 1;
+    topo: Topology;
     pendingUpdatesNodes: {
         [id: string]: Partial<INode>;
     };
     pendingUpdatesEdges: {
         [id: string]: Partial<IEdge>;
     };
-    readonly nodes: DataSet<INode, "id">;
-    readonly edges: DataSet<IEdge, "id">;
-    network: Network;
     defaultLatency: number;
     defaultLoss: number;
     contentStoreSize: number;
     latencySlowdown: number;
-    busiestNode?: INode;
-    busiestLink?: IEdge;
-    selectedNode?: INode;
-    selectedEdge?: IEdge;
-    captureAll: boolean;
-    pendingClickEvent?: (params: any) => void;
     private scheduledRouteRefresh;
     security: SecurityController;
     constructor();
-    /** Initialize the network */
-    createNetwork(container: HTMLElement): void;
-    /** Update objects every animation frame */
-    runAnimationFrame(): void;
-    /** Handler */
-    private onNetworkClick;
+    initialize: () => Promise<void>;
+    initializePostNetwork: () => Promise<void>;
+    edgeUpdated: (edge?: IEdge | undefined) => Promise<void>;
+    nodeUpdated: (node?: INode | undefined) => Promise<void>;
+    onNetworkClick: () => Promise<void>;
+    sendPingInterest(from: INode, to: INode): void;
+    sendInterest(name: string, node: INode): void;
+    runCode(code: string, node: INode): void;
+    /** Schedule a refresh of static routes */
+    scheduleRouteRefresh: () => void;
     /** Compute static routes */
     private computeRoutes;
-    /** Schedule a refresh of static routes */
-    scheduleRouteRefresh(): void;
     /** Ensure all nodes and edges are initialized */
     private ensureInitialized;
+    downloadExperimentDump(): void;
+    loadExperimentDump(): void;
 }
 
 export class NFW {
@@ -4999,6 +5047,8 @@ export class NFW {
     fw: Forwarder;
     private face;
     private faceRx;
+    /** Browser Forwarding Provider */
+    provider: ProviderBrowser;
     /** Security options */
     securityOptions?: {
         /** Signer object */
@@ -5010,8 +5060,6 @@ export class NFW {
     };
     /** Forwarding table */
     fib: any[];
-    /** Captured packets for this node */
-    readonly capturedPackets: any[];
     /** Enable packet capture */
     capture: boolean;
     /** Content Store */
@@ -5023,8 +5071,6 @@ export class NFW {
         prefix: Name;
         strategy: string;
     }[];
-    /** Packets pending to be forwarded */
-    private pendingTraffic;
     /** Server for ping */
     private pingServer?;
     /** Server for certificates */
@@ -5035,12 +5081,15 @@ export class NFW {
     private pit;
     /** Announcements current */
     private announcements;
+    /** Extra parameters of node */
+    private nodeExtra;
     constructor(topo: Topology, nodeId: IdType);
     node(): INode;
     nodeUpdated(): void;
     private setupPingServer;
     private setupCertServer;
-    capturePacket(p: any): void;
+    capturePacket(pkt: FwPacket): void;
+    /** Update color of current node */
     updateColors(): void;
     /** Add traffic to link */
     private addLinkTraffic;
@@ -5054,19 +5103,58 @@ export class NFW {
     }): Endpoint;
 }
 
-interface INode extends Node$1 {
+interface ICapturedPacket {
+    /** Node for which this packet is captured */
+    node?: string;
+    /** Frame number */
+    fn?: number | string;
+    /** Timestamp in ms */
+    t: number;
+    /** Length of packet in bytes */
+    l: number;
+    /** Interest/Data/Nack */
+    type: string;
+    /** NDN name of packet */
+    name: string;
+    /** Originating node */
+    from?: string;
+    /** Destination node */
+    to?: string;
+    /** Contents of the packet for visualization */
+    p?: any;
+}
+interface INodeExtra {
+    /** Units of traffic pending on this node */
+    pendingTraffic: number;
+    /** Currently written code on this node */
+    codeEdit: string;
+    /** Prefixes prodcued by this node */
     producedPrefixes: string[];
-    nfw: NFW;
-    extra: {
-        codeEdit: string;
-    };
+    /** FIB or status information of the node */
+    fibStr: string;
+    /** Wireshark */
+    capturedPackets: ICapturedPacket[];
+    /** Replay position */
+    replayWindow?: number;
+    /** Replay position (first) */
+    replayWindowF?: number;
+}
+interface INode extends Node$1 {
+    nfw?: NFW;
+    /** Extra data object */
+    extra: INodeExtra;
+}
+interface ILinkExtra {
+    /** Units of traffic pending on this link */
+    pendingTraffic: number;
 }
 interface IEdge extends Edge {
+    /** Latency in milliseconds */
     latency: number;
+    /** Loss in percentage */
     loss: number;
-    extra: {
-        pendingTraffic: number;
-    };
+    /** Extra data object */
+    extra: ILinkExtra;
 }
 
 /** Invertible Bloom Lookup Table. */

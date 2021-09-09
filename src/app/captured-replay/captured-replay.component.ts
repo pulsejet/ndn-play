@@ -116,13 +116,15 @@ export class CapturedReplayComponent implements OnInit {
       while (cwf < cw &&
              node.extra.capturedPackets[cwf].t <= this.t - this.transferTime)
       {
-        const pType = node.extra.capturedPackets[cwf].type.toLocaleLowerCase();
-        if (showTypes.includes(pType)) {
-          node.extra.pendingTraffic -= node.extra.capturedPackets[cwf].l;
+        const pack = node.extra.capturedPackets[cwf];
 
-          const link = this.getLink(node.extra.capturedPackets[cwf]);
+        const pType = pack.type.toLocaleLowerCase();
+        if (showTypes.includes(pType)) {
+          node.extra.pendingTraffic -= pack.l;
+
+          const link = this.getLink(pack);
           if (link) {
-            link.extra.pendingTraffic--;
+            link.extra.pendingTraffic -= pack.l;
             this.gs.topo.updateEdgeColor(link);
           }
         }
@@ -150,13 +152,15 @@ export class CapturedReplayComponent implements OnInit {
              node.extra.capturedPackets[cw].t >= this.t &&
              node.extra.capturedPackets[cw].t <= this.t + this.transferTime)
       {
-        const pType = node.extra.capturedPackets[cw].type.toLocaleLowerCase();
-        if (showTypes.includes(pType)) {
-          node.extra.pendingTraffic += node.extra.capturedPackets[cw].l;
+        const pack = node.extra.capturedPackets[cw];
 
-          const link = this.getLink(node.extra.capturedPackets[cw]);
+        const pType = pack.type.toLocaleLowerCase();
+        if (showTypes.includes(pType)) {
+          node.extra.pendingTraffic += pack.l;
+
+          const link = this.getLink(pack);
           if (link) {
-            link.extra.pendingTraffic++;
+            link.extra.pendingTraffic += pack.l;
             this.gs.topo.updateEdgeColor(link);
           }
         }

@@ -10,6 +10,7 @@ import { INode } from '../interfaces';
 })
 export class CapturedListComponent implements OnInit {
   public AltUri = AltUri;
+  private init = false;
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
@@ -18,11 +19,15 @@ export class CapturedListComponent implements OnInit {
   constructor() { }
 
   ngOnInit(): void {
+
+  }
+
+  public refresh() {
     this.provider.fetchCapturedPackets?.(this.node);
   }
 
   ngOnChanges(): void {
-    this.ngOnInit();
+    this.refresh();
   }
 
   public round(a: number) {

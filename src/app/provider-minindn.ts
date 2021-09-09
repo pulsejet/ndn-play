@@ -86,14 +86,12 @@ export class ProviderMiniNDN implements ForwardingProvider {
         this.topo.nodes.get(<string>msg?.res.id)!.extra.capturedPackets =
           msg?.res.packets.map((p: any) => {
             return {
-              id: p.id,
-              length: p.l,
-              t: p.t,
-              name: p.n,
-              type: p.y,
-              p: () => {
-                this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, msg?.res.id, p.id);
-              },
+              node: msg?.res.id,
+              fn: p[0],
+              t: p[1],
+              length: p[2],
+              type: p[3],
+              name: p[4],
             }});
         break;
 
@@ -187,6 +185,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   public fetchCapturedPackets(node: INode) {
     this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label);
+  }
+
+  public visualizeCaptured(packet: any) {
+    this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, packet.node, packet.fn);
   }
 
   /** Schedule a refresh of static routes */

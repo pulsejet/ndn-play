@@ -35,10 +35,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   setVisualized(p: any) {
-    if (p instanceof Function) {
-      p();
+    if (this.gs.topo.provider.visualizeCaptured) {
+      this.gs.topo.provider.visualizeCaptured(p);
     } else {
-      this.visualizedTlv = p;
+      this.visualizedTlv = p.p;
     }
   }
 }

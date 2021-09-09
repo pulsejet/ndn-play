@@ -34,6 +34,7 @@ export interface ForwardingProvider {
 
   // Packet capture
   fetchCapturedPackets?: (node: INode) => void;
+  visualizeCaptured?: (packet: any) => void;
 
   // Code execution
   runCode: (code: string, node: INode) => void;

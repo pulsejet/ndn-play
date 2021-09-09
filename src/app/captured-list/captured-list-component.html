@@ -6,7 +6,7 @@
         <th>Name</th>
     </tr>
     <tr *ngFor="let packet of node.extra.capturedPackets" [ngClass]="packet.type"
-        (click)="packetClick.emit(packet.p)">
+        (click)="packetClick.emit(packet)">
         <td>
             {{ round(packet.t) }} ms
         </td>

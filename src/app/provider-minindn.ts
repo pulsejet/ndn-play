@@ -94,6 +94,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
               name: p[4],
               from: p[5],
               to: p[6],
+              p: p[7] || undefined,
             } as ICapturedPacket });
         break;
 

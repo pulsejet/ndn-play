@@ -35,7 +35,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   setVisualized(p: any) {
-    if (this.gs.topo.provider.visualizeCaptured) {
+    if (!p.p && this.gs.topo.provider.visualizeCaptured) {
       this.gs.topo.provider.visualizeCaptured(p);
     } else {
       this.visualizedTlv = p.p;

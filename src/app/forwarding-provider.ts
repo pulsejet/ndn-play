@@ -1,4 +1,4 @@
-import { IEdge, INode, visTlv } from "./interfaces";
+import { IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
 export interface ForwardingProvider {

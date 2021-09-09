@@ -99,7 +99,6 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
         (<any>window).visualize(msg?.res);
-        console.log(msg?.res);
         break;
     }
   }

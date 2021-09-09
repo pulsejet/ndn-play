@@ -12,7 +12,31 @@
                 (click)="replay()">
             Replay
         </button>
+
+        <button class="button is-link is-light is-small ml-2"
+                (click)="stop()">
+            Stop
+        </button>
     </div>
+
+    <div class="field is-size-7">
+        <label class="checkbox is-small">
+            <input type="checkbox" [(ngModel)]="showTypes.interest">
+            Interest
+        </label>
+
+        <label class="checkbox is-small ml-3">
+            <input type="checkbox" [(ngModel)]="showTypes.data">
+            Data
+        </label>
+
+        <label class="checkbox is-small ml-3">
+            <input type="checkbox" [(ngModel)]="showTypes.nack">
+            Nack
+        </label>
+    </div>
+
+    <progress [value]="t - startTime" [max]="endTime - startTime"></progress>
 
     <div class="field">
         <label class="label is-small">Update Interval</label>

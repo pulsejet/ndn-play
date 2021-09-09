@@ -12,16 +12,23 @@ export class CapturedReplayComponent implements OnInit {
   /** Handle for the interval */
   private handle: number = 0;
   /** Time of the first packet */
-  private startTime: number = 0;
+  public startTime: number = 0;
   /** Time of last packet */
-  private endTime: number = 0;
+  public endTime: number = 0;
   /** Current time */
-  private t: number = 0;
+  public t: number = 0;
 
   /** Frame rate */
   public updateInterval: number = 100;
   /** Time to show one packet */
   public transferTime: number = 100;
+
+  /** Types of data to visualize */
+  public showTypes = {
+    interest: true,
+    data: true,
+    nack: false,
+  }
 
   constructor(
     public gs: GlobalService,
@@ -36,10 +43,14 @@ export class CapturedReplayComponent implements OnInit {
     });
   }
 
-  public replay() {
+  public stop() {
     if (this.handle) {
       window.clearInterval(this.handle);
     }
+  }
+
+  public replay() {
+    this.stop();
 
     this.startTime = 99999999999999999999999999999999999;
     this.endTime = 0;
@@ -78,6 +89,14 @@ export class CapturedReplayComponent implements OnInit {
       return;
     }
 
+    // Data types to show
+    const showTypes = [] as string[];
+    Object.keys(this.showTypes).forEach(key => {
+      if ((<any>this.showTypes)[key]) showTypes.push(key);
+    });
+
+
+    // Process traffic of each node
     this.gs.topo.nodes.forEach((node) => {
       if (!node.extra.capturedPackets) return;
 
@@ -91,7 +110,7 @@ export class CapturedReplayComponent implements OnInit {
              node.extra.capturedPackets[cwf].t <= this.t - this.transferTime)
       {
         const pType = node.extra.capturedPackets[cwf].type.toLocaleLowerCase();
-        if (pType == 'interest' || pType == 'data') {
+        if (showTypes.includes(pType)) {
           node.extra.pendingTraffic--;
 
           const link = this.getLink(node.extra.capturedPackets[cwf]);
@@ -125,7 +144,7 @@ export class CapturedReplayComponent implements OnInit {
              node.extra.capturedPackets[cw].t <= this.t + this.transferTime)
       {
         const pType = node.extra.capturedPackets[cw].type.toLocaleLowerCase();
-        if (pType == 'interest' || pType == 'data') {
+        if (showTypes.includes(pType)) {
           node.extra.pendingTraffic++;
 
           const link = this.getLink(node.extra.capturedPackets[cw]);

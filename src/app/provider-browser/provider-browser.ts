@@ -38,11 +38,11 @@ export class ProviderBrowser implements ForwardingProvider {
 
     // add dummy nodes
     this.topo.nodes.add(<any>[
-      { id: "1", label: "A" },
-      { id: "2", label: "M" },
-      { id: "3", label: "E" },
-      { id: "4", label: "B" },
-      { id: "5", label: "C" },
+      { id: "A", label: "A" },
+      { id: "M", label: "M" },
+      { id: "E", label: "E" },
+      { id: "B", label: "B" },
+      { id: "C", label: "C" },
 
       { id: "d1", label: "D" },
       { id: "d2", label: "D" },
@@ -52,16 +52,16 @@ export class ProviderBrowser implements ForwardingProvider {
 
     // add dummy edges
     this.topo.edges.add(<any>[
-      { from: "1", to: "3" },
-      { from: "1", to: "2" },
-      { from: "2", to: "4" },
-      { from: "2", to: "5" },
+      { from: "A", to: "E" },
+      { from: "A", to: "M" },
+      { from: "M", to: "B" },
+      { from: "M", to: "C" },
 
-      { from: "3", to: "d3" },
+      { from: "E", to: "d3" },
       { from: "d3", to: "d2" },
       { from: "d3", to: "d1" },
       { from: "d1", to: "d4" },
-      { from: "d4", to: "1" },
+      { from: "d4", to: "A" },
     ]);
   }
 

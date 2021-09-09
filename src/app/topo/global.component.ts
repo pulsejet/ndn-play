@@ -77,7 +77,7 @@ import { Topology } from './topo';
             </button>
             <button class="button is-link is-light is-small full-width mt-1"
                     *ngIf="topo.provider.loadExperimentDump"
-                    (click)="topo.provider.loadExperimentDump('ew')">
+                    (click)="topo.provider.loadExperimentDump()">
                 Load
             </button>
         </div>

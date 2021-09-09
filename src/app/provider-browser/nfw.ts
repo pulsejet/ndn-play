@@ -87,7 +87,7 @@ export class NFW {
             if (pkt.cancel || pkt.reject) return;
 
             // Wireshark
-            if (this.capture || this.topo.captureAll) this.capturePacket(pkt.l3);
+            if (this.capture || this.topo.captureAll) this.capturePacket(pkt);
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
@@ -162,18 +162,18 @@ export class NFW {
         });
     }
 
-    public capturePacket(p: any) {
+    public capturePacket(pkt: FwPacket) {
         let type;
-        if (p instanceof Interest) {
+        if (pkt.l3 instanceof Interest) {
             type = 'Interest';
-        } else if (p instanceof Data) {
+        } else if (pkt.l3 instanceof Data) {
             type = 'Data';
         } else {
             return;
         }
 
         const encoder = new Encoder();
-        encoder.encode(p);
+        encoder.encode(pkt.l3);
 
         // Store hex so we can dump later
         const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
@@ -183,7 +183,9 @@ export class NFW {
             p: hex,
             l: encoder.output.length,
             type: type,
-            name: AltUri.ofName(p.name).substr(0, 48),
+            name: AltUri.ofName(pkt.l3.name).substr(0, 48),
+            from: (<any>pkt).hop || undefined,
+            to: (<any>pkt).hop ? this.nodeId as string : undefined,
         });
     }
 
@@ -383,6 +385,7 @@ export class NFW {
                                             if (rpkt.l3 instanceof Data) {
                                                 nextNFW.node().extra.pendingTraffic--;
                                                 nextNFW.updateColors();
+                                                (<any>rpkt).hop = nextNFW.nodeId;
                                                 this.faceRx.push(rpkt);
 
                                                 // Remove PIT entry

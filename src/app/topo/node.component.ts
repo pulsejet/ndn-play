@@ -59,7 +59,7 @@ import { Topology } from './topo';
         </div>
 
         <div>
-            <label class="label is-small">Computed FIB:</label>
+            <label class="label is-small">Forwarder Status:</label>
             <pre>{{ node.extra.fibStr }}</pre>
         </div>
     </div>

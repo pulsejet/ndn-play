@@ -32,6 +32,9 @@ export interface ForwardingProvider {
   sendPingInterest: (from: INode, to: INode) => void;
   sendInterest: (name: string, node: INode) => void;
 
+  // Packet capture
+  fetchCapturedPackets?: (node: INode) => void;
+
   // Code execution
   runCode: (code: string, node: INode) => void;
 }

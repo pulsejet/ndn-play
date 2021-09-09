@@ -6,6 +6,7 @@ export interface INodeExtra {
     codeEdit: string;
     producedPrefixes: string[];
     fibStr: string;
+    capturedPackets: any[];
 }
 
 export interface INode extends vis.Node {

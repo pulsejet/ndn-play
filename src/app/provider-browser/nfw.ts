@@ -33,8 +33,6 @@ export class NFW {
     /** Forwarding table */
     public fib: any[] = [];
 
-    /** Captured packets for this node */
-    public readonly capturedPackets: any[] = []
     /** Enable packet capture */
     public capture = false;
 
@@ -177,7 +175,7 @@ export class NFW {
         const encoder = new Encoder();
         encoder.encode(p);
 
-        this.capturedPackets.push({
+        this.nodeExtra.capturedPackets.push({
             t: performance.now(),
             p: encoder.output,
             length: encoder.output.length,

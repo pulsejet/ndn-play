@@ -10,6 +10,9 @@ const WS_FUNCTIONS = {
   UPD_LINK: 'upd_link',
   DEL_NODE: 'del_node',
   ADD_NODE: 'add_node',
+  GET_FIB: 'get_fib',
+  GET_PCAP: 'get_pcap',
+  GET_PCAP_WIRE: 'get_pcap_wire',
 }
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -73,6 +76,30 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.ADD_NODE:
         this.topo.nodes.updateOnly(msg?.res);
+        break;
+
+      case WS_FUNCTIONS.GET_FIB:
+        this.topo.nodes.get(<string>msg?.res.id)!.extra.fibStr = msg?.res.fib;
+        break;
+
+      case WS_FUNCTIONS.GET_PCAP:
+        this.topo.nodes.get(<string>msg?.res.id)!.extra.capturedPackets =
+          msg?.res.packets.map((p: any) => {
+            return {
+              id: p.id,
+              length: p.l,
+              t: p.t,
+              name: p.n,
+              type: p.y,
+              p: () => {
+                this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, msg?.res.id, p.id);
+              },
+            }});
+        break;
+
+      case WS_FUNCTIONS.GET_PCAP_WIRE:
+        (<any>window).visualize(msg?.res);
+        console.log(msg?.res);
         break;
     }
   }
@@ -142,7 +169,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
   }
 
   public onNetworkClick = async () => {
-
+    if (this.topo.selectedNode) {
+      this.wsFun(WS_FUNCTIONS.GET_FIB, this.topo.selectedNode?.label);
+    }
   }
 
   public sendPingInterest(from: INode, to: INode) {
@@ -155,6 +184,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   public runCode(code: string, node: INode) {
 
+  }
+
+  public fetchCapturedPackets(node: INode) {
+    this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label);
   }
 
   /** Schedule a refresh of static routes */

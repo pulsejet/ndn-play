@@ -33,4 +33,12 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
+  setVisualized(p: any) {
+    if (p instanceof Function) {
+      p();
+    } else {
+      this.visualizedTlv = p;
+    }
+  }
 }

@@ -146,6 +146,7 @@ export class Topology {
             producedPrefixes: [],
             pendingTraffic: 0,
             codeEdit: '',
+            capturedPackets: [],
           },
         });
       }

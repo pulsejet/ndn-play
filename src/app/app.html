@@ -43,11 +43,12 @@
                 </div>
             </app-tab>
 
-            <app-tab name="Packet Capture" *ngIf="$any(gs.topo.provider).BROWSER && gs.topo.selectedNode">
+            <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode" #captureTab>
                 <div class="m-2">
-                    <app-captured-list
+                    <app-captured-list *ngIf="lowerTabs.selection == captureTab"
                         [node]="gs.topo.selectedNode"
-                        (packetClick)="this.visualizedTlv = $event; lowerTabs.selection = lowerVisTab"
+                        [provider]="gs.topo.provider"
+                        (packetClick)="setVisualized($event); lowerTabs.selection = lowerVisTab"
                     ></app-captured-list>
                 </div>
             </app-tab>

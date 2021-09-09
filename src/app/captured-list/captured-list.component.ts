@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AltUri } from '@ndn/packet';
+import { ForwardingProvider } from '../forwarding-provider';
 import { INode } from '../interfaces';
 
 @Component({
@@ -11,11 +12,26 @@ export class CapturedListComponent implements OnInit {
   public AltUri = AltUri;
 
   @Input() public node!: INode;
+  @Input() public provider!: ForwardingProvider;
   @Output() public packetClick = new EventEmitter<any>()
 
   constructor() { }
 
   ngOnInit(): void {
+    this.provider.fetchCapturedPackets?.(this.node);
+  }
+
+  ngOnChanges(): void {
+    this.ngOnInit();
+  }
+
+  public round(a: number) {
+    return Math.round(a);
+  }
+
+  public ellipsis(s: string) {
+    const MAX_LEN = 80;
+    return (s.length > MAX_LEN) ? s.substr(0, MAX_LEN) + ' ...' : s;
   }
 
 }

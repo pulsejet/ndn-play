@@ -5,10 +5,10 @@
         <th>Length</th>
         <th>Name</th>
     </tr>
-    <tr *ngFor="let packet of node.nfw!.capturedPackets" [ngClass]="packet.type"
+    <tr *ngFor="let packet of node.extra.capturedPackets" [ngClass]="packet.type"
         (click)="packetClick.emit(packet.p)">
         <td>
-            {{ packet.t }} ms
+            {{ round(packet.t) }} ms
         </td>
         <td>
             {{ packet.type }}
@@ -16,8 +16,8 @@
         <td>
             {{ packet.length }}
         </td>
-        <td>
-            {{ packet.name }}
+        <td [title]="packet.name">
+            {{ ellipsis(packet.name) }}
         </td>
     </tr>
 </table>

@@ -15,6 +15,7 @@ import { TopoSidebarComponent } from './topo/sidebar.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { TabComponent } from './tabs/tab.component';
 import { ConsoleComponent } from './console/console.component';
+import { CapturedReplayComponent } from './captured-replay/captured-replay.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { ConsoleComponent } from './console/console.component';
     TabsComponent,
     TabComponent,
     ConsoleComponent,
+    CapturedReplayComponent,
   ],
   imports: [
     BrowserModule,

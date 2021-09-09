@@ -1,0 +1,28 @@
+<div class="outer">
+    <div class="field">
+        <button class="button is-link is-light is-small"
+                *ngIf="gs.topo.provider.fetchCapturedPackets"
+                (click)="fetchAllPackets()">
+            Refresh Captured Traffic
+        </button>
+    </div>
+
+    <div class="field">
+        <button class="button is-link is-light is-small"
+                (click)="replay()">
+            Replay
+        </button>
+    </div>
+
+    <div class="field">
+        <label class="label is-small">Update Interval</label>
+        <input class="input is-small" type="number" placeholder="300"
+            [(ngModel)]="updateInterval">
+    </div>
+
+    <div class="field">
+        <label class="label is-small">Transfer Time</label>
+        <input class="input is-small" type="number" placeholder="300"
+            [(ngModel)]="transferTime">
+    </div>
+</div>

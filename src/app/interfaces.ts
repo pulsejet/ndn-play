@@ -33,6 +33,10 @@ export interface INodeExtra {
     fibStr: string;
     /** Wireshark */
     capturedPackets: ICapturedPacket[];
+    /** Replay position */
+    replayWindow?: number;
+    /** Replay position (first) */
+    replayWindowF?: number;
 }
 
 export interface INode extends vis.Node {

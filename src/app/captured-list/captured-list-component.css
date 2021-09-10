@@ -12,6 +12,10 @@
     background-color: #ffcccc;
 }
 
+.packets .active {
+    background-color: cyan;
+}
+
 .packets tr {
     cursor: pointer;
 }

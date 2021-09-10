@@ -5,7 +5,9 @@
         <th>Length</th>
         <th>Name</th>
     </tr>
-    <tr *ngFor="let packet of node.extra.capturedPackets" [ngClass]="packet.type"
+    <tr *ngFor="let packet of node.extra.capturedPackets; let i = index"
+        [ngClass]="packet.type"
+        [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
         (click)="packetClick.emit(packet)">
         <td>
             {{ round(packet.t) }} ms

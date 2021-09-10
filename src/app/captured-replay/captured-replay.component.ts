@@ -50,9 +50,8 @@ export class CapturedReplayComponent implements OnInit {
     } else {
       if (this.endTime == 0 || this.t >= this.endTime) {
         this.replay();
-      } else {
-        this.handle = window.setInterval(this.animate.bind(this), this.updateInterval);
       }
+      this.handle = window.setInterval(this.animate.bind(this), this.updateInterval);
     }
   }
 
@@ -84,7 +83,6 @@ export class CapturedReplayComponent implements OnInit {
 
     this.t = this.startTime;
     this.endTime += 1000;
-    this.startStop();
   }
 
   public getLink(p: ICapturedPacket): IEdge | undefined {

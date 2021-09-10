@@ -48,7 +48,7 @@ import { Topology } from './topo';
             </div>
         </div>
 
-        <div class="field is-size-7">
+        <div class="field is-size-7" *ngIf="$any(topo.provider).BROWSER">
             <label class="checkbox is-small">
                 <input type="checkbox" [(ngModel)]="topo.captureAll">
                 Enable Packet Capture (all nodes)

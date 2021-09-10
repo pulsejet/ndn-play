@@ -8,7 +8,11 @@ import { Topology } from './topo/topo';
 })
 export class GlobalService {
   // Topology
-  public topo = new Topology(new ProviderMiniNDN());
+  //public topo = new Topology(new ProviderMiniNDN());
+  public topo = new Topology(new ProviderBrowser());
+
+  // Scroll positions
+  public capturedListScrollOffset: number = 0;
 
   constructor() {
     requestAnimationFrame(this.runAnimationFrame.bind(this));

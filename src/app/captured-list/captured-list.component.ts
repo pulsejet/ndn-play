@@ -1,25 +1,40 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { AltUri } from '@ndn/packet';
 import { ForwardingProvider } from '../forwarding-provider';
 import { INode } from '../interfaces';
+import { GlobalService } from '../global.service';
 
 @Component({
   selector: 'app-captured-list[node]',
   templateUrl: 'captured-list-component.html',
   styleUrls: ['captured-list-component.css']
 })
-export class CapturedListComponent implements OnInit {
+export class CapturedListComponent implements OnInit, AfterViewInit {
   public AltUri = AltUri;
-  private init = false;
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
   @Output() public packetClick = new EventEmitter<any>()
 
-  constructor() { }
+  @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
+
+  constructor(
+    private gs: GlobalService,
+  ) { }
 
   ngOnInit(): void {
 
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(_ => {
+      this.viewPort.scrollToOffset(this.gs.capturedListScrollOffset);
+    });
+
+    this.viewPort.elementScrolled().subscribe(event => {
+      this.gs.capturedListScrollOffset = this.viewPort.measureScrollOffset();
+    });
   }
 
   public refresh() {

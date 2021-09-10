@@ -10,7 +10,7 @@ import { ICapturedPacket, IEdge } from '../interfaces';
 export class CapturedReplayComponent implements OnInit {
 
   /** Handle for the interval */
-  private handle: number = 0;
+  public handle: number = 0;
   /** Time of the first packet */
   public startTime: number = 0;
   /** Time of last packet */
@@ -43,14 +43,22 @@ export class CapturedReplayComponent implements OnInit {
     });
   }
 
-  public stop() {
+  public startStop() {
     if (this.handle) {
       window.clearInterval(this.handle);
+      this.handle = 0;
+    } else {
+      if (this.endTime == 0 || this.t >= this.endTime) {
+        this.replay();
+      } else {
+        this.handle = window.setInterval(this.animate.bind(this), this.updateInterval);
+      }
     }
   }
 
   public replay() {
-    this.stop();
+    window.clearInterval(this.handle);
+    this.handle = 0;
 
     this.startTime = 99999999999999999999999999999999999;
     this.endTime = 0;
@@ -76,7 +84,7 @@ export class CapturedReplayComponent implements OnInit {
 
     this.t = this.startTime;
     this.endTime += 1000;
-    this.handle = window.setInterval(this.animate.bind(this), this.updateInterval);
+    this.startStop();
   }
 
   public getLink(p: ICapturedPacket): IEdge | undefined {
@@ -92,6 +100,7 @@ export class CapturedReplayComponent implements OnInit {
   public animate() {
     if (this.t > this.endTime) {
       window.clearInterval(this.handle);
+      this.handle = 0;
       console.log('Finished animation');
       return;
     }

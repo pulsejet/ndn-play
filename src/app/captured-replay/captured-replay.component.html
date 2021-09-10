@@ -1,52 +1,66 @@
-<div class="outer">
-    <div class="field">
-        <button class="button is-link is-light is-small"
-                *ngIf="gs.topo.provider.fetchCapturedPackets"
-                (click)="fetchAllPackets()">
-            Refresh Captured Traffic
-        </button>
-    </div>
+<div class="outer" style="max-width: 500px;">
+    <div class="columns">
+        <div class="column">
+            <div class="field">
+                <label class="label is-small"> Controls </label>
 
-    <div class="field">
-        <button class="button is-link is-light is-small"
-                (click)="replay()">
-            Replay
-        </button>
+                <button class="button is-link is-light is-small mr-1"
+                        *ngIf="gs.topo.provider.fetchCapturedPackets"
+                        (click)="fetchAllPackets()">
+                    Refresh PCAP
+                </button>
 
-        <button class="button is-link is-light is-small ml-2"
-                (click)="stop()">
-            Stop
-        </button>
-    </div>
+                <button class="button is-link is-light is-small" title="Rewind"
+                        (click)="replay()">
+                    &#8634;
+                </button>
 
-    <div class="field is-size-7">
-        <label class="checkbox is-small">
-            <input type="checkbox" [(ngModel)]="showTypes.interest">
-            Interest
-        </label>
+                <button class="button is-link is-light is-small ml-1" title="Play / Stop"
+                        (click)="startStop()">
+                    <ng-container *ngIf="handle; else playb">
+                        &#9632;
+                    </ng-container>
+                    <ng-template #playb>
+                        &#9654;
+                    </ng-template>
+                </button>
+            </div>
 
-        <label class="checkbox is-small ml-3">
-            <input type="checkbox" [(ngModel)]="showTypes.data">
-            Data
-        </label>
+            <div class="field is-size-7">
+                <label class="label is-small"> Visualize Packet Types </label>
+                <label class="checkbox is-small">
+                    <input type="checkbox" [(ngModel)]="showTypes.interest">
+                    Interest
+                </label>
 
-        <label class="checkbox is-small ml-3">
-            <input type="checkbox" [(ngModel)]="showTypes.nack">
-            Nack
-        </label>
-    </div>
+                <label class="checkbox is-small ml-3">
+                    <input type="checkbox" [(ngModel)]="showTypes.data">
+                    Data
+                </label>
 
-    <progress [value]="t - startTime" [max]="endTime - startTime"></progress>
+                <label class="checkbox is-small ml-3">
+                    <input type="checkbox" [(ngModel)]="showTypes.nack">
+                    Nack
+                </label>
+            </div>
 
-    <div class="field">
-        <label class="label is-small">Update Interval</label>
-        <input class="input is-small" type="number" placeholder="300"
-            [(ngModel)]="updateInterval">
-    </div>
+            <div class="field">
+                <label class="label is-small"> Progress </label>
+                <progress class="progress is-primary" [value]="t - startTime" [max]="endTime - startTime"></progress>
+            </div>
+        </div>
+        <div class="column">
+            <div class="field">
+                <label class="label is-small">Update Interval</label>
+                <input class="input is-small" type="number" placeholder="300"
+                    [(ngModel)]="updateInterval">
+            </div>
 
-    <div class="field">
-        <label class="label is-small">Transfer Time</label>
-        <input class="input is-small" type="number" placeholder="300"
-            [(ngModel)]="transferTime">
+            <div class="field">
+                <label class="label is-small">Transfer Time</label>
+                <input class="input is-small" type="number" placeholder="300"
+                    [(ngModel)]="transferTime">
+            </div>
+        </div>
     </div>
 </div>

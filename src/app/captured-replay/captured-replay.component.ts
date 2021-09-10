@@ -35,6 +35,11 @@ export class CapturedReplayComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    window.addEventListener('keydown', (event) => {
+      if(event.ctrlKey && event.key == 'm') {
+        this.startStop();
+      }
+    });
   }
 
   public fetchAllPackets() {

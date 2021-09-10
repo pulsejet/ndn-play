@@ -1,28 +1,31 @@
-<table class="packets">
-    <tr>
-        <th>Timestamp</th>
-        <th>Type</th>
-        <th>Length</th>
-        <th>Name</th>
-    </tr>
-    <tr *ngFor="let packet of node.extra.capturedPackets; let i = index"
-        [ngClass]="packet.type"
-        [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
-        (click)="packetClick.emit(packet)">
-        <td>
-            {{ round(packet.t) }} ms
-        </td>
-        <td>
-            {{ packet.type }}
-            <ng-container *ngIf="packet.from">
-                [{{ packet.from }} &#8594; {{ packet.to }}]
-            </ng-container>
-        </td>
-        <td>
-            {{ packet.l }}
-        </td>
-        <td [title]="packet.name">
-            {{ ellipsis(packet.name) }}
-        </td>
-    </tr>
-</table>
+<cdk-virtual-scroll-viewport itemSize="22">
+    <table class="packets">
+        <tr>
+            <th>Timestamp</th>
+            <th>Type</th>
+            <th>Length</th>
+            <th>Name</th>
+        </tr>
+        <ng-container *cdkVirtualFor="let packet of node.extra.capturedPackets; let i = index">
+            <tr [ngClass]="packet.type"
+                [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
+                (click)="packetClick.emit(packet)">
+                <td>
+                    {{ round(packet.t) }} ms
+                </td>
+                <td>
+                    {{ packet.type }}
+                    <ng-container *ngIf="packet.from">
+                        [{{ packet.from }} &#8594; {{ packet.to }}]
+                    </ng-container>
+                </td>
+                <td>
+                    {{ packet.l }}
+                </td>
+                <td [title]="packet.name">
+                    {{ ellipsis(packet.name) }}
+                </td>
+            </tr>
+        </ng-container>
+    </table>
+</cdk-virtual-scroll-viewport>

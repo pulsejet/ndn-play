@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { AppComponent } from './app.component';
 import { PaneComponent } from './pane/pane.component';
@@ -37,6 +38,7 @@ import { CapturedReplayComponent } from './captured-replay/captured-replay.compo
     BrowserModule,
     FormsModule,
     MonacoEditorModule.forRoot(monacoConfig),
+    ScrollingModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

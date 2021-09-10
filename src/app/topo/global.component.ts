@@ -56,6 +56,20 @@ import { Topology } from './topo';
         </div>
 
         <div class="field">
+            <label class="label is-small">Experiment Dump:</label>
+            <button class="button is-danger is-light is-small full-width"
+                    *ngIf="topo.provider.loadExperimentDump"
+                    (click)="topo.provider.loadExperimentDump()">
+                Load
+            </button>
+            <button class="button is-link is-light is-small full-width mt-1"
+                    *ngIf="topo.provider.downloadExperimentDump"
+                    (click)="topo.provider.downloadExperimentDump()">
+                Generate
+            </button>
+        </div>
+
+        <div class="field">
             <label class="label is-small">MiniNDN Config:</label>
             <textarea class="textarea full-width mb-1 is-small" #mnConf style="white-space: nowrap"></textarea>
             <button class="button is-danger is-light is-small full-width"
@@ -65,20 +79,6 @@ import { Topology } from './topo';
             <button class="button is-link is-light is-small full-width mt-1"
                     (click)="mnConf.value = miniNDN.generate(topo)">
                 Generate
-            </button>
-        </div>
-
-        <div class="field">
-            <label class="label is-small">Experiment Dump:</label>
-            <button class="button is-danger is-light is-small full-width"
-                    *ngIf="topo.provider.downloadExperimentDump"
-                    (click)="topo.provider.downloadExperimentDump()">
-                Download
-            </button>
-            <button class="button is-link is-light is-small full-width mt-1"
-                    *ngIf="topo.provider.loadExperimentDump"
-                    (click)="topo.provider.loadExperimentDump()">
-                Load
             </button>
         </div>
     </div>

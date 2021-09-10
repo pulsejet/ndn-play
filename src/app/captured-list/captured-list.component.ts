@@ -32,8 +32,14 @@ export class CapturedListComponent implements OnInit, AfterViewInit {
       this.viewPort.scrollToOffset(this.gs.capturedListScrollOffset);
     });
 
-    this.viewPort.elementScrolled().subscribe(event => {
+    this.viewPort.elementScrolled().subscribe(_ => {
       this.gs.capturedListScrollOffset = this.viewPort.measureScrollOffset();
+    });
+
+    this.gs.replayWindowChanges.subscribe((o) => {
+      if (this.gs.autoScrollCaptureReplay) {
+        this.viewPort.scrollToIndex(o.cwf, 'smooth');
+      }
     });
   }
 

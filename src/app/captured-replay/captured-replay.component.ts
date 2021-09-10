@@ -121,9 +121,20 @@ export class CapturedReplayComponent implements OnInit {
 
       // Clear previous packets
       let cwf = node.extra.replayWindowF!;
+      const oldCwf = cwf;
 
       // Current window position
       let cw = node.extra.replayWindow!;
+      const oldCw = cw;
+
+      // Perform external updates
+      const performUpdates = () => {
+        this.gs.topo.updateNodeColor(node.id!);
+
+        if (this.gs.topo.selectedNode?.id == node.id && (oldCw != cw || oldCwf != cwf)) {
+          this.gs.replayWindowChanges.next({ cw, cwf });
+        }
+      };
 
       while (cwf < cw &&
              node.extra.capturedPackets[cwf].t <= this.t - this.transferTime)
@@ -149,7 +160,7 @@ export class CapturedReplayComponent implements OnInit {
 
       // This node is done
       if (cw >= node.extra.capturedPackets.length) {
-        this.gs.topo.updateNodeColor(node.id!);
+        performUpdates();
         return;
       }
 
@@ -181,7 +192,7 @@ export class CapturedReplayComponent implements OnInit {
       }
 
       node.extra.replayWindow = cw;
-      this.gs.topo.updateNodeColor(node.id!);
+      performUpdates();
     });
 
     this.t += 100;

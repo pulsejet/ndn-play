@@ -1,4 +1,4 @@
-import { IEdge, INode, INodeExtra } from "../interfaces";
+import { ICapturedPacket, IEdge, INode, INodeExtra } from "../interfaces";
 import { SecurityController } from "../provider-browser/security-controller";
 import { ForwardingProvider } from "../forwarding-provider";
 import { ProviderBrowser } from "../provider-browser/provider-browser";
@@ -35,6 +35,9 @@ export class Topology {
 
   // Next click event
   public pendingClickEvent?: (params: any) => void;
+
+  // Captured packet filter
+  public globalCaptureFilter: (packet: ICapturedPacket) => boolean = () => true;
 
   constructor(public provider: ForwardingProvider) {
     // Pass back to provider

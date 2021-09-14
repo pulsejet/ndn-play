@@ -178,7 +178,7 @@ export class CapturedReplayComponent implements OnInit {
         const pack = node.extra.capturedPackets[cw];
 
         const pType = pack.type.toLocaleLowerCase();
-        if (showTypes.includes(pType) && this.gs.globalCaptureFilter(pack)) {
+        if (showTypes.includes(pType) && this.gs.topo.globalCaptureFilter(pack)) {
           pack.a = true;
           node.extra.pendingTraffic += pack.l;
 

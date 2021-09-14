@@ -37,7 +37,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   setGlobalCaptureFilter(f: any) {
     if (f instanceof Function) {
-      this.gs.globalCaptureFilter = f;
+      this.gs.topo.globalCaptureFilter = f;
       console.log('Global filter function set successfully');
     } else {
       console.error('Argument must be a function');

@@ -1,4 +1,4 @@
-import { INode, INodeExtra } from "../interfaces";
+import { ICapturedPacket, INode, INodeExtra } from "../interfaces";
 import * as vis from 'vis-network/standalone';
 
 import { Endpoint, Producer } from "@ndn/endpoint";
@@ -178,7 +178,8 @@ export class NFW {
         // Store hex so we can dump later
         const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
 
-        this.nodeExtra.capturedPackets.push({
+        // Create packet object
+        const pack: ICapturedPacket = {
             t: performance.now(),
             p: hex,
             l: encoder.output.length,
@@ -186,7 +187,13 @@ export class NFW {
             name: AltUri.ofName(pkt.l3.name).substr(0, 48),
             from: (<any>pkt).hop || undefined,
             to: (<any>pkt).hop ? this.nodeId as string : undefined,
-        });
+        };
+
+        // Check if we want to capture this packet
+        if (!this.topo.globalCaptureFilter(pack)) {
+            return;
+        }
+        this.nodeExtra.capturedPackets.push(pack);
     }
 
     /** Update color of current node */

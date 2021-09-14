@@ -112,6 +112,9 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public runCode(code: string, node: INode) {
+    code = (<any>window).ts.transpile(code, {
+      target: (<any>window).ts.ScriptTarget.ES2015
+    });
     code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
     const fun = new Function(code);
     fun.call(node);

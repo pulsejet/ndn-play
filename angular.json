@@ -56,7 +56,8 @@
               "src/styles.css"
             ],
             "scripts": [
-              "node_modules/dijkstrajs/dijkstra.js"
+              "node_modules/dijkstrajs/dijkstra.js",
+              "node_modules/typescript/lib/typescriptServices.js"
             ],
             "vendorChunk": true,
             "extractLicenses": false,

@@ -20,6 +20,8 @@ export interface ICapturedPacket {
     to?: string;
     /** Contents of the packet for visualization */
     p?: any;
+    /** Currently replaying this packet */
+    a?: boolean;
 }
 
 export interface INodeExtra {

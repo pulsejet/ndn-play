@@ -33,3 +33,4 @@ echo -e "const node = t.node;\n\n" >> src/assets/types.d.ts.out
 echo -e "const ndn = t.ndn;\n\n" >> src/assets/types.d.ts.out
 
 echo -e "declare function visualize(packet: any): void;\n\n" >> src/assets/types.d.ts.out
+echo -e "declare function setGlobalCaptureFilter(filter: (packet: t.ICapturedPacket) => boolean): void;\n\n" >> src/assets/types.d.ts.out

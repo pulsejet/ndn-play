@@ -24,6 +24,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     (<any>window).ndn = ndnUserTypes;
     (<any>window).visualize = (p: any) => this.visualizedTlv = p;
+    (<any>window).setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
   }
 
   ngAfterViewInit() {
@@ -32,6 +33,15 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.gs.topo.provider.security.createNetwork(this.secContainer?.nativeElement);
       }
     });
+  }
+
+  setGlobalCaptureFilter(f: any) {
+    if (f instanceof Function) {
+      this.gs.globalCaptureFilter = f;
+      console.log('Global filter function set successfully');
+    } else {
+      console.error('Argument must be a function');
+    }
   }
 
   setVisualized(p: any) {

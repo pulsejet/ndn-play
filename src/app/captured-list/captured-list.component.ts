@@ -2,7 +2,7 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { AltUri } from '@ndn/packet';
 import { ForwardingProvider } from '../forwarding-provider';
-import { INode } from '../interfaces';
+import { ICapturedPacket, INode } from '../interfaces';
 import { GlobalService } from '../global.service';
 
 @Component({
@@ -10,8 +10,10 @@ import { GlobalService } from '../global.service';
   templateUrl: 'captured-list-component.html',
   styleUrls: ['captured-list-component.css']
 })
-export class CapturedListComponent implements OnInit, AfterViewInit {
+export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   public AltUri = AltUri;
+  private redrawInterval = 0;
+  public packets: ICapturedPacket[] = [];
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
@@ -24,7 +26,15 @@ export class CapturedListComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit(): void {
+    this.redrawInterval = window.setInterval(() => {
+      if (this.node.extra.capturedPackets.length != this.packets.length) {
+        this.redraw();
+      }
+    }, 1000);
+  }
 
+  ngOnDestroy(): void {
+    clearInterval(this.redrawInterval);
   }
 
   ngAfterViewInit(): void {
@@ -43,12 +53,17 @@ export class CapturedListComponent implements OnInit, AfterViewInit {
     });
   }
 
+  ngOnChanges(): void {
+    this.refresh();
+    this.redraw();
+  }
+
   public refresh() {
     this.provider.fetchCapturedPackets?.(this.node);
   }
 
-  ngOnChanges(): void {
-    this.refresh();
+  public redraw() {
+    this.packets = [...this.node.extra.capturedPackets];
   }
 
   public round(a: number) {

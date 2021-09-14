@@ -6,7 +6,7 @@
             <th>Length</th>
             <th>Name</th>
         </tr>
-        <ng-container *cdkVirtualFor="let packet of node.extra.capturedPackets; let i = index">
+        <ng-container *cdkVirtualFor="let packet of this.packets; let i = index">
             <tr [ngClass]="packet.type"
                 [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
                 (click)="packetClick.emit(packet)">

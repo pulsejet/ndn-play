@@ -54,7 +54,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.ws.subscribe(
       this.wsMessageCallback,
       err => console.log(err),
-      () => console.error('WebSocket Closed. Refresh this page'),
+      () => alert('WebSocket Closed. Refresh this page'),
     );
   }
 

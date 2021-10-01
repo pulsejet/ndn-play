@@ -9,8 +9,7 @@ import { Topology } from './topo/topo';
 })
 export class GlobalService {
   // Topology
-  //public topo = new Topology(new ProviderMiniNDN());
-  public topo = new Topology(new ProviderBrowser());
+  public topo: Topology;
 
   // Scroll positions
   public capturedListScrollOffset: number = 0;
@@ -20,6 +19,16 @@ export class GlobalService {
   public autoScrollCaptureReplay = true;
 
   constructor() {
+    // Connect to miniNDN
+    const url = new URL(window.location.href);
+    const minindn = url.searchParams.get("minindn");
+    if (minindn) {
+      console.log('Starting MiniNDN provider', minindn);
+      this.topo = new Topology(new ProviderMiniNDN(minindn))
+    } else {
+      this.topo = new Topology(new ProviderBrowser());
+    }
+
     requestAnimationFrame(this.runAnimationFrame.bind(this));
   }
 

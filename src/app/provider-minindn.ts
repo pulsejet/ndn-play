@@ -42,14 +42,14 @@ export class ProviderMiniNDN implements ForwardingProvider {
     positions?: any;
   }
 
-  constructor() {}
+  constructor(private wsUrl: string) {}
 
   public initialize = async () => {
     // Initialize new nodes
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
 
     // Start connection
-    this.ws = webSocket('ws://localhost:8765');
+    this.ws = webSocket(this.wsUrl);
 
     this.ws.subscribe(
       this.wsMessageCallback,

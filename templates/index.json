@@ -5,10 +5,16 @@
       "img": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/blank.json"
     },
+	{
+      "title": "Aggregation & Content Store",
+      "subtitle": "Demonstration of Interest Aggregation and Content Store",
+      "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.png",
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.json"
+    },
     {
       "title": "PSync",
       "subtitle": "Demonstration of Distributed Dataset Synchronization",
-      "img": "/assets/default-project.png",
+      "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.png",
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.json"
     }
 ]

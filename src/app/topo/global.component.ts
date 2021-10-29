@@ -56,8 +56,12 @@ import { Topology } from './topo';
         </div>
 
         <div class="field">
-            <label class="label is-small">Experiment Dump:</label>
-            <button class="button is-danger is-light is-small full-width"
+            <label class="label is-small">Experiment:</label>
+            <button class="button is-success is-light is-small full-width"
+                    (click)="runExperiment();">
+                Run
+            </button>
+            <button class="button is-danger is-light is-small full-width mt-1"
                     *ngIf="topo.provider.loadExperimentDump"
                     (click)="topo.provider.loadExperimentDump()">
                 Load
@@ -99,4 +103,9 @@ export class TopoGlobalComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  runExperiment() {
+    for (const node of this.topo.nodes.get()) {
+        this.topo.provider.runCode(node.extra.codeEdit, node);
+    }
+  }
 }

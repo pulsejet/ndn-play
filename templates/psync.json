@@ -1,0 +1,288 @@
+{
+    "exporter": "BROWSER",
+    "nodes": [
+      {
+        "id": "A",
+        "label": "A",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/A/ping",
+            "/ndn/A/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=E (cost=10), face=D (cost=10), face=M (cost=10)}\n/ndn/E/ping nexthops={face=E (cost=10), face=D (cost=40)}\n/ndn/E/cert nexthops={face=E (cost=10), face=D (cost=40)}\n/ndn/M/ping nexthops={face=M (cost=10)}\n/ndn/M/cert nexthops={face=M (cost=10)}\n/ndn/D/ping nexthops={face=D (cost=10), face=E (cost=20)}\n/ndn/D/cert nexthops={face=D (cost=10), face=E (cost=20)}\n/ndn/B/ping nexthops={face=M (cost=20)}\n/ndn/B/cert nexthops={face=M (cost=20)}\n/ndn/C/ping nexthops={face=M (cost=20)}\n/ndn/C/cert nexthops={face=M (cost=20)}"
+        }
+      },
+      {
+        "id": "M",
+        "label": "M",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/M/ping",
+            "/ndn/M/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=A (cost=10), face=B (cost=10), face=C (cost=10)}\n/ndn/A/ping nexthops={face=A (cost=10)}\n/ndn/A/cert nexthops={face=A (cost=10)}\n/ndn/B/ping nexthops={face=B (cost=10)}\n/ndn/B/cert nexthops={face=B (cost=10)}\n/ndn/C/ping nexthops={face=C (cost=10)}\n/ndn/C/cert nexthops={face=C (cost=10)}\n/ndn/E/ping nexthops={face=A (cost=20)}\n/ndn/E/cert nexthops={face=A (cost=20)}\n/ndn/D/ping nexthops={face=A (cost=20)}\n/ndn/D/cert nexthops={face=A (cost=20)}"
+        }
+      },
+      {
+        "id": "E",
+        "label": "E",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/E/ping",
+            "/ndn/E/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=A (cost=10), face=D (cost=10)}\n/ndn/A/ping nexthops={face=A (cost=10), face=D (cost=40)}\n/ndn/A/cert nexthops={face=A (cost=10), face=D (cost=40)}\n/ndn/D/ping nexthops={face=D (cost=10), face=A (cost=20)}\n/ndn/D/cert nexthops={face=D (cost=10), face=A (cost=20)}\n/ndn/M/ping nexthops={face=A (cost=20), face=D (cost=50)}\n/ndn/M/cert nexthops={face=A (cost=20), face=D (cost=50)}\n/ndn/B/ping nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/B/cert nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/C/ping nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/C/cert nexthops={face=A (cost=30), face=D (cost=60)}"
+        }
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/B/ping",
+            "/ndn/B/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "const { Data, Interest, Name } = ndn.packet;\r\nconst { fromUtf8, toUtf8 } = ndn.tlv;\r\n\r\nconst endpoint = node.nfw.getEndpoint({ secure: false });\r\n\r\nconst opts = {\r\n    p: ndn.sync.makePSyncCompatParam({ expectedEntries: 40 }),\r\n    syncPrefix: new Name(\"/ndn/multicast/psync\"),\r\n    syncInterestLifetime: 4000,\r\n    syncInterestInterval: [1100, 1500],\r\n    endpoint: endpoint,\r\n};\r\n\r\nconst sync = new ndn.sync.PSyncFull(opts);\r\nsync.on(\"update\", (e) => {\r\n    console.log(`PSync update at ${node.label} ${e.node.id.toString()} = ${e.loSeqNum} - ${e.hiSeqNum}`);\r\n});\r\n\r\nconst syncNode = sync.add(new Name(`/ndn/${node.label}/psync`));\r\nsetInterval(() => {\r\n    syncNode.seqNum++;\r\n    console.log(node.label, \"produced\", syncNode.seqNum)\r\n}, 3000);\r\n\r\nif (!window.sync) window.sync = [];\r\nwindow.sync[node.label] = sync;",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=M (cost=10)}\n/ndn/M/ping nexthops={face=M (cost=10)}\n/ndn/M/cert nexthops={face=M (cost=10)}\n/ndn/A/ping nexthops={face=M (cost=20)}\n/ndn/A/cert nexthops={face=M (cost=20)}\n/ndn/C/ping nexthops={face=M (cost=20)}\n/ndn/C/cert nexthops={face=M (cost=20)}\n/ndn/E/ping nexthops={face=M (cost=30)}\n/ndn/E/cert nexthops={face=M (cost=30)}\n/ndn/D/ping nexthops={face=M (cost=30)}\n/ndn/D/cert nexthops={face=M (cost=30)}"
+        }
+      },
+      {
+        "id": "C",
+        "label": "C",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/C/ping",
+            "/ndn/C/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=M (cost=10)}\n/ndn/M/ping nexthops={face=M (cost=10)}\n/ndn/M/cert nexthops={face=M (cost=10)}\n/ndn/A/ping nexthops={face=M (cost=20)}\n/ndn/A/cert nexthops={face=M (cost=20)}\n/ndn/B/ping nexthops={face=M (cost=20)}\n/ndn/B/cert nexthops={face=M (cost=20)}\n/ndn/E/ping nexthops={face=M (cost=30)}\n/ndn/E/cert nexthops={face=M (cost=30)}\n/ndn/D/ping nexthops={face=M (cost=30)}\n/ndn/D/cert nexthops={face=M (cost=30)}"
+        }
+      },
+      {
+        "id": "d1",
+        "label": "D",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/D/ping",
+            "/ndn/D/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=D (cost=10), face=D (cost=10)}\n/ndn/D/ping nexthops={face=D (cost=10), face=D (cost=10)}\n/ndn/D/cert nexthops={face=D (cost=10), face=D (cost=10)}\n/ndn/E/ping nexthops={face=D (cost=20), face=D (cost=30)}\n/ndn/E/cert nexthops={face=D (cost=20), face=D (cost=30)}\n/ndn/A/ping nexthops={face=D (cost=20), face=D (cost=30)}\n/ndn/A/cert nexthops={face=D (cost=20), face=D (cost=30)}\n/ndn/M/ping nexthops={face=D (cost=30), face=D (cost=40)}\n/ndn/M/cert nexthops={face=D (cost=30), face=D (cost=40)}\n/ndn/B/ping nexthops={face=D (cost=40), face=D (cost=50)}\n/ndn/B/cert nexthops={face=D (cost=40), face=D (cost=50)}\n/ndn/C/ping nexthops={face=D (cost=40), face=D (cost=50)}\n/ndn/C/cert nexthops={face=D (cost=40), face=D (cost=50)}"
+        }
+      },
+      {
+        "id": "d2",
+        "label": "D",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/D/ping",
+            "/ndn/D/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "const { Data, Interest, Name } = ndn.packet;\r\nconst { fromUtf8, toUtf8 } = ndn.tlv;\r\n\r\nconst endpoint = node.nfw.getEndpoint({ secure: false });\r\n\r\nconst opts = {\r\n    p: ndn.sync.makePSyncCompatParam({ expectedEntries: 40 }),\r\n    syncPrefix: new Name(\"/ndn/multicast/psync\"),\r\n    syncInterestLifetime: 4000,\r\n    syncInterestInterval: [1100, 1500],\r\n    endpoint: endpoint,\r\n};\r\n\r\nconst sync = new ndn.sync.PSyncFull(opts);\r\nsync.on(\"update\", (e) => {\r\n    console.log(`PSync update at ${node.label} ${e.node.id.toString()} = ${e.loSeqNum} - ${e.hiSeqNum}`);\r\n});\r\n\r\nconst syncNode = sync.add(new Name(`/ndn/${node.label}/psync`));\r\nsetInterval(() => {\r\n    syncNode.seqNum++;\r\n    console.log(node.label, \"produced\", syncNode.seqNum)\r\n}, 3000);\r\n\r\nif (!window.sync) window.sync = [];\r\nwindow.sync[node.label] = sync;",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=D (cost=10)}\n/ndn/D/ping nexthops={face=D (cost=10)}\n/ndn/D/cert nexthops={face=D (cost=10)}\n/ndn/E/ping nexthops={face=D (cost=20)}\n/ndn/E/cert nexthops={face=D (cost=20)}\n/ndn/A/ping nexthops={face=D (cost=30)}\n/ndn/A/cert nexthops={face=D (cost=30)}\n/ndn/M/ping nexthops={face=D (cost=40)}\n/ndn/M/cert nexthops={face=D (cost=40)}\n/ndn/B/ping nexthops={face=D (cost=50)}\n/ndn/B/cert nexthops={face=D (cost=50)}\n/ndn/C/ping nexthops={face=D (cost=50)}\n/ndn/C/cert nexthops={face=D (cost=50)}"
+        }
+      },
+      {
+        "id": "d3",
+        "label": "D",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/D/ping",
+            "/ndn/D/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=E (cost=10), face=D (cost=10), face=D (cost=10)}\n/ndn/E/ping nexthops={face=E (cost=10), face=D (cost=40)}\n/ndn/E/cert nexthops={face=E (cost=10), face=D (cost=40)}\n/ndn/D/ping nexthops={face=D (cost=10), face=D (cost=10), face=E (cost=30)}\n/ndn/D/cert nexthops={face=D (cost=10), face=D (cost=10), face=E (cost=30)}\n/ndn/A/ping nexthops={face=E (cost=20), face=D (cost=30)}\n/ndn/A/cert nexthops={face=E (cost=20), face=D (cost=30)}\n/ndn/M/ping nexthops={face=E (cost=30), face=D (cost=40)}\n/ndn/M/cert nexthops={face=E (cost=30), face=D (cost=40)}\n/ndn/B/ping nexthops={face=E (cost=40), face=D (cost=50)}\n/ndn/B/cert nexthops={face=E (cost=40), face=D (cost=50)}\n/ndn/C/ping nexthops={face=E (cost=40), face=D (cost=50)}\n/ndn/C/cert nexthops={face=E (cost=40), face=D (cost=50)}"
+        }
+      },
+      {
+        "id": "d4",
+        "label": "D",
+        "color": "#a4b7fc",
+        "extra": {
+          "producedPrefixes": [
+            "/ndn/multicast/test",
+            "/ndn/D/ping",
+            "/ndn/D/cert"
+          ],
+          "pendingTraffic": 0,
+          "codeEdit": "const { Data, Interest, Name } = ndn.packet;\r\nconst { fromUtf8, toUtf8 } = ndn.tlv;\r\n\r\nconst endpoint = node.nfw.getEndpoint({ secure: false });\r\n\r\nconst opts = {\r\n    p: ndn.sync.makePSyncCompatParam({ expectedEntries: 40 }),\r\n    syncPrefix: new Name(\"/ndn/multicast/psync\"),\r\n    syncInterestLifetime: 4000,\r\n    syncInterestInterval: [1100, 1500],\r\n    endpoint: endpoint,\r\n};\r\n\r\nconst sync = new ndn.sync.PSyncFull(opts);\r\nsync.on(\"update\", (e) => {\r\n    console.log(`PSync update at ${node.label} ${e.node.id.toString()} = ${e.loSeqNum} - ${e.hiSeqNum}`);\r\n});\r\n\r\nconst syncNode = sync.add(new Name(`/ndn/${node.label}/psync`));\r\nsetInterval(() => {\r\n    syncNode.seqNum++;\r\n    console.log(node.label, \"produced\", syncNode.seqNum)\r\n}, 3000);\r\n\r\nif (!window.sync) window.sync = [];\r\nwindow.sync[node.label] = sync;",
+          "capturedPackets": [],
+          "fibStr": "/ndn/multicast/test nexthops={face=D (cost=10), face=A (cost=10)}\n/ndn/D/ping nexthops={face=D (cost=10), face=A (cost=30)}\n/ndn/D/cert nexthops={face=D (cost=10), face=A (cost=30)}\n/ndn/A/ping nexthops={face=A (cost=10), face=D (cost=40)}\n/ndn/A/cert nexthops={face=A (cost=10), face=D (cost=40)}\n/ndn/E/ping nexthops={face=A (cost=20), face=D (cost=30)}\n/ndn/E/cert nexthops={face=A (cost=20), face=D (cost=30)}\n/ndn/M/ping nexthops={face=A (cost=20), face=D (cost=50)}\n/ndn/M/cert nexthops={face=A (cost=20), face=D (cost=50)}\n/ndn/B/ping nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/B/cert nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/C/ping nexthops={face=A (cost=30), face=D (cost=60)}\n/ndn/C/cert nexthops={face=A (cost=30), face=D (cost=60)}"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "A",
+        "to": "E",
+        "id": "b06912fb-4c20-4a15-9acf-7c50682bf5e2",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "A",
+        "to": "M",
+        "id": "302b58d1-ab89-4ca7-ae59-149532b760c4",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "M",
+        "to": "B",
+        "id": "58f97e95-5d25-4ff7-aad2-8c9f79469c48",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "M",
+        "to": "C",
+        "id": "7cff5b87-351d-4aba-9808-c7d2574d5627",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "E",
+        "to": "d3",
+        "id": "62b3e32f-1bba-4427-95d2-f058d0b026dd",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "d3",
+        "to": "d2",
+        "id": "649f7226-0cb1-4566-abd0-8f56d03945ea",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "d3",
+        "to": "d1",
+        "id": "a86390db-954e-466a-8c5e-f23860d6cc2c",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "d1",
+        "to": "d4",
+        "id": "00e95775-43b9-40d7-a3c3-7735149e5da6",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      },
+      {
+        "from": "d4",
+        "to": "A",
+        "id": "22d4661b-20b3-4695-8462-4ed5ea3255cf",
+        "color": "#3583ea",
+        "latency": -1,
+        "loss": -1,
+        "extra": {
+          "pendingTraffic": 0
+        }
+      }
+    ],
+    "positions": {
+      "A": {
+        "x": 38,
+        "y": -12
+      },
+      "M": {
+        "x": 155,
+        "y": 55
+      },
+      "E": {
+        "x": -69,
+        "y": 56
+      },
+      "B": {
+        "x": 145,
+        "y": 187
+      },
+      "C": {
+        "x": 267,
+        "y": -17
+      },
+      "d1": {
+        "x": -95,
+        "y": -156
+      },
+      "d2": {
+        "x": -291,
+        "y": -9
+      },
+      "d3": {
+        "x": -163,
+        "y": -37
+      },
+      "d4": {
+        "x": 26,
+        "y": -145
+      }
+    }
+  }

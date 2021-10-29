@@ -36,34 +36,6 @@ export class ProviderBrowser implements ForwardingProvider {
     // Initialize new nodes
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
 
-    // add dummy nodes
-    this.topo.nodes.add(<any>[
-      { id: "A", label: "A" },
-      { id: "M", label: "M" },
-      { id: "E", label: "E" },
-      { id: "B", label: "B" },
-      { id: "C", label: "C" },
-
-      { id: "d1", label: "D" },
-      { id: "d2", label: "D" },
-      { id: "d3", label: "D" },
-      { id: "d4", label: "D" },
-    ]);
-
-    // add dummy edges
-    this.topo.edges.add(<any>[
-      { from: "A", to: "E" },
-      { from: "A", to: "M" },
-      { from: "M", to: "B" },
-      { from: "M", to: "C" },
-
-      { from: "E", to: "d3" },
-      { from: "d3", to: "d2" },
-      { from: "d3", to: "d1" },
-      { from: "d1", to: "d4" },
-      { from: "d4", to: "A" },
-    ]);
-
     // load dump from url
     const url = new URL(window.location.href);
     const dump = url.searchParams.get('dump');
@@ -78,6 +50,34 @@ export class ProviderBrowser implements ForwardingProvider {
           });
         }
       }, 1000);
+    } else {
+      // add dummy nodes
+      this.topo.nodes.add(<any>[
+        { id: "A", label: "A" },
+        { id: "M", label: "M" },
+        { id: "E", label: "E" },
+        { id: "B", label: "B" },
+        { id: "C", label: "C" },
+
+        { id: "d1", label: "D" },
+        { id: "d2", label: "D" },
+        { id: "d3", label: "D" },
+        { id: "d4", label: "D" },
+      ]);
+
+      // add dummy edges
+      this.topo.edges.add(<any>[
+        { from: "A", to: "E" },
+        { from: "A", to: "M" },
+        { from: "M", to: "B" },
+        { from: "M", to: "C" },
+
+        { from: "E", to: "d3" },
+        { from: "d3", to: "d2" },
+        { from: "d3", to: "d1" },
+        { from: "d1", to: "d4" },
+        { from: "d4", to: "A" },
+      ]);
     }
   }
 

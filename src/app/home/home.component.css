@@ -1,0 +1,15 @@
+.vert-middle {
+    vertical-align: middle;
+}
+
+.templ {
+    height: 120px;
+    width: 210px;
+    display: inline-block;
+    object-fit: contain;
+}
+
+.outer {
+    height: calc(100vh - 160px);
+    overflow-y: scroll;
+}

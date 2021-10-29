@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { GlobalService } from './global.service';
 
 @Component({
   selector: 'app-root',
@@ -8,8 +7,15 @@ import { GlobalService } from './global.service';
 })
 export class AppComponent implements OnInit {
   title = 'ndn-play';
+  public start = false;
 
-  constructor(public gs: GlobalService) {}
+  constructor() {
+    const url = new URL(window.location.href);
+    const params = ['minindn', 'dump', 'default'];
+    if (params.some(p => url.searchParams.get(p))) {
+      this.start = true;
+    }
+  }
 
   ngOnInit() {
   }

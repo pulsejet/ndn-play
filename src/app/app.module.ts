@@ -17,6 +17,7 @@ import { TabsComponent } from './tabs/tabs.component';
 import { TabComponent } from './tabs/tab.component';
 import { ConsoleComponent } from './console/console.component';
 import { CapturedReplayComponent } from './captured-replay/captured-replay.component';
+import { PlayComponent } from './play/play.component';
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { CapturedReplayComponent } from './captured-replay/captured-replay.compo
     TabComponent,
     ConsoleComponent,
     CapturedReplayComponent,
+    PlayComponent,
   ],
   imports: [
     BrowserModule,

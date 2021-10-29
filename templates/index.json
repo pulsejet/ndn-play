@@ -18,6 +18,12 @@
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.json"
     },
     {
+      "title": "Data Signing",
+      "subtitle": "Simple security with data signing in NDN",
+      "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/signing.png",
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/signing.json"
+    },
+    {
       "title": "PSync",
       "subtitle": "Demonstration of Distributed Dataset Synchronization",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.png",

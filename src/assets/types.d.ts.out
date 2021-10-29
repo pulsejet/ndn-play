@@ -4563,6 +4563,84 @@ export namespace Endpoint {
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
 }
 
+export const crypto: Crypto;
+
+/** 'KEY' component. */
+export const KEY: Component;
+/** Default issuerId. */
+export const ISSUER_DEFAULT: Component;
+/** Self-signed issuerId. */
+export const ISSUER_SELF: Component;
+interface KeyNameFields {
+    subjectName: Name;
+    keyId: Component;
+}
+interface CertNameFields extends KeyNameFields {
+    issuerId: Component;
+    version: Component;
+    keyName: Name;
+}
+/** Get subject name from subject name, key name, or certificate name. */
+export function toSubjectName(name: Name): Name;
+/** Determine whether the name is a key name. */
+export function isKeyName(name: Name): boolean;
+/** Parse a key name into fields. */
+export function parseKeyName(name: Name): KeyNameFields;
+/**
+ * Get key name from key name or certificate name.
+ * @throws input name is neither key name nor certificate name.
+ */
+export function toKeyName(name: Name): Name;
+/**
+ * Create key name from subject name, key name, or certificate name.
+ * @param name subject name, key name, or certificate name.
+ * @param opts.keyId keyId component, used only if input name is subject name.
+ */
+export function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
+/** Determine whether the name is a certificate name. */
+export function isCertName(name: Name): boolean;
+/** Parse a certificate name into fields. */
+export function parseCertName(name: Name): CertNameFields;
+/**
+ * Create certificate name from subject name, key name, or certificate name.
+ * @param name subject name, key name, or certificate name.
+ * @param opts.keyId keyId component, used only if input name is subject name.
+ * @param opts.issuerId keyId, used only if input name is subject name.
+ * @param opts.version keyId, used only if input name is subject name.
+ */
+export function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
+
+export const naming_d_KEY: typeof KEY;
+export const naming_d_ISSUER_DEFAULT: typeof ISSUER_DEFAULT;
+export const naming_d_ISSUER_SELF: typeof ISSUER_SELF;
+type naming_d_KeyNameFields = KeyNameFields;
+type naming_d_CertNameFields = CertNameFields;
+export const naming_d_toSubjectName: typeof toSubjectName;
+export const naming_d_isKeyName: typeof isKeyName;
+export const naming_d_parseKeyName: typeof parseKeyName;
+export const naming_d_toKeyName: typeof toKeyName;
+export const naming_d_makeKeyName: typeof makeKeyName;
+export const naming_d_isCertName: typeof isCertName;
+export const naming_d_parseCertName: typeof parseCertName;
+export const naming_d_makeCertName: typeof makeCertName;
+export namespace naming_d {
+  export {
+    naming_d_KEY as KEY,
+    naming_d_ISSUER_DEFAULT as ISSUER_DEFAULT,
+    naming_d_ISSUER_SELF as ISSUER_SELF,
+    naming_d_KeyNameFields as KeyNameFields,
+    naming_d_CertNameFields as CertNameFields,
+    naming_d_toSubjectName as toSubjectName,
+    naming_d_isKeyName as isKeyName,
+    naming_d_parseKeyName as parseKeyName,
+    naming_d_toKeyName as toKeyName,
+    naming_d_makeKeyName as makeKeyName,
+    naming_d_isCertName as isCertName,
+    naming_d_parseCertName as parseCertName,
+    naming_d_makeCertName as makeCertName,
+  };
+}
+
 // Type definitions for @root/asn1 1.0
 
 
@@ -4591,8 +4669,12 @@ interface Key<K extends KeyKind> {
     readonly [KeyKind]: K;
     readonly spki?: "public" extends K ? Uint8Array : never;
 }
+/** Named private key. */
+export type PrivateKey = Key<"private">;
 /** Named public key. */
 export type PublicKey = Key<"public">;
+/** Named secret key. */
+export type SecretKey = Key<"secret">;
 /** Named private key or secret key signer. */
 interface NamedSigner<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, Signer {
     readonly sigType: number;
@@ -4930,6 +5012,360 @@ export namespace KeyChain {
     function createTemp(): KeyChain;
 }
 
+/** Create a plain encrypter from crypto key. */
+export function createEncrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): LLEncrypt.Key;
+/** Create a named encrypter from crypto key. */
+export function createEncrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedEncrypter<Asym>;
+/** Create a plain decrypter from crypto key. */
+export function createDecrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): LLDecrypt.Key;
+/** Create a named decrypter from crypto key. */
+export function createDecrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedDecrypter<Asym>;
+export type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [EncryptionAlgorithm<I, Asym, G>, G?] : [EncryptionAlgorithm<I, Asym, G>, G];
+/** Generate a pair of encrypter and decrypter. */
+export function generateEncryptionKey<I, Asym extends boolean, G>(name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
+/** Generate a pair of encrypter and decrypter, and save to KeyChain. */
+export function generateEncryptionKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
+
+/** Initialization Vector generator. */
+export abstract class IvGen {
+    readonly ivLength: number;
+    constructor(ivLength: number);
+    wrap<T extends LLEncrypt.Key>(key: T): T;
+    wrap(f: LLEncrypt): LLEncrypt;
+    private wrapKey;
+    private wrapLLEncrypt;
+    protected abstract generate(): Uint8Array;
+    protected update(plaintextLength: number, ciphertextLength: number): void;
+}
+/** Initialization Vector checker. */
+export abstract class IvChecker {
+    readonly ivLength: number;
+    constructor(ivLength: number);
+    wrap<T extends LLDecrypt.Key>(key: T): T;
+    wrap(f: LLDecrypt): LLDecrypt;
+    private wrapKey;
+    private wrapLLDecrypt;
+    protected abstract check(iv: Uint8Array, plaintextLength: number, ciphertextLength: number): void;
+}
+/** IV generator using all random bits. */
+export class RandomIvGen extends IvGen {
+    protected generate(): Uint8Array;
+}
+/**
+ * Options for Initialization Vectors using fixed+random+counter structure.
+ *
+ * IVs following this construction method have three parts:
+ * @li fixed bits, specified in options.
+ * @li random bits, different for each key and in each session.
+ * @li counter bits, monotonically increasing for each plaintext/ciphertext block.
+ */
+interface CounterIvOptions {
+    /** IV length in octets. */
+    ivLength: number;
+    /**
+     * Number of fixed bits.
+     * @default 0
+     */
+    fixedBits?: number;
+    /**
+     * Fixed portion.
+     * Required if fixedBits is positive.
+     * This may be specified as a bigint or a Uint8Array.
+     * If it's a Uint8Array, it must have fixedBits bits.
+     * The least significant bits are taken.
+     */
+    fixed?: bigint | Uint8Array;
+    /** Number of counter bits. */
+    counterBits: number;
+    /**
+     * Crypto algorithm block size in octets.
+     * If plaintext and ciphertext have different lengths, the longer length is considered.
+     */
+    blockSize: number;
+}
+/** IV generator using fixed+random+counter structure. */
+export class CounterIvGen extends IvGen {
+    constructor(opts: CounterIvGen.Options);
+    private readonly ivPrefix;
+    private readonly ci;
+    protected generate(): Uint8Array;
+    protected update(plaintextLength: number, ciphertextLength: number): void;
+}
+export namespace CounterIvGen {
+    interface Options extends CounterIvOptions {
+    }
+}
+/** Check IVs of fixed+random+counter structure to detect duplication. */
+export class CounterIvChecker extends IvChecker {
+    constructor(opts: CounterIvChecker.Options);
+    private readonly fixedMask;
+    private readonly randomMask;
+    private readonly counterMask;
+    private readonly fixed;
+    private readonly requireSameRandom;
+    private lastRandom?;
+    private readonly ci;
+    extract(iv: Uint8Array): {
+        fixed: bigint;
+        random: bigint;
+        counter: bigint;
+    };
+    protected check(iv: Uint8Array, plaintextLength: number, ciphertextLength: number): void;
+}
+export namespace CounterIvChecker {
+    interface Options extends CounterIvOptions {
+        /**
+         * If true, all IVs must have the same bits in the random portion.
+         * @default false
+         */
+        requireSameRandom?: boolean;
+    }
+}
+
+/** Create a plain signer from crypto key. */
+export function createSigner<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): Signer;
+/** Create a named signer from crypto key. */
+export function createSigner<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedSigner<Asym>;
+/** Create a plain verifier from crypto key. */
+export function createVerifier<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): Verifier;
+/** Create a named verifier from crypto key. */
+export function createVerifier<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedVerifier<Asym>;
+export type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [SigningAlgorithm<I, Asym, G>, G?] : [SigningAlgorithm<I, Asym, G>, G];
+/** Generate a pair of signer and verifier with the default ECDSA signing algorithm. */
+export function generateSigningKey(name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
+/** Generate a pair of signer and verifier with the default ECDSA signing algorithm, and save to KeyChain. */
+export function generateSigningKey(keyChain: KeyChain, name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
+/** Generate a pair of signer and verifier. */
+export function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
+/** Generate a pair of signer and verifier, and save to KeyChain. */
+export function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
+
+interface Encryption<I, G extends GenParams> extends EncryptionAlgorithm<I, false, G> {
+    readonly ivLength: number;
+    makeAesKeyGenParams: (genParams: G) => AesKeyGenParams;
+}
+export type KeyLength = 128 | 192 | 256;
+export namespace KeyLength {
+    const Default: KeyLength;
+    const Choices: readonly KeyLength[];
+}
+/** Key generation parameters. */
+interface GenParams {
+    length?: KeyLength;
+    /** Import raw key bits instead of generating. */
+    importRaw?: Uint8Array;
+}
+export type GenParams_ = GenParams;
+/** AES block size in octets. */
+export const blockSize = 16;
+/**
+ * AES-CBC encryption algorithm.
+ *
+ * Initialization Vectors must be 16 octets.
+ * During encryption, if IV is unspecified, it is randomly generated.
+ * During decryption, quality of IV is not checked.
+ */
+export const CBC: Encryption<{}, GenParams>;
+/**
+ * AES-CTR encryption algorithm.
+ *
+ * Initialization Vectors must be 16 octets.
+ * During encryption, if IV is unspecified, it is constructed with two parts:
+ * @li a 64-bit random number, generated each time a private key instance is constructed;
+ * @li a 64-bit counter starting from zero.
+ *
+ * During decryption, quality of IV is not automatically checked.
+ * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
+ * check IVs using CounterIvChecker type.
+ */
+export const CTR: Encryption<CTR.Info, CTR.GenParams>;
+export namespace CTR {
+    interface Info {
+        /**
+         * Specify number of bits in IV to use as counter.
+         * This must be between 1 and 128. Default is 64.
+         */
+        counterLength: number;
+    }
+    type GenParams = GenParams_ & Partial<Info>;
+}
+/**
+ * AES-GCM encryption algorithm.
+ *
+ * Initialization Vectors must be 12 octets.
+ * During encryption, if IV is unspecified, it is constructed with two parts:
+ * @li a 64-bit random number, generated each time a private key instance is constructed;
+ * @li a 32-bit counter starting from zero.
+ *
+ * During decryption, quality of IV is not automatically checked.
+ * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
+ * check IVs using CounterIvChecker type.
+ */
+export const GCM: Encryption<{}, GenParams>;
+
+type aes_d_Encryption<_0, _1> = Encryption<_0, _1>;
+export const aes_d_KeyLength: typeof KeyLength;
+type aes_d_GenParams = GenParams;
+export const aes_d_blockSize: typeof blockSize;
+export const aes_d_CBC: typeof CBC;
+export const aes_d_CTR: typeof CTR;
+export const aes_d_GCM: typeof GCM;
+export namespace aes_d {
+  export {
+    aes_d_Encryption as Encryption,
+    aes_d_KeyLength as KeyLength,
+    aes_d_GenParams as GenParams,
+    aes_d_blockSize as blockSize,
+    aes_d_CBC as CBC,
+    aes_d_CTR as CTR,
+    aes_d_GCM as GCM,
+  };
+}
+
+export const PointSizes: {
+    "P-256": number;
+    "P-384": number;
+    "P-521": number;
+};
+export type EcCurve = keyof typeof PointSizes;
+export namespace EcCurve {
+    const Default: EcCurve;
+    const Choices: readonly ("P-256" | "P-384" | "P-521")[];
+}
+/** Sha256WithEcdsa signing algorithm. */
+export const ECDSA: SigningAlgorithm<ECDSA.Info, true, ECDSA.GenParams>;
+export namespace ECDSA {
+    /** Key generation parameters. */
+    interface GenParams {
+        curve?: EcCurve;
+        /**
+         * Import PKCS#8 private key and SPKI public key instead of generating.
+         * This cannot handle specificCurve in SPKI.
+         */
+        importPkcs8?: [Uint8Array, Uint8Array];
+    }
+    interface Info {
+        curve: EcCurve;
+    }
+}
+
+/** HmacWithSha256 signing algorithm. */
+export const HMAC: SigningAlgorithm<{}, false, HMAC.GenParams>;
+export namespace HMAC {
+    /** Key generation parameters. */
+    interface GenParams {
+        /** Import raw key bits instead of generating. */
+        importRaw?: Uint8Array;
+    }
+}
+
+export const SigningAlgorithmList: SigningAlgorithm[];
+export const EncryptionAlgorithmList: EncryptionAlgorithm[];
+export const CryptoAlgorithmList: CryptoAlgorithm[];
+
+export type RsaModulusLength = 2048 | 4096;
+export namespace RsaModulusLength {
+    const Default: RsaModulusLength;
+    const Choices: readonly RsaModulusLength[];
+}
+/** Sha256WithRsa signing algorithm. */
+export const RSA: SigningAlgorithm<{}, true, RSA.GenParams>;
+export namespace RSA {
+    interface GenParams {
+        modulusLength?: RsaModulusLength;
+        /** Import PKCS#8 private key and SPKI public key instead of generating. */
+        importPkcs8?: [Uint8Array, Uint8Array];
+    }
+}
+/** RSA-OAEP encryption algorithm. */
+export const RSAOAEP: EncryptionAlgorithm<{}, true, RSA.GenParams>;
+
+export const keychain_EcCurve: typeof EcCurve;
+export const keychain_ECDSA: typeof ECDSA;
+export const keychain_HMAC: typeof HMAC;
+export const keychain_SigningAlgorithmList: typeof SigningAlgorithmList;
+export const keychain_EncryptionAlgorithmList: typeof EncryptionAlgorithmList;
+export const keychain_CryptoAlgorithmList: typeof CryptoAlgorithmList;
+export const keychain_RsaModulusLength: typeof RsaModulusLength;
+export const keychain_RSA: typeof RSA;
+export const keychain_RSAOAEP: typeof RSAOAEP;
+export const keychain_KeyKind: typeof KeyKind;
+type keychain_PrivateKey = PrivateKey;
+type keychain_PublicKey = PublicKey;
+type keychain_SecretKey = SecretKey;
+export const keychain_NamedSigner: typeof NamedSigner;
+export const keychain_NamedVerifier: typeof NamedVerifier;
+export const keychain_NamedEncrypter: typeof NamedEncrypter;
+export const keychain_NamedDecrypter: typeof NamedDecrypter;
+export const keychain_CryptoAlgorithm: typeof CryptoAlgorithm;
+type keychain_SigningAlgorithm<_0, _1, _2> = SigningAlgorithm<_0, _1, _2>;
+type keychain_EncryptionAlgorithm<_0, _1, _2> = EncryptionAlgorithm<_0, _1, _2>;
+export const keychain_createEncrypter: typeof createEncrypter;
+export const keychain_createDecrypter: typeof createDecrypter;
+export const keychain_generateEncryptionKey: typeof generateEncryptionKey;
+type keychain_IvGen = IvGen;
+export const keychain_IvGen: typeof IvGen;
+type keychain_IvChecker = IvChecker;
+export const keychain_IvChecker: typeof IvChecker;
+type keychain_RandomIvGen = RandomIvGen;
+export const keychain_RandomIvGen: typeof RandomIvGen;
+type keychain_CounterIvOptions = CounterIvOptions;
+export const keychain_CounterIvGen: typeof CounterIvGen;
+export const keychain_CounterIvChecker: typeof CounterIvChecker;
+export const keychain_createSigner: typeof createSigner;
+export const keychain_createVerifier: typeof createVerifier;
+export const keychain_generateSigningKey: typeof generateSigningKey;
+export const keychain_ValidityPeriod: typeof ValidityPeriod;
+export const keychain_Certificate: typeof Certificate;
+export const keychain_KeyStore: typeof KeyStore;
+type keychain_CertStore = CertStore;
+export const keychain_CertStore: typeof CertStore;
+export const keychain_KeyChain: typeof KeyChain;
+export namespace keychain {
+  export {
+    crypto as KeyChainImplWebCrypto,
+    naming_d as CertNaming,
+    aes_d as AES,
+    keychain_EcCurve as EcCurve,
+    keychain_ECDSA as ECDSA,
+    keychain_HMAC as HMAC,
+    keychain_SigningAlgorithmList as SigningAlgorithmList,
+    keychain_EncryptionAlgorithmList as EncryptionAlgorithmList,
+    keychain_CryptoAlgorithmList as CryptoAlgorithmList,
+    keychain_RsaModulusLength as RsaModulusLength,
+    keychain_RSA as RSA,
+    keychain_RSAOAEP as RSAOAEP,
+    keychain_KeyKind as KeyKind,
+    keychain_PrivateKey as PrivateKey,
+    keychain_PublicKey as PublicKey,
+    keychain_SecretKey as SecretKey,
+    keychain_NamedSigner as NamedSigner,
+    keychain_NamedVerifier as NamedVerifier,
+    keychain_NamedEncrypter as NamedEncrypter,
+    keychain_NamedDecrypter as NamedDecrypter,
+    keychain_CryptoAlgorithm as CryptoAlgorithm,
+    keychain_SigningAlgorithm as SigningAlgorithm,
+    keychain_EncryptionAlgorithm as EncryptionAlgorithm,
+    keychain_createEncrypter as createEncrypter,
+    keychain_createDecrypter as createDecrypter,
+    keychain_generateEncryptionKey as generateEncryptionKey,
+    keychain_IvGen as IvGen,
+    keychain_IvChecker as IvChecker,
+    keychain_RandomIvGen as RandomIvGen,
+    keychain_CounterIvOptions as CounterIvOptions,
+    keychain_CounterIvGen as CounterIvGen,
+    keychain_CounterIvChecker as CounterIvChecker,
+    keychain_createSigner as createSigner,
+    keychain_createVerifier as createVerifier,
+    keychain_generateSigningKey as generateSigningKey,
+    keychain_ValidityPeriod as ValidityPeriod,
+    keychain_Certificate as Certificate,
+    keychain_KeyStore as KeyStore,
+    keychain_CertStore as CertStore,
+    keychain_KeyChain as KeyChain,
+  };
+}
+
 interface ForwardingProvider {
     topo: Topology;
     pendingUpdatesNodes: {
@@ -4972,6 +5408,7 @@ export class Topology {
     selectedEdge?: IEdge;
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
+    globalCaptureFilter: (packet: ICapturedPacket) => boolean;
     constructor(provider: ForwardingProvider);
     /** Initialize the network */
     createNetwork: (container: HTMLElement) => Promise<void>;
@@ -5038,6 +5475,7 @@ export class ProviderBrowser implements ForwardingProvider {
     private ensureInitialized;
     downloadExperimentDump(): void;
     loadExperimentDump(): void;
+    loadExperimentDumpFromStr(val: string): void;
 }
 
 export class NFW {
@@ -5122,6 +5560,8 @@ interface ICapturedPacket {
     to?: string;
     /** Contents of the packet for visualization */
     p?: any;
+    /** Currently replaying this packet */
+    a?: boolean;
 }
 interface INodeExtra {
     /** Units of traffic pending on this node */
@@ -6000,6 +6440,7 @@ export const ndn: {
     packet: typeof packet;
     tlv: typeof tlv;
     sync: typeof sync;
+    keychain: typeof keychain;
 };
 
 }
@@ -6013,4 +6454,7 @@ const ndn = t.ndn;
 
 declare function visualize(packet: any): void;
 
+
 declare function setGlobalCaptureFilter(filter: (packet: t.ICapturedPacket) => boolean): void;
+
+

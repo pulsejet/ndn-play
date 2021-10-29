@@ -63,6 +63,17 @@ export class ProviderBrowser implements ForwardingProvider {
       { from: "d1", to: "d4" },
       { from: "d4", to: "A" },
     ]);
+
+    // load dump from url
+    const url = new URL(window.location.href);
+    const dump = url.searchParams.get('dump');
+    if (dump) {
+      setTimeout(() => {
+        if (confirm(`Do you want to load the experiment at ${dump}`)) {
+          fetch(dump).then(e=>e.text().then(this.loadExperimentDumpFromStr.bind(this)));
+        }
+      }, 1000);
+    }
   }
 
   public initializePostNetwork = async () => {
@@ -185,30 +196,34 @@ export class ProviderBrowser implements ForwardingProvider {
 
   public loadExperimentDump() {
     loadFileString().then((val) => {
-      try {
-        const dump = JSON.parse(val);
-        this.topo.edges.clear();
-        this.topo.nodes.clear();
-
-        if (dump.positions) {
-          dump.nodes.forEach((n: INode) => {
-            n.x = dump.positions[n.id!].x;
-            n.y = dump.positions[n.id!].y;
-          });
-        }
-
-        this.topo.imported = dump.exporter;
-
-        this.topo.nodes.add(dump.nodes);
-        this.topo.edges.add(dump.edges);
-
-        this.topo.network.stabilize();
-        setTimeout(() => this.topo.network.fit(), 200);
-      } catch (err) {
-        console.error('Failed to parse dump file', err);
-      }
+      this.loadExperimentDumpFromStr(val);
     }).catch(() => {
       console.error('Failed to read dump file');
     });
+  }
+
+  public loadExperimentDumpFromStr(val: string) {
+    try {
+      const dump = JSON.parse(val);
+      this.topo.edges.clear();
+      this.topo.nodes.clear();
+
+      if (dump.positions) {
+        dump.nodes.forEach((n: INode) => {
+          n.x = dump.positions[n.id!].x;
+          n.y = dump.positions[n.id!].y;
+        });
+      }
+
+      this.topo.imported = dump.exporter;
+
+      this.topo.nodes.add(dump.nodes);
+      this.topo.edges.add(dump.edges);
+
+      this.topo.network.stabilize();
+      setTimeout(() => this.topo.network.fit(), 200);
+    } catch (err) {
+      console.error('Failed to parse dump file', err);
+    }
   }
 }

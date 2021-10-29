@@ -70,7 +70,12 @@ export class ProviderBrowser implements ForwardingProvider {
     if (dump) {
       setTimeout(() => {
         if (confirm(`Do you want to load the experiment at ${dump}`)) {
-          fetch(dump).then(e=>e.text().then(this.loadExperimentDumpFromStr.bind(this)));
+          fetch(dump).then(e => {
+            e.text().then(this.loadExperimentDumpFromStr.bind(this)).catch(console.error);
+          }).catch(e => {
+            console.error(e);
+            alert('Failed to load remote experiment')
+          });
         }
       }, 1000);
     }

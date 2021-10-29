@@ -40,8 +40,9 @@ export class ProviderBrowser implements ForwardingProvider {
     const url = new URL(window.location.href);
     const dump = url.searchParams.get('dump');
     if (dump) {
+      const OFFICIAL_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
       setTimeout(() => {
-        if (confirm(`Do you want to load the experiment at ${dump}`)) {
+        if (dump.startsWith(OFFICIAL_PREFIX) || confirm(`Do you want to load the experiment at ${dump}`)) {
           fetch(dump).then(e => {
             e.text().then(this.loadExperimentDumpFromStr.bind(this)).catch(console.error);
           }).catch(e => {
@@ -49,7 +50,7 @@ export class ProviderBrowser implements ForwardingProvider {
             alert('Failed to load remote experiment')
           });
         }
-      }, 1000);
+      }, 500);
     } else {
       // add dummy nodes
       this.topo.nodes.add(<any>[

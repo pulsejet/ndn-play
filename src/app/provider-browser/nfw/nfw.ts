@@ -315,9 +315,6 @@ export class NFW {
                 this.updateColors();
 
                 if (success) {
-                    // Start the face if not running
-                    this.ensureConnectionRunning(nextNFW);
-
                     // Cheat cause we're not really a network
                     // Put the nonce in the DNL of the _next_ NFW,
                     // so it refuses any duplicate interests later
@@ -332,14 +329,16 @@ export class NFW {
 
                     const newPkt = FwPacket.create(interest, upstreamToken);
                     (<any>newPkt).hop = this.nodeId;
-                    this.connections[nextHop].tx.push(newPkt);
-                    this.shark.capturePacket(this.connections[nextHop].face, pkt, "tx");
+
+                    const connection = this.getConnection(nextNFW);
+                    connection.tx.push(newPkt);
+                    this.shark.capturePacket(connection.face, newPkt, "tx");
                 }
             });
         }
     }
 
-    private ensureConnectionRunning(nextNFW: NFW) {
+    private getConnection(nextNFW: NFW) {
         const nextHop = nextNFW.nodeId;
 
         if (!this.connections[nextHop]?.face.running) {
@@ -350,7 +349,7 @@ export class NFW {
                     for await (const rpkt of iterable) {
                         // Flash nodes only for data
                         if (rpkt.l3 instanceof Data) {
-                            nextNFW.node().extra.pendingTraffic++;
+                            nextNFW.nodeExtra.pendingTraffic++;
                             nextNFW.updateColors();
                         }
 
@@ -368,10 +367,10 @@ export class NFW {
                                 };
 
                                 if (rpkt.l3 instanceof Data) {
-                                    nextNFW.node().extra.pendingTraffic--;
+                                    nextNFW.nodeExtra.pendingTraffic--;
                                     nextNFW.updateColors();
                                     (<any>rpkt).hop = nextNFW.nodeId;
-                                    this.faceRx.push(rpkt);
+                                    nextNFW.getConnection(this).tx.push(rpkt);
 
                                     // Remove PIT entry
                                     clear();
@@ -384,7 +383,7 @@ export class NFW {
                                         this.pit[t].count--;
                                     } else {
                                         // Reject the PIT entry
-                                        this.faceRx.push(rpkt);
+                                        nextNFW.getConnection(this).tx.push(rpkt);
                                         clear();
                                     }
                                 }
@@ -398,6 +397,8 @@ export class NFW {
             (<any>face).hops[nextHop] = this.nodeId,
             this.connections[nextHop] = { face, tx };
         }
+
+        return this.connections[nextHop];
     }
 
     public strsFIB() {

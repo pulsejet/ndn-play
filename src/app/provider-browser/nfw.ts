@@ -89,7 +89,7 @@ export class NFW {
             if (pkt.cancel || pkt.reject) return;
 
             // Wireshark
-            if (this.capture || this.topo.captureAll) this.capturePacket(pkt);
+            this.capturePacket(face, pkt, "rx");
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
@@ -97,6 +97,11 @@ export class NFW {
             } else if (pkt.l3 instanceof Data) {
                 this.cs.push(pkt.l3);
             }
+        });
+
+        this.fw.on("pkttx", (face, pkt) => {
+            if (pkt.cancel || pkt.reject) return;
+            this.capturePacket(face, pkt, "tx");
         });
 
         this.face = this.fw.addFace({
@@ -164,7 +169,14 @@ export class NFW {
         });
     }
 
-    public capturePacket(pkt: FwPacket) {
+    public capturePacket(face: FwFace, pkt: FwPacket, event: "tx" | "rx") {
+        // Confirm we are capturing
+        if (!this.capture && !this.topo.captureAll) return;
+
+        // Skip if this came from content store
+        if ((<any>pkt).contentstore) return;
+
+        // Get type of packet
         let type;
         if (pkt.l3 instanceof Interest) {
             type = 'Interest';
@@ -180,8 +192,13 @@ export class NFW {
         // Store hex so we can dump later
         const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
 
-        // Get from hop Id
-        const fromHopId: string = (<any>pkt).hop;
+        // Get hops
+        // If hops field doesn't exist then it is a local face (SCK)
+        const thisHop: string = this.node().label!;
+        let otherHop: string = (<any>face).hops?.[this.nodeId] || (<any>pkt).hop;
+        otherHop = otherHop ? this.topo.nodes.get(otherHop)?.label! : 'SCK';
+        const fromHop = event == 'rx' ? otherHop : thisHop;
+        const toHop = event == 'rx' ? thisHop : otherHop;
 
         // Create packet object
         const pack: ICapturedPacket = {
@@ -190,8 +207,8 @@ export class NFW {
             l: encoder.output.length,
             type: type,
             name: AltUri.ofName(pkt.l3.name).substr(0, 48),
-            from: fromHopId ? this.topo.nodes.get(fromHopId)?.label : undefined,
-            to: fromHopId ? this.node().label as string : undefined,
+            from: fromHop,
+            to: toHop,
         };
 
         // Check if we want to capture this packet
@@ -285,7 +302,7 @@ export class NFW {
         const csEntry = this.cs.get(interest);
         if (csEntry) {
             const pkt = FwPacket.create(csEntry);
-            (<any>pkt).hop = this.nodeId;
+            (<any>pkt).contentstore = 1;
             this.faceRx.push(pkt);
             return;
         }
@@ -423,6 +440,9 @@ export class NFW {
                                 }
                             },
                         });
+                        (<any>face).hops = {};
+                        (<any>face).hops[this.nodeId] = nextHop,
+                        (<any>face).hops[nextHop] = this.nodeId,
                         this.connections[nextHop] = { face, tx };
                     }
 
@@ -441,6 +461,7 @@ export class NFW {
                     const newPkt = FwPacket.create(interest, upstreamToken);
                     (<any>newPkt).hop = this.nodeId;
                     this.connections[nextHop].tx.push(newPkt);
+                    this.capturePacket(this.connections[nextHop].face, pkt, "tx");
                 }
             });
         }

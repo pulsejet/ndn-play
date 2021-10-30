@@ -19,8 +19,10 @@ import { DefaultServers } from "./servers";
 export class NFW {
     /** NDNts forwarder */
     public fw = Forwarder.create();
-    private face: FwFace;
-    private faceRx = pushable<FwPacket>();
+    /** Local face for content store etc */
+    public localFace: FwFace;
+    /** Push channel to local face */
+    private localFaceTx = pushable<FwPacket>();
 
     /** Browser Forwarding Provider */
     public provider: ProviderBrowser;
@@ -108,9 +110,9 @@ export class NFW {
             this.shark.capturePacket(face, pkt, "tx");
         });
 
-        this.face = this.fw.addFace({
-            rx: this.faceRx,
-            tx: async () => {},
+        this.localFace = this.fw.addFace({
+            rx: this.localFaceTx,
+            tx: async () => {}, // Nothing should ever be received here
         });
 
         // Add routes
@@ -228,8 +230,7 @@ export class NFW {
         const csEntry = this.cs.get(interest);
         if (csEntry) {
             const pkt = FwPacket.create(csEntry);
-            (<any>pkt).contentstore = 1;
-            this.faceRx.push(pkt);
+            this.localFaceTx.push(pkt);
             return;
         }
 
@@ -285,7 +286,7 @@ export class NFW {
         this.pit[upstreamToken] = {
             count: 0,
             timer: window.setTimeout(() => {
-                this.faceRx.push(new RejectInterest("expire", interest))
+                this.localFaceTx.push(new RejectInterest("expire", interest))
                 delete this.pit[upstreamToken]
             }, interest.lifetime || 4000),
         };

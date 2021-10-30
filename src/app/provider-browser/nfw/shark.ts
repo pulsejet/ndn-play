@@ -27,7 +27,7 @@ export class Shark {
         if (!this.nfw.capture && !this.topo.captureAll) return;
 
         // Skip if this came from content store
-        if ((<any>pkt).contentstore) return;
+        if (face == this.nfw.localFace) return;
 
         // Get type of packet
         let type;

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 import * as languageFacts from '../languageFacts/facts.js';
 import * as nodes from '../parser/cssNodes.js';
 import { union } from '../utils/arrays.js';

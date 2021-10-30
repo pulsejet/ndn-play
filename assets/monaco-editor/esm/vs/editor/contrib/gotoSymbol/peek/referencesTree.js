@@ -11,22 +11,22 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { ReferencesModel, FileReferences, OneReference } from '../referencesModel.js';
-import { ITextModelService } from '../../../common/services/resolverService.js';
-import { IconLabel } from '../../../../base/browser/ui/iconLabel/iconLabel.js';
-import { CountBadge } from '../../../../base/browser/ui/countBadge/countBadge.js';
-import { ILabelService } from '../../../../platform/label/common/label.js';
-import { IThemeService } from '../../../../platform/theme/common/themeService.js';
-import { attachBadgeStyler } from '../../../../platform/theme/common/styler.js';
 import * as dom from '../../../../base/browser/dom.js';
-import { localize } from '../../../../nls.js';
+import { CountBadge } from '../../../../base/browser/ui/countBadge/countBadge.js';
+import { HighlightedLabel } from '../../../../base/browser/ui/highlightedlabel/highlightedLabel.js';
+import { IconLabel } from '../../../../base/browser/ui/iconLabel/iconLabel.js';
+import { createMatches, FuzzyScore } from '../../../../base/common/filters.js';
 import { getBaseLabel } from '../../../../base/common/labels.js';
-import { dirname, basename } from '../../../../base/common/resources.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
+import { basename, dirname } from '../../../../base/common/resources.js';
+import { ITextModelService } from '../../../common/services/resolverService.js';
+import { localize } from '../../../../nls.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
-import { FuzzyScore, createMatches } from '../../../../base/common/filters.js';
-import { HighlightedLabel } from '../../../../base/browser/ui/highlightedlabel/highlightedLabel.js';
+import { ILabelService } from '../../../../platform/label/common/label.js';
+import { attachBadgeStyler } from '../../../../platform/theme/common/styler.js';
+import { IThemeService } from '../../../../platform/theme/common/themeService.js';
+import { FileReferences, OneReference, ReferencesModel } from '../referencesModel.js';
 let DataSource = class DataSource {
     constructor(_resolverService) {
         this._resolverService = _resolverService;

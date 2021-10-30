@@ -17,25 +17,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import './media/quickInput.css';
 import * as dom from '../../../browser/dom.js';
-import { dispose } from '../../../common/lifecycle.js';
-import { matchesFuzzyIconAware, parseLabelWithIcons } from '../../../common/iconLabels.js';
-import { compareAnything } from '../../../common/comparers.js';
-import { Emitter, Event } from '../../../common/event.js';
 import { StandardKeyboardEvent } from '../../../browser/keyboardEvent.js';
-import { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';
-import { HighlightedLabel } from '../../../browser/ui/highlightedlabel/highlightedLabel.js';
-import { memoize } from '../../../common/decorators.js';
-import { range } from '../../../common/arrays.js';
-import * as platform from '../../../common/platform.js';
 import { ActionBar } from '../../../browser/ui/actionbar/actionbar.js';
-import { Action } from '../../../common/actions.js';
-import { getIconClass } from './quickInputUtils.js';
-import { withNullAsUndefined } from '../../../common/types.js';
+import { HighlightedLabel } from '../../../browser/ui/highlightedlabel/highlightedLabel.js';
+import { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';
 import { KeybindingLabel } from '../../../browser/ui/keybindingLabel/keybindingLabel.js';
-import { localize } from '../../../../nls.js';
+import { Action } from '../../../common/actions.js';
+import { range } from '../../../common/arrays.js';
 import { getCodiconAriaLabel } from '../../../common/codicons.js';
+import { compareAnything } from '../../../common/comparers.js';
+import { memoize } from '../../../common/decorators.js';
+import { Emitter, Event } from '../../../common/event.js';
+import { matchesFuzzyIconAware, parseLabelWithIcons } from '../../../common/iconLabels.js';
+import { dispose } from '../../../common/lifecycle.js';
+import * as platform from '../../../common/platform.js';
+import { withNullAsUndefined } from '../../../common/types.js';
+import { getIconClass } from './quickInputUtils.js';
+import './media/quickInput.css';
+import { localize } from '../../../../nls.js';
 const $ = dom.$;
 class ListElement {
     constructor(init) {
@@ -276,6 +276,12 @@ export class QuickInputList {
     }
     get onDidChangeSelection() {
         return Event.map(this.list.onDidChangeSelection, e => ({ items: e.elements.map(e => e.item), event: e.browserEvent }));
+    }
+    get scrollTop() {
+        return this.list.scrollTop;
+    }
+    set scrollTop(scrollTop) {
+        this.list.scrollTop = scrollTop;
     }
     getAllVisibleChecked() {
         return this.allVisibleChecked(this.elements, false);

@@ -20,20 +20,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../../nls.js';
+import { Codicon } from '../../../base/common/codicons.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
-import { RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
+import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
+import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
-import { registerEditorAction, registerEditorContribution, EditorAction, EditorCommand, registerEditorCommand } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { MarkerNavigationWidget } from './gotoErrorWidget.js';
-import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
-import { MenuId } from '../../../platform/actions/common/actions.js';
-import { Codicon } from '../../../base/common/codicons.js';
-import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { IMarkerNavigationService } from './markerNavigationService.js';
+import * as nls from '../../../nls.js';
+import { MenuId } from '../../../platform/actions/common/actions.js';
+import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
+import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { registerIcon } from '../../../platform/theme/common/iconRegistry.js';
+import { MarkerNavigationWidget } from './gotoErrorWidget.js';
 let MarkerController = class MarkerController {
     constructor(editor, _markerNavigationService, _contextKeyService, _editorService, _instantiationService) {
         this._markerNavigationService = _markerNavigationService;
@@ -187,7 +187,7 @@ export class NextMarkerAction extends MarkerNavigationAction {
             menuOpts: {
                 menuId: MarkerNavigationWidget.TitleMenu,
                 title: NextMarkerAction.LABEL,
-                icon: registerIcon('marker-navigation-next', Codicon.chevronDown, nls.localize('nextMarkerIcon', 'Icon for goto next marker.')),
+                icon: registerIcon('marker-navigation-next', Codicon.arrowDown, nls.localize('nextMarkerIcon', 'Icon for goto next marker.')),
                 group: 'navigation',
                 order: 1
             }
@@ -211,7 +211,7 @@ class PrevMarkerAction extends MarkerNavigationAction {
             menuOpts: {
                 menuId: MarkerNavigationWidget.TitleMenu,
                 title: NextMarkerAction.LABEL,
-                icon: registerIcon('marker-navigation-previous', Codicon.chevronUp, nls.localize('previousMarkerIcon', 'Icon for goto previous marker.')),
+                icon: registerIcon('marker-navigation-previous', Codicon.arrowUp, nls.localize('previousMarkerIcon', 'Icon for goto previous marker.')),
                 group: 'navigation',
                 order: 2
             }

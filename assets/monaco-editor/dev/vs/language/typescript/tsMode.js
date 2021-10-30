@@ -102,7 +102,8 @@ define('vs/language/typescript/workerManager',["require", "exports", "./fillers/
                     createData: {
                         compilerOptions: this._defaults.getCompilerOptions(),
                         extraLibs: this._defaults.getExtraLibs(),
-                        customWorkerPath: this._defaults.workerOptions.customWorkerPath
+                        customWorkerPath: this._defaults.workerOptions.customWorkerPath,
+                        inlayHintsOptions: this._defaults.inlayHintsOptions
                     }
                 });
                 var p = this._worker.getProxy();
@@ -201,6 +202,11 @@ define('vs/language/typescript/lib/lib.index',["require", "exports"], function (
     exports.libFileSet['lib.es2020.sharedmemory.d.ts'] = true;
     exports.libFileSet['lib.es2020.string.d.ts'] = true;
     exports.libFileSet['lib.es2020.symbol.wellknown.d.ts'] = true;
+    exports.libFileSet['lib.es2021.d.ts'] = true;
+    exports.libFileSet['lib.es2021.full.d.ts'] = true;
+    exports.libFileSet['lib.es2021.promise.d.ts'] = true;
+    exports.libFileSet['lib.es2021.string.d.ts'] = true;
+    exports.libFileSet['lib.es2021.weakref.d.ts'] = true;
     exports.libFileSet['lib.es5.d.ts'] = true;
     exports.libFileSet['lib.es6.d.ts'] = true;
     exports.libFileSet['lib.esnext.d.ts'] = true;
@@ -230,6 +236,17 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -266,14 +283,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/lib.index", "./fillers/monaco-editor-core"], function (require, exports, lib_index_1, monaco_editor_core_1) {
+define('vs/language/typescript/languageFeatures',["require", "exports", "./monaco.contribution", "./lib/lib.index", "./fillers/monaco-editor-core"], function (require, exports, monaco_contribution_1, lib_index_1, monaco_editor_core_1) {
     /*---------------------------------------------------------------------------------------------
      *  Copyright (c) Microsoft Corporation. All rights reserved.
      *  Licensed under the MIT License. See License.txt in the project root for license information.
      *--------------------------------------------------------------------------------------------*/
     'use strict';
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.RenameAdapter = exports.CodeActionAdaptor = exports.FormatOnTypeAdapter = exports.FormatAdapter = exports.FormatHelper = exports.Kind = exports.OutlineAdapter = exports.ReferenceAdapter = exports.DefinitionAdapter = exports.OccurrencesAdapter = exports.QuickInfoAdapter = exports.SignatureHelpAdapter = exports.SuggestAdapter = exports.DiagnosticsAdapter = exports.LibFiles = exports.Adapter = exports.flattenDiagnosticMessageText = void 0;
+    exports.InlayHintsAdapter = exports.RenameAdapter = exports.CodeActionAdaptor = exports.FormatOnTypeAdapter = exports.FormatAdapter = exports.FormatHelper = exports.Kind = exports.OutlineAdapter = exports.ReferenceAdapter = exports.DefinitionAdapter = exports.OccurrencesAdapter = exports.QuickInfoAdapter = exports.SignatureHelpAdapter = exports.SuggestAdapter = exports.DiagnosticsAdapter = exports.LibFiles = exports.Adapter = exports.flattenDiagnosticMessageText = void 0;
     //#region utils copied from typescript to prevent loading the entire typescriptServices ---
     var IndentStyle;
     (function (IndentStyle) {
@@ -351,13 +368,18 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
             }
             return false;
         };
-        LibFiles.prototype.getOrCreateModel = function (uri) {
+        LibFiles.prototype.getOrCreateModel = function (fileName) {
+            var uri = monaco_editor_core_1.Uri.parse(fileName);
             var model = monaco_editor_core_1.editor.getModel(uri);
             if (model) {
                 return model;
             }
             if (this.isLibFile(uri) && this._hasFetchedLibFiles) {
                 return monaco_editor_core_1.editor.createModel(this._libFiles[uri.path.slice(1)], 'typescript', uri);
+            }
+            var matchedLibFile = monaco_contribution_1.typescriptDefaults.getExtraLibs()[fileName];
+            if (matchedLibFile) {
+                return monaco_editor_core_1.editor.createModel(matchedLibFile.content, 'typescript', uri);
             }
             return null;
         };
@@ -585,14 +607,13 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
         DiagnosticsAdapter.prototype._convertRelatedInformation = function (model, relatedInformation) {
             var _this = this;
             if (!relatedInformation) {
-                return;
+                return [];
             }
             var result = [];
             relatedInformation.forEach(function (info) {
                 var relatedResource = model;
                 if (info.file) {
-                    var relatedResourceUri = monaco_editor_core_1.Uri.parse(info.file.fileName);
-                    relatedResource = _this._libFiles.getOrCreateModel(relatedResourceUri);
+                    relatedResource = _this._libFiles.getOrCreateModel(info.file.fileName);
                 }
                 if (!relatedResource) {
                     return;
@@ -773,10 +794,13 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
     function tagToString(tag) {
         var tagLabel = "*@" + tag.name + "*";
         if (tag.name === 'param' && tag.text) {
-            var _a = tag.text.split(' '), paramName = _a[0], rest = _a.slice(1);
-            tagLabel += "`" + paramName + "`";
+            var _a = tag.text, paramName = _a[0], rest = _a.slice(1);
+            tagLabel += "`" + paramName.text + "`";
             if (rest.length > 0)
-                tagLabel += " \u2014 " + rest.join(' ');
+                tagLabel += " \u2014 " + rest.map(function (r) { return r.text; }).join(' ');
+        }
+        else if (Array.isArray(tag.text)) {
+            tagLabel += " \u2014 " + tag.text.map(function (r) { return r.text; }).join(' ');
         }
         else if (tag.text) {
             tagLabel += " \u2014 " + tag.text;
@@ -974,7 +998,7 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
         }
         DefinitionAdapter.prototype.provideDefinition = function (model, position, token) {
             return __awaiter(this, void 0, void 0, function () {
-                var resource, offset, worker, entries, result, _i, entries_1, entry, uri, refModel;
+                var resource, offset, worker, entries, result, _i, entries_1, entry, refModel;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1003,11 +1027,10 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
                             result = [];
                             for (_i = 0, entries_1 = entries; _i < entries_1.length; _i++) {
                                 entry = entries_1[_i];
-                                uri = monaco_editor_core_1.Uri.parse(entry.fileName);
-                                refModel = this._libFiles.getOrCreateModel(uri);
+                                refModel = this._libFiles.getOrCreateModel(entry.fileName);
                                 if (refModel) {
                                     result.push({
-                                        uri: uri,
+                                        uri: refModel.uri,
                                         range: this._textSpanToRange(refModel, entry.textSpan)
                                     });
                                 }
@@ -1030,7 +1053,7 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
         }
         ReferenceAdapter.prototype.provideReferences = function (model, position, context, token) {
             return __awaiter(this, void 0, void 0, function () {
-                var resource, offset, worker, entries, result, _i, entries_2, entry, uri, refModel;
+                var resource, offset, worker, entries, result, _i, entries_2, entry, refModel;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1059,11 +1082,10 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
                             result = [];
                             for (_i = 0, entries_2 = entries; _i < entries_2.length; _i++) {
                                 entry = entries_2[_i];
-                                uri = monaco_editor_core_1.Uri.parse(entry.fileName);
-                                refModel = this._libFiles.getOrCreateModel(uri);
+                                refModel = this._libFiles.getOrCreateModel(entry.fileName);
                                 if (refModel) {
                                     result.push({
-                                        uri: uri,
+                                        uri: refModel.uri,
                                         range: this._textSpanToRange(refModel, entry.textSpan)
                                     });
                                 }
@@ -1109,9 +1131,10 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
                                     kind: (outlineTypeTable[item.kind] || monaco_editor_core_1.languages.SymbolKind.Variable),
                                     range: _this._textSpanToRange(model, item.spans[0]),
                                     selectionRange: _this._textSpanToRange(model, item.spans[0]),
-                                    tags: [],
-                                    containerName: containerLabel
+                                    tags: []
                                 };
+                                if (containerLabel)
+                                    result.containerName = containerLabel;
                                 if (item.childItems && item.childItems.length > 0) {
                                     for (var _i = 0, _a = item.childItems; _i < _a.length; _i++) {
                                         var child = _a[_i];
@@ -1379,12 +1402,14 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
     // --- rename ----
     var RenameAdapter = /** @class */ (function (_super) {
         __extends(RenameAdapter, _super);
-        function RenameAdapter() {
-            return _super !== null && _super.apply(this, arguments) || this;
+        function RenameAdapter(_libFiles, worker) {
+            var _this = _super.call(this, worker) || this;
+            _this._libFiles = _libFiles;
+            return _this;
         }
         RenameAdapter.prototype.provideRenameEdits = function (model, position, newName, token) {
             return __awaiter(this, void 0, void 0, function () {
-                var resource, fileName, offset, worker, renameInfo, renameLocations, edits, _i, renameLocations_1, renameLocation, resource_1, model_1;
+                var resource, fileName, offset, worker, renameInfo, renameLocations, edits, _i, renameLocations_1, renameLocation, model_1;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1424,11 +1449,10 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
                             edits = [];
                             for (_i = 0, renameLocations_1 = renameLocations; _i < renameLocations_1.length; _i++) {
                                 renameLocation = renameLocations_1[_i];
-                                resource_1 = monaco_editor_core_1.Uri.parse(renameLocation.fileName);
-                                model_1 = monaco_editor_core_1.editor.getModel(resource_1);
+                                model_1 = this._libFiles.getOrCreateModel(renameLocation.fileName);
                                 if (model_1) {
                                     edits.push({
-                                        resource: resource_1,
+                                        resource: model_1.uri,
                                         edit: {
                                             range: this._textSpanToRange(model_1, renameLocation.textSpan),
                                             text: newName
@@ -1436,7 +1460,7 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
                                     });
                                 }
                                 else {
-                                    throw new Error("Unknown URI " + resource_1 + ".");
+                                    throw new Error("Unknown file " + renameLocation.fileName + ".");
                                 }
                             }
                             return [2 /*return*/, { edits: edits }];
@@ -1447,6 +1471,58 @@ define('vs/language/typescript/languageFeatures',["require", "exports", "./lib/l
         return RenameAdapter;
     }(Adapter));
     exports.RenameAdapter = RenameAdapter;
+    // --- inlay hints ----
+    var InlayHintsAdapter = /** @class */ (function (_super) {
+        __extends(InlayHintsAdapter, _super);
+        function InlayHintsAdapter() {
+            return _super !== null && _super.apply(this, arguments) || this;
+        }
+        InlayHintsAdapter.prototype.provideInlayHints = function (model, range, token) {
+            return __awaiter(this, void 0, void 0, function () {
+                var resource, fileName, start, end, worker, hints;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            resource = model.uri;
+                            fileName = resource.toString();
+                            start = model.getOffsetAt({
+                                lineNumber: range.startLineNumber,
+                                column: range.startColumn
+                            });
+                            end = model.getOffsetAt({
+                                lineNumber: range.endLineNumber,
+                                column: range.endColumn
+                            });
+                            return [4 /*yield*/, this._worker(resource)];
+                        case 1:
+                            worker = _a.sent();
+                            if (model.isDisposed()) {
+                                return [2 /*return*/, []];
+                            }
+                            return [4 /*yield*/, worker.provideInlayHints(fileName, start, end)];
+                        case 2:
+                            hints = _a.sent();
+                            return [2 /*return*/, hints.map(function (hint) {
+                                    return __assign(__assign({}, hint), { position: model.getPositionAt(hint.position), kind: _this._convertHintKind(hint.kind) });
+                                })];
+                    }
+                });
+            });
+        };
+        InlayHintsAdapter.prototype._convertHintKind = function (kind) {
+            switch (kind) {
+                case 'Parameter':
+                    return monaco_editor_core_1.languages.InlayHintKind.Parameter;
+                case 'Type':
+                    return monaco_editor_core_1.languages.InlayHintKind.Type;
+                default:
+                    return monaco_editor_core_1.languages.InlayHintKind.Other;
+            }
+        };
+        return InlayHintsAdapter;
+    }(Adapter));
+    exports.InlayHintsAdapter = InlayHintsAdapter;
 });
 
 define('vs/language/typescript/tsMode',["require", "exports", "./workerManager", "./languageFeatures", "./fillers/monaco-editor-core"], function (require, exports, workerManager_1, languageFeatures, monaco_editor_core_1) {
@@ -1505,7 +1581,8 @@ define('vs/language/typescript/tsMode',["require", "exports", "./workerManager",
         monaco_editor_core_1.languages.registerDocumentRangeFormattingEditProvider(modeId, new languageFeatures.FormatAdapter(worker));
         monaco_editor_core_1.languages.registerOnTypeFormattingEditProvider(modeId, new languageFeatures.FormatOnTypeAdapter(worker));
         monaco_editor_core_1.languages.registerCodeActionProvider(modeId, new languageFeatures.CodeActionAdaptor(worker));
-        monaco_editor_core_1.languages.registerRenameProvider(modeId, new languageFeatures.RenameAdapter(worker));
+        monaco_editor_core_1.languages.registerRenameProvider(modeId, new languageFeatures.RenameAdapter(libFiles, worker));
+        monaco_editor_core_1.languages.registerInlayHintsProvider(modeId, new languageFeatures.InlayHintsAdapter(worker));
         new languageFeatures.DiagnosticsAdapter(libFiles, defaults, modeId, worker);
         return worker;
     }

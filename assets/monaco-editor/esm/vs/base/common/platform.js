@@ -26,23 +26,6 @@ else if (typeof process !== 'undefined') {
     nodeProcess = process;
 }
 const isElectronRenderer = typeof ((_a = nodeProcess === null || nodeProcess === void 0 ? void 0 : nodeProcess.versions) === null || _a === void 0 ? void 0 : _a.electron) === 'string' && nodeProcess.type === 'renderer';
-export const isElectronSandboxed = isElectronRenderer && (nodeProcess === null || nodeProcess === void 0 ? void 0 : nodeProcess.sandboxed);
-export const browserCodeLoadingCacheStrategy = (() => {
-    // Always enabled when sandbox is enabled
-    if (isElectronSandboxed) {
-        return 'bypassHeatCheck';
-    }
-    // Otherwise, only enabled conditionally
-    const env = nodeProcess === null || nodeProcess === void 0 ? void 0 : nodeProcess.env['VSCODE_BROWSER_CODE_LOADING'];
-    if (typeof env === 'string') {
-        if (env === 'none' || env === 'code' || env === 'bypassHeatCheck' || env === 'bypassHeatCheckAndEagerCompile') {
-            return env;
-        }
-        return 'bypassHeatCheck';
-    }
-    return undefined;
-})();
-export const isPreferringBrowserCodeLoad = typeof browserCodeLoadingCacheStrategy === 'string';
 // Web environment
 if (typeof navigator === 'object' && !isElectronRenderer) {
     _userAgent = navigator.userAgent;

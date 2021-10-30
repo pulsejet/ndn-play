@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { CoreEditingCommands } from '../../browser/controller/coreCommands.js';
 import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
@@ -17,6 +16,7 @@ import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { CopyLinesCommand } from './copyLinesCommand.js';
 import { MoveLinesCommand } from './moveLinesCommand.js';
 import { SortLinesCommand } from './sortLinesCommand.js';
+import * as nls from '../../../nls.js';
 import { MenuId } from '../../../platform/actions/common/actions.js';
 // copy lines
 class AbstractCopyLinesAction extends EditorAction {
@@ -805,7 +805,7 @@ export class AbstractCaseAction extends EditorAction {
         if (model === null) {
             return;
         }
-        const wordSeparators = editor.getOption(113 /* wordSeparators */);
+        const wordSeparators = editor.getOption(115 /* wordSeparators */);
         const textEdits = [];
         for (const selection of selections) {
             if (selection.isEmpty()) {

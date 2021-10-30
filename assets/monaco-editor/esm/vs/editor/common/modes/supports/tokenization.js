@@ -5,6 +5,7 @@
 import { Color } from '../../../../base/common/color.js';
 export class ParsedTokenThemeRule {
     constructor(token, index, fontStyle, foreground, background) {
+        this._parsedThemeRuleBrand = undefined;
         this.token = token;
         this.index = index;
         this.fontStyle = fontStyle;
@@ -186,6 +187,7 @@ export function strcmp(a, b) {
 }
 export class ThemeTrieElementRule {
     constructor(fontStyle, foreground, background) {
+        this._themeTrieElementRuleBrand = undefined;
         this._fontStyle = fontStyle;
         this._foreground = foreground;
         this._background = background;
@@ -213,6 +215,7 @@ export class ThemeTrieElementRule {
 }
 export class ThemeTrieElement {
     constructor(mainRule) {
+        this._themeTrieElementBrand = undefined;
         this._mainRule = mainRule;
         this._children = new Map();
     }

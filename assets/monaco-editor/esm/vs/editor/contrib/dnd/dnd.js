@@ -2,15 +2,15 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './dnd.css';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { isMacintosh } from '../../../base/common/platform.js';
+import './dnd.css';
 import { registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
-import { DragAndDropCommand } from './dragAndDropCommand.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
+import { DragAndDropCommand } from './dragAndDropCommand.js';
 function hasTriggerModifier(e) {
     if (isMacintosh) {
         return e.altKey;
@@ -44,7 +44,7 @@ export class DragAndDropController extends Disposable {
         this._modifierPressed = false;
     }
     onEditorKeyDown(e) {
-        if (!this._editor.getOption(29 /* dragAndDrop */) || this._editor.getOption(16 /* columnSelection */)) {
+        if (!this._editor.getOption(31 /* dragAndDrop */) || this._editor.getOption(18 /* columnSelection */)) {
             return;
         }
         if (hasTriggerModifier(e)) {
@@ -57,7 +57,7 @@ export class DragAndDropController extends Disposable {
         }
     }
     onEditorKeyUp(e) {
-        if (!this._editor.getOption(29 /* dragAndDrop */) || this._editor.getOption(16 /* columnSelection */)) {
+        if (!this._editor.getOption(31 /* dragAndDrop */) || this._editor.getOption(18 /* columnSelection */)) {
             return;
         }
         if (hasTriggerModifier(e)) {
@@ -190,6 +190,7 @@ export class DragAndDropController extends Disposable {
 DragAndDropController.ID = 'editor.contrib.dragAndDrop';
 DragAndDropController.TRIGGER_KEY_VALUE = isMacintosh ? 6 /* Alt */ : 5 /* Ctrl */;
 DragAndDropController._DECORATION_OPTIONS = ModelDecorationOptions.register({
+    description: 'dnd-target',
     className: 'dnd-target'
 });
 registerEditorContribution(DragAndDropController.ID, DragAndDropController);

@@ -168,6 +168,7 @@ export class StandaloneCommandService {
     constructor(instantiationService) {
         this._onWillExecuteCommand = new Emitter();
         this._onDidExecuteCommand = new Emitter();
+        this.onDidExecuteCommand = this._onDidExecuteCommand.event;
         this._instantiationService = instantiationService;
     }
     executeCommand(id, ...args) {
@@ -338,7 +339,7 @@ let SimpleResourcePropertiesService = class SimpleResourcePropertiesService {
     }
     getEOL(resource, language) {
         const eol = this.configurationService.getValue('files.eol', { overrideIdentifier: language, resource });
-        if (eol && eol !== 'auto') {
+        if (eol && typeof eol === 'string' && eol !== 'auto') {
             return eol;
         }
         return (isLinux || isMacintosh) ? '\n' : '\r\n';

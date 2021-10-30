@@ -12,15 +12,15 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import { Separator, SubmenuAction } from '../../../base/common/actions.js';
-import { createDecorator } from '../../instantiation/common/instantiation.js';
-import { IContextKeyService } from '../../contextkey/common/contextkey.js';
-import { ICommandService } from '../../commands/common/commands.js';
-import { toDisposable } from '../../../base/common/lifecycle.js';
-import { Emitter } from '../../../base/common/event.js';
-import { ThemeIcon } from '../../theme/common/themeService.js';
-import { Iterable } from '../../../base/common/iterator.js';
-import { LinkedList } from '../../../base/common/linkedList.js';
 import { CSSIcon } from '../../../base/common/codicons.js';
+import { Emitter } from '../../../base/common/event.js';
+import { Iterable } from '../../../base/common/iterator.js';
+import { toDisposable } from '../../../base/common/lifecycle.js';
+import { LinkedList } from '../../../base/common/linkedList.js';
+import { ICommandService } from '../../commands/common/commands.js';
+import { IContextKeyService } from '../../contextkey/common/contextkey.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
+import { ThemeIcon } from '../../theme/common/themeService.js';
 export function isIMenuItem(item) {
     return item.command !== undefined;
 }
@@ -33,12 +33,14 @@ export class MenuId {
 MenuId._idPool = 0;
 MenuId.CommandPalette = new MenuId('CommandPalette');
 MenuId.EditorContext = new MenuId('EditorContext');
+MenuId.SimpleEditorContext = new MenuId('SimpleEditorContext');
 MenuId.EditorContextCopy = new MenuId('EditorContextCopy');
 MenuId.EditorContextPeek = new MenuId('EditorContextPeek');
 MenuId.MenubarEditMenu = new MenuId('MenubarEditMenu');
 MenuId.MenubarCopy = new MenuId('MenubarCopy');
 MenuId.MenubarGoMenu = new MenuId('MenubarGoMenu');
 MenuId.MenubarSelectionMenu = new MenuId('MenubarSelectionMenu');
+MenuId.InlineCompletionsActions = new MenuId('InlineCompletionsActions');
 export const IMenuService = createDecorator('menuService');
 export const MenuRegistry = new class {
     constructor() {
@@ -163,11 +165,13 @@ export class SubmenuItemAction extends SubmenuAction {
 // subscribes to events of Action or modified properties
 let MenuItemAction = class MenuItemAction {
     constructor(item, alt, options, contextKeyService, _commandService) {
-        var _a;
+        var _a, _b;
         this._commandService = _commandService;
         this.id = item.id;
-        this.label = typeof item.title === 'string' ? item.title : item.title.value;
-        this.tooltip = (_a = item.tooltip) !== null && _a !== void 0 ? _a : '';
+        this.label = (options === null || options === void 0 ? void 0 : options.renderShortTitle) && item.shortTitle
+            ? (typeof item.shortTitle === 'string' ? item.shortTitle : item.shortTitle.value)
+            : (typeof item.title === 'string' ? item.title : item.title.value);
+        this.tooltip = (_b = (typeof item.tooltip === 'string' ? item.tooltip : (_a = item.tooltip) === null || _a === void 0 ? void 0 : _a.value)) !== null && _b !== void 0 ? _b : '';
         this.enabled = !item.precondition || contextKeyService.contextMatchesRules(item.precondition);
         this.checked = false;
         if (item.toggled) {

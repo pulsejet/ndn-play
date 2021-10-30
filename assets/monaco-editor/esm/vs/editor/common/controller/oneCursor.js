@@ -6,7 +6,10 @@ import { CursorState, SingleCursorState } from './cursorCommon.js';
 import { Position } from '../core/position.js';
 import { Range } from '../core/range.js';
 import { Selection } from '../core/selection.js';
-export class OneCursor {
+/**
+ * Represents a single cursor.
+*/
+export class Cursor {
     constructor(context) {
         this._selTrackedRange = null;
         this._trackSelection = true;
@@ -49,7 +52,29 @@ export class OneCursor {
     setState(context, modelState, viewState) {
         this._setState(context, modelState, viewState);
     }
+    static _validatePositionWithCache(viewModel, position, cacheInput, cacheOutput) {
+        if (position.equals(cacheInput)) {
+            return cacheOutput;
+        }
+        return viewModel.normalizePosition(position, 2 /* None */);
+    }
+    static _validateViewState(viewModel, viewState) {
+        const position = viewState.position;
+        const sStartPosition = viewState.selectionStart.getStartPosition();
+        const sEndPosition = viewState.selectionStart.getEndPosition();
+        const validPosition = viewModel.normalizePosition(position, 2 /* None */);
+        const validSStartPosition = this._validatePositionWithCache(viewModel, sStartPosition, position, validPosition);
+        const validSEndPosition = this._validatePositionWithCache(viewModel, sEndPosition, sStartPosition, validSStartPosition);
+        if (position.equals(validPosition) && sStartPosition.equals(validSStartPosition) && sEndPosition.equals(validSEndPosition)) {
+            // fast path: the state is valid
+            return viewState;
+        }
+        return new SingleCursorState(Range.fromPositions(validSStartPosition, validSEndPosition), viewState.selectionStartLeftoverVisibleColumns + sStartPosition.column - validSStartPosition.column, validPosition, viewState.leftoverVisibleColumns + position.column - validPosition.column);
+    }
     _setState(context, modelState, viewState) {
+        if (viewState) {
+            viewState = Cursor._validateViewState(context.viewModel, viewState);
+        }
         if (!modelState) {
             if (!viewState) {
                 return;

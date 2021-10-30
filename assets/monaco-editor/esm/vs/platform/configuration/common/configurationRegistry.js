@@ -1,12 +1,8 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
 import { Emitter } from '../../../base/common/event.js';
-import { Registry } from '../../registry/common/platform.js';
 import * as types from '../../../base/common/types.js';
+import * as nls from '../../../nls.js';
 import { Extensions as JSONExtensions } from '../../jsonschemas/common/jsonContributionRegistry.js';
+import { Registry } from '../../registry/common/platform.js';
 export const Extensions = {
     Configuration: 'base.contributions.configuration'
 };
@@ -39,12 +35,7 @@ class ConfigurationRegistry {
         this.registerConfigurations([configuration], validate);
     }
     registerConfigurations(configurations, validate = true) {
-        const properties = [];
-        configurations.forEach(configuration => {
-            properties.push(...this.validateAndRegisterProperties(configuration, validate, configuration.extensionInfo)); // fills in defaults
-            this.configurationContributors.push(configuration);
-            this.registerJSONConfiguration(configuration);
-        });
+        const properties = this.doRegisterConfigurations(configurations, validate);
         contributionRegistry.registerSchema(resourceLanguageSettingsSchemaId, this.resourceLanguageSettingsSchema);
         this._onDidSchemaChange.fire();
         this._onDidUpdateConfiguration.fire(properties);
@@ -54,6 +45,15 @@ class ConfigurationRegistry {
             this.overrideIdentifiers.add(overrideIdentifier);
         }
         this.updateOverridePropertyPatternKey();
+    }
+    doRegisterConfigurations(configurations, validate) {
+        const properties = [];
+        configurations.forEach(configuration => {
+            properties.push(...this.validateAndRegisterProperties(configuration, validate, configuration.extensionInfo)); // fills in defaults
+            this.configurationContributors.push(configuration);
+            this.registerJSONConfiguration(configuration);
+        });
+        return properties;
     }
     validateAndRegisterProperties(configuration, validate = true, extensionInfo, scope = 3 /* WINDOW */) {
         var _a;

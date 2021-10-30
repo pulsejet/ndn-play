@@ -20,15 +20,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { alert } from '../../../base/browser/ui/aria/aria.js';
+import { MarkdownString } from '../../../base/common/htmlContent.js';
+import { KeyChord } from '../../../base/common/keyCodes.js';
 import './anchorSelect.css';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
-import { localize } from '../../../nls.js';
-import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { Selection } from '../../common/core/selection.js';
-import { KeyChord } from '../../../base/common/keyCodes.js';
-import { RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
-import { MarkdownString } from '../../../base/common/htmlContent.js';
-import { alert } from '../../../base/browser/ui/aria/aria.js';
+import { EditorContextKeys } from '../../common/editorContextKeys.js';
+import { localize } from '../../../nls.js';
+import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 export const SelectionAnchorSet = new RawContextKey('selectionAnchorSet', false);
 let SelectionAnchorController = class SelectionAnchorController {
     constructor(editor, contextKeyService) {
@@ -46,6 +46,7 @@ let SelectionAnchorController = class SelectionAnchorController {
             const newDecorationId = this.editor.deltaDecorations(previousDecorations, [{
                     range: Selection.fromPositions(position, position),
                     options: {
+                        description: 'selection-anchor',
                         stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
                         hoverMessage: new MarkdownString().appendText(localize('selectionAnchor', "Selection Anchor")),
                         className: 'selection-anchor'

@@ -85,7 +85,7 @@ export class Range {
         return Range.strictContainsRange(this, range);
     }
     /**
-     * Test if `otherRange` is strinctly in `range` (must start after, and end before). If the ranges are equal, will return false.
+     * Test if `otherRange` is strictly in `range` (must start after, and end before). If the ranges are equal, will return false.
      */
     static strictContainsRange(range, otherRange) {
         if (otherRange.startLineNumber < range.startLineNumber || otherRange.endLineNumber < range.startLineNumber) {

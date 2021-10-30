@@ -45,17 +45,15 @@ let MarkdownRenderer = class MarkdownRenderer {
         this._onDidRenderAsync.dispose();
     }
     render(markdown, options, markedOptions) {
-        const disposeables = new DisposableStore();
-        let element;
         if (!markdown) {
-            element = document.createElement('span');
+            const element = document.createElement('span');
+            return { element, dispose: () => { } };
         }
-        else {
-            element = renderMarkdown(markdown, Object.assign(Object.assign({}, this._getRenderOptions(markdown, disposeables)), options), markedOptions);
-        }
+        const disposables = new DisposableStore();
+        const rendered = disposables.add(renderMarkdown(markdown, Object.assign(Object.assign({}, this._getRenderOptions(markdown, disposables)), options), markedOptions));
         return {
-            element,
-            dispose: () => disposeables.dispose()
+            element: rendered.element,
+            dispose: () => disposables.dispose()
         };
     }
     _getRenderOptions(markdown, disposeables) {
@@ -83,7 +81,7 @@ let MarkdownRenderer = class MarkdownRenderer {
                 // use "good" font
                 let fontFamily = this._options.codeBlockFontFamily;
                 if (this._options.editor) {
-                    fontFamily = this._options.editor.getOption(40 /* fontInfo */).fontFamily;
+                    fontFamily = this._options.editor.getOption(43 /* fontInfo */).fontFamily;
                 }
                 if (fontFamily) {
                     element.style.fontFamily = fontFamily;
@@ -93,7 +91,7 @@ let MarkdownRenderer = class MarkdownRenderer {
             asyncRenderCallback: () => this._onDidRenderAsync.fire(),
             actionHandler: {
                 callback: (content) => this._openerService.open(content, { fromUserGesture: true, allowContributedOpeners: true, allowCommands: markdown.isTrusted }).catch(onUnexpectedError),
-                disposeables
+                disposables: disposeables
             }
         };
     }

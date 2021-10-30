@@ -14,7 +14,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { onUnexpectedExternalError } from '../../../base/common/errors.js';
 import { registerModelAndPositionCommand } from '../../browser/editorExtensions.js';
-import { DefinitionProviderRegistry, ImplementationProviderRegistry, TypeDefinitionProviderRegistry, DeclarationProviderRegistry, ReferenceProviderRegistry } from '../../common/modes.js';
+import { DeclarationProviderRegistry, DefinitionProviderRegistry, ImplementationProviderRegistry, ReferenceProviderRegistry, TypeDefinitionProviderRegistry } from '../../common/modes.js';
 import { ReferencesModel } from './referencesModel.js';
 function getLocationLinks(model, position, registry, provide) {
     const provider = registry.ordered(model);

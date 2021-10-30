@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { ThemeIcon } from '../common/themeService.js';
-import { getIconRegistry } from '../common/iconRegistry.js';
 import { asCSSPropertyValue, asCSSUrl } from '../../../base/browser/dom.js';
 import { Emitter } from '../../../base/common/event.js';
+import { getIconRegistry } from '../common/iconRegistry.js';
+import { ThemeIcon } from '../common/themeService.js';
 export function getIconsStyleSheet() {
     const onDidChangeEmmiter = new Emitter();
     const iconRegistry = getIconRegistry();
@@ -43,7 +43,7 @@ export function getIconsStyleSheet() {
             for (let id in usedFontIds) {
                 const fontContribution = usedFontIds[id];
                 const src = fontContribution.definition.src.map(l => `${asCSSUrl(l.location)} format('${l.format}')`).join(', ');
-                rules.push(`@font-face { src: ${src}; font-family: ${asCSSPropertyValue(id)}; }`);
+                rules.push(`@font-face { src: ${src}; font-family: ${asCSSPropertyValue(id)}; font-display: block; }`);
             }
             return rules.join('\n');
         }

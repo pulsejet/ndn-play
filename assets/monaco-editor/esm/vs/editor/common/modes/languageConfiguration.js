@@ -31,6 +31,7 @@ export var IndentAction;
  */
 export class StandardAutoClosingPairConditional {
     constructor(source) {
+        this._standardAutoClosingPairConditionalBrand = undefined;
         this.open = source.open;
         this.close = source.close;
         // initially allowed in all tokens

@@ -20,7 +20,6 @@ define('vs/basic-languages/rust/rust',["require", "exports"], function (require,
             { open: '[', close: ']' },
             { open: '{', close: '}' },
             { open: '(', close: ')' },
-            { open: "'", close: "'", notIn: ['string', 'comment'] },
             { open: '"', close: '"', notIn: ['string'] }
         ],
         surroundingPairs: [

@@ -93,7 +93,7 @@ let CodeEditorServiceImpl = class CodeEditorServiceImpl extends AbstractCodeEdit
     _removeEditorStyleSheets(editorId) {
         this._editorStyleSheets.delete(editorId);
     }
-    registerDecorationType(key, options, parentTypeKey, editor) {
+    registerDecorationType(description, key, options, parentTypeKey, editor) {
         let provider = this._decorationOptionProviders.get(key);
         if (!provider) {
             const styleSheet = this._getOrCreateStyleSheet(editor);
@@ -104,7 +104,7 @@ let CodeEditorServiceImpl = class CodeEditorServiceImpl extends AbstractCodeEdit
                 options: options || Object.create(null)
             };
             if (!parentTypeKey) {
-                provider = new DecorationTypeOptionsProvider(this._themeService, styleSheet, providerArgs);
+                provider = new DecorationTypeOptionsProvider(description, this._themeService, styleSheet, providerArgs);
             }
             else {
                 provider = new DecorationSubTypeOptionsProvider(this._themeService, styleSheet, providerArgs);
@@ -169,8 +169,9 @@ export class DecorationSubTypeOptionsProvider {
     }
 }
 export class DecorationTypeOptionsProvider {
-    constructor(themeService, styleSheet, providerArgs) {
+    constructor(description, themeService, styleSheet, providerArgs) {
         this._disposables = new DisposableStore();
+        this.description = description;
         this._styleSheet = styleSheet;
         this._styleSheet.ref();
         this.refCount = 0;
@@ -198,6 +199,22 @@ export class DecorationTypeOptionsProvider {
         }
         this.beforeContentClassName = createCSSRules(3 /* BeforeContentClassName */);
         this.afterContentClassName = createCSSRules(4 /* AfterContentClassName */);
+        if (providerArgs.options.beforeInjectedText && providerArgs.options.beforeInjectedText.contentText) {
+            const beforeInlineData = createInlineCSSRules(5 /* BeforeInjectedTextClassName */);
+            this.beforeInjectedText = {
+                content: providerArgs.options.beforeInjectedText.contentText,
+                inlineClassName: beforeInlineData === null || beforeInlineData === void 0 ? void 0 : beforeInlineData.className,
+                inlineClassNameAffectsLetterSpacing: (beforeInlineData === null || beforeInlineData === void 0 ? void 0 : beforeInlineData.hasLetterSpacing) || providerArgs.options.beforeInjectedText.affectsLetterSpacing
+            };
+        }
+        if (providerArgs.options.afterInjectedText && providerArgs.options.afterInjectedText.contentText) {
+            const afterInlineData = createInlineCSSRules(6 /* AfterInjectedTextClassName */);
+            this.afterInjectedText = {
+                content: providerArgs.options.afterInjectedText.contentText,
+                inlineClassName: afterInlineData === null || afterInlineData === void 0 ? void 0 : afterInlineData.className,
+                inlineClassNameAffectsLetterSpacing: (afterInlineData === null || afterInlineData === void 0 ? void 0 : afterInlineData.hasLetterSpacing) || providerArgs.options.afterInjectedText.affectsLetterSpacing
+            };
+        }
         this.glyphMarginClassName = createCSSRules(2 /* GlyphMarginClassName */);
         const options = providerArgs.options;
         this.isWholeLine = Boolean(options.isWholeLine);
@@ -218,6 +235,7 @@ export class DecorationTypeOptionsProvider {
             return this;
         }
         return {
+            description: this.description,
             inlineClassName: this.inlineClassName,
             beforeContentClassName: this.beforeContentClassName,
             afterContentClassName: this.afterContentClassName,
@@ -225,7 +243,9 @@ export class DecorationTypeOptionsProvider {
             glyphMarginClassName: this.glyphMarginClassName,
             isWholeLine: this.isWholeLine,
             overviewRuler: this.overviewRuler,
-            stickiness: this.stickiness
+            stickiness: this.stickiness,
+            before: this.beforeInjectedText,
+            after: this.afterInjectedText
         };
     }
     dispose() {
@@ -261,7 +281,8 @@ export const _CSS_MAP = {
     margin: 'margin:{0};',
     padding: 'padding:{0};',
     width: 'width:{0};',
-    height: 'height:{0};'
+    height: 'height:{0};',
+    verticalAlign: 'vertical-align:{0};',
 };
 class DecorationCSSRules {
     constructor(ruleType, providerArgs, themeService) {
@@ -337,6 +358,16 @@ class DecorationCSSRules {
                 lightCSS = this.getCSSTextForModelDecorationContentClassName(options.light && options.light.after);
                 darkCSS = this.getCSSTextForModelDecorationContentClassName(options.dark && options.dark.after);
                 break;
+            case 5 /* BeforeInjectedTextClassName */:
+                unthemedCSS = this.getCSSTextForModelDecorationContentClassName(options.beforeInjectedText);
+                lightCSS = this.getCSSTextForModelDecorationContentClassName(options.light && options.light.beforeInjectedText);
+                darkCSS = this.getCSSTextForModelDecorationContentClassName(options.dark && options.dark.beforeInjectedText);
+                break;
+            case 6 /* AfterInjectedTextClassName */:
+                unthemedCSS = this.getCSSTextForModelDecorationContentClassName(options.afterInjectedText);
+                lightCSS = this.getCSSTextForModelDecorationContentClassName(options.light && options.light.afterInjectedText);
+                darkCSS = this.getCSSTextForModelDecorationContentClassName(options.dark && options.dark.afterInjectedText);
+                break;
             default:
                 throw new Error('Unknown rule type: ' + this._ruleType);
         }
@@ -404,7 +435,7 @@ class DecorationCSSRules {
                 const escaped = truncated.replace(/['\\]/g, '\\$&');
                 cssTextArr.push(strings.format(_CSS_MAP.contentText, escaped));
             }
-            this.collectCSSText(opts, ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'textDecoration', 'color', 'opacity', 'backgroundColor', 'margin', 'padding'], cssTextArr);
+            this.collectCSSText(opts, ['verticalAlign', 'fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'textDecoration', 'color', 'opacity', 'backgroundColor', 'margin', 'padding'], cssTextArr);
             if (this.collectCSSText(opts, ['width', 'height'], cssTextArr)) {
                 cssTextArr.push('display:inline-block;');
             }

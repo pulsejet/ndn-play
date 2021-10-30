@@ -439,6 +439,10 @@ define('vs/basic-languages/systemverilog/systemverilog',["require", "exports"], 
                                     token: 'keyword.$2',
                                     next: '@module_instance'
                                 },
+                                table: {
+                                    token: 'keyword.$2',
+                                    next: '@table'
+                                },
                                 '@keywords': { token: 'keyword.$2' },
                                 '@default': {
                                     token: 'identifier',
@@ -454,7 +458,7 @@ define('vs/basic-languages/systemverilog/systemverilog',["require", "exports"], 
                 [/^\s*`\s*\w+/, 'keyword'],
                 // identifiers and keywords
                 { include: '@identifier_or_keyword' },
-                // whitespace
+                // whitespace and comments
                 { include: '@whitespace' },
                 // (* attributes *).
                 [/\(\*.*\*\)/, 'annotation'],
@@ -560,6 +564,13 @@ define('vs/basic-languages/systemverilog/systemverilog',["require", "exports"], 
                         { token: 'string.include.identifier', next: '@pop' }
                     ]
                 ]
+            ],
+            table: [
+                { include: '@whitespace' },
+                [/[()]/, '@brackets'],
+                [/[:;]/, 'delimiter'],
+                [/[01\-*?xXbBrRfFpPnN]/, 'variable.predefined'],
+                ['endtable', 'keyword.endtable', '@pop']
             ]
         }
     };

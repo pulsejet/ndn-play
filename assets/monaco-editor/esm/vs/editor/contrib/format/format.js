@@ -15,6 +15,9 @@ import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { asArray, isNonEmptyArray } from '../../../base/common/arrays.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { illegalArgument, onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { Iterable } from '../../../base/common/iterator.js';
+import { LinkedList } from '../../../base/common/linkedList.js';
+import { assertType } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
 import { EditorStateCancellationTokenSource, TextModelCancellationTokenSource } from '../../browser/core/editorState.js';
 import { isCodeEditor } from '../../browser/editorBrowser.js';
@@ -26,12 +29,9 @@ import { IEditorWorkerService } from '../../common/services/editorWorkerService.
 import { IModelService } from '../../common/services/modelService.js';
 import { FormattingEdit } from './formattingEdit.js';
 import * as nls from '../../../nls.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
 import { ExtensionIdentifier } from '../../../platform/extensions/common/extensions.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
-import { LinkedList } from '../../../base/common/linkedList.js';
-import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { assertType } from '../../../base/common/types.js';
-import { Iterable } from '../../../base/common/iterator.js';
 export function alertFormattingEdits(edits) {
     edits = edits.filter(edit => edit.range);
     if (!edits.length) {
@@ -144,21 +144,70 @@ export function formatDocumentRangesWithProvider(accessor, provider, editorOrMod
                 len = ranges.push(range);
             }
         }
-        const allEdits = [];
-        for (let range of ranges) {
-            try {
-                const rawEdits = yield provider.provideDocumentRangeFormattingEdits(model, range, model.getFormattingOptions(), cts.token);
-                const minEdits = yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);
-                if (minEdits) {
-                    allEdits.push(...minEdits);
+        const computeEdits = (range) => __awaiter(this, void 0, void 0, function* () {
+            return (yield provider.provideDocumentRangeFormattingEdits(model, range, model.getFormattingOptions(), cts.token)) || [];
+        });
+        const hasIntersectingEdit = (a, b) => {
+            if (!a.length || !b.length) {
+                return false;
+            }
+            // quick exit if the list of ranges are completely unrelated [O(n)]
+            const mergedA = a.reduce((acc, val) => { return Range.plusRange(acc, val.range); }, a[0].range);
+            if (!b.some(x => { return Range.intersectRanges(mergedA, x.range); })) {
+                return false;
+            }
+            // fallback to a complete check [O(n^2)]
+            for (let edit of a) {
+                for (let otherEdit of b) {
+                    if (Range.intersectRanges(edit.range, otherEdit.range)) {
+                        return true;
+                    }
                 }
+            }
+            return false;
+        };
+        const allEdits = [];
+        const rawEditsList = [];
+        try {
+            for (let range of ranges) {
                 if (cts.token.isCancellationRequested) {
                     return true;
                 }
+                rawEditsList.push(yield computeEdits(range));
             }
-            finally {
-                cts.dispose();
+            for (let i = 0; i < ranges.length; ++i) {
+                for (let j = i + 1; j < ranges.length; ++j) {
+                    if (cts.token.isCancellationRequested) {
+                        return true;
+                    }
+                    if (hasIntersectingEdit(rawEditsList[i], rawEditsList[j])) {
+                        // Merge ranges i and j into a single range, recompute the associated edits
+                        const mergedRange = Range.plusRange(ranges[i], ranges[j]);
+                        const edits = yield computeEdits(mergedRange);
+                        ranges.splice(j, 1);
+                        ranges.splice(i, 1);
+                        ranges.push(mergedRange);
+                        rawEditsList.splice(j, 1);
+                        rawEditsList.splice(i, 1);
+                        rawEditsList.push(edits);
+                        // Restart scanning
+                        i = 0;
+                        j = 0;
+                    }
+                }
             }
+            for (let rawEdits of rawEditsList) {
+                if (cts.token.isCancellationRequested) {
+                    return true;
+                }
+                const minimalEdits = yield workerService.computeMoreMinimalEdits(model.uri, rawEdits);
+                if (minimalEdits) {
+                    allEdits.push(...minimalEdits);
+                }
+            }
+        }
+        finally {
+            cts.dispose();
         }
         if (allEdits.length === 0) {
             return false;

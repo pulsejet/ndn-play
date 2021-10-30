@@ -11,19 +11,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
+import { createCancelablePromise, timeout } from '../../../base/common/async.js';
+import { onUnexpectedError } from '../../../base/common/errors.js';
+import { EditorState } from '../../browser/core/editorState.js';
+import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { registerEditorAction, EditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
-import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
-import { InPlaceReplaceCommand } from './inPlaceReplaceCommand.js';
-import { EditorState } from '../../browser/core/editorState.js';
-import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { editorBracketMatchBorder } from '../../common/view/editorColorRegistry.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
-import { createCancelablePromise, timeout } from '../../../base/common/async.js';
-import { onUnexpectedError } from '../../../base/common/errors.js';
+import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
+import { editorBracketMatchBorder } from '../../common/view/editorColorRegistry.js';
+import * as nls from '../../../nls.js';
+import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
+import { InPlaceReplaceCommand } from './inPlaceReplaceCommand.js';
 let InPlaceReplaceController = class InPlaceReplaceController {
     constructor(editor, editorWorkerService) {
         this.decorationIds = [];
@@ -100,6 +100,7 @@ let InPlaceReplaceController = class InPlaceReplaceController {
 };
 InPlaceReplaceController.ID = 'editor.contrib.inPlaceReplaceController';
 InPlaceReplaceController.DECORATION = ModelDecorationOptions.register({
+    description: 'in-place-replace',
     className: 'valueSetReplacement'
 });
 InPlaceReplaceController = __decorate([

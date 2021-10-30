@@ -11,9 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { Disposable } from '../../../common/lifecycle.js';
-import { Emitter, Event } from '../../../common/event.js';
 import { ThrottledDelayer } from '../../../common/async.js';
+import { Emitter, Event } from '../../../common/event.js';
+import { Disposable } from '../../../common/lifecycle.js';
 import { isUndefinedOrNull } from '../../../common/types.js';
 var StorageState;
 (function (StorageState) {
@@ -162,7 +162,6 @@ export class Storage extends Disposable {
         });
     }
     dispose() {
-        this.flushDelayer.cancel(); // workaround https://github.com/microsoft/vscode/issues/116777
         this.flushDelayer.dispose();
         super.dispose();
     }

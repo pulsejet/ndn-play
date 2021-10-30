@@ -627,7 +627,7 @@ function _doScore(pattern, patternLow, patternPos, patternStart, word, wordLow, 
             score += isGapLocation ? 2 : 0;
         }
         else {
-            // this is part of a contiguous match, so give it a slight bonus, but do so only if it would not be a prefered gap location
+            // this is part of a contiguous match, so give it a slight bonus, but do so only if it would not be a preferred gap location
             score += isGapLocation ? 0 : 1;
         }
     }

@@ -11,15 +11,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { CancellationToken } from '../../../base/common/cancellation.js';
 import { onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { assertType } from '../../../base/common/types.js';
+import { URI } from '../../../base/common/uri.js';
 import { Position } from '../../common/core/position.js';
 import * as modes from '../../common/modes.js';
-import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
-import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { URI } from '../../../base/common/uri.js';
-import { assertType } from '../../../base/common/types.js';
 import { ITextModelService } from '../../common/services/resolverService.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 export const Context = {
     Visible: new RawContextKey('parameterHintsVisible', false),
     MultipleSignatures: new RawContextKey('parameterHintsMultipleSignatures', false),

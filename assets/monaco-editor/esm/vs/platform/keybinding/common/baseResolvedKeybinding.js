@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { illegalArgument } from '../../../base/common/errors.js';
-import { UILabelProvider, AriaLabelProvider } from '../../../base/common/keybindingLabels.js';
+import { AriaLabelProvider, ElectronAcceleratorLabelProvider, UILabelProvider } from '../../../base/common/keybindingLabels.js';
 import { ResolvedKeybinding, ResolvedKeybindingPart } from '../../../base/common/keyCodes.js';
 export class BaseResolvedKeybinding extends ResolvedKeybinding {
     constructor(os, parts) {
@@ -19,6 +19,13 @@ export class BaseResolvedKeybinding extends ResolvedKeybinding {
     }
     getAriaLabel() {
         return AriaLabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getAriaLabel(keybinding));
+    }
+    getElectronAccelerator() {
+        if (this._parts.length > 1) {
+            // Electron cannot handle chords
+            return null;
+        }
+        return ElectronAcceleratorLabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getElectronAccelerator(keybinding));
     }
     isChord() {
         return (this._parts.length > 1);

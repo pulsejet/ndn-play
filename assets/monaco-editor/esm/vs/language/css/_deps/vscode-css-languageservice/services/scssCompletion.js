@@ -21,7 +21,7 @@ var __extends = (this && this.__extends) || (function () {
 import { CSSCompletion } from './cssCompletion.js';
 import * as nodes from '../parser/cssNodes.js';
 import { CompletionItemKind, TextEdit, InsertTextFormat } from '../cssLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var SCSSCompletion = /** @class */ (function (_super) {
     __extends(SCSSCompletion, _super);

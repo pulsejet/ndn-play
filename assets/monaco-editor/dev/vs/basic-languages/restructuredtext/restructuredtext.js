@@ -51,10 +51,9 @@ define('vs/basic-languages/restructuredtext/restructuredtext',["require", "expor
             'param'
         ],
         alphanumerics: /[A-Za-z0-9]/,
-        alphanumericsplus: /[A-Za-z0-9-_+:.]/,
-        simpleRefNameWithoutBq: /(?:@alphanumerics@alphanumericsplus*@alphanumerics)+|(?:@alphanumerics+)/,
-        simpleRefName: /(?:`@simpleRefNameWithoutBq`|@simpleRefNameWithoutBq)/,
-        phrase: /@simpleRefName(?:\s@simpleRefName)*/,
+        simpleRefNameWithoutBq: /(?:@alphanumerics[-_+:.]*@alphanumerics)+|(?:@alphanumerics+)/,
+        simpleRefName: /(?:`@phrase`|@simpleRefNameWithoutBq)/,
+        phrase: /@simpleRefNameWithoutBq(?:\s@simpleRefNameWithoutBq)*/,
         citationName: /[A-Za-z][A-Za-z0-9-_.]*/,
         blockLiteralStart: /(?:[!"#$%&'()*+,-./:;<=>?@\[\]^_`{|}~]|[\s])/,
         precedingChars: /(?:[ -:/'"<([{])/,

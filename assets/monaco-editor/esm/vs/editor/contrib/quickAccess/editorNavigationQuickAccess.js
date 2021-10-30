@@ -2,13 +2,13 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { OverviewRulerLane } from '../../common/model.js';
-import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
-import { overviewRulerRangeHighlight } from '../../common/view/editorColorRegistry.js';
-import { DisposableStore, toDisposable, MutableDisposable } from '../../../base/common/lifecycle.js';
-import { isDiffEditor, getCodeEditor } from '../../browser/editorBrowser.js';
-import { withNullAsUndefined } from '../../../base/common/types.js';
 import { once } from '../../../base/common/functional.js';
+import { DisposableStore, MutableDisposable, toDisposable } from '../../../base/common/lifecycle.js';
+import { withNullAsUndefined } from '../../../base/common/types.js';
+import { getCodeEditor, isDiffEditor } from '../../browser/editorBrowser.js';
+import { OverviewRulerLane } from '../../common/model.js';
+import { overviewRulerRangeHighlight } from '../../common/view/editorColorRegistry.js';
+import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 /**
  * A reusable quick access provider for the editor with support
  * for adding decorations for navigating in the currently active file
@@ -111,6 +111,7 @@ export class AbstractEditorNavigationQuickAccessProvider {
                 {
                     range,
                     options: {
+                        description: 'quick-access-range-highlight',
                         className: 'rangeHighlight',
                         isWholeLine: true
                     }
@@ -119,6 +120,7 @@ export class AbstractEditorNavigationQuickAccessProvider {
                 {
                     range,
                     options: {
+                        description: 'quick-access-range-highlight-overview',
                         overviewRuler: {
                             color: themeColorFromId(overviewRulerRangeHighlight),
                             position: OverviewRulerLane.Full

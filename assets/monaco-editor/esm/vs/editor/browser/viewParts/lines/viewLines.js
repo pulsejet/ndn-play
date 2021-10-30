@@ -11,7 +11,7 @@ import { PartFingerprints, ViewPart } from '../../view/viewPart.js';
 import { DomReadingContext, ViewLine, ViewLineOptions } from './viewLine.js';
 import { Position } from '../../../common/core/position.js';
 import { Range } from '../../../common/core/range.js';
-import { LineVisibleRanges, HorizontalPosition } from '../../../common/view/renderingContext.js';
+import { LineVisibleRanges, HorizontalPosition, HorizontalRange } from '../../../common/view/renderingContext.js';
 import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from '../../../../base/browser/ui/mouseCursor/mouseCursor.js';
 class LastRenderedData {
     constructor() {
@@ -64,15 +64,15 @@ export class ViewLines extends ViewPart {
         this.domNode = this._visibleLines.domNode;
         const conf = this._context.configuration;
         const options = this._context.configuration.options;
-        const fontInfo = options.get(40 /* fontInfo */);
-        const wrappingInfo = options.get(128 /* wrappingInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
+        const fontInfo = options.get(43 /* fontInfo */);
+        const wrappingInfo = options.get(130 /* wrappingInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
         this._typicalHalfwidthCharacterWidth = fontInfo.typicalHalfwidthCharacterWidth;
         this._isViewportWrapping = wrappingInfo.isViewportWrapping;
-        this._revealHorizontalRightPadding = options.get(86 /* revealHorizontalRightPadding */);
-        this._cursorSurroundingLines = options.get(23 /* cursorSurroundingLines */);
-        this._cursorSurroundingLinesStyle = options.get(24 /* cursorSurroundingLinesStyle */);
-        this._canUseLayerHinting = !options.get(26 /* disableLayerHinting */);
+        this._revealHorizontalRightPadding = options.get(88 /* revealHorizontalRightPadding */);
+        this._cursorSurroundingLines = options.get(25 /* cursorSurroundingLines */);
+        this._cursorSurroundingLinesStyle = options.get(26 /* cursorSurroundingLinesStyle */);
+        this._canUseLayerHinting = !options.get(28 /* disableLayerHinting */);
         this._viewLineOptions = new ViewLineOptions(conf, this._context.theme.type);
         PartFingerprints.write(this.domNode, 7 /* ViewLines */);
         this.domNode.setClassName(`view-lines ${MOUSE_CURSOR_TEXT_CSS_CLASS_NAME}`);
@@ -104,22 +104,22 @@ export class ViewLines extends ViewPart {
     // ---- begin view event handlers
     onConfigurationChanged(e) {
         this._visibleLines.onConfigurationChanged(e);
-        if (e.hasChanged(128 /* wrappingInfo */)) {
+        if (e.hasChanged(130 /* wrappingInfo */)) {
             this._maxLineWidth = 0;
         }
         const options = this._context.configuration.options;
-        const fontInfo = options.get(40 /* fontInfo */);
-        const wrappingInfo = options.get(128 /* wrappingInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
+        const fontInfo = options.get(43 /* fontInfo */);
+        const wrappingInfo = options.get(130 /* wrappingInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
         this._typicalHalfwidthCharacterWidth = fontInfo.typicalHalfwidthCharacterWidth;
         this._isViewportWrapping = wrappingInfo.isViewportWrapping;
-        this._revealHorizontalRightPadding = options.get(86 /* revealHorizontalRightPadding */);
-        this._cursorSurroundingLines = options.get(23 /* cursorSurroundingLines */);
-        this._cursorSurroundingLinesStyle = options.get(24 /* cursorSurroundingLinesStyle */);
-        this._canUseLayerHinting = !options.get(26 /* disableLayerHinting */);
+        this._revealHorizontalRightPadding = options.get(88 /* revealHorizontalRightPadding */);
+        this._cursorSurroundingLines = options.get(25 /* cursorSurroundingLines */);
+        this._cursorSurroundingLinesStyle = options.get(26 /* cursorSurroundingLinesStyle */);
+        this._canUseLayerHinting = !options.get(28 /* disableLayerHinting */);
         Configuration.applyFontInfo(this.domNode, fontInfo);
         this._onOptionsMaybeChanged();
-        if (e.hasChanged(127 /* layoutInfo */)) {
+        if (e.hasChanged(129 /* layoutInfo */)) {
             this._maxLineWidth = 0;
         }
         return true;
@@ -323,7 +323,7 @@ export class ViewLines extends ViewPart {
             }
             const startColumn = lineNumber === range.startLineNumber ? range.startColumn : 1;
             const endColumn = lineNumber === range.endLineNumber ? range.endColumn : this._context.model.getLineMaxColumn(lineNumber);
-            const visibleRangesForLine = this._visibleLines.getVisibleLine(lineNumber).getVisibleRangesForRange(startColumn, endColumn, domReadingContext);
+            const visibleRangesForLine = this._visibleLines.getVisibleLine(lineNumber).getVisibleRangesForRange(lineNumber, startColumn, endColumn, domReadingContext);
             if (!visibleRangesForLine) {
                 continue;
             }
@@ -334,7 +334,7 @@ export class ViewLines extends ViewPart {
                     visibleRangesForLine.ranges[visibleRangesForLine.ranges.length - 1].width += this._typicalHalfwidthCharacterWidth;
                 }
             }
-            visibleRanges[visibleRangesLen++] = new LineVisibleRanges(visibleRangesForLine.outsideRenderedLine, lineNumber, visibleRangesForLine.ranges);
+            visibleRanges[visibleRangesLen++] = new LineVisibleRanges(visibleRangesForLine.outsideRenderedLine, lineNumber, HorizontalRange.from(visibleRangesForLine.ranges));
         }
         if (visibleRangesLen === 0) {
             return null;
@@ -350,7 +350,7 @@ export class ViewLines extends ViewPart {
         if (lineNumber < this._visibleLines.getStartLineNumber() || lineNumber > this._visibleLines.getEndLineNumber()) {
             return null;
         }
-        return this._visibleLines.getVisibleLine(lineNumber).getVisibleRangesForRange(startColumn, endColumn, new DomReadingContext(this.domNode.domNode, this._textRangeRestingSpot));
+        return this._visibleLines.getVisibleLine(lineNumber).getVisibleRangesForRange(lineNumber, startColumn, endColumn, new DomReadingContext(this.domNode.domNode, this._textRangeRestingSpot));
     }
     visibleRangeForPosition(position) {
         const visibleRanges = this._visibleRangesForLineRange(position.lineNumber, position.column, position.column);
@@ -580,8 +580,8 @@ export class ViewLines extends ViewPart {
                 return null;
             }
             for (const visibleRange of visibleRanges.ranges) {
-                boxStartX = Math.min(boxStartX, visibleRange.left);
-                boxEndX = Math.max(boxEndX, visibleRange.left + visibleRange.width);
+                boxStartX = Math.min(boxStartX, Math.round(visibleRange.left));
+                boxEndX = Math.max(boxEndX, Math.round(visibleRange.left + visibleRange.width));
             }
         }
         else {
@@ -594,8 +594,8 @@ export class ViewLines extends ViewPart {
                     return null;
                 }
                 for (const visibleRange of visibleRanges.ranges) {
-                    boxStartX = Math.min(boxStartX, visibleRange.left);
-                    boxEndX = Math.max(boxEndX, visibleRange.left + visibleRange.width);
+                    boxStartX = Math.min(boxStartX, Math.round(visibleRange.left));
+                    boxEndX = Math.max(boxEndX, Math.round(visibleRange.left + visibleRange.width));
                 }
             }
         }

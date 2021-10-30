@@ -71,6 +71,23 @@ export const AriaLabelProvider = new ModifierLabelProvider({
     metaKey: nls.localize({ key: 'superKey.long', comment: ['This is the long form for the Super key on the keyboard'] }, "Super"),
     separator: '+',
 });
+/**
+ * A label provider that prints modifiers in a suitable format for Electron Accelerators.
+ * See https://github.com/electron/electron/blob/master/docs/api/accelerator.md
+ */
+export const ElectronAcceleratorLabelProvider = new ModifierLabelProvider({
+    ctrlKey: 'Ctrl',
+    shiftKey: 'Shift',
+    altKey: 'Alt',
+    metaKey: 'Cmd',
+    separator: '+',
+}, {
+    ctrlKey: 'Ctrl',
+    shiftKey: 'Shift',
+    altKey: 'Alt',
+    metaKey: 'Super',
+    separator: '+',
+});
 function _simpleAsString(modifiers, key, labels) {
     if (key === null) {
         return '';

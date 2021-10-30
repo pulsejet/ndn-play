@@ -11,7 +11,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
+import { alert } from '../../../base/browser/ui/aria/aria.js';
 import * as arrays from '../../../base/common/arrays.js';
 import { createCancelablePromise, first, timeout } from '../../../base/common/async.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
@@ -20,13 +20,13 @@ import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import { EditorAction, registerEditorAction, registerEditorContribution, registerModelAndPositionCommand } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { OverviewRulerLane } from '../../common/model.js';
+import { MinimapPosition, OverviewRulerLane } from '../../common/model.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { DocumentHighlightKind, DocumentHighlightProviderRegistry } from '../../common/modes.js';
+import * as nls from '../../../nls.js';
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
-import { activeContrastBorder, editorSelectionHighlight, editorSelectionHighlightBorder, overviewRulerSelectionHighlightForeground, registerColor } from '../../../platform/theme/common/colorRegistry.js';
+import { activeContrastBorder, editorSelectionHighlight, editorSelectionHighlightBorder, minimapSelectionOccurrenceHighlight, overviewRulerSelectionHighlightForeground, registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant, themeColorFromId } from '../../../platform/theme/common/themeService.js';
-import { alert } from '../../../base/browser/ui/aria/aria.js';
 const editorWordHighlight = registerColor('editor.wordHighlightBackground', { dark: '#575757B8', light: '#57575740', hc: null }, nls.localize('wordHighlight', 'Background color of a symbol during read-access, like reading a variable. The color must not be opaque so as not to hide underlying decorations.'), true);
 const editorWordHighlightStrong = registerColor('editor.wordHighlightStrongBackground', { dark: '#004972B8', light: '#0e639c40', hc: null }, nls.localize('wordHighlightStrong', 'Background color of a symbol during write-access, like writing to a variable. The color must not be opaque so as not to hide underlying decorations.'), true);
 const editorWordHighlightBorder = registerColor('editor.wordHighlightBorder', { light: null, dark: null, hc: activeContrastBorder }, nls.localize('wordHighlightBorder', 'Border color of a symbol during read-access, like reading a variable.'));
@@ -132,7 +132,7 @@ class WordHighlighter {
         this.editor = editor;
         this._hasWordHighlights = ctxHasWordHighlights.bindTo(contextKeyService);
         this._ignorePositionChangeEvent = false;
-        this.occurrencesHighlight = this.editor.getOption(68 /* occurrencesHighlight */);
+        this.occurrencesHighlight = this.editor.getOption(71 /* occurrencesHighlight */);
         this.model = this.editor.getModel();
         this.toUnhook.add(editor.onDidChangeCursorPosition((e) => {
             if (this._ignorePositionChangeEvent) {
@@ -150,7 +150,7 @@ class WordHighlighter {
             this._stopAll();
         }));
         this.toUnhook.add(editor.onDidChangeConfiguration((e) => {
-            let newValue = this.editor.getOption(68 /* occurrencesHighlight */);
+            let newValue = this.editor.getOption(71 /* occurrencesHighlight */);
             if (this.occurrencesHighlight !== newValue) {
                 this.occurrencesHighlight = newValue;
                 this._stopAll();
@@ -306,7 +306,7 @@ class WordHighlighter {
             this._stopAll();
             let myRequestId = ++this.workerRequestTokenId;
             this.workerRequestCompleted = false;
-            this.workerRequest = computeOccurencesAtPosition(this.model, this.editor.getSelection(), this.editor.getOption(113 /* wordSeparators */));
+            this.workerRequest = computeOccurencesAtPosition(this.model, this.editor.getSelection(), this.editor.getOption(115 /* wordSeparators */));
             this.workerRequest.result.then(data => {
                 if (myRequestId === this.workerRequestTokenId) {
                     this.workerRequestCompleted = true;
@@ -362,28 +362,43 @@ class WordHighlighter {
     }
 }
 WordHighlighter._WRITE_OPTIONS = ModelDecorationOptions.register({
+    description: 'word-highlight-strong',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'wordHighlightStrong',
     overviewRuler: {
         color: themeColorFromId(overviewRulerWordHighlightStrongForeground),
         position: OverviewRulerLane.Center
-    }
+    },
+    minimap: {
+        color: themeColorFromId(minimapSelectionOccurrenceHighlight),
+        position: MinimapPosition.Inline
+    },
 });
 WordHighlighter._TEXT_OPTIONS = ModelDecorationOptions.register({
+    description: 'selection-highlight',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'selectionHighlight',
     overviewRuler: {
         color: themeColorFromId(overviewRulerSelectionHighlightForeground),
         position: OverviewRulerLane.Center
-    }
+    },
+    minimap: {
+        color: themeColorFromId(minimapSelectionOccurrenceHighlight),
+        position: MinimapPosition.Inline
+    },
 });
 WordHighlighter._REGULAR_OPTIONS = ModelDecorationOptions.register({
+    description: 'word-highlight',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'wordHighlight',
     overviewRuler: {
         color: themeColorFromId(overviewRulerWordHighlightForeground),
         position: OverviewRulerLane.Center
-    }
+    },
+    minimap: {
+        color: themeColorFromId(minimapSelectionOccurrenceHighlight),
+        position: MinimapPosition.Inline
+    },
 });
 let WordHighlighterContribution = class WordHighlighterContribution extends Disposable {
     constructor(editor, contextKeyService) {

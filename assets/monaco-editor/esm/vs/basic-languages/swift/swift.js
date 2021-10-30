@@ -50,7 +50,7 @@ export var language = {
         '@IBInspectable',
         '@IBOutlet'
     ],
-    accessmodifiers: ['public', 'private', 'internal'],
+    accessmodifiers: ['public', 'private', 'fileprivate', 'internal'],
     keywords: [
         '__COLUMN__',
         '__FILE__',
@@ -76,6 +76,7 @@ export var language = {
         'enum',
         'extension',
         'fallthrough',
+        'fileprivate',
         'final',
         'for',
         'func',

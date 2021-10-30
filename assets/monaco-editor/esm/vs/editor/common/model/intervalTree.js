@@ -20,23 +20,17 @@ function getNodeIsForValidation(node) {
 function setNodeIsForValidation(node, value) {
     node.metadata = ((node.metadata & 251 /* IsForValidationMaskInverse */) | ((value ? 1 : 0) << 2 /* IsForValidationOffset */));
 }
-export function getNodeIsInOverviewRuler(node) {
-    return ((node.metadata & 8 /* IsInOverviewRulerMask */) >>> 3 /* IsInOverviewRulerOffset */) === 1;
-}
-function setNodeIsInOverviewRuler(node, value) {
-    node.metadata = ((node.metadata & 247 /* IsInOverviewRulerMaskInverse */) | ((value ? 1 : 0) << 3 /* IsInOverviewRulerOffset */));
-}
 function getNodeStickiness(node) {
-    return ((node.metadata & 48 /* StickinessMask */) >>> 4 /* StickinessOffset */);
+    return ((node.metadata & 24 /* StickinessMask */) >>> 3 /* StickinessOffset */);
 }
 function _setNodeStickiness(node, stickiness) {
-    node.metadata = ((node.metadata & 207 /* StickinessMaskInverse */) | (stickiness << 4 /* StickinessOffset */));
+    node.metadata = ((node.metadata & 231 /* StickinessMaskInverse */) | (stickiness << 3 /* StickinessOffset */));
 }
 function getCollapseOnReplaceEdit(node) {
-    return ((node.metadata & 64 /* CollapseOnReplaceEditMask */) >>> 6 /* CollapseOnReplaceEditOffset */) === 1;
+    return ((node.metadata & 32 /* CollapseOnReplaceEditMask */) >>> 5 /* CollapseOnReplaceEditOffset */) === 1;
 }
 function setCollapseOnReplaceEdit(node, value) {
-    node.metadata = ((node.metadata & 191 /* CollapseOnReplaceEditMaskInverse */) | ((value ? 1 : 0) << 6 /* CollapseOnReplaceEditOffset */));
+    node.metadata = ((node.metadata & 223 /* CollapseOnReplaceEditMaskInverse */) | ((value ? 1 : 0) << 5 /* CollapseOnReplaceEditOffset */));
 }
 export class IntervalNode {
     constructor(id, start, end) {
@@ -55,7 +49,6 @@ export class IntervalNode {
         this.options = null;
         setNodeIsForValidation(this, false);
         _setNodeStickiness(this, 1 /* NeverGrowsWhenTypingAtEdges */);
-        setNodeIsInOverviewRuler(this, false);
         setCollapseOnReplaceEdit(this, false);
         this.cachedVersionId = 0;
         this.cachedAbsoluteStart = start;
@@ -79,7 +72,6 @@ export class IntervalNode {
             || className === "squiggly-warning" /* EditorWarningDecoration */
             || className === "squiggly-info" /* EditorInfoDecoration */));
         _setNodeStickiness(this, this.options.stickiness);
-        setNodeIsInOverviewRuler(this, (this.options.overviewRuler && this.options.overviewRuler.color) ? true : false);
         setCollapseOnReplaceEdit(this, this.options.collapseOnReplaceEdit);
     }
     setCachedOffsets(absoluteStart, absoluteEnd, cachedVersionId) {

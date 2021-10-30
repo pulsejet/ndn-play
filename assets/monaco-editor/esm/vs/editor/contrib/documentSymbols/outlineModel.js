@@ -5,10 +5,10 @@
 import { equals } from '../../../base/common/arrays.js';
 import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { Iterable } from '../../../base/common/iterator.js';
 import { LRUCache } from '../../../base/common/map.js';
 import { Range } from '../../common/core/range.js';
 import { DocumentSymbolProviderRegistry } from '../../common/modes.js';
-import { Iterable } from '../../../base/common/iterator.js';
 import { LanguageFeatureRequestDelays } from '../../common/modes/languageFeatureRegistry.js';
 export class TreeElement {
     remove() {

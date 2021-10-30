@@ -1490,7 +1490,7 @@ export var CoreEditingCommands;
             document.execCommand('undo');
         }
         runEditorCommand(accessor, editor, args) {
-            if (!editor.hasModel() || editor.getOption(77 /* readOnly */) === true) {
+            if (!editor.hasModel() || editor.getOption(80 /* readOnly */) === true) {
                 return;
             }
             return editor.getModel().undo();
@@ -1504,7 +1504,7 @@ export var CoreEditingCommands;
             document.execCommand('redo');
         }
         runEditorCommand(accessor, editor, args) {
-            if (!editor.hasModel() || editor.getOption(77 /* readOnly */) === true) {
+            if (!editor.hasModel() || editor.getOption(80 /* readOnly */) === true) {
                 return;
             }
             return editor.getModel().redo();

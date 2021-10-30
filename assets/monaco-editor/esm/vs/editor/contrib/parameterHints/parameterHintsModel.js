@@ -95,7 +95,7 @@ export class ParameterHintsModel extends Disposable {
         const length = this.state.hints.signatures.length;
         const activeSignature = this.state.hints.activeSignature;
         const last = (activeSignature % length) === (length - 1);
-        const cycle = this.editor.getOption(72 /* parameterHints */).cycle;
+        const cycle = this.editor.getOption(75 /* parameterHints */).cycle;
         // If there is only one signature, or we're on last signature of list
         if ((length < 2 || last) && !cycle) {
             this.cancel();
@@ -110,7 +110,7 @@ export class ParameterHintsModel extends Disposable {
         const length = this.state.hints.signatures.length;
         const activeSignature = this.state.hints.activeSignature;
         const first = activeSignature === 0;
-        const cycle = this.editor.getOption(72 /* parameterHints */).cycle;
+        const cycle = this.editor.getOption(75 /* parameterHints */).cycle;
         // If there is only one signature, or we're on first signature of list
         if ((length < 2 || first) && !cycle) {
             this.cancel();
@@ -235,7 +235,7 @@ export class ParameterHintsModel extends Disposable {
         }
     }
     onEditorConfigurationChange() {
-        this.triggerOnType = this.editor.getOption(72 /* parameterHints */).enabled;
+        this.triggerOnType = this.editor.getOption(75 /* parameterHints */).enabled;
         if (!this.triggerOnType) {
             this.cancel();
         }

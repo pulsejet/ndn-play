@@ -11,16 +11,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { RunOnceScheduler, createCancelablePromise } from '../../../base/common/async.js';
+import { createCancelablePromise, RunOnceScheduler } from '../../../base/common/async.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { registerEditorContribution } from '../../browser/editorExtensions.js';
 import { DocumentRangeSemanticTokensProviderRegistry } from '../../common/modes.js';
-import { IModelService } from '../../common/services/modelService.js';
-import { toMultilineTokens2 } from '../../common/services/semanticTokensProviderStyling.js';
-import { IThemeService } from '../../../platform/theme/common/themeService.js';
-import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
-import { isSemanticColoringEnabled, SEMANTIC_HIGHLIGHTING_SETTING_ID } from '../../common/services/modelServiceImpl.js';
 import { getDocumentRangeSemanticTokensProvider } from '../../common/services/getSemanticTokens.js';
+import { IModelService } from '../../common/services/modelService.js';
+import { isSemanticColoringEnabled, SEMANTIC_HIGHLIGHTING_SETTING_ID } from '../../common/services/modelServiceImpl.js';
+import { toMultilineTokens2 } from '../../common/services/semanticTokensProviderStyling.js';
+import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+import { IThemeService } from '../../../platform/theme/common/themeService.js';
 let ViewportSemanticTokensContribution = class ViewportSemanticTokensContribution extends Disposable {
     constructor(editor, _modelService, _themeService, _configurationService) {
         super();

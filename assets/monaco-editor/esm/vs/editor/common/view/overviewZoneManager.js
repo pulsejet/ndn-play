@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 export class ColorZone {
     constructor(from, to, colorId) {
+        this._colorZoneBrand = undefined;
         this.from = from | 0;
         this.to = to | 0;
         this.colorId = colorId | 0;
@@ -23,6 +24,7 @@ export class ColorZone {
  */
 export class OverviewRulerZone {
     constructor(startLineNumber, endLineNumber, color) {
+        this._overviewRulerZoneBrand = undefined;
         this.startLineNumber = startLineNumber;
         this.endLineNumber = endLineNumber;
         this.color = color;

@@ -2,11 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as strings from './strings.js';
-import * as extpath from './extpath.js';
-import * as paths from './path.js';
-import { LRUCache } from './map.js';
 import { isThenable } from './async.js';
+import * as extpath from './extpath.js';
+import { LRUCache } from './map.js';
+import * as paths from './path.js';
+import * as strings from './strings.js';
 const GLOBSTAR = '**';
 const GLOB_SPLIT = '/';
 const PATH_REGEX = '[/\\\\]'; // any slash or backslash
@@ -165,7 +165,7 @@ function parseRegExp(pattern) {
     }
     return regEx;
 }
-// regexes to check for trival glob patterns that just check for String#endsWith
+// regexes to check for trivial glob patterns that just check for String#endsWith
 const T1 = /^\*\*\/\*\.[\w\.-]+$/; // **/*.something
 const T2 = /^\*\*\/([\w\.-]+)\/?$/; // **/something
 const T3 = /^{\*\*\/[\*\.]?[\w\.-]+\/?(,\*\*\/[\*\.]?[\w\.-]+\/?)*}$/; // {**/*.something,**/*.else} or {**/package.json,**/project.json}
@@ -199,7 +199,7 @@ function parsePattern(arg1, options) {
     if (parsedPattern) {
         return wrapRelativePattern(parsedPattern, arg1);
     }
-    // Check for Trivias
+    // Check for Trivials
     let match;
     if (T1.test(pattern)) { // common pattern: **/*.txt just need endsWith check
         const base = pattern.substr(4); // '**/*'.length === 4

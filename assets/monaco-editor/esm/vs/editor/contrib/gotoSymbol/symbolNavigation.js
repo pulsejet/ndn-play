@@ -11,19 +11,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
-import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
-import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
-import { KeybindingsRegistry } from '../../../platform/keybinding/common/keybindingsRegistry.js';
-import { registerEditorCommand, EditorCommand } from '../../browser/editorExtensions.js';
+import { Emitter } from '../../../base/common/event.js';
+import { combinedDisposable, DisposableStore, dispose } from '../../../base/common/lifecycle.js';
+import { isEqual } from '../../../base/common/resources.js';
+import { EditorCommand, registerEditorCommand } from '../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { Range } from '../../common/core/range.js';
-import { dispose, combinedDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { Emitter } from '../../../base/common/event.js';
 import { localize } from '../../../nls.js';
+import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
+import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
+import { KeybindingsRegistry } from '../../../platform/keybinding/common/keybindingsRegistry.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
-import { isEqual } from '../../../base/common/resources.js';
 export const ctxHasSymbols = new RawContextKey('hasSymbols', false, localize('hasSymbols', "Whether there are symbol locations that can be navigated via keyboard-only."));
 export const ISymbolNavigationService = createDecorator('ISymbolNavigationService');
 let SymbolNavigationService = class SymbolNavigationService {

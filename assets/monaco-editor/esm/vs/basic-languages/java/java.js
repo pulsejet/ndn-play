@@ -91,7 +91,12 @@ export var language = {
         'super',
         'while',
         'true',
-        'false'
+        'false',
+        'yield',
+        'record',
+        'sealed',
+        'non-sealed',
+        'permits'
     ],
     operators: [
         '=',
@@ -142,6 +147,8 @@ export var language = {
     // The main tokenizer for our languages
     tokenizer: {
         root: [
+            // Special keyword with a dash
+            ['non-sealed', 'keyword.non-sealed'],
             // identifiers and keywords
             [
                 /[a-zA-Z_$][\w$]*/,
@@ -180,6 +187,7 @@ export var language = {
             [/[;,.]/, 'delimiter'],
             // strings
             [/"([^"\\]|\\.)*$/, 'string.invalid'],
+            [/"""/, 'string', '@multistring'],
             [/"/, 'string', '@string'],
             // characters
             [/'[^\\']'/, 'string'],
@@ -212,6 +220,13 @@ export var language = {
             [/@escapes/, 'string.escape'],
             [/\\./, 'string.escape.invalid'],
             [/"/, 'string', '@pop']
+        ],
+        multistring: [
+            [/[^\\"]+/, 'string'],
+            [/@escapes/, 'string.escape'],
+            [/\\./, 'string.escape.invalid'],
+            [/"""/, 'string', '@pop'],
+            [/./, 'string']
         ]
     }
 };

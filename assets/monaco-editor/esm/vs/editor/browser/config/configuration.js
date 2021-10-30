@@ -9,7 +9,7 @@ import * as platform from '../../../base/common/platform.js';
 import { CharWidthRequest, readCharWidths } from './charWidthReader.js';
 import { ElementSizeObserver } from './elementSizeObserver.js';
 import { CommonEditorConfiguration } from '../../common/config/commonEditorConfig.js';
-import { EditorFontLigatures } from '../../common/config/editorOptions.js';
+import { EditorFontLigatures, EDITOR_FONT_DEFAULTS } from '../../common/config/editorOptions.js';
 import { FontInfo } from '../../common/config/fontInfo.js';
 class CSSBasedConfigurationCache {
     constructor() {
@@ -221,7 +221,7 @@ export class Configuration extends CommonEditorConfiguration {
         this._recomputeOptions();
     }
     static applyFontInfoSlow(domNode, fontInfo) {
-        domNode.style.fontFamily = fontInfo.getMassagedFontFamily();
+        domNode.style.fontFamily = fontInfo.getMassagedFontFamily(browser.isSafari ? EDITOR_FONT_DEFAULTS.fontFamily : null);
         domNode.style.fontWeight = fontInfo.fontWeight;
         domNode.style.fontSize = fontInfo.fontSize + 'px';
         domNode.style.fontFeatureSettings = fontInfo.fontFeatureSettings;
@@ -229,7 +229,7 @@ export class Configuration extends CommonEditorConfiguration {
         domNode.style.letterSpacing = fontInfo.letterSpacing + 'px';
     }
     static applyFontInfo(domNode, fontInfo) {
-        domNode.setFontFamily(fontInfo.getMassagedFontFamily());
+        domNode.setFontFamily(fontInfo.getMassagedFontFamily(browser.isSafari ? EDITOR_FONT_DEFAULTS.fontFamily : null));
         domNode.setFontWeight(fontInfo.fontWeight);
         domNode.setFontSize(fontInfo.fontSize);
         domNode.setFontFeatureSettings(fontInfo.fontFeatureSettings);

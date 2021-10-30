@@ -11,22 +11,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { onUnexpectedExternalError, canceled, isPromiseCanceledError } from '../../../base/common/errors.js';
-import * as modes from '../../common/modes.js';
-import { Position } from '../../common/core/position.js';
-import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
-import { Range } from '../../common/core/range.js';
+import { canceled, isPromiseCanceledError, onUnexpectedExternalError } from '../../../base/common/errors.js';
 import { FuzzyScore } from '../../../base/common/filters.js';
-import { isDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { MenuId } from '../../../platform/actions/common/actions.js';
-import { SnippetParser } from '../snippet/snippetParser.js';
+import { DisposableStore, isDisposable } from '../../../base/common/lifecycle.js';
 import { StopWatch } from '../../../base/common/stopwatch.js';
-import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
 import { assertType } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
+import { Position } from '../../common/core/position.js';
+import { Range } from '../../common/core/range.js';
+import * as modes from '../../common/modes.js';
 import { ITextModelService } from '../../common/services/resolverService.js';
+import { SnippetParser } from '../snippet/snippetParser.js';
 import { localize } from '../../../nls.js';
+import { MenuId } from '../../../platform/actions/common/actions.js';
+import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 export const Context = {
     Visible: new RawContextKey('suggestWidgetVisible', false, localize('suggestWidgetVisible', "Whether suggestion are visible")),
     DetailsVisible: new RawContextKey('suggestWidgetDetailsVisible', false, localize('suggestWidgetDetailsVisible', "Whether suggestion details are visible")),
@@ -51,7 +51,7 @@ export class CompletionItem {
         this.distance = 0;
         this.textLabel = typeof completion.label === 'string'
             ? completion.label
-            : completion.label.name;
+            : completion.label.label;
         // ensure lower-variants (perf)
         this.labelLow = this.textLabel.toLowerCase();
         // validate label
@@ -112,10 +112,11 @@ export class CompletionItem {
     }
 }
 export class CompletionOptions {
-    constructor(snippetSortOrder = 2 /* Bottom */, kindFilter = new Set(), providerFilter = new Set()) {
+    constructor(snippetSortOrder = 2 /* Bottom */, kindFilter = new Set(), providerFilter = new Set(), showDeprecated = true) {
         this.snippetSortOrder = snippetSortOrder;
         this.kindFilter = kindFilter;
         this.providerFilter = providerFilter;
+        this.showDeprecated = showDeprecated;
     }
 }
 CompletionOptions.default = new CompletionOptions();
@@ -143,19 +144,23 @@ export function provideSuggestionItems(model, position, options = CompletionOpti
         const durations = [];
         let needsClipboard = false;
         const onCompletionList = (provider, container, sw) => {
-            var _a, _b;
+            var _a, _b, _c;
             if (!container) {
                 return;
             }
             for (let suggestion of container.suggestions) {
                 if (!options.kindFilter.has(suggestion.kind)) {
+                    // skip if not showing deprecated suggestions
+                    if (!options.showDeprecated && ((_a = suggestion === null || suggestion === void 0 ? void 0 : suggestion.tags) === null || _a === void 0 ? void 0 : _a.includes(1 /* Deprecated */))) {
+                        continue;
+                    }
                     // fill in default range when missing
                     if (!suggestion.range) {
                         suggestion.range = defaultRange;
                     }
                     // fill in default sortText when missing
                     if (!suggestion.sortText) {
-                        suggestion.sortText = typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.name;
+                        suggestion.sortText = typeof suggestion.label === 'string' ? suggestion.label : suggestion.label.label;
                     }
                     if (!needsClipboard && suggestion.insertTextRules && suggestion.insertTextRules & 4 /* InsertAsSnippet */) {
                         needsClipboard = SnippetParser.guessNeedsClipboard(suggestion.insertText);
@@ -167,7 +172,7 @@ export function provideSuggestionItems(model, position, options = CompletionOpti
                 disposables.add(container);
             }
             durations.push({
-                providerName: (_a = provider._debugDisplayName) !== null && _a !== void 0 ? _a : 'unkown_provider', elapsedProvider: (_b = container.duration) !== null && _b !== void 0 ? _b : -1, elapsedOverall: sw.elapsed()
+                providerName: (_b = provider._debugDisplayName) !== null && _b !== void 0 ? _b : 'unkown_provider', elapsedProvider: (_c = container.duration) !== null && _c !== void 0 ? _c : -1, elapsedOverall: sw.elapsed()
             });
         };
         // ask for snippets in parallel to asking "real" providers. Only do something if configured to

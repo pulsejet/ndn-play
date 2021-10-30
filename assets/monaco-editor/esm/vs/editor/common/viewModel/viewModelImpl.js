@@ -8,6 +8,7 @@ import * as strings from '../../../base/common/strings.js';
 import { EDITOR_FONT_DEFAULTS, filterValidationDecorations } from '../config/editorOptions.js';
 import { Position } from '../core/position.js';
 import { Range } from '../core/range.js';
+import * as textModelEvents from '../model/textModelEvents.js';
 import { TokenizationRegistry } from '../modes.js';
 import { tokenizeLineToHTML } from '../modes/textToHtmlTokenizer.js';
 import { MinimapTokensColorTracker } from './minimapTokensColorTracker.js';
@@ -18,7 +19,7 @@ import { MinimapLinesRenderingData, ViewLineRenderingData } from './viewModel.js
 import { ViewModelDecorations } from './viewModelDecorations.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import * as platform from '../../../base/common/platform.js';
-import { Cursor } from '../controller/cursor.js';
+import { CursorsController } from '../controller/cursor.js';
 import { CursorConfiguration } from '../controller/cursorCommon.js';
 import { ViewModelEventDispatcher, FocusChangedEvent, ScrollChangedEvent, ViewZonesChangedEvent, ReadOnlyEditAttemptEvent } from './viewModelEventDispatcher.js';
 const USE_IDENTITY_LINES_COLLECTION = true;
@@ -42,14 +43,14 @@ export class ViewModel extends Disposable {
         }
         else {
             const options = this._configuration.options;
-            const fontInfo = options.get(40 /* fontInfo */);
-            const wrappingStrategy = options.get(121 /* wrappingStrategy */);
-            const wrappingInfo = options.get(128 /* wrappingInfo */);
-            const wrappingIndent = options.get(120 /* wrappingIndent */);
-            this._lines = new SplitLinesCollection(this.model, domLineBreaksComputerFactory, monospaceLineBreaksComputerFactory, fontInfo, this.model.getOptions().tabSize, wrappingStrategy, wrappingInfo.wrappingColumn, wrappingIndent);
+            const fontInfo = options.get(43 /* fontInfo */);
+            const wrappingStrategy = options.get(123 /* wrappingStrategy */);
+            const wrappingInfo = options.get(130 /* wrappingInfo */);
+            const wrappingIndent = options.get(122 /* wrappingIndent */);
+            this._lines = new SplitLinesCollection(this._editorId, this.model, domLineBreaksComputerFactory, monospaceLineBreaksComputerFactory, fontInfo, this.model.getOptions().tabSize, wrappingStrategy, wrappingInfo.wrappingColumn, wrappingIndent);
         }
         this.coordinatesConverter = this._lines.createCoordinatesConverter();
-        this._cursor = this._register(new Cursor(model, this, this.coordinatesConverter, this.cursorConfig));
+        this._cursor = this._register(new CursorsController(model, this, this.coordinatesConverter, this.cursorConfig));
         this.viewLayout = this._register(new ViewLayout(this._configuration, this.getLineCount(), scheduleAtNextAnimationFrame));
         this._register(this.viewLayout.onDidScroll((e) => {
             if (e.scrollTopChanged) {
@@ -129,10 +130,10 @@ export class ViewModel extends Disposable {
         }
         let restorePreviousViewportStart = false;
         const options = this._configuration.options;
-        const fontInfo = options.get(40 /* fontInfo */);
-        const wrappingStrategy = options.get(121 /* wrappingStrategy */);
-        const wrappingInfo = options.get(128 /* wrappingInfo */);
-        const wrappingIndent = options.get(120 /* wrappingIndent */);
+        const fontInfo = options.get(43 /* fontInfo */);
+        const wrappingStrategy = options.get(123 /* wrappingStrategy */);
+        const wrappingInfo = options.get(130 /* wrappingInfo */);
+        const wrappingIndent = options.get(122 /* wrappingIndent */);
         if (this._lines.setWrappingSettings(fontInfo, wrappingStrategy, wrappingInfo.wrappingColumn, wrappingIndent)) {
             eventsCollector.emitViewEvent(new viewEvents.ViewFlushedEvent());
             eventsCollector.emitViewEvent(new viewEvents.ViewLineMappingChangedEvent());
@@ -146,7 +147,7 @@ export class ViewModel extends Disposable {
             }
             this._updateConfigurationViewLineCount.schedule();
         }
-        if (e.hasChanged(77 /* readOnly */)) {
+        if (e.hasChanged(80 /* readOnly */)) {
             // Must read again all decorations due to readOnly filtering
             this._decorations.reset();
             eventsCollector.emitViewEvent(new viewEvents.ViewDecorationsChangedEvent(null));
@@ -164,25 +165,34 @@ export class ViewModel extends Disposable {
         }
     }
     _registerModelEvents() {
-        this._register(this.model.onDidChangeRawContentFast((e) => {
+        this._register(this.model.onDidChangeContentOrInjectedText((e) => {
             try {
                 const eventsCollector = this._eventDispatcher.beginEmitViewEvents();
                 let hadOtherModelChange = false;
                 let hadModelLineChangeThatChangedLineMapping = false;
                 const changes = e.changes;
-                const versionId = e.versionId;
+                const versionId = (e instanceof textModelEvents.ModelRawContentChangedEvent ? e.versionId : null);
                 // Do a first pass to compute line mappings, and a second pass to actually interpret them
                 const lineBreaksComputer = this._lines.createLineBreaksComputer();
                 for (const change of changes) {
                     switch (change.changeType) {
                         case 4 /* LinesInserted */: {
-                            for (const line of change.detail) {
-                                lineBreaksComputer.addRequest(line, null);
+                            for (let lineIdx = 0; lineIdx < change.detail.length; lineIdx++) {
+                                const line = change.detail[lineIdx];
+                                let injectedText = change.injectedTexts[lineIdx];
+                                if (injectedText) {
+                                    injectedText = injectedText.filter(element => (!element.ownerId || element.ownerId === this._editorId));
+                                }
+                                lineBreaksComputer.addRequest(line, injectedText, null);
                             }
                             break;
                         }
                         case 2 /* LineChanged */: {
-                            lineBreaksComputer.addRequest(change.detail, null);
+                            let injectedText = null;
+                            if (change.injectedText) {
+                                injectedText = change.injectedText.filter(element => (!element.ownerId || element.ownerId === this._editorId));
+                            }
+                            lineBreaksComputer.addRequest(change.detail, injectedText, null);
                             break;
                         }
                     }
@@ -243,7 +253,9 @@ export class ViewModel extends Disposable {
                         }
                     }
                 }
-                this._lines.acceptVersionId(versionId);
+                if (versionId !== null) {
+                    this._lines.acceptVersionId(versionId);
+                }
                 this.viewLayout.onHeightMaybeChanged();
                 if (!hadOtherModelChange && hadModelLineChangeThatChangedLineMapping) {
                     eventsCollector.emitViewEvent(new viewEvents.ViewLineMappingChangedEvent());
@@ -346,8 +358,8 @@ export class ViewModel extends Disposable {
         this._updateConfigurationViewLineCount.schedule();
     }
     getVisibleRangesPlusViewportAboveBelow() {
-        const layoutInfo = this._configuration.options.get(127 /* layoutInfo */);
-        const lineHeight = this._configuration.options.get(55 /* lineHeight */);
+        const layoutInfo = this._configuration.options.get(129 /* layoutInfo */);
+        const lineHeight = this._configuration.options.get(58 /* lineHeight */);
         const linesAround = Math.max(20, Math.round(layoutInfo.height / lineHeight));
         const partialData = this.viewLayout.getLinesViewportData();
         const startViewLineNumber = Math.max(1, partialData.completelyVisibleStartLineNumber - linesAround);
@@ -458,6 +470,9 @@ export class ViewModel extends Disposable {
     getLinesIndentGuides(startLineNumber, endLineNumber) {
         return this._lines.getViewLinesIndentGuides(startLineNumber, endLineNumber);
     }
+    getBracketGuidesInRangeByLine(startLineNumber, endLineNumber, activePosition, highlightActiveGuides, includeNonActiveGuides) {
+        return this._lines.getViewLinesBracketGuides(startLineNumber, endLineNumber, activePosition, highlightActiveGuides, includeNonActiveGuides);
+    }
     getLineContent(lineNumber) {
         return this._lines.getViewLineContent(lineNumber);
     }
@@ -487,6 +502,9 @@ export class ViewModel extends Disposable {
     getDecorationsInViewport(visibleRange) {
         return this._decorations.getDecorationsViewportData(visibleRange).decorations;
     }
+    getInjectedTextAt(viewPosition) {
+        return this._lines.getInjectedTextAt(viewPosition);
+    }
     getViewLineRenderingData(visibleRange, lineNumber) {
         let mightContainRTL = this.model.mightContainRTL();
         let mightContainNonBasicASCII = this.model.mightContainNonBasicASCII();
@@ -494,6 +512,12 @@ export class ViewModel extends Disposable {
         let lineData = this._lines.getViewLineData(lineNumber);
         let allInlineDecorations = this._decorations.getDecorationsViewportData(visibleRange).inlineDecorations;
         let inlineDecorations = allInlineDecorations[lineNumber - visibleRange.startLineNumber];
+        if (lineData.inlineDecorations) {
+            inlineDecorations = [
+                ...inlineDecorations,
+                ...lineData.inlineDecorations.map(d => d.toInlineDecoration(lineNumber))
+            ];
+        }
         return new ViewLineRenderingData(lineData.minColumn, lineData.maxColumn, lineData.content, lineData.continuesWithWrappedLine, mightContainRTL, mightContainNonBasicASCII, lineData.tokens, inlineDecorations, tabSize, lineData.startVisibleColumn);
     }
     getViewLineData(lineNumber) {
@@ -628,7 +652,7 @@ export class ViewModel extends Disposable {
             const lineNumber = range.startLineNumber;
             range = new Range(lineNumber, this.model.getLineMinColumn(lineNumber), lineNumber, this.model.getLineMaxColumn(lineNumber));
         }
-        const fontInfo = this._configuration.options.get(40 /* fontInfo */);
+        const fontInfo = this._configuration.options.get(43 /* fontInfo */);
         const colorMap = this._getColorMap();
         const hasBadChars = (/[:;\\\/<>]/.test(fontInfo.fontFamily));
         const useDefaultFontFamily = (hasBadChars || fontInfo.fontFamily === EDITOR_FONT_DEFAULTS.fontFamily);
@@ -834,5 +858,15 @@ export class ViewModel extends Disposable {
         finally {
             this._eventDispatcher.endEmitViewEvents();
         }
+    }
+    normalizePosition(position, affinity) {
+        return this._lines.normalizePosition(position, affinity);
+    }
+    /**
+     * Gets the column at which indentation stops at a given line.
+     * @internal
+    */
+    getLineIndentColumn(lineNumber) {
+        return this._lines.getLineIndentColumn(lineNumber);
     }
 }

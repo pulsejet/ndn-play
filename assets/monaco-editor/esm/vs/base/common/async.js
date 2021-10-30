@@ -21,13 +21,17 @@ export function createCancelablePromise(callback) {
     const source = new CancellationTokenSource();
     const thenable = callback(source.token);
     const promise = new Promise((resolve, reject) => {
-        source.token.onCancellationRequested(() => {
+        const subscription = source.token.onCancellationRequested(() => {
+            subscription.dispose();
+            source.dispose();
             reject(canceled());
         });
         Promise.resolve(thenable).then(value => {
+            subscription.dispose();
             source.dispose();
             resolve(value);
         }, err => {
+            subscription.dispose();
             source.dispose();
             reject(err);
         });
@@ -189,7 +193,7 @@ export class Delayer {
         }
     }
     dispose() {
-        this.cancelTimeout();
+        this.cancel();
     }
 }
 /**
@@ -209,9 +213,6 @@ export class ThrottledDelayer {
     trigger(promiseFactory, delay) {
         return this.delayer.trigger(() => this.throttler.queue(promiseFactory), delay);
     }
-    cancel() {
-        this.delayer.cancel();
-    }
     dispose() {
         this.delayer.dispose();
     }
@@ -221,9 +222,13 @@ export function timeout(millis, token) {
         return createCancelablePromise(token => timeout(millis, token));
     }
     return new Promise((resolve, reject) => {
-        const handle = setTimeout(resolve, millis);
-        token.onCancellationRequested(() => {
+        const handle = setTimeout(() => {
+            disposable.dispose();
+            resolve();
+        }, millis);
+        const disposable = token.onCancellationRequested(() => {
             clearTimeout(handle);
+            disposable.dispose();
             reject(canceled());
         });
     });
@@ -364,12 +369,16 @@ export class RunOnceScheduler {
 export let runWhenIdle;
 (function () {
     if (typeof requestIdleCallback !== 'function' || typeof cancelIdleCallback !== 'function') {
-        const dummyIdle = Object.freeze({
-            didTimeout: true,
-            timeRemaining() { return 15; }
-        });
         runWhenIdle = (runner) => {
-            const handle = setTimeout(() => runner(dummyIdle));
+            const handle = setTimeout(() => {
+                const end = Date.now() + 15; // one frame at 64fps
+                runner(Object.freeze({
+                    didTimeout: true,
+                    timeRemaining() {
+                        return Math.max(0, end - Date.now());
+                    }
+                }));
+            });
             let disposed = false;
             return {
                 dispose() {
@@ -431,42 +440,14 @@ export class IdleValue {
         }
         return this._value;
     }
+    get isInitialized() {
+        return this._didRun;
+    }
 }
 //#endregion
 //#region Promises
 export var Promises;
 (function (Promises) {
-    /**
-     * A polyfill of `Promise.allSettled`: returns after all promises have
-     * resolved or rejected and provides access to each result or error
-     * in the order of the original passed in promises array.
-     * See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled
-     */
-    function allSettled(promises) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (typeof Promise.allSettled === 'function') {
-                return allSettledNative(promises); // in some environments we can benefit from native implementation
-            }
-            return allSettledShim(promises);
-        });
-    }
-    Promises.allSettled = allSettled;
-    function allSettledNative(promises) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return Promise.allSettled(promises);
-        });
-    }
-    function allSettledShim(promises) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return Promise.all(promises.map(promise => (promise.then(value => {
-                const fulfilled = { status: 'fulfilled', value };
-                return fulfilled;
-            }, error => {
-                const rejected = { status: 'rejected', reason: error };
-                return rejected;
-            }))));
-        });
-    }
     /**
      * A drop-in replacement for `Promise.all` with the only difference
      * that the method awaits every promise to either fulfill or reject.

@@ -14,10 +14,10 @@ export class AbstractLineHighlightOverlay extends DynamicViewOverlay {
         super();
         this._context = context;
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._renderLineHighlight = options.get(82 /* renderLineHighlight */);
-        this._renderLineHighlightOnlyWhenFocus = options.get(83 /* renderLineHighlightOnlyWhenFocus */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._renderLineHighlight = options.get(84 /* renderLineHighlight */);
+        this._renderLineHighlightOnlyWhenFocus = options.get(85 /* renderLineHighlightOnlyWhenFocus */);
         this._contentLeft = layoutInfo.contentLeft;
         this._contentWidth = layoutInfo.contentWidth;
         this._selectionIsEmpty = true;
@@ -54,10 +54,10 @@ export class AbstractLineHighlightOverlay extends DynamicViewOverlay {
     }
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._renderLineHighlight = options.get(82 /* renderLineHighlight */);
-        this._renderLineHighlightOnlyWhenFocus = options.get(83 /* renderLineHighlightOnlyWhenFocus */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._renderLineHighlight = options.get(84 /* renderLineHighlight */);
+        this._renderLineHighlightOnlyWhenFocus = options.get(85 /* renderLineHighlightOnlyWhenFocus */);
         this._contentLeft = layoutInfo.contentLeft;
         this._contentWidth = layoutInfo.contentWidth;
         return true;

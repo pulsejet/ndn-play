@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 export var conf = {
     comments: {
-        lineComment: '//',
+        lineComment: '#',
         blockComment: ['/*', '*/']
     },
     brackets: [

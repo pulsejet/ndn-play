@@ -36,14 +36,22 @@ import { IEditorProgressService } from '../../../platform/progress/common/progre
 import { IModelService } from '../../common/services/modelService.js';
 import { IModeService } from '../../common/services/modeService.js';
 import { StandaloneCodeEditorServiceImpl } from './standaloneCodeServiceImpl.js';
+import { Mimes } from '../../../base/common/mime.js';
 let LAST_GENERATED_COMMAND_ID = 0;
 let ariaDomNodeCreated = false;
-function createAriaDomNode() {
-    if (ariaDomNodeCreated) {
-        return;
+/**
+ * Create ARIA dom node inside parent,
+ * or only for the first editor instantiation inside document.body.
+ * @param parent container element for ARIA dom node
+ */
+function createAriaDomNode(parent) {
+    if (!parent) {
+        if (ariaDomNodeCreated) {
+            return;
+        }
+        ariaDomNodeCreated = true;
     }
-    ariaDomNodeCreated = true;
-    aria.setARIAContainer(document.body);
+    aria.setARIAContainer(parent || document.body);
 }
 /**
  * A code editor to be used both by the standalone editor and the standalone diff editor.
@@ -60,8 +68,7 @@ let StandaloneCodeEditor = class StandaloneCodeEditor extends CodeEditorWidget {
         else {
             this._standaloneKeybindingService = null;
         }
-        // Create the ARIA dom node as soon as the first editor is instantiated
-        createAriaDomNode();
+        createAriaDomNode(options.ariaContainerElement);
     }
     addCommand(keybinding, handler, context) {
         if (!this._standaloneKeybindingService) {
@@ -176,7 +183,7 @@ let StandaloneEditor = class StandaloneEditor extends StandaloneCodeEditor {
         this._register(themeDomRegistration);
         let model;
         if (typeof _model === 'undefined') {
-            model = createTextModel(modelService, modeService, options.value || '', options.language || 'text/plain', undefined);
+            model = createTextModel(modelService, modeService, options.value || '', options.language || Mimes.text, undefined);
             this._ownsModel = true;
         }
         else {

@@ -18,7 +18,7 @@ import { TernarySearchTree } from '../../../base/common/map.js';
 import { localize } from '../../../nls.js';
 import { CommandsRegistry } from '../../commands/common/commands.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
-import { IContextKeyService, SET_CONTEXT_COMMAND_ID, RawContextKey } from '../common/contextkey.js';
+import { IContextKeyService, RawContextKey, SET_CONTEXT_COMMAND_ID } from '../common/contextkey.js';
 import { KeybindingResolver } from '../../keybinding/common/keybindingResolver.js';
 const KEYBINDING_CONTEXT_ATTR = 'data-keybinding-context';
 export class Context {

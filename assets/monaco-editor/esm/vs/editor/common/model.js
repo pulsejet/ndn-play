@@ -1,3 +1,4 @@
+import { equals } from '../../base/common/objects.js';
 /**
  * Vertical Lane in the overview ruler of the editor.
  */
@@ -21,11 +22,13 @@ export class TextModelResolvedOptions {
      * @internal
      */
     constructor(src) {
+        this._textModelResolvedOptionsBrand = undefined;
         this.tabSize = Math.max(1, src.tabSize | 0);
         this.indentSize = src.tabSize | 0;
         this.insertSpaces = Boolean(src.insertSpaces);
         this.defaultEOL = src.defaultEOL | 0;
         this.trimAutoWhitespace = Boolean(src.trimAutoWhitespace);
+        this.bracketPairColorizationOptions = src.bracketPairColorizationOptions;
     }
     /**
      * @internal
@@ -35,7 +38,8 @@ export class TextModelResolvedOptions {
             && this.indentSize === other.indentSize
             && this.insertSpaces === other.insertSpaces
             && this.defaultEOL === other.defaultEOL
-            && this.trimAutoWhitespace === other.trimAutoWhitespace);
+            && this.trimAutoWhitespace === other.trimAutoWhitespace
+            && equals(this.bracketPairColorizationOptions, other.bracketPairColorizationOptions));
     }
     /**
      * @internal
@@ -54,8 +58,33 @@ export class FindMatch {
      * @internal
      */
     constructor(range, matches) {
+        this._findMatchBrand = undefined;
         this.range = range;
         this.matches = matches;
+    }
+}
+/**
+ * @internal
+ */
+export class IndentGuide {
+    constructor(visibleColumn, className) {
+        this.visibleColumn = visibleColumn;
+        this.className = className;
+    }
+}
+/**
+ * @internal
+ */
+export class BracketPair {
+    constructor(range, openingBracketRange, closingBracketRange, 
+    /**
+     * 0-based
+    */
+    nestingLevel) {
+        this.range = range;
+        this.openingBracketRange = openingBracketRange;
+        this.closingBracketRange = closingBracketRange;
+        this.nestingLevel = nestingLevel;
     }
 }
 /**

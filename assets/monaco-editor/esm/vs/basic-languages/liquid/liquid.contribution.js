@@ -5,6 +5,8 @@
 import { registerLanguage } from '../_.contribution.js';
 registerLanguage({
     id: 'liquid',
-    extensions: ['.liquid', '.liquid.html', '.liquid.css'],
+    extensions: ['.liquid', '.html.liquid'],
+    aliases: ['Liquid', 'liquid'],
+    mimetypes: ['application/liquid'],
     loader: function () { return import('./liquid.js'); }
 });

@@ -139,6 +139,15 @@ export interface WorkerOptions {
     /** A full HTTP path to a JavaScript file which adds a function `customTSWorkerFactory` to the self inside a web-worker */
     customWorkerPath?: string;
 }
+interface InlayHintsOptions {
+    readonly includeInlayParameterNameHints?: 'none' | 'literals' | 'all';
+    readonly includeInlayParameterNameHintsWhenArgumentMatchesName?: boolean;
+    readonly includeInlayFunctionParameterTypeHints?: boolean;
+    readonly includeInlayVariableTypeHints?: boolean;
+    readonly includeInlayPropertyDeclarationTypeHints?: boolean;
+    readonly includeInlayFunctionLikeReturnTypeHints?: boolean;
+    readonly includeInlayEnumMemberValueHints?: boolean;
+}
 interface IExtraLib {
     content: string;
     version: number;
@@ -195,6 +204,7 @@ export interface LanguageServiceDefaults {
      */
     readonly onDidExtraLibsChange: IEvent<void>;
     readonly workerOptions: WorkerOptions;
+    readonly inlayHintsOptions: InlayHintsOptions;
     /**
      * Get the current extra libs registered with the language service.
      */
@@ -255,6 +265,10 @@ export interface LanguageServiceDefaults {
      * to the worker on start or restart.
      */
     getEagerModelSync(): boolean;
+    /**
+     * Configure inlay hints options.
+     */
+    setInlayHintsOptions(options: InlayHintsOptions): void;
 }
 export interface TypeScriptWorker {
     /**
@@ -358,6 +372,12 @@ export interface TypeScriptWorker {
      * @returns `Promise<ReadonlyArray<typescript.CodeFixAction>>`
      */
     getCodeFixesAtPosition(fileName: string, start: number, end: number, errorCodes: number[], formatOptions: any): Promise<ReadonlyArray<any>>;
+    /**
+     * Get inlay hints in the range of the file.
+     * @param fileName
+     * @returns `Promise<typescript.InlayHint[]>`
+     */
+    provideInlayHints(fileName: string, start: number, end: number): Promise<ReadonlyArray<any>>;
 }
 export declare const typescriptVersion: string;
 export declare const typescriptDefaults: LanguageServiceDefaults;

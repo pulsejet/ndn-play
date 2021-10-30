@@ -7,6 +7,7 @@ import { createFastDomNode } from '../../../../base/browser/fastDomNode.js';
 import { PartFingerprints, ViewPart } from '../../view/viewPart.js';
 class Coordinate {
     constructor(top, left) {
+        this._coordinateBrand = undefined;
         this.top = top;
         this.left = left;
     }
@@ -129,11 +130,11 @@ class Widget {
         this.allowEditorOverflow = this._actual.allowEditorOverflow || false;
         this.suppressMouseDown = this._actual.suppressMouseDown || false;
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
-        this._fixedOverflowWidgets = options.get(34 /* fixedOverflowWidgets */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
+        this._fixedOverflowWidgets = options.get(36 /* fixedOverflowWidgets */);
         this._contentWidth = layoutInfo.contentWidth;
         this._contentLeft = layoutInfo.contentLeft;
-        this._lineHeight = options.get(55 /* lineHeight */);
+        this._lineHeight = options.get(58 /* lineHeight */);
         this._range = null;
         this._viewRange = null;
         this._preference = [];
@@ -149,9 +150,9 @@ class Widget {
     }
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        this._lineHeight = options.get(55 /* lineHeight */);
-        if (e.hasChanged(127 /* layoutInfo */)) {
-            const layoutInfo = options.get(127 /* layoutInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        if (e.hasChanged(129 /* layoutInfo */)) {
+            const layoutInfo = options.get(129 /* layoutInfo */);
             this._contentLeft = layoutInfo.contentLeft;
             this._contentWidth = layoutInfo.contentWidth;
             this._maxWidth = this._getMaxWidth();

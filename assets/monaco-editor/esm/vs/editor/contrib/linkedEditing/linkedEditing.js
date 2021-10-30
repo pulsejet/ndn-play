@@ -20,26 +20,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../../nls.js';
-import { registerEditorContribution, registerModelAndPositionCommand, EditorAction, EditorCommand, registerEditorAction, registerEditorCommand } from '../../browser/editorExtensions.js';
 import * as arrays from '../../../base/common/arrays.js';
-import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { Position } from '../../common/core/position.js';
+import { createCancelablePromise, Delayer, first } from '../../../base/common/async.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
-import { Range } from '../../common/core/range.js';
-import { LinkedEditingRangeProviderRegistry } from '../../common/modes.js';
-import { first, createCancelablePromise, Delayer } from '../../../base/common/async.js';
-import { ModelDecorationOptions } from '../../common/model/textModel.js';
-import { ContextKeyExpr, RawContextKey, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
-import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { URI } from '../../../base/common/uri.js';
-import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
+import { Color } from '../../../base/common/color.js';
 import { isPromiseCanceledError, onUnexpectedError, onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import * as strings from '../../../base/common/strings.js';
+import { URI } from '../../../base/common/uri.js';
+import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution, registerModelAndPositionCommand } from '../../browser/editorExtensions.js';
+import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
+import { Position } from '../../common/core/position.js';
+import { Range } from '../../common/core/range.js';
+import { EditorContextKeys } from '../../common/editorContextKeys.js';
+import { ModelDecorationOptions } from '../../common/model/textModel.js';
+import { LinkedEditingRangeProviderRegistry } from '../../common/modes.js';
+import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
+import * as nls from '../../../nls.js';
+import { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { Color } from '../../../base/common/color.js';
-import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
 export const CONTEXT_ONTYPE_RENAME_INPUT_VISIBLE = new RawContextKey('LinkedEditingInputVisible', false);
 const DECORATION_CLASS_NAME = 'linked-editing-decoration';
 let LinkedEditingContribution = class LinkedEditingContribution extends Disposable {
@@ -60,23 +60,23 @@ let LinkedEditingContribution = class LinkedEditingContribution extends Disposab
         this._currentRequest = null;
         this._currentRequestPosition = null;
         this._currentRequestModelVersion = null;
-        this._register(this._editor.onDidChangeModel(() => this.reinitialize()));
+        this._register(this._editor.onDidChangeModel(() => this.reinitialize(true)));
         this._register(this._editor.onDidChangeConfiguration(e => {
-            if (e.hasChanged(58 /* linkedEditing */) || e.hasChanged(78 /* renameOnType */)) {
-                this.reinitialize();
+            if (e.hasChanged(61 /* linkedEditing */) || e.hasChanged(81 /* renameOnType */)) {
+                this.reinitialize(false);
             }
         }));
-        this._register(LinkedEditingRangeProviderRegistry.onDidChange(() => this.reinitialize()));
-        this._register(this._editor.onDidChangeModelLanguage(() => this.reinitialize()));
-        this.reinitialize();
+        this._register(LinkedEditingRangeProviderRegistry.onDidChange(() => this.reinitialize(false)));
+        this._register(this._editor.onDidChangeModelLanguage(() => this.reinitialize(true)));
+        this.reinitialize(true);
     }
     static get(editor) {
         return editor.getContribution(LinkedEditingContribution.ID);
     }
-    reinitialize() {
+    reinitialize(forceRefresh) {
         const model = this._editor.getModel();
-        const isEnabled = model !== null && (this._editor.getOption(58 /* linkedEditing */) || this._editor.getOption(78 /* renameOnType */)) && LinkedEditingRangeProviderRegistry.has(model);
-        if (isEnabled === this._enabled) {
+        const isEnabled = model !== null && (this._editor.getOption(61 /* linkedEditing */) || this._editor.getOption(81 /* renameOnType */)) && LinkedEditingRangeProviderRegistry.has(model);
+        if (isEnabled === this._enabled && !forceRefresh) {
             return;
         }
         this._enabled = isEnabled;
@@ -279,6 +279,7 @@ let LinkedEditingContribution = class LinkedEditingContribution extends Disposab
 };
 LinkedEditingContribution.ID = 'editor.contrib.linkedEditing';
 LinkedEditingContribution.DECORATION = ModelDecorationOptions.register({
+    description: 'linked-editing',
     stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */,
     className: DECORATION_CLASS_NAME
 });

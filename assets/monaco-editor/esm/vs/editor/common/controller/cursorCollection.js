@@ -3,12 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { CursorState } from './cursorCommon.js';
-import { OneCursor } from './oneCursor.js';
+import { Cursor } from './oneCursor.js';
 import { Selection } from '../core/selection.js';
 export class CursorCollection {
     constructor(context) {
         this.context = context;
-        this.primaryCursor = new OneCursor(context);
+        this.primaryCursor = new Cursor(context);
         this.secondaryCursors = [];
         this.lastAddedCursorIndex = 0;
     }
@@ -136,7 +136,7 @@ export class CursorCollection {
         this._setSecondaryStates([]);
     }
     _addSecondaryCursor() {
-        this.secondaryCursors.push(new OneCursor(this.context));
+        this.secondaryCursors.push(new Cursor(this.context));
         this.lastAddedCursorIndex = this.secondaryCursors.length;
     }
     getLastAddedCursorIndex() {

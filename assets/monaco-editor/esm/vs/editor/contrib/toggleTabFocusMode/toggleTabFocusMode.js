@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
 import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
 import { TabFocus } from '../../common/config/commonEditorConfig.js';
+import * as nls from '../../../nls.js';
 export class ToggleTabFocusModeAction extends EditorAction {
     constructor() {
         super({

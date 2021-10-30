@@ -27,7 +27,7 @@ import { StopWatch } from '../../../base/common/stopwatch.js';
 /**
  * @internal
  */
-class MirrorModel extends BaseMirrorModel {
+export class MirrorModel extends BaseMirrorModel {
     get uri() {
         return this._uri;
     }
@@ -128,7 +128,7 @@ class MirrorModel extends BaseMirrorModel {
     offsetAt(position) {
         position = this._validatePosition(position);
         this._ensureLineStarts();
-        return this._lineStarts.getAccumulatedValue(position.lineNumber - 2) + (position.column - 1);
+        return this._lineStarts.getPrefixSum(position.lineNumber - 2) + (position.column - 1);
     }
     positionAt(offset) {
         offset = Math.floor(offset);

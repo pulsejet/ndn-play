@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { fuzzyScore, fuzzyScoreGracefulAggressive, FuzzyScore, anyScore } from '../../../base/common/filters.js';
-import { compareIgnoreCase } from '../../../base/common/strings.js';
 import { quickSelect } from '../../../base/common/arrays.js';
+import { anyScore, fuzzyScore, FuzzyScore, fuzzyScoreGracefulAggressive } from '../../../base/common/filters.js';
+import { compareIgnoreCase } from '../../../base/common/strings.js';
 export class LineContext {
     constructor(leadingLineContent, characterCountDelta) {
         this.leadingLineContent = leadingLineContent;

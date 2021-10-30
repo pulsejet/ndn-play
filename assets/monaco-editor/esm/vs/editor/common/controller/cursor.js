@@ -10,6 +10,7 @@ import { DeleteOperations } from './cursorDeleteOperations.js';
 import { TypeOperations, TypeWithAutoClosingCommand } from './cursorTypeOperations.js';
 import { Range } from '../core/range.js';
 import { Selection } from '../core/selection.js';
+import { ModelInjectedTextChangedEvent } from '../model/textModelEvents.js';
 import { ViewCursorStateChangedEvent, ViewRevealRangeRequestEvent } from '../view/viewEvents.js';
 import { dispose, Disposable } from '../../../base/common/lifecycle.js';
 import { CursorStateChangedEvent } from '../viewModel/viewModelEventDispatcher.js';
@@ -91,14 +92,14 @@ class AutoClosedAction {
         return true;
     }
 }
-export class Cursor extends Disposable {
+export class CursorsController extends Disposable {
     constructor(model, viewModel, coordinatesConverter, cursorConfig) {
         super();
         this._model = model;
         this._knownModelVersionId = this._model.getVersionId();
         this._viewModel = viewModel;
         this._coordinatesConverter = coordinatesConverter;
-        this.context = new CursorContext(this._model, this._coordinatesConverter, cursorConfig);
+        this.context = new CursorContext(this._model, this._viewModel, this._coordinatesConverter, cursorConfig);
         this._cursors = new CursorCollection(this.context);
         this._hasFocus = false;
         this._isHandling = false;
@@ -114,7 +115,7 @@ export class Cursor extends Disposable {
         super.dispose();
     }
     updateConfiguration(cursorConfig) {
-        this.context = new CursorContext(this._model, this._coordinatesConverter, cursorConfig);
+        this.context = new CursorContext(this._model, this._viewModel, this._coordinatesConverter, cursorConfig);
         this._cursors.updateContext(this.context);
     }
     onLineMappingChanged(eventsCollector) {
@@ -159,8 +160,8 @@ export class Cursor extends Disposable {
     }
     setStates(eventsCollector, source, reason, states) {
         let reachedMaxCursorCount = false;
-        if (states !== null && states.length > Cursor.MAX_CURSOR_COUNT) {
-            states = states.slice(0, Cursor.MAX_CURSOR_COUNT);
+        if (states !== null && states.length > CursorsController.MAX_CURSOR_COUNT) {
+            states = states.slice(0, CursorsController.MAX_CURSOR_COUNT);
             reachedMaxCursorCount = true;
         }
         const oldState = new CursorModelState(this._model, this);
@@ -251,29 +252,49 @@ export class Cursor extends Disposable {
         this.revealPrimary(eventsCollector, 'restoreState', true, 1 /* Immediate */);
     }
     onModelContentChanged(eventsCollector, e) {
-        this._knownModelVersionId = e.versionId;
-        if (this._isHandling) {
-            return;
-        }
-        const hadFlushEvent = e.containsEvent(1 /* Flush */);
-        this._prevEditOperationType = 0 /* Other */;
-        if (hadFlushEvent) {
-            // a model.setValue() was called
-            this._cursors.dispose();
-            this._cursors = new CursorCollection(this.context);
-            this._validateAutoClosedActions();
-            this._emitStateChangedIfNecessary(eventsCollector, 'model', 1 /* ContentFlush */, null, false);
+        if (e instanceof ModelInjectedTextChangedEvent) {
+            // If injected texts change, the view positions of all cursors need to be updated.
+            if (this._isHandling) {
+                // The view positions will be updated when handling finishes
+                return;
+            }
+            // setStates might remove markers, which could trigger a decoration change.
+            // If there are injected text decorations for that line, `onModelContentChanged` is emitted again
+            // and an endless recursion happens.
+            // _isHandling prevents that.
+            this._isHandling = true;
+            try {
+                this.setStates(eventsCollector, 'modelChange', 0 /* NotSet */, this.getCursorStates());
+            }
+            finally {
+                this._isHandling = false;
+            }
         }
         else {
-            if (this._hasFocus && e.resultingSelection && e.resultingSelection.length > 0) {
-                const cursorState = CursorState.fromModelSelections(e.resultingSelection);
-                if (this.setStates(eventsCollector, 'modelChange', e.isUndoing ? 5 /* Undo */ : e.isRedoing ? 6 /* Redo */ : 2 /* RecoverFromMarkers */, cursorState)) {
-                    this._revealPrimaryCursor(eventsCollector, 'modelChange', 0 /* Simple */, true, 0 /* Smooth */);
-                }
+            this._knownModelVersionId = e.versionId;
+            if (this._isHandling) {
+                return;
+            }
+            const hadFlushEvent = e.containsEvent(1 /* Flush */);
+            this._prevEditOperationType = 0 /* Other */;
+            if (hadFlushEvent) {
+                // a model.setValue() was called
+                this._cursors.dispose();
+                this._cursors = new CursorCollection(this.context);
+                this._validateAutoClosedActions();
+                this._emitStateChangedIfNecessary(eventsCollector, 'model', 1 /* ContentFlush */, null, false);
             }
             else {
-                const selectionsFromMarkers = this._cursors.readSelectionFromMarkers();
-                this.setStates(eventsCollector, 'modelChange', 2 /* RecoverFromMarkers */, CursorState.fromModelSelections(selectionsFromMarkers));
+                if (this._hasFocus && e.resultingSelection && e.resultingSelection.length > 0) {
+                    const cursorState = CursorState.fromModelSelections(e.resultingSelection);
+                    if (this.setStates(eventsCollector, 'modelChange', e.isUndoing ? 5 /* Undo */ : e.isRedoing ? 6 /* Redo */ : 2 /* RecoverFromMarkers */, cursorState)) {
+                        this._revealPrimaryCursor(eventsCollector, 'modelChange', 0 /* Simple */, true, 0 /* Smooth */);
+                    }
+                }
+                else {
+                    const selectionsFromMarkers = this._cursors.readSelectionFromMarkers();
+                    this.setStates(eventsCollector, 'modelChange', 2 /* RecoverFromMarkers */, CursorState.fromModelSelections(selectionsFromMarkers));
+                }
             }
         }
     }
@@ -321,6 +342,7 @@ export class Cursor extends Disposable {
             autoClosedCharactersDeltaDecorations.push({
                 range: autoClosedCharactersRanges[i],
                 options: {
+                    description: 'auto-closed-character',
                     inlineClassName: 'auto-closed-character',
                     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */
                 }
@@ -328,6 +350,7 @@ export class Cursor extends Disposable {
             autoClosedEnclosingDeltaDecorations.push({
                 range: autoClosedEnclosingRanges[i],
                 options: {
+                    description: 'auto-closed-enclosing',
                     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */
                 }
             });
@@ -569,7 +592,7 @@ export class Cursor extends Disposable {
         }, eventsCollector, source);
     }
 }
-Cursor.MAX_CURSOR_COUNT = 10000;
+CursorsController.MAX_CURSOR_COUNT = 10000;
 class CommandExecutor {
     static executeCommands(model, selectionsBefore, commands) {
         const ctx = {

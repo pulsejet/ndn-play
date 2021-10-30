@@ -2,10 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './bracketMatching.css';
-import * as nls from '../../../nls.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
+import './bracketMatching.css';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
@@ -14,9 +13,10 @@ import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { OverviewRulerLane } from '../../common/model.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { editorBracketMatchBackground, editorBracketMatchBorder } from '../../common/view/editorColorRegistry.js';
+import * as nls from '../../../nls.js';
+import { MenuId, MenuRegistry } from '../../../platform/actions/common/actions.js';
 import { registerColor } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant, themeColorFromId } from '../../../platform/theme/common/themeService.js';
-import { MenuRegistry, MenuId } from '../../../platform/actions/common/actions.js';
 const overviewRulerBracketMatchForeground = registerColor('editorOverviewRuler.bracketMatchForeground', { dark: '#A0A0A0', light: '#A0A0A0', hc: '#A0A0A0' }, nls.localize('overviewRulerBracketMatchForeground', 'Overview ruler marker color for matching brackets.'));
 class JumpToBracketAction extends EditorAction {
     constructor() {
@@ -91,7 +91,7 @@ export class BracketMatchingController extends Disposable {
         this._lastVersionId = 0;
         this._decorations = [];
         this._updateBracketsSoon = this._register(new RunOnceScheduler(() => this._updateBrackets(), 50));
-        this._matchBrackets = this._editor.getOption(60 /* matchBrackets */);
+        this._matchBrackets = this._editor.getOption(63 /* matchBrackets */);
         this._updateBracketsSoon.schedule();
         this._register(editor.onDidChangeCursorPosition((e) => {
             if (this._matchBrackets === 'never') {
@@ -114,8 +114,8 @@ export class BracketMatchingController extends Disposable {
             this._updateBracketsSoon.schedule();
         }));
         this._register(editor.onDidChangeConfiguration((e) => {
-            if (e.hasChanged(60 /* matchBrackets */)) {
-                this._matchBrackets = this._editor.getOption(60 /* matchBrackets */);
+            if (e.hasChanged(63 /* matchBrackets */)) {
+                this._matchBrackets = this._editor.getOption(63 /* matchBrackets */);
                 this._decorations = this._editor.deltaDecorations(this._decorations, []);
                 this._lastBracketsData = [];
                 this._lastVersionId = 0;
@@ -191,6 +191,12 @@ export class BracketMatchingController extends Disposable {
                 const [open, close] = brackets;
                 selectFrom = selectBrackets ? open.getStartPosition() : open.getEndPosition();
                 selectTo = selectBrackets ? close.getEndPosition() : close.getStartPosition();
+                if (close.containsPosition(position)) {
+                    // select backwards if the cursor was on the closing bracket
+                    const tmp = selectFrom;
+                    selectFrom = selectTo;
+                    selectTo = tmp;
+                }
             }
             if (selectFrom && selectTo) {
                 newSelections.push(new Selection(selectFrom.lineNumber, selectFrom.column, selectTo.lineNumber, selectTo.column));
@@ -275,6 +281,7 @@ export class BracketMatchingController extends Disposable {
 }
 BracketMatchingController.ID = 'editor.contrib.bracketMatchingController';
 BracketMatchingController._DECORATION_OPTIONS_WITH_OVERVIEW_RULER = ModelDecorationOptions.register({
+    description: 'bracket-match-overview',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'bracket-match',
     overviewRuler: {
@@ -283,6 +290,7 @@ BracketMatchingController._DECORATION_OPTIONS_WITH_OVERVIEW_RULER = ModelDecorat
     }
 });
 BracketMatchingController._DECORATION_OPTIONS_WITHOUT_OVERVIEW_RULER = ModelDecorationOptions.register({
+    description: 'bracket-match-no-overview',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'bracket-match'
 });

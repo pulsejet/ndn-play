@@ -6,6 +6,7 @@ import { Emitter } from './event.js';
 import { Disposable } from './lifecycle.js';
 export class ScrollState {
     constructor(width, scrollWidth, scrollLeft, height, scrollHeight, scrollTop) {
+        this._scrollStateBrand = undefined;
         width = width | 0;
         scrollWidth = scrollWidth | 0;
         scrollLeft = scrollLeft | 0;
@@ -88,6 +89,7 @@ export class ScrollState {
 export class Scrollable extends Disposable {
     constructor(smoothScrollDuration, scheduleAtNextAnimationFrame) {
         super();
+        this._scrollableBrand = undefined;
         this._onScroll = this._register(new Emitter());
         this.onScroll = this._onScroll.event;
         this._smoothScrollDuration = smoothScrollDuration;

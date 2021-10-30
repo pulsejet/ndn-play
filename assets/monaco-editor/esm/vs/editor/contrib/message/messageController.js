@@ -11,17 +11,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import './messageController.css';
-import * as nls from '../../../nls.js';
+import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { TimeoutTimer } from '../../../base/common/async.js';
 import { DisposableStore, MutableDisposable } from '../../../base/common/lifecycle.js';
-import { alert } from '../../../base/browser/ui/aria/aria.js';
+import './messageController.css';
+import { EditorCommand, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { Range } from '../../common/core/range.js';
-import { registerEditorContribution, EditorCommand, registerEditorCommand } from '../../browser/editorExtensions.js';
+import * as nls from '../../../nls.js';
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
-import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { inputValidationInfoBorder, inputValidationInfoBackground, inputValidationInfoForeground } from '../../../platform/theme/common/colorRegistry.js';
+import { inputValidationInfoBackground, inputValidationInfoBorder, inputValidationInfoForeground } from '../../../platform/theme/common/colorRegistry.js';
 import { ColorScheme } from '../../../platform/theme/common/theme.js';
+import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 let MessageController = class MessageController {
     constructor(editor, contextKeyService) {
         this._messageWidget = new MutableDisposable();

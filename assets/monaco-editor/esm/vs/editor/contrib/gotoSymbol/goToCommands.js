@@ -12,35 +12,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var _a, _b, _c, _d, _e, _f, _g, _h;
+import { isStandalone } from '../../../base/browser/browser.js';
 import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { createCancelablePromise, raceCancellation } from '../../../base/common/async.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { isWeb } from '../../../base/common/platform.js';
+import { assertType } from '../../../base/common/types.js';
+import { URI } from '../../../base/common/uri.js';
+import { EditorStateCancellationTokenSource } from '../../browser/core/editorState.js';
 import { isCodeEditor } from '../../browser/editorBrowser.js';
 import { EditorAction, registerInstantiatedEditorAction } from '../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
+import { EmbeddedCodeEditorWidget } from '../../browser/widget/embeddedCodeEditorWidget.js';
 import * as corePosition from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { isLocationLink } from '../../common/modes.js';
-import { MessageController } from '../message/messageController.js';
-import { PeekContext } from '../peekView/peekView.js';
 import { ReferencesController } from './peek/referencesController.js';
 import { ReferencesModel } from './referencesModel.js';
+import { ISymbolNavigationService } from './symbolNavigation.js';
+import { MessageController } from '../message/messageController.js';
+import { PeekContext } from '../peekView/peekView.js';
 import * as nls from '../../../nls.js';
 import { MenuId, MenuRegistry } from '../../../platform/actions/common/actions.js';
+import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
 import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
 import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
-import { getDefinitionsAtPosition, getImplementationsAtPosition, getTypeDefinitionsAtPosition, getDeclarationsAtPosition, getReferencesAtPosition } from './goToSymbol.js';
-import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
-import { EditorStateCancellationTokenSource } from '../../browser/core/editorState.js';
-import { ISymbolNavigationService } from './symbolNavigation.js';
-import { isStandalone } from '../../../base/browser/browser.js';
-import { URI } from '../../../base/common/uri.js';
-import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
-import { assertType } from '../../../base/common/types.js';
-import { EmbeddedCodeEditorWidget } from '../../browser/widget/embeddedCodeEditorWidget.js';
+import { getDeclarationsAtPosition, getDefinitionsAtPosition, getImplementationsAtPosition, getReferencesAtPosition, getTypeDefinitionsAtPosition } from './goToSymbol.js';
 MenuRegistry.appendMenuItem(MenuId.EditorContext, {
     submenu: MenuId.EditorContextPeek,
     title: nls.localize('peek.submenu', "Peek"),
@@ -157,7 +157,7 @@ class SymbolNavigationAction extends EditorAction {
             }
             if (highlight) {
                 const modelNow = targetEditor.getModel();
-                const ids = targetEditor.deltaDecorations([], [{ range, options: { className: 'symbolHighlight' } }]);
+                const ids = targetEditor.deltaDecorations([], [{ range, options: { description: 'symbol-navigate-action-highlight', className: 'symbolHighlight' } }]);
                 setTimeout(() => {
                     if (targetEditor.getModel() === modelNow) {
                         targetEditor.deltaDecorations(ids, []);
@@ -190,10 +190,10 @@ export class DefinitionAction extends SymbolNavigationAction {
             : nls.localize('generic.noResults', "No definition found");
     }
     _getAlternativeCommand(editor) {
-        return editor.getOption(47 /* gotoLocation */).alternativeDefinitionCommand;
+        return editor.getOption(50 /* gotoLocation */).alternativeDefinitionCommand;
     }
     _getGoToPreference(editor) {
-        return editor.getOption(47 /* gotoLocation */).multipleDefinitions;
+        return editor.getOption(50 /* gotoLocation */).multipleDefinitions;
     }
 }
 const goToDefinitionKb = isWeb && !isStandalone
@@ -218,12 +218,6 @@ registerGoToAction((_a = class GoToDefinitionAction extends DefinitionAction {
                 contextMenuOpts: {
                     group: 'navigation',
                     order: 1.1
-                },
-                menuOpts: {
-                    menuId: MenuId.MenubarGoMenu,
-                    group: '4_symbol_nav',
-                    order: 2,
-                    title: nls.localize({ key: 'miGotoDefinition', comment: ['&& denotes a mnemonic'] }, "Go to &&Definition")
                 }
             });
             CommandsRegistry.registerCommandAlias('editor.action.goToDeclaration', GoToDefinitionAction.id);
@@ -295,10 +289,10 @@ class DeclarationAction extends SymbolNavigationAction {
             : nls.localize('decl.generic.noResults', "No declaration found");
     }
     _getAlternativeCommand(editor) {
-        return editor.getOption(47 /* gotoLocation */).alternativeDeclarationCommand;
+        return editor.getOption(50 /* gotoLocation */).alternativeDeclarationCommand;
     }
     _getGoToPreference(editor) {
-        return editor.getOption(47 /* gotoLocation */).multipleDeclarations;
+        return editor.getOption(50 /* gotoLocation */).multipleDeclarations;
     }
 }
 registerGoToAction((_d = class GoToDeclarationAction extends DeclarationAction {
@@ -315,12 +309,6 @@ registerGoToAction((_d = class GoToDeclarationAction extends DeclarationAction {
                 contextMenuOpts: {
                     group: 'navigation',
                     order: 1.3
-                },
-                menuOpts: {
-                    menuId: MenuId.MenubarGoMenu,
-                    group: '4_symbol_nav',
-                    order: 3,
-                    title: nls.localize({ key: 'miGotoDeclaration', comment: ['&& denotes a mnemonic'] }, "Go to &&Declaration")
                 },
             });
         }
@@ -365,10 +353,10 @@ class TypeDefinitionAction extends SymbolNavigationAction {
             : nls.localize('goToTypeDefinition.generic.noResults', "No type definition found");
     }
     _getAlternativeCommand(editor) {
-        return editor.getOption(47 /* gotoLocation */).alternativeTypeDefinitionCommand;
+        return editor.getOption(50 /* gotoLocation */).alternativeTypeDefinitionCommand;
     }
     _getGoToPreference(editor) {
-        return editor.getOption(47 /* gotoLocation */).multipleTypeDefinitions;
+        return editor.getOption(50 /* gotoLocation */).multipleTypeDefinitions;
     }
 }
 registerGoToAction((_e = class GoToTypeDefinitionAction extends TypeDefinitionAction {
@@ -390,12 +378,6 @@ registerGoToAction((_e = class GoToTypeDefinitionAction extends TypeDefinitionAc
                 contextMenuOpts: {
                     group: 'navigation',
                     order: 1.4
-                },
-                menuOpts: {
-                    menuId: MenuId.MenubarGoMenu,
-                    group: '4_symbol_nav',
-                    order: 3,
-                    title: nls.localize({ key: 'miGotoTypeDefinition', comment: ['&& denotes a mnemonic'] }, "Go to &&Type Definition")
                 }
             });
         }
@@ -437,10 +419,10 @@ class ImplementationAction extends SymbolNavigationAction {
             : nls.localize('goToImplementation.generic.noResults', "No implementation found");
     }
     _getAlternativeCommand(editor) {
-        return editor.getOption(47 /* gotoLocation */).alternativeImplementationCommand;
+        return editor.getOption(50 /* gotoLocation */).alternativeImplementationCommand;
     }
     _getGoToPreference(editor) {
-        return editor.getOption(47 /* gotoLocation */).multipleImplementations;
+        return editor.getOption(50 /* gotoLocation */).multipleImplementations;
     }
 }
 registerGoToAction((_g = class GoToImplementationAction extends ImplementationAction {
@@ -458,12 +440,6 @@ registerGoToAction((_g = class GoToImplementationAction extends ImplementationAc
                     kbExpr: EditorContextKeys.editorTextFocus,
                     primary: 2048 /* CtrlCmd */ | 70 /* F12 */,
                     weight: 100 /* EditorContrib */
-                },
-                menuOpts: {
-                    menuId: MenuId.MenubarGoMenu,
-                    group: '4_symbol_nav',
-                    order: 4,
-                    title: nls.localize({ key: 'miGotoImplementation', comment: ['&& denotes a mnemonic'] }, "Go to &&Implementations")
                 },
                 contextMenuOpts: {
                     group: 'navigation',
@@ -509,10 +485,10 @@ class ReferencesAction extends SymbolNavigationAction {
             : nls.localize('references.noGeneric', "No references found");
     }
     _getAlternativeCommand(editor) {
-        return editor.getOption(47 /* gotoLocation */).alternativeReferenceCommand;
+        return editor.getOption(50 /* gotoLocation */).alternativeReferenceCommand;
     }
     _getGoToPreference(editor) {
-        return editor.getOption(47 /* gotoLocation */).multipleReferences;
+        return editor.getOption(50 /* gotoLocation */).multipleReferences;
     }
 }
 registerGoToAction(class GoToReferencesAction extends ReferencesAction {
@@ -534,13 +510,7 @@ registerGoToAction(class GoToReferencesAction extends ReferencesAction {
             contextMenuOpts: {
                 group: 'navigation',
                 order: 1.45
-            },
-            menuOpts: {
-                menuId: MenuId.MenubarGoMenu,
-                group: '4_symbol_nav',
-                order: 5,
-                title: nls.localize({ key: 'miGotoReference', comment: ['&& denotes a mnemonic'] }, "Go to &&References")
-            },
+            }
         });
     }
     _getLocationModel(model, position, token) {
@@ -596,7 +566,7 @@ class GenericGoToLocationAction extends SymbolNavigationAction {
     }
     _getGoToPreference(editor) {
         var _a;
-        return (_a = this._gotoMultipleBehaviour) !== null && _a !== void 0 ? _a : editor.getOption(47 /* gotoLocation */).multipleReferences;
+        return (_a = this._gotoMultipleBehaviour) !== null && _a !== void 0 ? _a : editor.getOption(50 /* gotoLocation */).multipleReferences;
     }
     _getAlternativeCommand() { return ''; }
 }
@@ -678,3 +648,61 @@ CommandsRegistry.registerCommand({
 // use NEW command
 CommandsRegistry.registerCommandAlias('editor.action.showReferences', 'editor.action.peekLocations');
 //#endregion
+// -- unconditionally register goto-action
+MenuRegistry.appendMenuItems([
+    {
+        id: MenuId.MenubarGoMenu,
+        item: {
+            command: {
+                id: 'editor.action.revealDefinition',
+                title: nls.localize({ key: 'miGotoDefinition', comment: ['&& denotes a mnemonic'] }, "Go to &&Definition")
+            },
+            group: '4_symbol_nav',
+            order: 2,
+        },
+    },
+    {
+        id: MenuId.MenubarGoMenu,
+        item: {
+            command: {
+                id: 'editor.action.revealDeclaration',
+                title: nls.localize({ key: 'miGotoDeclaration', comment: ['&& denotes a mnemonic'] }, "Go to &&Declaration")
+            },
+            group: '4_symbol_nav',
+            order: 3,
+        },
+    },
+    {
+        id: MenuId.MenubarGoMenu,
+        item: {
+            command: {
+                id: 'editor.action.goToTypeDefinition',
+                title: nls.localize({ key: 'miGotoTypeDefinition', comment: ['&& denotes a mnemonic'] }, "Go to &&Type Definition")
+            },
+            group: '4_symbol_nav',
+            order: 3,
+        },
+    },
+    {
+        id: MenuId.MenubarGoMenu,
+        item: {
+            command: {
+                id: 'editor.action.goToImplementation',
+                title: nls.localize({ key: 'miGotoImplementation', comment: ['&& denotes a mnemonic'] }, "Go to &&Implementations")
+            },
+            group: '4_symbol_nav',
+            order: 4,
+        },
+    },
+    {
+        id: MenuId.MenubarGoMenu,
+        item: {
+            command: {
+                id: 'editor.action.goToReferences',
+                title: nls.localize({ key: 'miGotoReference', comment: ['&& denotes a mnemonic'] }, "Go to &&References")
+            },
+            group: '4_symbol_nav',
+            order: 5,
+        },
+    },
+]);

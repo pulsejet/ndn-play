@@ -83,4 +83,11 @@ export class VerticalScrollbar extends AbstractScrollbar {
     writeScrollPosition(target, scrollPosition) {
         target.scrollTop = scrollPosition;
     }
+    updateOptions(options) {
+        this.updateScrollbarSize(options.vertical === 2 /* Hidden */ ? 0 : options.verticalScrollbarSize);
+        // give priority to vertical scroll bar over horizontal and let it scroll all the way to the bottom
+        this._scrollbarState.setOppositeScrollbarSize(0);
+        this._visibilityController.setVisibility(options.vertical);
+        this._scrollByPage = options.scrollByPage;
+    }
 }

@@ -11,15 +11,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { localize } from '../../../nls.js';
-import { Emitter } from '../../../base/common/event.js';
-import { basename, extUri } from '../../../base/common/resources.js';
-import { dispose } from '../../../base/common/lifecycle.js';
-import * as strings from '../../../base/common/strings.js';
-import { defaultGenerator } from '../../../base/common/idGenerator.js';
-import { Range } from '../../common/core/range.js';
-import { ResourceMap } from '../../../base/common/map.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
+import { Emitter } from '../../../base/common/event.js';
+import { defaultGenerator } from '../../../base/common/idGenerator.js';
+import { dispose } from '../../../base/common/lifecycle.js';
+import { ResourceMap } from '../../../base/common/map.js';
+import { basename, extUri } from '../../../base/common/resources.js';
+import * as strings from '../../../base/common/strings.js';
+import { Range } from '../../common/core/range.js';
+import { localize } from '../../../nls.js';
 export class OneReference {
     constructor(isProviderFirst, parent, link, _rangeCallback) {
         this.isProviderFirst = isProviderFirst;

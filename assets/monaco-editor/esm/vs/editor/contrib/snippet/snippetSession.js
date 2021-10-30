@@ -10,13 +10,12 @@ import { EditOperation } from '../../common/core/editOperation.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
-import { IWorkspaceContextService } from '../../../platform/workspace/common/workspace.js';
-import { optional } from '../../../platform/instantiation/common/instantiation.js';
-import { Choice, Placeholder, SnippetParser, Text } from './snippetParser.js';
-import { ClipboardBasedVariableResolver, CompositeSnippetVariableResolver, ModelBasedVariableResolver, SelectionBasedVariableResolver, TimeBasedVariableResolver, CommentBasedVariableResolver, WorkspaceBasedVariableResolver, RandomBasedVariableResolver } from './snippetVariables.js';
-import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import * as colors from '../../../platform/theme/common/colorRegistry.js';
 import { ILabelService } from '../../../platform/label/common/label.js';
+import * as colors from '../../../platform/theme/common/colorRegistry.js';
+import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
+import { IWorkspaceContextService } from '../../../platform/workspace/common/workspace.js';
+import { Choice, Placeholder, SnippetParser, Text } from './snippetParser.js';
+import { ClipboardBasedVariableResolver, CommentBasedVariableResolver, CompositeSnippetVariableResolver, ModelBasedVariableResolver, RandomBasedVariableResolver, SelectionBasedVariableResolver, TimeBasedVariableResolver, WorkspaceBasedVariableResolver } from './snippetVariables.js';
 registerThemingParticipant((theme, collector) => {
     function getColorGraceful(name) {
         const color = theme.getColor(name);
@@ -235,10 +234,10 @@ export class OneSnippet {
     }
 }
 OneSnippet._decor = {
-    active: ModelDecorationOptions.register({ stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),
-    inactive: ModelDecorationOptions.register({ stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),
-    activeFinal: ModelDecorationOptions.register({ stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),
-    inactiveFinal: ModelDecorationOptions.register({ stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),
+    active: ModelDecorationOptions.register({ description: 'snippet-placeholder-1', stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),
+    inactive: ModelDecorationOptions.register({ description: 'snippet-placeholder-2', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'snippet-placeholder' }),
+    activeFinal: ModelDecorationOptions.register({ description: 'snippet-placeholder-3', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),
+    inactiveFinal: ModelDecorationOptions.register({ description: 'snippet-placeholder-4', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */, className: 'finish-snippet-placeholder' }),
 };
 const _defaultOptions = {
     overwriteBefore: 0,
@@ -321,8 +320,8 @@ export class SnippetSession {
             return { edits, snippets };
         }
         const model = editor.getModel();
-        const workspaceService = editor.invokeWithinContext(accessor => accessor.get(IWorkspaceContextService, optional));
-        const modelBasedVariableResolver = editor.invokeWithinContext(accessor => new ModelBasedVariableResolver(accessor.get(ILabelService, optional), model));
+        const workspaceService = editor.invokeWithinContext(accessor => accessor.get(IWorkspaceContextService));
+        const modelBasedVariableResolver = editor.invokeWithinContext(accessor => new ModelBasedVariableResolver(accessor.get(ILabelService), model));
         const readClipboardText = () => clipboardText;
         let delta = 0;
         // know what text the overwrite[Before|After] extensions
@@ -364,7 +363,7 @@ export class SnippetSession {
             const snippetLineLeadingWhitespace = SnippetSession.adjustWhitespace(model, start, snippet, adjustWhitespace || (idx > 0 && firstLineFirstNonWhitespace !== model.getLineFirstNonWhitespaceColumn(selection.positionLineNumber)), true);
             snippet.resolveVariables(new CompositeSnippetVariableResolver([
                 modelBasedVariableResolver,
-                new ClipboardBasedVariableResolver(readClipboardText, idx, indexedSelections.length, editor.getOption(67 /* multiCursorPaste */) === 'spread'),
+                new ClipboardBasedVariableResolver(readClipboardText, idx, indexedSelections.length, editor.getOption(70 /* multiCursorPaste */) === 'spread'),
                 new SelectionBasedVariableResolver(model, selection, idx, overtypingCapturer),
                 new CommentBasedVariableResolver(model, selection),
                 new TimeBasedVariableResolver,

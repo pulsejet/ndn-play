@@ -95,7 +95,12 @@ define('vs/basic-languages/java/java',["require", "exports"], function (require,
             'super',
             'while',
             'true',
-            'false'
+            'false',
+            'yield',
+            'record',
+            'sealed',
+            'non-sealed',
+            'permits'
         ],
         operators: [
             '=',
@@ -146,6 +151,8 @@ define('vs/basic-languages/java/java',["require", "exports"], function (require,
         // The main tokenizer for our languages
         tokenizer: {
             root: [
+                // Special keyword with a dash
+                ['non-sealed', 'keyword.non-sealed'],
                 // identifiers and keywords
                 [
                     /[a-zA-Z_$][\w$]*/,
@@ -184,6 +191,7 @@ define('vs/basic-languages/java/java',["require", "exports"], function (require,
                 [/[;,.]/, 'delimiter'],
                 // strings
                 [/"([^"\\]|\\.)*$/, 'string.invalid'],
+                [/"""/, 'string', '@multistring'],
                 [/"/, 'string', '@string'],
                 // characters
                 [/'[^\\']'/, 'string'],
@@ -216,6 +224,13 @@ define('vs/basic-languages/java/java',["require", "exports"], function (require,
                 [/@escapes/, 'string.escape'],
                 [/\\./, 'string.escape.invalid'],
                 [/"/, 'string', '@pop']
+            ],
+            multistring: [
+                [/[^\\"]+/, 'string'],
+                [/@escapes/, 'string.escape'],
+                [/\\./, 'string.escape.invalid'],
+                [/"""/, 'string', '@pop'],
+                [/./, 'string']
             ]
         }
     };

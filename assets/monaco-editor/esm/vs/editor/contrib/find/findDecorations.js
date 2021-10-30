@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { Range } from '../../common/core/range.js';
-import { OverviewRulerLane, MinimapPosition } from '../../common/model.js';
+import { MinimapPosition, OverviewRulerLane } from '../../common/model.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
-import { overviewRulerFindMatchForeground, minimapFindMatch } from '../../../platform/theme/common/colorRegistry.js';
+import { minimapFindMatch, overviewRulerFindMatchForeground } from '../../../platform/theme/common/colorRegistry.js';
 import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 export class FindDecorations {
     constructor(editor) {
@@ -233,6 +233,7 @@ export class FindDecorations {
     }
 }
 FindDecorations._CURRENT_FIND_MATCH_DECORATION = ModelDecorationOptions.register({
+    description: 'current-find-match',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     zIndex: 13,
     className: 'currentFindMatch',
@@ -247,7 +248,9 @@ FindDecorations._CURRENT_FIND_MATCH_DECORATION = ModelDecorationOptions.register
     }
 });
 FindDecorations._FIND_MATCH_DECORATION = ModelDecorationOptions.register({
+    description: 'find-match',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
+    zIndex: 10,
     className: 'findMatch',
     showIfCollapsed: true,
     overviewRuler: {
@@ -260,11 +263,13 @@ FindDecorations._FIND_MATCH_DECORATION = ModelDecorationOptions.register({
     }
 });
 FindDecorations._FIND_MATCH_NO_OVERVIEW_DECORATION = ModelDecorationOptions.register({
+    description: 'find-match-no-overview',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'findMatch',
     showIfCollapsed: true
 });
 FindDecorations._FIND_MATCH_ONLY_OVERVIEW_DECORATION = ModelDecorationOptions.register({
+    description: 'find-match-only-overview',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     overviewRuler: {
         color: themeColorFromId(overviewRulerFindMatchForeground),
@@ -272,11 +277,13 @@ FindDecorations._FIND_MATCH_ONLY_OVERVIEW_DECORATION = ModelDecorationOptions.re
     }
 });
 FindDecorations._RANGE_HIGHLIGHT_DECORATION = ModelDecorationOptions.register({
+    description: 'find-range-highlight',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'rangeHighlight',
     isWholeLine: true
 });
 FindDecorations._FIND_SCOPE_DECORATION = ModelDecorationOptions.register({
+    description: 'find-scope',
     className: 'findScope',
     isWholeLine: true
 });

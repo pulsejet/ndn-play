@@ -122,6 +122,7 @@ export var language = {
         'shr',
         'specialize',
         'stored',
+        'strict',
         'then',
         'threadvar',
         'to',

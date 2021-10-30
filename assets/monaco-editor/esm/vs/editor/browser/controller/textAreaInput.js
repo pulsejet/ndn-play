@@ -7,6 +7,7 @@ import * as dom from '../../../base/browser/dom.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
+import { Mimes } from '../../../base/common/mime.js';
 import * as platform from '../../../base/common/platform.js';
 import * as strings from '../../../base/common/strings.js';
 import { TextAreaState, _debugComposition } from './textAreaState.js';
@@ -476,15 +477,12 @@ class ClipboardEventUtils {
         if (e.clipboardData) {
             return true;
         }
-        if (window.clipboardData) {
-            return true;
-        }
         return false;
     }
     static getTextData(e) {
         if (e.clipboardData) {
             e.preventDefault();
-            const text = e.clipboardData.getData('text/plain');
+            const text = e.clipboardData.getData(Mimes.text);
             let metadata = null;
             const rawmetadata = e.clipboardData.getData('vscode-editor-data');
             if (typeof rawmetadata === 'string') {
@@ -500,25 +498,15 @@ class ClipboardEventUtils {
             }
             return [text, metadata];
         }
-        if (window.clipboardData) {
-            e.preventDefault();
-            const text = window.clipboardData.getData('Text');
-            return [text, null];
-        }
         throw new Error('ClipboardEventUtils.getTextData: Cannot use text data!');
     }
     static setTextData(e, text, html, metadata) {
         if (e.clipboardData) {
-            e.clipboardData.setData('text/plain', text);
+            e.clipboardData.setData(Mimes.text, text);
             if (typeof html === 'string') {
                 e.clipboardData.setData('text/html', html);
             }
             e.clipboardData.setData('vscode-editor-data', JSON.stringify(metadata));
-            e.preventDefault();
-            return;
-        }
-        if (window.clipboardData) {
-            window.clipboardData.setData('Text', text);
             e.preventDefault();
             return;
         }

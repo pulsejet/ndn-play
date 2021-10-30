@@ -66,7 +66,9 @@ define('vs/language/html/workerManager',["require", "exports", "./fillers/monaco
                 _client = client;
             })
                 .then(function (_) {
-                return _this._worker.withSyncedResources(resources);
+                if (_this._worker) {
+                    return _this._worker.withSyncedResources(resources);
+                }
             })
                 .then(function (_) { return _client; });
         };
@@ -2325,32 +2327,51 @@ define('vscode-languageserver-textdocument', ['vscode-languageserver-textdocumen
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-html-languageservice/htmlLanguageTypes',["require", "exports", "vscode-languageserver-types", "vscode-languageserver-textdocument", "vscode-languageserver-types"], factory);
+        define('vscode-html-languageservice/htmlLanguageTypes',["require", "exports", "vscode-languageserver-types", "vscode-languageserver-textdocument"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.FileType = exports.ClientCapabilities = exports.ScannerState = exports.TokenType = exports.TextDocument = void 0;
+    exports.FileType = exports.ClientCapabilities = exports.ScannerState = exports.TokenType = exports.ColorPresentation = exports.ColorInformation = exports.Color = exports.FormattingOptions = exports.Diagnostic = exports.FoldingRangeKind = exports.FoldingRange = exports.DocumentLink = exports.DocumentHighlightKind = exports.DocumentHighlight = exports.InsertTextFormat = exports.InsertReplaceEdit = exports.TextEdit = exports.Hover = exports.SymbolKind = exports.SymbolInformation = exports.Command = exports.InsertTextMode = exports.CompletionItemTag = exports.CompletionItem = exports.CompletionItemKind = exports.CompletionList = exports.WorkspaceEdit = exports.SelectionRange = exports.MarkedString = exports.MarkupKind = exports.MarkupContent = exports.Location = exports.Range = exports.Position = exports.TextDocument = void 0;
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
+    Object.defineProperty(exports, "Position", { enumerable: true, get: function () { return vscode_languageserver_types_1.Position; } });
+    Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return vscode_languageserver_types_1.Range; } });
+    Object.defineProperty(exports, "Location", { enumerable: true, get: function () { return vscode_languageserver_types_1.Location; } });
+    Object.defineProperty(exports, "MarkupContent", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupContent; } });
+    Object.defineProperty(exports, "MarkupKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupKind; } });
+    Object.defineProperty(exports, "MarkedString", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkedString; } });
+    Object.defineProperty(exports, "SelectionRange", { enumerable: true, get: function () { return vscode_languageserver_types_1.SelectionRange; } });
+    Object.defineProperty(exports, "WorkspaceEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.WorkspaceEdit; } });
+    Object.defineProperty(exports, "CompletionList", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionList; } });
+    Object.defineProperty(exports, "CompletionItemKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItemKind; } });
+    Object.defineProperty(exports, "CompletionItem", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItem; } });
+    Object.defineProperty(exports, "CompletionItemTag", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItemTag; } });
+    Object.defineProperty(exports, "InsertTextMode", { enumerable: true, get: function () { return vscode_languageserver_types_1.InsertTextMode; } });
+    Object.defineProperty(exports, "Command", { enumerable: true, get: function () { return vscode_languageserver_types_1.Command; } });
+    Object.defineProperty(exports, "SymbolInformation", { enumerable: true, get: function () { return vscode_languageserver_types_1.SymbolInformation; } });
+    Object.defineProperty(exports, "SymbolKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.SymbolKind; } });
+    Object.defineProperty(exports, "Hover", { enumerable: true, get: function () { return vscode_languageserver_types_1.Hover; } });
+    Object.defineProperty(exports, "TextEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.TextEdit; } });
+    Object.defineProperty(exports, "InsertReplaceEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.InsertReplaceEdit; } });
+    Object.defineProperty(exports, "InsertTextFormat", { enumerable: true, get: function () { return vscode_languageserver_types_1.InsertTextFormat; } });
+    Object.defineProperty(exports, "DocumentHighlight", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentHighlight; } });
+    Object.defineProperty(exports, "DocumentHighlightKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentHighlightKind; } });
+    Object.defineProperty(exports, "DocumentLink", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentLink; } });
+    Object.defineProperty(exports, "FoldingRange", { enumerable: true, get: function () { return vscode_languageserver_types_1.FoldingRange; } });
+    Object.defineProperty(exports, "FoldingRangeKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.FoldingRangeKind; } });
+    Object.defineProperty(exports, "Diagnostic", { enumerable: true, get: function () { return vscode_languageserver_types_1.Diagnostic; } });
+    Object.defineProperty(exports, "FormattingOptions", { enumerable: true, get: function () { return vscode_languageserver_types_1.FormattingOptions; } });
+    Object.defineProperty(exports, "Color", { enumerable: true, get: function () { return vscode_languageserver_types_1.Color; } });
+    Object.defineProperty(exports, "ColorInformation", { enumerable: true, get: function () { return vscode_languageserver_types_1.ColorInformation; } });
+    Object.defineProperty(exports, "ColorPresentation", { enumerable: true, get: function () { return vscode_languageserver_types_1.ColorPresentation; } });
     var vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
     Object.defineProperty(exports, "TextDocument", { enumerable: true, get: function () { return vscode_languageserver_textdocument_1.TextDocument; } });
-    __exportStar(require("vscode-languageserver-types"), exports);
     var TokenType;
     (function (TokenType) {
         TokenType[TokenType["StartCommentTag"] = 0] = "StartCommentTag";
@@ -2571,7 +2592,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     var _WSP = ' '.charCodeAt(0);
     var _TAB = '\t'.charCodeAt(0);
     var htmlScriptContents = {
-        'text/x-handlebars-template': true
+        'text/x-handlebars-template': true,
+        // Fix for https://github.com/microsoft/vscode/issues/77977
+        'text/html': true,
     };
     function createScanner(input, initialOffset, initialState, emitPseudoCloseTags) {
         if (initialOffset === void 0) { initialOffset = 0; }
@@ -2981,7 +3004,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
             configurable: true
         });
         Node.prototype.findNodeBefore = function (offset) {
-            var idx = arrays_1.findFirst(this.children, function (c) { return offset <= c.start; }) - 1;
+            var idx = (0, arrays_1.findFirst)(this.children, function (c) { return offset <= c.start; }) - 1;
             if (idx >= 0) {
                 var child = this.children[idx];
                 if (offset > child.start) {
@@ -2998,7 +3021,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
             return this;
         };
         Node.prototype.findNodeAt = function (offset) {
-            var idx = arrays_1.findFirst(this.children, function (c) { return offset <= c.start; }) - 1;
+            var idx = (0, arrays_1.findFirst)(this.children, function (c) { return offset <= c.start; }) - 1;
             if (idx >= 0) {
                 var child = this.children[idx];
                 if (offset > child.start && offset <= child.end) {
@@ -3011,7 +3034,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     }());
     exports.Node = Node;
     function parse(text) {
-        var scanner = htmlScanner_1.createScanner(text, undefined, undefined, true);
+        var scanner = (0, htmlScanner_1.createScanner)(text, undefined, undefined, true);
         var htmlDocument = new Node(0, text.length, [], void 0);
         var curr = htmlDocument;
         var endTagStart = -1;
@@ -3033,7 +3056,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
                         curr.end = scanner.getTokenEnd(); // might be later set to end tag position
                         if (scanner.getTokenLength()) {
                             curr.startTagEnd = scanner.getTokenEnd();
-                            if (curr.tag && fact_1.isVoidElement(curr.tag)) {
+                            if (curr.tag && (0, fact_1.isVoidElement)(curr.tag)) {
                                 curr.closed = true;
                                 curr = curr.parent;
                             }
@@ -5590,10 +5613,9 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
                 });
             };
             var tagEntry = this._tagMap[tag.toLowerCase()];
-            if (!tagEntry) {
-                return [];
+            if (tagEntry) {
+                processAttributes(tagEntry.attributes);
             }
-            processAttributes(tagEntry.attributes);
             processAttributes(this._globalAttributes);
             return values;
         };
@@ -5611,7 +5633,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
             value: ''
         };
         if (item.description && settings.documentation !== false) {
-            var normalizedDescription = markup_1.normalizeMarkupContent(item.description);
+            var normalizedDescription = (0, markup_1.normalizeMarkupContent)(item.description);
             if (normalizedDescription) {
                 result.value += normalizedDescription.value;
             }
@@ -5775,7 +5797,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     exports.PathCompletionParticipant = PathCompletionParticipant;
     var CharCode_dot = '.'.charCodeAt(0);
     function stripQuotes(fullValue) {
-        if (strings_1.startsWith(fullValue, "'") || strings_1.startsWith(fullValue, "\"")) {
+        if ((0, strings_1.startsWith)(fullValue, "'") || (0, strings_1.startsWith)(fullValue, "\"")) {
             return fullValue.slice(1, -1);
         }
         else {
@@ -5783,7 +5805,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         }
     }
     function isCompletablePath(value) {
-        if (strings_1.startsWith(value, 'http') || strings_1.startsWith(value, 'https') || strings_1.startsWith(value, '//')) {
+        if ((0, strings_1.startsWith)(value, 'http') || (0, strings_1.startsWith)(value, 'https') || (0, strings_1.startsWith)(value, '//')) {
             return false;
         }
         return true;
@@ -6001,7 +6023,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             if (!node) {
                 return result;
             }
-            var scanner = htmlScanner_1.createScanner(text, node.start);
+            var scanner = (0, htmlScanner_1.createScanner)(text, node.start);
             var currentTag = '';
             var currentAttributeName;
             function getReplaceRange(replaceStart, replaceEnd) {
@@ -6018,7 +6040,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         result.items.push({
                             label: tag.name,
                             kind: htmlLanguageTypes_1.CompletionItemKind.Property,
-                            documentation: dataProvider_1.generateDocumentation(tag, undefined, doesSupportMarkdown),
+                            documentation: (0, dataProvider_1.generateDocumentation)(tag, undefined, doesSupportMarkdown),
                             textEdit: htmlLanguageTypes_1.TextEdit.replace(range, tag.name),
                             insertTextFormat: htmlLanguageTypes_1.InsertTextFormat.PlainText
                         });
@@ -6078,7 +6100,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         result.items.push({
                             label: '/' + tag.name,
                             kind: htmlLanguageTypes_1.CompletionItemKind.Property,
-                            documentation: dataProvider_1.generateDocumentation(tag, undefined, doesSupportMarkdown),
+                            documentation: (0, dataProvider_1.generateDocumentation)(tag, undefined, doesSupportMarkdown),
                             filterText: '/' + tag.name + closeTag,
                             textEdit: htmlLanguageTypes_1.TextEdit.replace(range, '/' + tag.name + closeTag),
                             insertTextFormat: htmlLanguageTypes_1.InsertTextFormat.PlainText
@@ -6091,7 +6113,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 if (settings && settings.hideAutoCompleteProposals) {
                     return result;
                 }
-                if (!fact_1.isVoidElement(tag)) {
+                if (!(0, fact_1.isVoidElement)(tag)) {
                     var pos = document.positionAt(tagCloseEnd);
                     result.items.push({
                         label: '</' + tag + '>',
@@ -6108,15 +6130,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 collectCloseTagSuggestions(tagStart, true, tagEnd);
                 return result;
             }
+            function getExistingAttributes() {
+                var existingAttributes = Object.create(null);
+                node.attributeNames.forEach(function (attribute) {
+                    existingAttributes[attribute] = true;
+                });
+                return existingAttributes;
+            }
             function collectAttributeNameSuggestions(nameStart, nameEnd) {
                 if (nameEnd === void 0) { nameEnd = offset; }
                 var replaceEnd = offset;
                 while (replaceEnd < nameEnd && text[replaceEnd] !== '<') { // < is a valid attribute name character, but we rather assume the attribute name ends. See #23236.
                     replaceEnd++;
                 }
+                var currentAttribute = text.substring(nameStart, nameEnd);
                 var range = getReplaceRange(nameStart, replaceEnd);
                 var value = isFollowedBy(text, nameEnd, htmlLanguageTypes_1.ScannerState.AfterAttributeName, htmlLanguageTypes_1.TokenType.DelimiterAssign) ? '' : '="$1"';
-                var seenAttributes = Object.create(null);
+                var seenAttributes = getExistingAttributes();
+                // include current typing attribute
+                seenAttributes[currentAttribute] = false;
                 dataProviders.forEach(function (provider) {
                     provider.provideAttributes(currentTag).forEach(function (attr) {
                         if (seenAttributes[attr.name]) {
@@ -6137,7 +6169,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                         result.items.push({
                             label: attr.name,
                             kind: attr.valueSet === 'handler' ? htmlLanguageTypes_1.CompletionItemKind.Function : htmlLanguageTypes_1.CompletionItemKind.Value,
-                            documentation: dataProvider_1.generateDocumentation(attr, undefined, doesSupportMarkdown),
+                            documentation: (0, dataProvider_1.generateDocumentation)(attr, undefined, doesSupportMarkdown),
                             textEdit: htmlLanguageTypes_1.TextEdit.replace(range, codeSnippet),
                             insertTextFormat: htmlLanguageTypes_1.InsertTextFormat.Snippet,
                             command: command
@@ -6153,7 +6185,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 dataAttributes[dataAttr] = dataAttr + "$1=\"$2\"";
                 function addNodeDataAttributes(node) {
                     node.attributeNames.forEach(function (attr) {
-                        if (strings_1.startsWith(attr, dataAttr) && !dataAttributes[attr] && !seenAttributes[attr]) {
+                        if ((0, strings_1.startsWith)(attr, dataAttr) && !dataAttributes[attr] && !seenAttributes[attr]) {
                             dataAttributes[attr] = attr + '="$1"';
                         }
                     });
@@ -6211,7 +6243,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                             label: value.name,
                             filterText: insertText,
                             kind: htmlLanguageTypes_1.CompletionItemKind.Unit,
-                            documentation: dataProvider_1.generateDocumentation(value, undefined, doesSupportMarkdown),
+                            documentation: (0, dataProvider_1.generateDocumentation)(value, undefined, doesSupportMarkdown),
                             textEdit: htmlLanguageTypes_1.TextEdit.replace(range, insertText),
                             insertTextFormat: htmlLanguageTypes_1.InsertTextFormat.PlainText
                         });
@@ -6242,14 +6274,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 // character entities
                 var k = offset - 1;
                 var characterStart = position.character;
-                while (k >= 0 && strings_1.isLetterOrDigit(text, k)) {
+                while (k >= 0 && (0, strings_1.isLetterOrDigit)(text, k)) {
                     k--;
                     characterStart--;
                 }
                 if (k >= 0 && text[k] === '&') {
                     var range = htmlLanguageTypes_1.Range.create(htmlLanguageTypes_1.Position.create(position.line, characterStart - 1), position);
                     for (var entity in htmlEntities_1.entities) {
-                        if (strings_1.endsWith(entity, ';')) {
+                        if ((0, strings_1.endsWith)(entity, ';')) {
                             var label = '&' + entity;
                             result.items.push({
                                 label: label,
@@ -6379,8 +6411,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             var char = document.getText().charAt(offset - 1);
             if (char === '>') {
                 var node = htmlDocument.findNodeBefore(offset);
-                if (node && node.tag && !fact_1.isVoidElement(node.tag) && node.start < offset && (!node.endTagStart || node.endTagStart > offset)) {
-                    var scanner = htmlScanner_1.createScanner(document.getText(), node.start);
+                if (node && node.tag && !(0, fact_1.isVoidElement)(node.tag) && node.start < offset && (!node.endTagStart || node.endTagStart > offset)) {
+                    var scanner = (0, htmlScanner_1.createScanner)(document.getText(), node.start);
                     var token = scanner.scan();
                     while (token !== htmlLanguageTypes_1.TokenType.EOS && scanner.getTokenEnd() <= offset) {
                         if (token === htmlLanguageTypes_1.TokenType.StartTagClose && scanner.getTokenEnd() === offset) {
@@ -6392,11 +6424,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             }
             else if (char === '/') {
                 var node = htmlDocument.findNodeBefore(offset);
-                while (node && node.closed) {
+                while (node && node.closed && !(node.endTagStart && (node.endTagStart > offset))) {
                     node = node.parent;
                 }
                 if (node && node.tag) {
-                    var scanner = htmlScanner_1.createScanner(document.getText(), node.start);
+                    var scanner = (0, htmlScanner_1.createScanner)(document.getText(), node.start);
                     var token = scanner.scan();
                     while (token !== htmlLanguageTypes_1.TokenType.EOS && scanner.getTokenEnd() <= offset) {
                         if (token === htmlLanguageTypes_1.TokenType.EndTagOpen && scanner.getTokenEnd() === offset) {
@@ -6423,8 +6455,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         };
         HTMLCompletion.prototype.doesSupportMarkdown = function () {
             var _a, _b, _c;
-            if (!object_1.isDefined(this.supportsMarkdown)) {
-                if (!object_1.isDefined(this.lsOptions.clientCapabilities)) {
+            if (!(0, object_1.isDefined)(this.supportsMarkdown)) {
+                if (!(0, object_1.isDefined)(this.lsOptions.clientCapabilities)) {
                     this.supportsMarkdown = true;
                     return this.supportsMarkdown;
                 }
@@ -6443,7 +6475,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         return /^\s*$/.test(s);
     }
     function isFollowedBy(s, offset, intialState, expectedToken) {
-        var scanner = htmlScanner_1.createScanner(s, offset, intialState);
+        var scanner = (0, htmlScanner_1.createScanner)(s, offset, intialState);
         var token = scanner.scan();
         while (token === htmlLanguageTypes_1.TokenType.Whitespace) {
             token = scanner.scan();
@@ -6508,7 +6540,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     var hover = null;
                     provider.provideTags().forEach(function (tag) {
                         if (tag.name.toLowerCase() === currTag.toLowerCase()) {
-                            var markupContent = dataProvider_1.generateDocumentation(tag, options, doesSupportMarkdown);
+                            var markupContent = (0, dataProvider_1.generateDocumentation)(tag, options, doesSupportMarkdown);
                             if (!markupContent) {
                                 markupContent = {
                                     kind: doesSupportMarkdown ? 'markdown' : 'plaintext',
@@ -6536,7 +6568,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     var hover = null;
                     provider.provideAttributes(currTag).forEach(function (attr) {
                         if (currAttr === attr.name && attr.description) {
-                            var contentsDoc = dataProvider_1.generateDocumentation(attr, options, doesSupportMarkdown);
+                            var contentsDoc = (0, dataProvider_1.generateDocumentation)(attr, options, doesSupportMarkdown);
                             if (contentsDoc) {
                                 hover = { contents: contentsDoc, range: range };
                             }
@@ -6563,7 +6595,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     var hover = null;
                     provider.provideValues(currTag, currAttr).forEach(function (attrValue) {
                         if (currAttrValue === attrValue.name && attrValue.description) {
-                            var contentsDoc = dataProvider_1.generateDocumentation(attrValue, options, doesSupportMarkdown);
+                            var contentsDoc = (0, dataProvider_1.generateDocumentation)(attrValue, options, doesSupportMarkdown);
                             if (contentsDoc) {
                                 hover = { contents: contentsDoc, range: range };
                             }
@@ -6618,7 +6650,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 return null;
             }
             function getTagNameRange(tokenType, startOffset) {
-                var scanner = htmlScanner_1.createScanner(document.getText(), startOffset);
+                var scanner = (0, htmlScanner_1.createScanner)(document.getText(), startOffset);
                 var token = scanner.scan();
                 while (token !== htmlLanguageTypes_1.TokenType.EOS && (scanner.getTokenEnd() < offset || scanner.getTokenEnd() === offset && token !== tokenType)) {
                     token = scanner.scan();
@@ -6631,13 +6663,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             function getEntityRange() {
                 var k = offset - 1;
                 var characterStart = position.character;
-                while (k >= 0 && strings_1.isLetterOrDigit(text, k)) {
+                while (k >= 0 && (0, strings_1.isLetterOrDigit)(text, k)) {
                     k--;
                     characterStart--;
                 }
                 var n = k + 1;
                 var characterEnd = characterStart;
-                while (strings_1.isLetterOrDigit(text, n)) {
+                while ((0, strings_1.isLetterOrDigit)(text, n)) {
                     n++;
                     characterEnd++;
                 }
@@ -6656,11 +6688,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
             function filterEntity(text) {
                 var k = offset - 1;
                 var newText = '&';
-                while (k >= 0 && strings_1.isLetterOrDigit(text, k)) {
+                while (k >= 0 && (0, strings_1.isLetterOrDigit)(text, k)) {
                     k--;
                 }
                 k = k + 1;
-                while (strings_1.isLetterOrDigit(text, k)) {
+                while ((0, strings_1.isLetterOrDigit)(text, k)) {
                     newText += text[k];
                     k += 1;
                 }
@@ -6689,7 +6721,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                 return getEntityHover(text, entityRange);
             }
             function scanAttrAndAttrValue(nodeStart, attrValueStart) {
-                var scanner = htmlScanner_1.createScanner(document.getText(), nodeStart);
+                var scanner = (0, htmlScanner_1.createScanner)(document.getText(), nodeStart);
                 var token = scanner.scan();
                 var prevAttr = undefined;
                 while (token !== htmlLanguageTypes_1.TokenType.EOS && (scanner.getTokenEnd() <= attrValueStart)) {
@@ -6738,8 +6770,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         };
         HTMLHover.prototype.doesSupportMarkdown = function () {
             var _a, _b, _c;
-            if (!object_1.isDefined(this.supportsMarkdown)) {
-                if (!object_1.isDefined(this.lsOptions.clientCapabilities)) {
+            if (!(0, object_1.isDefined)(this.supportsMarkdown)) {
+                if (!(0, object_1.isDefined)(this.lsOptions.clientCapabilities)) {
                     this.supportsMarkdown = true;
                     return this.supportsMarkdown;
                 }
@@ -6792,7 +6824,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 });
 
 // copied from js-beautify/js/lib/beautify-css.js
-// version: 1.13.4
+// version: 1.14.0
 /* AUTO-GENERATED. DO NOT MODIFY. */
 /*
 
@@ -6860,99 +6892,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 (function() {
 
 /* GENERATED_BUILD_OUTPUT */
-var legacy_beautify_css =
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
-/******/ })
-/************************************************************************/
-/******/ ([
+var legacy_beautify_css;
+/******/ (function() { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ([
 /* 0 */,
 /* 1 */,
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -7380,8 +7327,7 @@ module.exports.Output = Output;
 /* 4 */,
 /* 5 */,
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -7581,8 +7527,7 @@ module.exports.mergeOpts = _mergeOpts;
 /***/ }),
 /* 7 */,
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -7784,8 +7729,7 @@ module.exports.InputScanner = InputScanner;
 /* 11 */,
 /* 12 */,
 /* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -7854,8 +7798,7 @@ module.exports.Directives = Directives;
 /***/ }),
 /* 14 */,
 /* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -7903,8 +7846,7 @@ module.exports.defaultOptions = function() {
 
 /***/ }),
 /* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -8341,7 +8283,7 @@ Beautifier.prototype.beautify = function() {
     } else if (this._ch === ',') {
       this.print_string(this._ch);
       this.eatWhitespace(true);
-      if (this._options.selector_separator_newline && !insidePropertyValue && parenLevel === 0 && !insideAtImport) {
+      if (this._options.selector_separator_newline && !insidePropertyValue && parenLevel === 0 && !insideAtImport && !insideAtExtend) {
         this._output.add_new_line();
       } else {
         this._output.space_before_token = true;
@@ -8390,8 +8332,7 @@ module.exports.Beautifier = Beautifier;
 
 /***/ }),
 /* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -8452,7 +8393,42 @@ module.exports.Options = Options;
 
 
 /***/ })
-/******/ ]);
+/******/ 	]);
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__(15);
+/******/ 	legacy_beautify_css = __webpack_exports__;
+/******/ 	
+/******/ })()
+;
 var css_beautify = legacy_beautify_css;
 /* Footer */
 if (typeof define === "function" && define.amd) {
@@ -8477,7 +8453,7 @@ if (typeof define === "function" && define.amd) {
 }());
 
 // copied from js-beautify/js/lib/beautify-html.js
-// version: 1.13.4
+// version: 1.14.0
 /* AUTO-GENERATED. DO NOT MODIFY. */
 /*
 
@@ -8555,99 +8531,14 @@ if (typeof define === "function" && define.amd) {
 (function() {
 
 /* GENERATED_BUILD_OUTPUT */
-var legacy_beautify_html =
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 18);
-/******/ })
-/************************************************************************/
-/******/ ([
+var legacy_beautify_html;
+/******/ (function() { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ([
 /* 0 */,
 /* 1 */,
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9072,8 +8963,7 @@ module.exports.Output = Output;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9135,8 +9025,7 @@ module.exports.Token = Token;
 /* 4 */,
 /* 5 */,
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9336,8 +9225,7 @@ module.exports.mergeOpts = _mergeOpts;
 /***/ }),
 /* 7 */,
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9535,8 +9423,7 @@ module.exports.InputScanner = InputScanner;
 
 /***/ }),
 /* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -9682,8 +9569,7 @@ module.exports.TOKEN = TOKEN;
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9767,8 +9653,7 @@ module.exports.TokenStream = TokenStream;
 
 /***/ }),
 /* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -9879,8 +9764,7 @@ module.exports.WhitespacePattern = WhitespacePattern;
 
 /***/ }),
 /* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -9980,8 +9864,7 @@ module.exports.Pattern = Pattern;
 
 /***/ }),
 /* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module) {
 
 /*jshint node:true */
 /*
@@ -10049,8 +9932,7 @@ module.exports.Directives = Directives;
 
 /***/ }),
 /* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -10111,7 +9993,7 @@ function TemplatablePattern(input_scanner, parent) {
     handlebars_comment: pattern.starting_with(/{{!--/).until_after(/--}}/),
     handlebars_unescaped: pattern.starting_with(/{{{/).until_after(/}}}/),
     handlebars: pattern.starting_with(/{{/).until_after(/}}/),
-    php: pattern.starting_with(/<\?(?:[=]|php)/).until_after(/\?>/),
+    php: pattern.starting_with(/<\?(?:[= ]|php)/).until_after(/\?>/),
     erb: pattern.starting_with(/<%[^%]/).until_after(/[^%]%>/),
     // django coflicts with handlebars a bit.
     django: pattern.starting_with(/{%/).until_after(/%}/),
@@ -10270,8 +10152,7 @@ module.exports.TemplatablePattern = TemplatablePattern;
 /* 16 */,
 /* 17 */,
 /* 18 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -10319,8 +10200,7 @@ module.exports.defaultOptions = function() {
 
 /***/ }),
 /* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -11191,8 +11071,7 @@ module.exports.Beautifier = Beautifier;
 
 /***/ }),
 /* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -11289,8 +11168,7 @@ module.exports.Options = Options;
 
 /***/ }),
 /* 21 */
-/***/ (function(module, exports, __webpack_require__) {
-
+/***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 /*jshint node:true */
 /*
@@ -11627,7 +11505,42 @@ module.exports.TOKEN = TOKEN;
 
 
 /***/ })
-/******/ ]);
+/******/ 	]);
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __webpack_require__(18);
+/******/ 	legacy_beautify_html = __webpack_exports__;
+/******/ 	
+/******/ })()
+;
 var style_html = legacy_beautify_html;
 /* Footer */
 if (typeof define === "function" && define.amd) {
@@ -11756,9 +11669,9 @@ if (typeof define === "function" && define.amd) {
             templating: getTemplatingFormatOption(options, 'all'),
             unformatted_content_delimiter: getFormatOption(options, 'unformattedContentDelimiter', ''),
         };
-        var result = beautify_html_1.html_beautify(trimLeft(value), htmlOptions);
+        var result = (0, beautify_html_1.html_beautify)(trimLeft(value), htmlOptions);
         if (initialIndentLevel > 0) {
-            var indent = options.insertSpaces ? strings_1.repeat(' ', tabSize * initialIndentLevel) : strings_1.repeat('\t', initialIndentLevel);
+            var indent = options.insertSpaces ? (0, strings_1.repeat)(' ', tabSize * initialIndentLevel) : (0, strings_1.repeat)('\t', initialIndentLevel);
             result = result.split('\n').join('\n' + indent);
             if (range.start.character === 0) {
                 result = indent + result; // keep the indent
@@ -11930,7 +11843,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
     }
     function findDocumentLinks(document, documentContext) {
         var newLinks = [];
-        var scanner = htmlScanner_1.createScanner(document.getText(), 0);
+        var scanner = (0, htmlScanner_1.createScanner)(document.getText(), 0);
         var token = scanner.scan();
         var lastAttributeName = undefined;
         var afterBase = false;
@@ -12036,7 +11949,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
         return isBeforeOrEqual(range.start, position) && isBeforeOrEqual(position, range.end);
     }
     function getTagNameRange(tokenType, document, startOffset) {
-        var scanner = htmlScanner_1.createScanner(document.getText(), startOffset);
+        var scanner = (0, htmlScanner_1.createScanner)(document.getText(), startOffset);
         var token = scanner.scan();
         while (token !== htmlLanguageTypes_1.TokenType.EOS && token !== tokenType) {
             token = scanner.scan();
@@ -12339,7 +12252,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
         return result;
     }
     function getFoldingRanges(document, context) {
-        var scanner = htmlScanner_1.createScanner(document.getText());
+        var scanner = (0, htmlScanner_1.createScanner)(document.getText());
         var token = scanner.scan();
         var ranges = [];
         var stack = [];
@@ -12363,7 +12276,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                     break;
                 }
                 case htmlLanguageTypes_1.TokenType.StartTagClose:
-                    if (!lastTagName || !fact_1.isVoidElement(lastTagName)) {
+                    if (!lastTagName || !(0, fact_1.isVoidElement)(lastTagName)) {
                         break;
                     }
                 // fallthrough
@@ -12469,7 +12382,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
     }
     exports.getSelectionRanges = getSelectionRanges;
     function getApplicableRanges(document, position) {
-        var htmlDoc = htmlParser_1.parse(document.getText());
+        var htmlDoc = (0, htmlParser_1.parse)(document.getText());
         var currOffset = document.offsetAt(position);
         var currNode = htmlDoc.findNodeAt(currOffset);
         var result = getAllParentTagRanges(currNode);
@@ -12555,7 +12468,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
         /**
          * Tag level semantic selection
          */
-        var scanner = htmlScanner_1.createScanner(currNodeText);
+        var scanner = (0, htmlScanner_1.createScanner)(currNodeText);
         var token = scanner.scan();
         /**
          * For text like
@@ -16603,6 +16516,14 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                 }
             },
             {
+                "name": "onmouseenter",
+                "description": "A pointing device is moved onto the element that has the listener attached."
+            },
+            {
+                "name": "onmouseleave",
+                "description": "A pointing device is moved off the element that has the listener attached."
+            },
+            {
                 "name": "onmouseup",
                 "description": {
                     "kind": "markdown",
@@ -16632,6 +16553,46 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                     "kind": "markdown",
                     "value": "Playback is ready to start after having been paused or delayed due to lack of data."
                 }
+            },
+            {
+                "name": "onpointercancel",
+                "description": "The pointer is unlikely to produce any more events."
+            },
+            {
+                "name": "onpointerdown",
+                "description": "The pointer enters the active buttons state."
+            },
+            {
+                "name": "onpointerenter",
+                "description": "Pointing device is moved inside the hit-testing boundary."
+            },
+            {
+                "name": "onpointerleave",
+                "description": "Pointing device is moved out of the hit-testing boundary."
+            },
+            {
+                "name": "onpointerlockchange",
+                "description": "The pointer was locked or released."
+            },
+            {
+                "name": "onpointerlockerror",
+                "description": "It was impossible to lock the pointer for technical reasons or because the permission was denied."
+            },
+            {
+                "name": "onpointermove",
+                "description": "The pointer changed coordinates."
+            },
+            {
+                "name": "onpointerout",
+                "description": "The pointing device moved out of hit-testing boundary or leaves detectable hover range."
+            },
+            {
+                "name": "onpointerover",
+                "description": "The pointing device is moved into the hit-testing boundary."
+            },
+            {
+                "name": "onpointerup",
+                "description": "The pointer leaves the active buttons state."
             },
             {
                 "name": "onprogress",
@@ -18680,7 +18641,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
         return {
             setDataProviders: dataManager.setDataProviders.bind(dataManager),
             createScanner: htmlScanner_1.createScanner,
-            parseHTMLDocument: function (document) { return htmlParser_1.parse(document.getText()); },
+            parseHTMLDocument: function (document) { return (0, htmlParser_1.parse)(document.getText()); },
             doComplete: htmlCompletion.doComplete.bind(htmlCompletion),
             doComplete2: htmlCompletion.doComplete2.bind(htmlCompletion),
             setCompletionParticipants: htmlCompletion.setCompletionParticipants.bind(htmlCompletion),
@@ -18718,110 +18679,7 @@ define('vscode-html-languageservice', ['vscode-html-languageservice/htmlLanguage
 define('vs/language/html/languageFeatures',["require", "exports", "vscode-html-languageservice", "./fillers/monaco-editor-core"], function (require, exports, htmlService, monaco_editor_core_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.SelectionRangeAdapter = exports.FoldingRangeAdapter = exports.RenameAdapter = exports.DocumentRangeFormattingEditProvider = exports.DocumentFormattingEditProvider = exports.DocumentLinkAdapter = exports.DocumentSymbolAdapter = exports.DocumentHighlightAdapter = exports.HoverAdapter = exports.CompletionAdapter = exports.DiagnosticsAdapter = void 0;
-    // --- diagnostics --- ---
-    var DiagnosticsAdapter = /** @class */ (function () {
-        function DiagnosticsAdapter(_languageId, _worker, defaults) {
-            var _this = this;
-            this._languageId = _languageId;
-            this._worker = _worker;
-            this._disposables = [];
-            this._listener = Object.create(null);
-            var onModelAdd = function (model) {
-                var modeId = model.getModeId();
-                if (modeId !== _this._languageId) {
-                    return;
-                }
-                var handle;
-                _this._listener[model.uri.toString()] = model.onDidChangeContent(function () {
-                    clearTimeout(handle);
-                    handle = setTimeout(function () { return _this._doValidate(model.uri, modeId); }, 500);
-                });
-                _this._doValidate(model.uri, modeId);
-            };
-            var onModelRemoved = function (model) {
-                monaco_editor_core_1.editor.setModelMarkers(model, _this._languageId, []);
-                var uriStr = model.uri.toString();
-                var listener = _this._listener[uriStr];
-                if (listener) {
-                    listener.dispose();
-                    delete _this._listener[uriStr];
-                }
-            };
-            this._disposables.push(monaco_editor_core_1.editor.onDidCreateModel(onModelAdd));
-            this._disposables.push(monaco_editor_core_1.editor.onWillDisposeModel(function (model) {
-                onModelRemoved(model);
-            }));
-            this._disposables.push(monaco_editor_core_1.editor.onDidChangeModelLanguage(function (event) {
-                onModelRemoved(event.model);
-                onModelAdd(event.model);
-            }));
-            this._disposables.push(defaults.onDidChange(function (_) {
-                monaco_editor_core_1.editor.getModels().forEach(function (model) {
-                    if (model.getModeId() === _this._languageId) {
-                        onModelRemoved(model);
-                        onModelAdd(model);
-                    }
-                });
-            }));
-            this._disposables.push({
-                dispose: function () {
-                    for (var key in _this._listener) {
-                        _this._listener[key].dispose();
-                    }
-                }
-            });
-            monaco_editor_core_1.editor.getModels().forEach(onModelAdd);
-        }
-        DiagnosticsAdapter.prototype.dispose = function () {
-            this._disposables.forEach(function (d) { return d && d.dispose(); });
-            this._disposables = [];
-        };
-        DiagnosticsAdapter.prototype._doValidate = function (resource, languageId) {
-            this._worker(resource)
-                .then(function (worker) {
-                return worker.doValidation(resource.toString()).then(function (diagnostics) {
-                    var markers = diagnostics.map(function (d) { return toDiagnostics(resource, d); });
-                    var model = monaco_editor_core_1.editor.getModel(resource);
-                    if (model && model.getModeId() === languageId) {
-                        monaco_editor_core_1.editor.setModelMarkers(model, languageId, markers);
-                    }
-                });
-            })
-                .then(undefined, function (err) {
-                console.error(err);
-            });
-        };
-        return DiagnosticsAdapter;
-    }());
-    exports.DiagnosticsAdapter = DiagnosticsAdapter;
-    function toSeverity(lsSeverity) {
-        switch (lsSeverity) {
-            case htmlService.DiagnosticSeverity.Error:
-                return monaco_editor_core_1.MarkerSeverity.Error;
-            case htmlService.DiagnosticSeverity.Warning:
-                return monaco_editor_core_1.MarkerSeverity.Warning;
-            case htmlService.DiagnosticSeverity.Information:
-                return monaco_editor_core_1.MarkerSeverity.Info;
-            case htmlService.DiagnosticSeverity.Hint:
-                return monaco_editor_core_1.MarkerSeverity.Hint;
-            default:
-                return monaco_editor_core_1.MarkerSeverity.Info;
-        }
-    }
-    function toDiagnostics(resource, diag) {
-        var code = typeof diag.code === 'number' ? String(diag.code) : diag.code;
-        return {
-            severity: toSeverity(diag.severity),
-            startLineNumber: diag.range.start.line + 1,
-            startColumn: diag.range.start.character + 1,
-            endLineNumber: diag.range.end.line + 1,
-            endColumn: diag.range.end.character + 1,
-            message: diag.message,
-            code: code,
-            source: diag.source
-        };
-    }
+    exports.SelectionRangeAdapter = exports.FoldingRangeAdapter = exports.RenameAdapter = exports.DocumentRangeFormattingEditProvider = exports.DocumentFormattingEditProvider = exports.DocumentLinkAdapter = exports.DocumentSymbolAdapter = exports.DocumentHighlightAdapter = exports.HoverAdapter = exports.CompletionAdapter = void 0;
     // --- completion ------
     function fromPosition(position) {
         if (!position) {
@@ -18941,6 +18799,9 @@ define('vs/language/html/languageFeatures',["require", "exports", "vscode-html-l
             text: textEdit.newText
         };
     }
+    function toCommand(c) {
+        return c && c.command === 'editor.action.triggerSuggest' ? { id: c.command, title: c.title, arguments: c.arguments } : undefined;
+    }
     var CompletionAdapter = /** @class */ (function () {
         function CompletionAdapter(_worker) {
             this._worker = _worker;
@@ -18971,6 +18832,7 @@ define('vs/language/html/languageFeatures',["require", "exports", "vscode-html-l
                         sortText: entry.sortText,
                         filterText: entry.filterText,
                         documentation: entry.documentation,
+                        command: toCommand(entry.command),
                         detail: entry.detail,
                         range: wordRange,
                         kind: toCompletionItemKind(entry.kind)
@@ -19366,7 +19228,6 @@ define('vs/language/html/htmlMode',["require", "exports", "./workerManager", "./
         if (languageId === 'html') {
             monaco_editor_core_1.languages.registerDocumentFormattingEditProvider(languageId, new languageFeatures.DocumentFormattingEditProvider(worker));
             monaco_editor_core_1.languages.registerDocumentRangeFormattingEditProvider(languageId, new languageFeatures.DocumentRangeFormattingEditProvider(worker));
-            new languageFeatures.DiagnosticsAdapter(languageId, worker, defaults);
         }
     }
     exports.setupMode1 = setupMode1;
@@ -19414,9 +19275,6 @@ define('vs/language/html/htmlMode',["require", "exports", "./workerManager", "./
             }
             if (modeConfiguration.documentRangeFormattingEdits) {
                 providers.push(monaco_editor_core_1.languages.registerDocumentRangeFormattingEditProvider(languageId, new languageFeatures.DocumentRangeFormattingEditProvider(worker)));
-            }
-            if (modeConfiguration.diagnostics) {
-                providers.push(new languageFeatures.DiagnosticsAdapter(languageId, worker, defaults));
             }
         }
         registerProviders();

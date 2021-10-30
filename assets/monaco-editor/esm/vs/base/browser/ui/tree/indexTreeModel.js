@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { TreeError } from './tree.js';
-import { tail2 } from '../../../common/arrays.js';
+import { splice, tail2 } from '../../../common/arrays.js';
 import { LcsDiff } from '../../../common/diff/diff.js';
 import { Emitter, EventBufferer } from '../../../common/event.js';
 import { Iterable } from '../../../common/iterator.js';
@@ -126,7 +126,7 @@ export class IndexTreeModel {
                 child.visibleChildIndex = visibleChildStartIndex + insertedVisibleChildrenCount++;
             }
         }
-        const deletedNodes = parentNode.children.splice(lastIndex, deleteCount, ...nodesToInsert);
+        const deletedNodes = splice(parentNode.children, lastIndex, deleteCount, nodesToInsert);
         // figure out what is the count of deleted visible children
         let deletedVisibleChildrenCount = 0;
         for (const child of deletedNodes) {

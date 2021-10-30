@@ -11,17 +11,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
 import * as dom from '../../../base/browser/dom.js';
+import { ActionViewItem } from '../../../base/browser/ui/actionbar/actionViewItems.js';
 import { Separator, SubmenuAction } from '../../../base/common/actions.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { isIOS } from '../../../base/common/platform.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
+import * as nls from '../../../nls.js';
 import { IMenuService, MenuId, SubmenuItemAction } from '../../../platform/actions/common/actions.js';
 import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IContextMenuService, IContextViewService } from '../../../platform/contextview/browser/contextView.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
-import { ActionViewItem } from '../../../base/browser/ui/actionbar/actionViewItems.js';
 let ContextMenuController = class ContextMenuController {
     constructor(editor, _contextMenuService, _contextViewService, _contextKeyService, _keybindingService, _menuService) {
         this._contextMenuService = _contextMenuService;
@@ -60,7 +61,7 @@ let ContextMenuController = class ContextMenuController {
         if (!this._editor.hasModel()) {
             return;
         }
-        if (!this._editor.getOption(18 /* contextmenu */)) {
+        if (!this._editor.getOption(20 /* contextmenu */)) {
             this._editor.focus();
             // Ensure the cursor is at the position of the mouse click
             if (e.target.position && !this._editor.getSelection().containsPosition(e.target.position)) {
@@ -72,6 +73,7 @@ let ContextMenuController = class ContextMenuController {
             return; // allow native menu on widgets to support right click on input field for example in find
         }
         e.event.preventDefault();
+        e.event.stopPropagation();
         if (e.target.type !== 6 /* CONTENT_TEXT */ && e.target.type !== 7 /* CONTENT_EMPTY */ && e.target.type !== 1 /* TEXTAREA */) {
             return; // only support mouse click into text or native context menu key for now
         }
@@ -99,7 +101,7 @@ let ContextMenuController = class ContextMenuController {
         this.showContextMenu(anchor);
     }
     showContextMenu(anchor) {
-        if (!this._editor.getOption(18 /* contextmenu */)) {
+        if (!this._editor.getOption(20 /* contextmenu */)) {
             return; // Context menu is turned off through configuration
         }
         if (!this._editor.hasModel()) {
@@ -110,7 +112,7 @@ let ContextMenuController = class ContextMenuController {
             return; // We need the context menu service to function
         }
         // Find actions available for menu
-        const menuActions = this._getMenuActions(this._editor.getModel(), MenuId.EditorContext);
+        const menuActions = this._getMenuActions(this._editor.getModel(), this._editor.isSimpleWidget ? MenuId.SimpleEditorContext : MenuId.EditorContext);
         // Show menu if we have actions to show
         if (menuActions.length > 0) {
             this._doShowContextMenu(menuActions, anchor);
@@ -153,7 +155,7 @@ let ContextMenuController = class ContextMenuController {
             return;
         }
         // Disable hover
-        const oldHoverSetting = this._editor.getOption(50 /* hover */);
+        const oldHoverSetting = this._editor.getOption(52 /* hover */);
         this._editor.updateOptions({
             hover: {
                 enabled: false
@@ -170,7 +172,7 @@ let ContextMenuController = class ContextMenuController {
             const posy = editorCoords.top + cursorCoords.top + cursorCoords.height;
             anchor = { x: posx, y: posy };
         }
-        const useShadowDOM = this._editor.getOption(111 /* useShadowDOM */);
+        const useShadowDOM = this._editor.getOption(113 /* useShadowDOM */) && !isIOS; // Do not use shadow dom on IOS #122035
         // Show menu
         this._contextMenuIsBeingShownCount++;
         this._contextMenuService.showContextMenu({

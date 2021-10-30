@@ -5,9 +5,17 @@
 import { TokenMetadata } from '../modes.js';
 export class LineTokens {
     constructor(tokens, text) {
+        this._lineTokensBrand = undefined;
         this._tokens = tokens;
         this._tokensCount = (this._tokens.length >>> 1);
         this._text = text;
+    }
+    static createEmpty(lineContent) {
+        const defaultMetadata = LineTokens.defaultTokenMetadata;
+        const tokens = new Uint32Array(2);
+        tokens[0] = lineContent.length;
+        tokens[1] = defaultMetadata;
+        return new LineTokens(tokens, lineContent);
     }
     equals(other) {
         if (other instanceof LineTokens) {
@@ -113,7 +121,52 @@ export class LineTokens {
         }
         return low;
     }
+    /**
+     * @pure
+     * @param insertTokens Must be sorted by offset.
+    */
+    withInserted(insertTokens) {
+        if (insertTokens.length === 0) {
+            return this;
+        }
+        let nextOriginalTokenIdx = 0;
+        let nextInsertTokenIdx = 0;
+        let text = '';
+        const newTokens = new Array();
+        let originalEndOffset = 0;
+        while (true) {
+            let nextOriginalTokenEndOffset = nextOriginalTokenIdx < this._tokensCount ? this._tokens[nextOriginalTokenIdx << 1] : -1;
+            let nextInsertToken = nextInsertTokenIdx < insertTokens.length ? insertTokens[nextInsertTokenIdx] : null;
+            if (nextOriginalTokenEndOffset !== -1 && (nextInsertToken === null || nextOriginalTokenEndOffset <= nextInsertToken.offset)) {
+                // original token ends before next insert token
+                text += this._text.substring(originalEndOffset, nextOriginalTokenEndOffset);
+                const metadata = this._tokens[(nextOriginalTokenIdx << 1) + 1];
+                newTokens.push(text.length, metadata);
+                nextOriginalTokenIdx++;
+                originalEndOffset = nextOriginalTokenEndOffset;
+            }
+            else if (nextInsertToken) {
+                if (nextInsertToken.offset > originalEndOffset) {
+                    // insert token is in the middle of the next token.
+                    text += this._text.substring(originalEndOffset, nextInsertToken.offset);
+                    const metadata = this._tokens[(nextOriginalTokenIdx << 1) + 1];
+                    newTokens.push(text.length, metadata);
+                    originalEndOffset = nextInsertToken.offset;
+                }
+                text += nextInsertToken.text;
+                newTokens.push(text.length, nextInsertToken.tokenMetadata);
+                nextInsertTokenIdx++;
+            }
+            else {
+                break;
+            }
+        }
+        return new LineTokens(new Uint32Array(newTokens), text);
+    }
 }
+LineTokens.defaultTokenMetadata = ((0 /* None */ << 11 /* FONT_STYLE_OFFSET */)
+    | (1 /* DefaultForeground */ << 14 /* FOREGROUND_OFFSET */)
+    | (2 /* DefaultBackground */ << 23 /* BACKGROUND_OFFSET */)) >>> 0;
 export class SlicedLineTokens {
     constructor(source, startOffset, endOffset, deltaOffset) {
         this._source = source;

@@ -18,6 +18,17 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -54,6 +65,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+import { typescriptDefaults } from './monaco.contribution.js';
 import { libFileSet } from './lib/lib.index.js';
 import { editor, languages, Uri, Range, MarkerTag, MarkerSeverity } from './fillers/monaco-editor-core.js';
 //#region utils copied from typescript to prevent loading the entire typescriptServices ---
@@ -132,13 +144,18 @@ var LibFiles = /** @class */ (function () {
         }
         return false;
     };
-    LibFiles.prototype.getOrCreateModel = function (uri) {
+    LibFiles.prototype.getOrCreateModel = function (fileName) {
+        var uri = Uri.parse(fileName);
         var model = editor.getModel(uri);
         if (model) {
             return model;
         }
         if (this.isLibFile(uri) && this._hasFetchedLibFiles) {
             return editor.createModel(this._libFiles[uri.path.slice(1)], 'typescript', uri);
+        }
+        var matchedLibFile = typescriptDefaults.getExtraLibs()[fileName];
+        if (matchedLibFile) {
+            return editor.createModel(matchedLibFile.content, 'typescript', uri);
         }
         return null;
     };
@@ -366,14 +383,13 @@ var DiagnosticsAdapter = /** @class */ (function (_super) {
     DiagnosticsAdapter.prototype._convertRelatedInformation = function (model, relatedInformation) {
         var _this = this;
         if (!relatedInformation) {
-            return;
+            return [];
         }
         var result = [];
         relatedInformation.forEach(function (info) {
             var relatedResource = model;
             if (info.file) {
-                var relatedResourceUri = Uri.parse(info.file.fileName);
-                relatedResource = _this._libFiles.getOrCreateModel(relatedResourceUri);
+                relatedResource = _this._libFiles.getOrCreateModel(info.file.fileName);
             }
             if (!relatedResource) {
                 return;
@@ -554,10 +570,13 @@ export { SuggestAdapter };
 function tagToString(tag) {
     var tagLabel = "*@" + tag.name + "*";
     if (tag.name === 'param' && tag.text) {
-        var _a = tag.text.split(' '), paramName = _a[0], rest = _a.slice(1);
-        tagLabel += "`" + paramName + "`";
+        var _a = tag.text, paramName = _a[0], rest = _a.slice(1);
+        tagLabel += "`" + paramName.text + "`";
         if (rest.length > 0)
-            tagLabel += " \u2014 " + rest.join(' ');
+            tagLabel += " \u2014 " + rest.map(function (r) { return r.text; }).join(' ');
+    }
+    else if (Array.isArray(tag.text)) {
+        tagLabel += " \u2014 " + tag.text.map(function (r) { return r.text; }).join(' ');
     }
     else if (tag.text) {
         tagLabel += " \u2014 " + tag.text;
@@ -755,7 +774,7 @@ var DefinitionAdapter = /** @class */ (function (_super) {
     }
     DefinitionAdapter.prototype.provideDefinition = function (model, position, token) {
         return __awaiter(this, void 0, void 0, function () {
-            var resource, offset, worker, entries, result, _i, entries_1, entry, uri, refModel;
+            var resource, offset, worker, entries, result, _i, entries_1, entry, refModel;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -784,11 +803,10 @@ var DefinitionAdapter = /** @class */ (function (_super) {
                         result = [];
                         for (_i = 0, entries_1 = entries; _i < entries_1.length; _i++) {
                             entry = entries_1[_i];
-                            uri = Uri.parse(entry.fileName);
-                            refModel = this._libFiles.getOrCreateModel(uri);
+                            refModel = this._libFiles.getOrCreateModel(entry.fileName);
                             if (refModel) {
                                 result.push({
-                                    uri: uri,
+                                    uri: refModel.uri,
                                     range: this._textSpanToRange(refModel, entry.textSpan)
                                 });
                             }
@@ -811,7 +829,7 @@ var ReferenceAdapter = /** @class */ (function (_super) {
     }
     ReferenceAdapter.prototype.provideReferences = function (model, position, context, token) {
         return __awaiter(this, void 0, void 0, function () {
-            var resource, offset, worker, entries, result, _i, entries_2, entry, uri, refModel;
+            var resource, offset, worker, entries, result, _i, entries_2, entry, refModel;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -840,11 +858,10 @@ var ReferenceAdapter = /** @class */ (function (_super) {
                         result = [];
                         for (_i = 0, entries_2 = entries; _i < entries_2.length; _i++) {
                             entry = entries_2[_i];
-                            uri = Uri.parse(entry.fileName);
-                            refModel = this._libFiles.getOrCreateModel(uri);
+                            refModel = this._libFiles.getOrCreateModel(entry.fileName);
                             if (refModel) {
                                 result.push({
-                                    uri: uri,
+                                    uri: refModel.uri,
                                     range: this._textSpanToRange(refModel, entry.textSpan)
                                 });
                             }
@@ -890,9 +907,10 @@ var OutlineAdapter = /** @class */ (function (_super) {
                                 kind: (outlineTypeTable[item.kind] || languages.SymbolKind.Variable),
                                 range: _this._textSpanToRange(model, item.spans[0]),
                                 selectionRange: _this._textSpanToRange(model, item.spans[0]),
-                                tags: [],
-                                containerName: containerLabel
+                                tags: []
                             };
+                            if (containerLabel)
+                                result.containerName = containerLabel;
                             if (item.childItems && item.childItems.length > 0) {
                                 for (var _i = 0, _a = item.childItems; _i < _a.length; _i++) {
                                     var child = _a[_i];
@@ -1160,12 +1178,14 @@ export { CodeActionAdaptor };
 // --- rename ----
 var RenameAdapter = /** @class */ (function (_super) {
     __extends(RenameAdapter, _super);
-    function RenameAdapter() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function RenameAdapter(_libFiles, worker) {
+        var _this = _super.call(this, worker) || this;
+        _this._libFiles = _libFiles;
+        return _this;
     }
     RenameAdapter.prototype.provideRenameEdits = function (model, position, newName, token) {
         return __awaiter(this, void 0, void 0, function () {
-            var resource, fileName, offset, worker, renameInfo, renameLocations, edits, _i, renameLocations_1, renameLocation, resource_1, model_1;
+            var resource, fileName, offset, worker, renameInfo, renameLocations, edits, _i, renameLocations_1, renameLocation, model_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -1205,11 +1225,10 @@ var RenameAdapter = /** @class */ (function (_super) {
                         edits = [];
                         for (_i = 0, renameLocations_1 = renameLocations; _i < renameLocations_1.length; _i++) {
                             renameLocation = renameLocations_1[_i];
-                            resource_1 = Uri.parse(renameLocation.fileName);
-                            model_1 = editor.getModel(resource_1);
+                            model_1 = this._libFiles.getOrCreateModel(renameLocation.fileName);
                             if (model_1) {
                                 edits.push({
-                                    resource: resource_1,
+                                    resource: model_1.uri,
                                     edit: {
                                         range: this._textSpanToRange(model_1, renameLocation.textSpan),
                                         text: newName
@@ -1217,7 +1236,7 @@ var RenameAdapter = /** @class */ (function (_super) {
                                 });
                             }
                             else {
-                                throw new Error("Unknown URI " + resource_1 + ".");
+                                throw new Error("Unknown file " + renameLocation.fileName + ".");
                             }
                         }
                         return [2 /*return*/, { edits: edits }];
@@ -1228,3 +1247,55 @@ var RenameAdapter = /** @class */ (function (_super) {
     return RenameAdapter;
 }(Adapter));
 export { RenameAdapter };
+// --- inlay hints ----
+var InlayHintsAdapter = /** @class */ (function (_super) {
+    __extends(InlayHintsAdapter, _super);
+    function InlayHintsAdapter() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    InlayHintsAdapter.prototype.provideInlayHints = function (model, range, token) {
+        return __awaiter(this, void 0, void 0, function () {
+            var resource, fileName, start, end, worker, hints;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        resource = model.uri;
+                        fileName = resource.toString();
+                        start = model.getOffsetAt({
+                            lineNumber: range.startLineNumber,
+                            column: range.startColumn
+                        });
+                        end = model.getOffsetAt({
+                            lineNumber: range.endLineNumber,
+                            column: range.endColumn
+                        });
+                        return [4 /*yield*/, this._worker(resource)];
+                    case 1:
+                        worker = _a.sent();
+                        if (model.isDisposed()) {
+                            return [2 /*return*/, []];
+                        }
+                        return [4 /*yield*/, worker.provideInlayHints(fileName, start, end)];
+                    case 2:
+                        hints = _a.sent();
+                        return [2 /*return*/, hints.map(function (hint) {
+                                return __assign(__assign({}, hint), { position: model.getPositionAt(hint.position), kind: _this._convertHintKind(hint.kind) });
+                            })];
+                }
+            });
+        });
+    };
+    InlayHintsAdapter.prototype._convertHintKind = function (kind) {
+        switch (kind) {
+            case 'Parameter':
+                return languages.InlayHintKind.Parameter;
+            case 'Type':
+                return languages.InlayHintKind.Type;
+            default:
+                return languages.InlayHintKind.Other;
+        }
+    };
+    return InlayHintsAdapter;
+}(Adapter));
+export { InlayHintsAdapter };

@@ -116,7 +116,7 @@ define('vs/basic-languages/markdown/markdown',["require", "exports"], function (
             ],
             // github style code blocks
             codeblockgh: [
-                [/```\s*$/, { token: 'variable.source', next: '@pop', nextEmbedded: '@pop' }],
+                [/```\s*$/, { token: 'string', next: '@pop', nextEmbedded: '@pop' }],
                 [/[^`]+/, 'variable.source']
             ],
             linecontent: [

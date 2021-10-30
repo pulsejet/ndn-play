@@ -11,16 +11,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { localize } from '../../../nls.js';
 import { CancellationTokenSource } from '../../../base/common/cancellation.js';
-import { DisposableStore, Disposable, toDisposable } from '../../../base/common/lifecycle.js';
-import { Range } from '../../common/core/range.js';
-import { AbstractEditorNavigationQuickAccessProvider } from './editorNavigationQuickAccess.js';
-import { SymbolKinds, DocumentSymbolProviderRegistry } from '../../common/modes.js';
-import { OutlineModel } from '../documentSymbols/outlineModel.js';
-import { trim, format } from '../../../base/common/strings.js';
-import { prepareQuery, pieceToQuery, scoreFuzzy2 } from '../../../base/common/fuzzyScorer.js';
 import { Codicon } from '../../../base/common/codicons.js';
+import { pieceToQuery, prepareQuery, scoreFuzzy2 } from '../../../base/common/fuzzyScorer.js';
+import { Disposable, DisposableStore, toDisposable } from '../../../base/common/lifecycle.js';
+import { format, trim } from '../../../base/common/strings.js';
+import { Range } from '../../common/core/range.js';
+import { DocumentSymbolProviderRegistry, SymbolKinds } from '../../common/modes.js';
+import { OutlineModel } from '../documentSymbols/outlineModel.js';
+import { AbstractEditorNavigationQuickAccessProvider } from './editorNavigationQuickAccess.js';
+import { localize } from '../../../nls.js';
 export class AbstractGotoSymbolQuickAccessProvider extends AbstractEditorNavigationQuickAccessProvider {
     constructor(options = Object.create(null)) {
         super(options);

@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
 import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { MoveCaretCommand } from './moveCaretCommand.js';
+import * as nls from '../../../nls.js';
 class MoveCaretAction extends EditorAction {
     constructor(left, opts) {
         super(opts);

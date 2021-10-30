@@ -2,6 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { implies, expressionsAreEqualWithConstantSubstitution } from '../../contextkey/common/contextkey.js';
 export class KeybindingResolver {
     constructor(defaultKeybindings, overrides, log) {
         this._log = log;
@@ -46,7 +47,7 @@ export class KeybindingResolver {
             if (!defaultKb.when) {
                 return false;
             }
-            if (!when.equals(defaultKb.when)) {
+            if (!expressionsAreEqualWithConstantSubstitution(when, defaultKb.when)) {
                 return false;
             }
         }
@@ -137,45 +138,30 @@ export class KeybindingResolver {
      * Returns true if it is provable `a` implies `b`.
      */
     static whenIsEntirelyIncluded(a, b) {
-        if (!b) {
+        if (!b || b.type === 1 /* True */) {
             return true;
         }
-        if (!a) {
+        if (!a || a.type === 1 /* True */) {
             return false;
         }
-        return this._implies(a, b);
-    }
-    /**
-     * Returns true if it is provable `p` implies `q`.
-     */
-    static _implies(p, q) {
-        const notP = p.negate();
-        const terminals = (node) => {
-            if (node.type === 9 /* Or */) {
-                return node.expr;
-            }
-            return [node];
-        };
-        let expr = terminals(notP).concat(terminals(q));
-        for (let i = 0; i < expr.length; i++) {
-            const a = expr[i];
-            const notA = a.negate();
-            for (let j = i + 1; j < expr.length; j++) {
-                const b = expr[j];
-                if (notA.equals(b)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return implies(a, b);
     }
     getKeybindings() {
         return this._keybindings;
     }
-    lookupPrimaryKeybinding(commandId) {
-        let items = this._lookupMap.get(commandId);
+    lookupPrimaryKeybinding(commandId, context) {
+        const items = this._lookupMap.get(commandId);
         if (typeof items === 'undefined' || items.length === 0) {
             return null;
+        }
+        if (items.length === 1) {
+            return items[0];
+        }
+        for (let i = items.length - 1; i >= 0; i--) {
+            const item = items[i];
+            if (context.contextMatchesRules(item.when)) {
+                return item;
+            }
         }
         return items[items.length - 1];
     }

@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as extpath from './extpath.js';
-import * as paths from './path.js';
-import { URI, uriToFsPath } from './uri.js';
-import { compare as strCompare } from './strings.js';
 import { Schemas } from './network.js';
+import * as paths from './path.js';
+import { compare as strCompare } from './strings.js';
+import { URI, uriToFsPath } from './uri.js';
 export function originalFSPath(uri) {
     return uriToFsPath(uri, true);
 }
@@ -87,12 +87,7 @@ export class ExtUri {
                 path: newURI.path
             });
         }
-        if (path.indexOf('/') === -1) { // no slashes? it's likely a Windows path
-            path = extpath.toSlashes(path);
-            if (/^[a-zA-Z]:(\/|$)/.test(path)) { // starts with a drive letter
-                path = '/' + path;
-            }
-        }
+        path = extpath.toPosixPath(path); // we allow path to be a windows path
         return base.with({
             path: paths.posix.resolve(base.path, path)
         });

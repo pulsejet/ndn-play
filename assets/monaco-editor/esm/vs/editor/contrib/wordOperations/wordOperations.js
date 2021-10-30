@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
-import { EditorCommand, registerEditorCommand, EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
+import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand } from '../../browser/editorExtensions.js';
 import { ReplaceCommand } from '../../common/commands/replaceCommand.js';
+import { EditorOptions } from '../../common/config/editorOptions.js';
 import { CursorState } from '../../common/controller/cursorCommon.js';
 import { WordOperations } from '../../common/controller/cursorWordOperations.js';
 import { getMapForWordSeparators } from '../../common/controller/wordCharacterClassifier.js';
@@ -12,10 +12,10 @@ import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
+import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
+import * as nls from '../../../nls.js';
 import { CONTEXT_ACCESSIBILITY_MODE_ENABLED } from '../../../platform/accessibility/common/accessibility.js';
 import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
-import { EditorOptions } from '../../common/config/editorOptions.js';
-import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
 import { IsWindowsContext } from '../../../platform/contextkey/common/contextkeys.js';
 export class MoveWordCommand extends EditorCommand {
     constructor(opts) {
@@ -27,7 +27,7 @@ export class MoveWordCommand extends EditorCommand {
         if (!editor.hasModel()) {
             return;
         }
-        const wordSeparators = getMapForWordSeparators(editor.getOption(113 /* wordSeparators */));
+        const wordSeparators = getMapForWordSeparators(editor.getOption(115 /* wordSeparators */));
         const model = editor.getModel();
         const selections = editor.getSelections();
         const result = selections.map((sel) => {
@@ -274,7 +274,7 @@ export class DeleteWordCommand extends EditorCommand {
         if (!editor.hasModel()) {
             return;
         }
-        const wordSeparators = getMapForWordSeparators(editor.getOption(113 /* wordSeparators */));
+        const wordSeparators = getMapForWordSeparators(editor.getOption(115 /* wordSeparators */));
         const model = editor.getModel();
         const selections = editor.getSelections();
         const autoClosingBrackets = editor.getOption(5 /* autoClosingBrackets */);
@@ -405,7 +405,7 @@ export class DeleteInsideWord extends EditorAction {
         if (!editor.hasModel()) {
             return;
         }
-        const wordSeparators = getMapForWordSeparators(editor.getOption(113 /* wordSeparators */));
+        const wordSeparators = getMapForWordSeparators(editor.getOption(115 /* wordSeparators */));
         const model = editor.getModel();
         const selections = editor.getSelections();
         const commands = selections.map((sel) => {

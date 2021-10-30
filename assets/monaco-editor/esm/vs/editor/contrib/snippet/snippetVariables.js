@@ -2,15 +2,15 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
+import { normalizeDriveLetter } from '../../../base/common/labels.js';
 import * as path from '../../../base/common/path.js';
 import { dirname } from '../../../base/common/resources.js';
-import { Text } from './snippetParser.js';
-import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
-import { getLeadingWhitespace, commonPrefixLength, isFalsyOrWhitespace, splitLines } from '../../../base/common/strings.js';
-import { toWorkspaceIdentifier, WORKSPACE_EXTENSION, isSingleFolderWorkspaceIdentifier } from '../../../platform/workspaces/common/workspaces.js';
-import { normalizeDriveLetter } from '../../../base/common/labels.js';
+import { commonPrefixLength, getLeadingWhitespace, isFalsyOrWhitespace, splitLines } from '../../../base/common/strings.js';
 import { generateUuid } from '../../../base/common/uuid.js';
+import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
+import { Text } from './snippetParser.js';
+import * as nls from '../../../nls.js';
+import { isSingleFolderWorkspaceIdentifier, toWorkspaceIdentifier, WORKSPACE_EXTENSION } from '../../../platform/workspaces/common/workspaces.js';
 export class CompositeSnippetVariableResolver {
     constructor(_delegates) {
         this._delegates = _delegates;
@@ -109,16 +109,16 @@ export class ModelBasedVariableResolver {
                 return name.slice(0, idx);
             }
         }
-        else if (name === 'TM_DIRECTORY' && this._labelService) {
+        else if (name === 'TM_DIRECTORY') {
             if (path.dirname(this._model.uri.fsPath) === '.') {
                 return '';
             }
             return this._labelService.getUriLabel(dirname(this._model.uri));
         }
-        else if (name === 'TM_FILEPATH' && this._labelService) {
+        else if (name === 'TM_FILEPATH') {
             return this._labelService.getUriLabel(this._model.uri);
         }
-        else if (name === 'RELATIVE_FILEPATH' && this._labelService) {
+        else if (name === 'RELATIVE_FILEPATH') {
             return this._labelService.getUriLabel(this._model.uri, { relative: true, noPrefix: true });
         }
         return undefined;
@@ -178,43 +178,46 @@ export class CommentBasedVariableResolver {
     }
 }
 export class TimeBasedVariableResolver {
+    constructor() {
+        this._date = new Date();
+    }
     resolve(variable) {
         const { name } = variable;
         if (name === 'CURRENT_YEAR') {
-            return String(new Date().getFullYear());
+            return String(this._date.getFullYear());
         }
         else if (name === 'CURRENT_YEAR_SHORT') {
-            return String(new Date().getFullYear()).slice(-2);
+            return String(this._date.getFullYear()).slice(-2);
         }
         else if (name === 'CURRENT_MONTH') {
-            return String(new Date().getMonth().valueOf() + 1).padStart(2, '0');
+            return String(this._date.getMonth().valueOf() + 1).padStart(2, '0');
         }
         else if (name === 'CURRENT_DATE') {
-            return String(new Date().getDate().valueOf()).padStart(2, '0');
+            return String(this._date.getDate().valueOf()).padStart(2, '0');
         }
         else if (name === 'CURRENT_HOUR') {
-            return String(new Date().getHours().valueOf()).padStart(2, '0');
+            return String(this._date.getHours().valueOf()).padStart(2, '0');
         }
         else if (name === 'CURRENT_MINUTE') {
-            return String(new Date().getMinutes().valueOf()).padStart(2, '0');
+            return String(this._date.getMinutes().valueOf()).padStart(2, '0');
         }
         else if (name === 'CURRENT_SECOND') {
-            return String(new Date().getSeconds().valueOf()).padStart(2, '0');
+            return String(this._date.getSeconds().valueOf()).padStart(2, '0');
         }
         else if (name === 'CURRENT_DAY_NAME') {
-            return TimeBasedVariableResolver.dayNames[new Date().getDay()];
+            return TimeBasedVariableResolver.dayNames[this._date.getDay()];
         }
         else if (name === 'CURRENT_DAY_NAME_SHORT') {
-            return TimeBasedVariableResolver.dayNamesShort[new Date().getDay()];
+            return TimeBasedVariableResolver.dayNamesShort[this._date.getDay()];
         }
         else if (name === 'CURRENT_MONTH_NAME') {
-            return TimeBasedVariableResolver.monthNames[new Date().getMonth()];
+            return TimeBasedVariableResolver.monthNames[this._date.getMonth()];
         }
         else if (name === 'CURRENT_MONTH_NAME_SHORT') {
-            return TimeBasedVariableResolver.monthNamesShort[new Date().getMonth()];
+            return TimeBasedVariableResolver.monthNamesShort[this._date.getMonth()];
         }
         else if (name === 'CURRENT_SECONDS_UNIX') {
-            return String(Math.floor(Date.now() / 1000));
+            return String(Math.floor(this._date.getTime() / 1000));
         }
         return undefined;
     }

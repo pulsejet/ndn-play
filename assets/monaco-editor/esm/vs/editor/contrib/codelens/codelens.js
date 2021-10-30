@@ -13,12 +13,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { illegalArgument, onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { assertType } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
 import { CodeLensProviderRegistry } from '../../common/modes.js';
 import { IModelService } from '../../common/services/modelService.js';
-import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { assertType } from '../../../base/common/types.js';
 export class CodeLensModel {
     constructor() {
         this.lenses = [];

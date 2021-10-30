@@ -312,14 +312,18 @@ export class CursorMoveCommands {
             return new CursorState(cursor.modelState, cursor.viewState);
         }
         else {
+            let newViewLineNumber;
             if (viewLineNumber > visibleViewRange.endLineNumber - 1) {
-                viewLineNumber = visibleViewRange.endLineNumber - 1;
+                newViewLineNumber = visibleViewRange.endLineNumber - 1;
             }
-            if (viewLineNumber < visibleViewRange.startLineNumber) {
-                viewLineNumber = visibleViewRange.startLineNumber;
+            else if (viewLineNumber < visibleViewRange.startLineNumber) {
+                newViewLineNumber = visibleViewRange.startLineNumber;
             }
-            const viewColumn = viewModel.getLineFirstNonWhitespaceColumn(viewLineNumber);
-            return this._moveToViewPosition(viewModel, cursor, inSelectionMode, viewLineNumber, viewColumn);
+            else {
+                newViewLineNumber = viewLineNumber;
+            }
+            const position = MoveOperations.vertical(viewModel.cursorConfig, viewModel, viewLineNumber, cursor.viewState.position.column, cursor.viewState.leftoverVisibleColumns, newViewLineNumber, false);
+            return CursorState.fromViewState(cursor.viewState.move(inSelectionMode, position.lineNumber, position.column, position.leftoverVisibleColumns));
         }
     }
     /**
@@ -345,26 +349,7 @@ export class CursorMoveCommands {
         return Math.max(startLineNumber, range.endLineNumber - count + 1);
     }
     static _moveLeft(viewModel, cursors, inSelectionMode, noOfColumns) {
-        const hasMultipleCursors = (cursors.length > 1);
-        let result = [];
-        for (let i = 0, len = cursors.length; i < len; i++) {
-            const cursor = cursors[i];
-            const skipWrappingPointStop = hasMultipleCursors || !cursor.viewState.hasSelection();
-            let newViewState = MoveOperations.moveLeft(viewModel.cursorConfig, viewModel, cursor.viewState, inSelectionMode, noOfColumns);
-            if (skipWrappingPointStop
-                && noOfColumns === 1
-                && cursor.viewState.position.column === viewModel.getLineMinColumn(cursor.viewState.position.lineNumber)
-                && newViewState.position.lineNumber !== cursor.viewState.position.lineNumber) {
-                // moved over to the previous view line
-                const newViewModelPosition = viewModel.coordinatesConverter.convertViewPositionToModelPosition(newViewState.position);
-                if (newViewModelPosition.lineNumber === cursor.modelState.position.lineNumber) {
-                    // stayed on the same model line => pass wrapping point where 2 view positions map to a single model position
-                    newViewState = MoveOperations.moveLeft(viewModel.cursorConfig, viewModel, newViewState, inSelectionMode, 1);
-                }
-            }
-            result[i] = CursorState.fromViewState(newViewState);
-        }
-        return result;
+        return cursors.map(cursor => CursorState.fromViewState(MoveOperations.moveLeft(viewModel.cursorConfig, viewModel, cursor.viewState, inSelectionMode, noOfColumns)));
     }
     static _moveHalfLineLeft(viewModel, cursors, inSelectionMode) {
         let result = [];
@@ -377,26 +362,7 @@ export class CursorMoveCommands {
         return result;
     }
     static _moveRight(viewModel, cursors, inSelectionMode, noOfColumns) {
-        const hasMultipleCursors = (cursors.length > 1);
-        let result = [];
-        for (let i = 0, len = cursors.length; i < len; i++) {
-            const cursor = cursors[i];
-            const skipWrappingPointStop = hasMultipleCursors || !cursor.viewState.hasSelection();
-            let newViewState = MoveOperations.moveRight(viewModel.cursorConfig, viewModel, cursor.viewState, inSelectionMode, noOfColumns);
-            if (skipWrappingPointStop
-                && noOfColumns === 1
-                && cursor.viewState.position.column === viewModel.getLineMaxColumn(cursor.viewState.position.lineNumber)
-                && newViewState.position.lineNumber !== cursor.viewState.position.lineNumber) {
-                // moved over to the next view line
-                const newViewModelPosition = viewModel.coordinatesConverter.convertViewPositionToModelPosition(newViewState.position);
-                if (newViewModelPosition.lineNumber === cursor.modelState.position.lineNumber) {
-                    // stayed on the same model line => pass wrapping point where 2 view positions map to a single model position
-                    newViewState = MoveOperations.moveRight(viewModel.cursorConfig, viewModel, newViewState, inSelectionMode, 1);
-                }
-            }
-            result[i] = CursorState.fromViewState(newViewState);
-        }
-        return result;
+        return cursors.map(cursor => CursorState.fromViewState(MoveOperations.moveRight(viewModel.cursorConfig, viewModel, cursor.viewState, inSelectionMode, noOfColumns)));
     }
     static _moveHalfLineRight(viewModel, cursors, inSelectionMode) {
         let result = [];

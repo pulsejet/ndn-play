@@ -2,13 +2,13 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as platform from '../../registry/common/platform.js';
-import { ThemeIcon } from './themeService.js';
+import { RunOnceScheduler } from '../../../base/common/async.js';
+import * as Codicons from '../../../base/common/codicons.js';
 import { Emitter } from '../../../base/common/event.js';
 import { localize } from '../../../nls.js';
 import { Extensions as JSONExtensions } from '../../jsonschemas/common/jsonContributionRegistry.js';
-import { RunOnceScheduler } from '../../../base/common/async.js';
-import * as Codicons from '../../../base/common/codicons.js';
+import * as platform from '../../registry/common/platform.js';
+import { ThemeIcon } from './themeService.js';
 //  ------ API types
 // icon registry
 export const Extensions = {

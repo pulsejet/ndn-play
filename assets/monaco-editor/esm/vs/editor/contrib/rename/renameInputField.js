@@ -11,14 +11,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import './renameInputField.css';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
+import './renameInputField.css';
 import { Position } from '../../common/core/position.js';
 import { localize } from '../../../nls.js';
 import { IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
-import { inputBackground, inputBorder, inputForeground, widgetShadow, editorWidgetBackground } from '../../../platform/theme/common/colorRegistry.js';
-import { IThemeService } from '../../../platform/theme/common/themeService.js';
 import { IKeybindingService } from '../../../platform/keybinding/common/keybinding.js';
+import { editorWidgetBackground, inputBackground, inputBorder, inputForeground, widgetShadow } from '../../../platform/theme/common/colorRegistry.js';
+import { IThemeService } from '../../../platform/theme/common/themeService.js';
 export const CONTEXT_RENAME_INPUT_VISIBLE = new RawContextKey('renameInputVisible', false, localize('renameInputVisible', "Whether the rename input widget is visible"));
 let RenameInputField = class RenameInputField {
     constructor(_editor, _acceptKeybindings, _themeService, _keybindingService, contextKeyService) {
@@ -31,7 +31,7 @@ let RenameInputField = class RenameInputField {
         this._visibleContextKey = CONTEXT_RENAME_INPUT_VISIBLE.bindTo(contextKeyService);
         this._editor.addContentWidget(this);
         this._disposables.add(this._editor.onDidChangeConfiguration(e => {
-            if (e.hasChanged(40 /* fontInfo */)) {
+            if (e.hasChanged(43 /* fontInfo */)) {
                 this._updateFont();
             }
         }));
@@ -89,7 +89,7 @@ let RenameInputField = class RenameInputField {
         if (!this._input || !this._label) {
             return;
         }
-        const fontInfo = this._editor.getOption(40 /* fontInfo */);
+        const fontInfo = this._editor.getOption(43 /* fontInfo */);
         this._input.style.fontFamily = fontInfo.fontFamily;
         this._input.style.fontWeight = fontInfo.fontWeight;
         this._input.style.fontSize = `${fontInfo.fontSize}px`;

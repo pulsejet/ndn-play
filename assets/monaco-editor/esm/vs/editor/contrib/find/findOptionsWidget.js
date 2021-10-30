@@ -7,7 +7,7 @@ import { CaseSensitiveCheckbox, RegexCheckbox, WholeWordsCheckbox } from '../../
 import { Widget } from '../../../base/browser/ui/widget.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { FIND_IDS } from './findModel.js';
-import { contrastBorder, editorWidgetBackground, inputActiveOptionBorder, inputActiveOptionBackground, widgetShadow, editorWidgetForeground, inputActiveOptionForeground } from '../../../platform/theme/common/colorRegistry.js';
+import { contrastBorder, editorWidgetBackground, editorWidgetForeground, inputActiveOptionBackground, inputActiveOptionBorder, inputActiveOptionForeground, widgetShadow } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 export class FindOptionsWidget extends Widget {
     constructor(editor, state, keybindingService, themeService) {

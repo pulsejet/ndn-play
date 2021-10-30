@@ -20,23 +20,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { RunOnceScheduler, createCancelablePromise, disposableTimeout } from '../../../base/common/async.js';
+import * as dom from '../../../base/browser/dom.js';
+import { createCancelablePromise, disposableTimeout, RunOnceScheduler } from '../../../base/common/async.js';
 import { onUnexpectedError, onUnexpectedExternalError } from '../../../base/common/errors.js';
-import { toDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
+import { hash } from '../../../base/common/hash.js';
+import { DisposableStore, toDisposable } from '../../../base/common/lifecycle.js';
 import { StableEditorScrollState } from '../../browser/core/editorState.js';
-import { registerEditorContribution, registerEditorAction, EditorAction } from '../../browser/editorExtensions.js';
+import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
+import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { CodeLensProviderRegistry } from '../../common/modes.js';
+import { LanguageFeatureRequestDelays } from '../../common/modes/languageFeatureRegistry.js';
 import { getCodeLensModel } from './codelens.js';
-import { CodeLensWidget, CodeLensHelper } from './codelensWidget.js';
+import { ICodeLensCache } from './codeLensCache.js';
+import { CodeLensHelper, CodeLensWidget } from './codelensWidget.js';
+import { localize } from '../../../nls.js';
 import { ICommandService } from '../../../platform/commands/common/commands.js';
 import { INotificationService } from '../../../platform/notification/common/notification.js';
-import { ICodeLensCache } from './codeLensCache.js';
-import * as dom from '../../../base/browser/dom.js';
-import { hash } from '../../../base/common/hash.js';
 import { IQuickInputService } from '../../../platform/quickinput/common/quickInput.js';
-import { localize } from '../../../nls.js';
-import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { LanguageFeatureRequestDelays } from '../../common/modes/languageFeatureRegistry.js';
 let CodeLensContribution = class CodeLensContribution {
     constructor(_editor, _commandService, _notificationService, _codeLensCache) {
         this._editor = _editor;
@@ -53,10 +53,10 @@ let CodeLensContribution = class CodeLensContribution {
         this._disposables.add(this._editor.onDidChangeModel(() => this._onModelChange()));
         this._disposables.add(this._editor.onDidChangeModelLanguage(() => this._onModelChange()));
         this._disposables.add(this._editor.onDidChangeConfiguration((e) => {
-            if (e.hasChanged(40 /* fontInfo */) || e.hasChanged(14 /* codeLensFontSize */) || e.hasChanged(13 /* codeLensFontFamily */)) {
+            if (e.hasChanged(43 /* fontInfo */) || e.hasChanged(16 /* codeLensFontSize */) || e.hasChanged(15 /* codeLensFontFamily */)) {
                 this._updateLensStyle();
             }
-            if (e.hasChanged(12 /* codeLens */)) {
+            if (e.hasChanged(14 /* codeLens */)) {
                 this._onModelChange();
             }
         }));
@@ -77,21 +77,21 @@ let CodeLensContribution = class CodeLensContribution {
         this._styleElement.remove();
     }
     _getLayoutInfo() {
-        let fontSize = this._editor.getOption(14 /* codeLensFontSize */);
+        let fontSize = this._editor.getOption(16 /* codeLensFontSize */);
         let codeLensHeight;
         if (!fontSize || fontSize < 5) {
-            fontSize = (this._editor.getOption(42 /* fontSize */) * .9) | 0;
-            codeLensHeight = this._editor.getOption(55 /* lineHeight */);
+            fontSize = (this._editor.getOption(45 /* fontSize */) * .9) | 0;
+            codeLensHeight = this._editor.getOption(58 /* lineHeight */);
         }
         else {
-            codeLensHeight = (fontSize * Math.max(1.3, this._editor.getOption(55 /* lineHeight */) / this._editor.getOption(42 /* fontSize */))) | 0;
+            codeLensHeight = (fontSize * Math.max(1.3, this._editor.getOption(58 /* lineHeight */) / this._editor.getOption(45 /* fontSize */))) | 0;
         }
         return { codeLensHeight, fontSize };
     }
     _updateLensStyle() {
         const { codeLensHeight, fontSize } = this._getLayoutInfo();
-        const fontFamily = this._editor.getOption(13 /* codeLensFontFamily */);
-        const editorFontInfo = this._editor.getOption(40 /* fontInfo */);
+        const fontFamily = this._editor.getOption(15 /* codeLensFontFamily */);
+        const editorFontInfo = this._editor.getOption(43 /* fontInfo */);
         const fontFamilyVar = `--codelens-font-family${this._styleClassName}`;
         const fontFeaturesVar = `--codelens-font-features${this._styleClassName}`;
         let newStyle = `
@@ -127,7 +127,7 @@ let CodeLensContribution = class CodeLensContribution {
         if (!model) {
             return;
         }
-        if (!this._editor.getOption(12 /* codeLens */)) {
+        if (!this._editor.getOption(14 /* codeLens */)) {
             return;
         }
         const cachedLenses = this._codeLensCache.get(model);
@@ -171,7 +171,8 @@ let CodeLensContribution = class CodeLensContribution {
                 scheduler.delay = newDelay;
                 // render lenses
                 this._renderCodeLensSymbols(result);
-                this._resolveCodeLensesInViewport();
+                // dom.scheduleAtNextAnimationFrame(() => this._resolveCodeLensesInViewport());
+                this._resolveCodeLensesInViewportSoon();
             }, onUnexpectedError);
         }, this._getCodeLensModelDelays.get(model));
         this._localToDispose.add(scheduler);

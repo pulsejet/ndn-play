@@ -11,9 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../nls.js';
-import { Disposable } from './lifecycle.js';
 import { Emitter } from './event.js';
+import { Disposable } from './lifecycle.js';
+import * as nls from '../../nls.js';
 export class Action extends Disposable {
     constructor(id, label = '', cssClass = '', enabled = true, actionCallback) {
         super();

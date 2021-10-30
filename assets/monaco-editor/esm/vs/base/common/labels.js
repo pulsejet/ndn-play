@@ -2,11 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { URI } from './uri.js';
+import { hasDriveLetter, isRootOrDriveLetter } from './extpath.js';
 import { Schemas } from './network.js';
 import { isWindows } from './platform.js';
 import { basename } from './resources.js';
-import { hasDriveLetter, isRootOrDriveLetter } from './extpath.js';
+import { URI } from './uri.js';
 export function getBaseLabel(resource) {
     if (!resource) {
         return undefined;

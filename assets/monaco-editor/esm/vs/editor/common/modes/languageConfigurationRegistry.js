@@ -136,6 +136,7 @@ class LanguageConfigurationEntries {
             result.surroundingPairs = conf.surroundingPairs || result.surroundingPairs;
             result.autoCloseBefore = conf.autoCloseBefore || result.autoCloseBefore;
             result.folding = conf.folding || result.folding;
+            result.colorizedBracketPairs = conf.colorizedBracketPairs || result.colorizedBracketPairs;
             result.__electricCharacterSupport = conf.__electricCharacterSupport || result.__electricCharacterSupport;
         }
         return result;
@@ -143,7 +144,7 @@ class LanguageConfigurationEntries {
 }
 export class LanguageConfigurationRegistryImpl {
     constructor() {
-        this._entries2 = new Map();
+        this._entries = new Map();
         this._onDidChange = new Emitter();
         this.onDidChange = this._onDidChange.event;
     }
@@ -151,10 +152,10 @@ export class LanguageConfigurationRegistryImpl {
      * @param priority Use a higher number for higher priority
      */
     register(languageIdentifier, configuration, priority = 0) {
-        let entries = this._entries2.get(languageIdentifier.id);
+        let entries = this._entries.get(languageIdentifier.id);
         if (!entries) {
             entries = new LanguageConfigurationEntries(languageIdentifier);
-            this._entries2.set(languageIdentifier.id, entries);
+            this._entries.set(languageIdentifier.id, entries);
         }
         const disposable = entries.register(configuration, priority);
         this._onDidChange.fire(new LanguageConfigurationChangeEvent(languageIdentifier));
@@ -164,7 +165,7 @@ export class LanguageConfigurationRegistryImpl {
         });
     }
     _getRichEditSupport(languageId) {
-        const entries = this._entries2.get(languageId);
+        const entries = this._entries.get(languageId);
         return entries ? entries.getRichEditSupport() : null;
     }
     getIndentationRules(languageId) {
@@ -680,6 +681,10 @@ export class LanguageConfigurationRegistryImpl {
             return null;
         }
         return value.brackets || null;
+    }
+    getColorizedBracketPairs(languageId) {
+        var _a;
+        return ((_a = this._getRichEditSupport(languageId)) === null || _a === void 0 ? void 0 : _a.characterPair.getColorizedBrackets()) || [];
     }
 }
 export const LanguageConfigurationRegistry = new LanguageConfigurationRegistryImpl();

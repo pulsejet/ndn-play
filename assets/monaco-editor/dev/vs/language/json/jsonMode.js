@@ -1740,6 +1740,77 @@ define('jsonc-parser', ['jsonc-parser/main'], function (main) { return main; });
     exports.isString = isString;
 });
 
+/*---------------------------------------------------------------------------------------------
+*  Copyright (c) Microsoft Corporation. All rights reserved.
+*  Licensed under the MIT License. See License.txt in the project root for license information.
+*--------------------------------------------------------------------------------------------*/
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define('vscode-json-languageservice/utils/strings',["require", "exports"], factory);
+    }
+})(function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.extendedRegExp = exports.repeat = exports.convertSimple2RegExpPattern = exports.endsWith = exports.startsWith = void 0;
+    function startsWith(haystack, needle) {
+        if (haystack.length < needle.length) {
+            return false;
+        }
+        for (var i = 0; i < needle.length; i++) {
+            if (haystack[i] !== needle[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    exports.startsWith = startsWith;
+    /**
+     * Determines if haystack ends with needle.
+     */
+    function endsWith(haystack, needle) {
+        var diff = haystack.length - needle.length;
+        if (diff > 0) {
+            return haystack.lastIndexOf(needle) === diff;
+        }
+        else if (diff === 0) {
+            return haystack === needle;
+        }
+        else {
+            return false;
+        }
+    }
+    exports.endsWith = endsWith;
+    function convertSimple2RegExpPattern(pattern) {
+        return pattern.replace(/[\-\\\{\}\+\?\|\^\$\.\,\[\]\(\)\#\s]/g, '\\$&').replace(/[\*]/g, '.*');
+    }
+    exports.convertSimple2RegExpPattern = convertSimple2RegExpPattern;
+    function repeat(value, count) {
+        var s = '';
+        while (count > 0) {
+            if ((count & 1) === 1) {
+                s += value;
+            }
+            value += value;
+            count = count >>> 1;
+        }
+        return s;
+    }
+    exports.repeat = repeat;
+    function extendedRegExp(pattern) {
+        if (startsWith(pattern, '(?i)')) {
+            return new RegExp(pattern.substring(4), 'i');
+        }
+        else {
+            return new RegExp(pattern);
+        }
+    }
+    exports.extendedRegExp = extendedRegExp;
+});
+
 (function (factory) {
     if (typeof module === "object" && typeof module.exports === "object") {
         var v = factory(require, exports);
@@ -3961,31 +4032,42 @@ define('vscode-languageserver-textdocument', ['vscode-languageserver-textdocumen
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ClientCapabilities = exports.ErrorCode = exports.MarkedString = exports.Hover = exports.Location = exports.DocumentSymbol = exports.SymbolKind = exports.SymbolInformation = exports.MarkupKind = exports.MarkupContent = exports.InsertTextFormat = exports.Position = exports.CompletionList = exports.CompletionItemKind = exports.CompletionItem = exports.DiagnosticSeverity = exports.Diagnostic = exports.SelectionRange = exports.FoldingRangeKind = exports.FoldingRange = exports.ColorPresentation = exports.ColorInformation = exports.Color = exports.TextEdit = exports.Range = exports.TextDocument = void 0;
+    exports.ClientCapabilities = exports.ErrorCode = exports.DocumentHighlightKind = exports.VersionedTextDocumentIdentifier = exports.TextDocumentEdit = exports.CodeActionKind = exports.TextEdit = exports.WorkspaceEdit = exports.DocumentLink = exports.DocumentHighlight = exports.CodeAction = exports.Command = exports.CodeActionContext = exports.MarkedString = exports.Hover = exports.Location = exports.DocumentSymbol = exports.SymbolKind = exports.SymbolInformation = exports.InsertTextFormat = exports.CompletionItemTag = exports.CompletionList = exports.CompletionItemKind = exports.CompletionItem = exports.DiagnosticSeverity = exports.Diagnostic = exports.SelectionRange = exports.FoldingRangeKind = exports.FoldingRange = exports.ColorPresentation = exports.ColorInformation = exports.Color = exports.MarkupKind = exports.MarkupContent = exports.Position = exports.Range = exports.TextDocument = void 0;
     var vscode_languageserver_types_1 = require("vscode-languageserver-types");
     Object.defineProperty(exports, "Range", { enumerable: true, get: function () { return vscode_languageserver_types_1.Range; } });
-    Object.defineProperty(exports, "TextEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.TextEdit; } });
+    Object.defineProperty(exports, "Position", { enumerable: true, get: function () { return vscode_languageserver_types_1.Position; } });
+    Object.defineProperty(exports, "MarkupContent", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupContent; } });
+    Object.defineProperty(exports, "MarkupKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupKind; } });
     Object.defineProperty(exports, "Color", { enumerable: true, get: function () { return vscode_languageserver_types_1.Color; } });
     Object.defineProperty(exports, "ColorInformation", { enumerable: true, get: function () { return vscode_languageserver_types_1.ColorInformation; } });
     Object.defineProperty(exports, "ColorPresentation", { enumerable: true, get: function () { return vscode_languageserver_types_1.ColorPresentation; } });
     Object.defineProperty(exports, "FoldingRange", { enumerable: true, get: function () { return vscode_languageserver_types_1.FoldingRange; } });
     Object.defineProperty(exports, "FoldingRangeKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.FoldingRangeKind; } });
-    Object.defineProperty(exports, "MarkupKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupKind; } });
     Object.defineProperty(exports, "SelectionRange", { enumerable: true, get: function () { return vscode_languageserver_types_1.SelectionRange; } });
     Object.defineProperty(exports, "Diagnostic", { enumerable: true, get: function () { return vscode_languageserver_types_1.Diagnostic; } });
     Object.defineProperty(exports, "DiagnosticSeverity", { enumerable: true, get: function () { return vscode_languageserver_types_1.DiagnosticSeverity; } });
     Object.defineProperty(exports, "CompletionItem", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItem; } });
     Object.defineProperty(exports, "CompletionItemKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItemKind; } });
     Object.defineProperty(exports, "CompletionList", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionList; } });
-    Object.defineProperty(exports, "Position", { enumerable: true, get: function () { return vscode_languageserver_types_1.Position; } });
+    Object.defineProperty(exports, "CompletionItemTag", { enumerable: true, get: function () { return vscode_languageserver_types_1.CompletionItemTag; } });
     Object.defineProperty(exports, "InsertTextFormat", { enumerable: true, get: function () { return vscode_languageserver_types_1.InsertTextFormat; } });
-    Object.defineProperty(exports, "MarkupContent", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkupContent; } });
     Object.defineProperty(exports, "SymbolInformation", { enumerable: true, get: function () { return vscode_languageserver_types_1.SymbolInformation; } });
     Object.defineProperty(exports, "SymbolKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.SymbolKind; } });
     Object.defineProperty(exports, "DocumentSymbol", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentSymbol; } });
     Object.defineProperty(exports, "Location", { enumerable: true, get: function () { return vscode_languageserver_types_1.Location; } });
     Object.defineProperty(exports, "Hover", { enumerable: true, get: function () { return vscode_languageserver_types_1.Hover; } });
     Object.defineProperty(exports, "MarkedString", { enumerable: true, get: function () { return vscode_languageserver_types_1.MarkedString; } });
+    Object.defineProperty(exports, "CodeActionContext", { enumerable: true, get: function () { return vscode_languageserver_types_1.CodeActionContext; } });
+    Object.defineProperty(exports, "Command", { enumerable: true, get: function () { return vscode_languageserver_types_1.Command; } });
+    Object.defineProperty(exports, "CodeAction", { enumerable: true, get: function () { return vscode_languageserver_types_1.CodeAction; } });
+    Object.defineProperty(exports, "DocumentHighlight", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentHighlight; } });
+    Object.defineProperty(exports, "DocumentLink", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentLink; } });
+    Object.defineProperty(exports, "WorkspaceEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.WorkspaceEdit; } });
+    Object.defineProperty(exports, "TextEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.TextEdit; } });
+    Object.defineProperty(exports, "CodeActionKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.CodeActionKind; } });
+    Object.defineProperty(exports, "TextDocumentEdit", { enumerable: true, get: function () { return vscode_languageserver_types_1.TextDocumentEdit; } });
+    Object.defineProperty(exports, "VersionedTextDocumentIdentifier", { enumerable: true, get: function () { return vscode_languageserver_types_1.VersionedTextDocumentIdentifier; } });
+    Object.defineProperty(exports, "DocumentHighlightKind", { enumerable: true, get: function () { return vscode_languageserver_types_1.DocumentHighlightKind; } });
     var vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
     Object.defineProperty(exports, "TextDocument", { enumerable: true, get: function () { return vscode_languageserver_textdocument_1.TextDocument; } });
     /**
@@ -4080,6 +4162,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -4091,7 +4175,7 @@ var __extends = (this && this.__extends) || (function () {
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/parser/jsonParser',["require", "exports", "jsonc-parser", "../utils/objects", "../jsonLanguageTypes", "vscode-nls"], factory);
+        define('vscode-json-languageservice/parser/jsonParser',["require", "exports", "jsonc-parser", "../utils/objects", "../utils/strings", "../jsonLanguageTypes", "vscode-nls"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -4099,6 +4183,7 @@ var __extends = (this && this.__extends) || (function () {
     exports.parse = exports.JSONDocument = exports.contains = exports.getNodePath = exports.getNodeValue = exports.newJSONDocument = exports.ValidationResult = exports.EnumMatch = exports.asSchema = exports.ObjectASTNodeImpl = exports.PropertyASTNodeImpl = exports.StringASTNodeImpl = exports.NumberASTNodeImpl = exports.ArrayASTNodeImpl = exports.BooleanASTNodeImpl = exports.NullASTNodeImpl = exports.ASTNodeImpl = void 0;
     var Json = require("jsonc-parser");
     var objects_1 = require("../utils/objects");
+    var strings_1 = require("../utils/strings");
     var jsonLanguageTypes_1 = require("../jsonLanguageTypes");
     var nls = require("vscode-nls");
     var localize = nls.loadMessageBundle();
@@ -4700,7 +4785,7 @@ var __extends = (this && this.__extends) || (function () {
                 });
             }
             if (objects_1.isString(schema.pattern)) {
-                var regex = new RegExp(schema.pattern);
+                var regex = strings_1.extendedRegExp(schema.pattern);
                 if (!regex.test(node.value)) {
                     validationResult.problems.push({
                         location: { offset: node.offset, length: node.length },
@@ -4892,7 +4977,7 @@ var __extends = (this && this.__extends) || (function () {
             if (schema.patternProperties) {
                 for (var _f = 0, _g = Object.keys(schema.patternProperties); _f < _g.length; _f++) {
                     var propertyPattern = _g[_f];
-                    var regex = new RegExp(propertyPattern);
+                    var regex = strings_1.extendedRegExp(propertyPattern);
                     for (var _h = 0, _j = unprocessedProperties.slice(0); _h < _j.length; _h++) {
                         var propertyName = _j[_h];
                         if (regex.test(propertyName)) {
@@ -5355,68 +5440,6 @@ var __extends = (this && this.__extends) || (function () {
 });
 
 /*---------------------------------------------------------------------------------------------
-*  Copyright (c) Microsoft Corporation. All rights reserved.
-*  Licensed under the MIT License. See License.txt in the project root for license information.
-*--------------------------------------------------------------------------------------------*/
-(function (factory) {
-    if (typeof module === "object" && typeof module.exports === "object") {
-        var v = factory(require, exports);
-        if (v !== undefined) module.exports = v;
-    }
-    else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/utils/strings',["require", "exports"], factory);
-    }
-})(function (require, exports) {
-    "use strict";
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.repeat = exports.convertSimple2RegExpPattern = exports.endsWith = exports.startsWith = void 0;
-    function startsWith(haystack, needle) {
-        if (haystack.length < needle.length) {
-            return false;
-        }
-        for (var i = 0; i < needle.length; i++) {
-            if (haystack[i] !== needle[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    exports.startsWith = startsWith;
-    /**
-     * Determines if haystack ends with needle.
-     */
-    function endsWith(haystack, needle) {
-        var diff = haystack.length - needle.length;
-        if (diff > 0) {
-            return haystack.lastIndexOf(needle) === diff;
-        }
-        else if (diff === 0) {
-            return haystack === needle;
-        }
-        else {
-            return false;
-        }
-    }
-    exports.endsWith = endsWith;
-    function convertSimple2RegExpPattern(pattern) {
-        return pattern.replace(/[\-\\\{\}\+\?\|\^\$\.\,\[\]\(\)\#\s]/g, '\\$&').replace(/[\*]/g, '.*');
-    }
-    exports.convertSimple2RegExpPattern = convertSimple2RegExpPattern;
-    function repeat(value, count) {
-        var s = '';
-        while (count > 0) {
-            if ((count & 1) === 1) {
-                s += value;
-            }
-            value += value;
-            count = count >>> 1;
-        }
-        return s;
-    }
-    exports.repeat = repeat;
-});
-
-/*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
@@ -5869,7 +5892,7 @@ var __extends = (this && this.__extends) || (function () {
                             if (s.schema.patternProperties && !propertyMatched) {
                                 for (var _a = 0, _b = Object.keys(s.schema.patternProperties); _a < _b.length; _a++) {
                                     var pattern = _b[_a];
-                                    var regex = new RegExp(pattern);
+                                    var regex = strings_1.extendedRegExp(pattern);
                                     if (regex.test(parentKey)) {
                                         propertyMatched = true;
                                         var propertySchema = s.schema.patternProperties[pattern];
@@ -6494,6 +6517,145 @@ var __extends = (this && this.__extends) || (function () {
 //# sourceMappingURL=index.js.map;
 define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
 
+(function (factory) {
+    if (typeof module === "object" && typeof module.exports === "object") {
+        var v = factory(require, exports);
+        if (v !== undefined) module.exports = v;
+    }
+    else if (typeof define === "function" && define.amd) {
+        define('vscode-json-languageservice/utils/glob',["require", "exports"], factory);
+    }
+})(function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.createRegex = void 0;
+    /*---------------------------------------------------------------------------------------------
+     *  Copyright (c) Microsoft Corporation. All rights reserved.
+     *  Copyright (c) 2013, Nick Fitzgerald
+     *  Licensed under the MIT License. See LICENCE.md in the project root for license information.
+     *--------------------------------------------------------------------------------------------*/
+    function createRegex(glob, opts) {
+        if (typeof glob !== 'string') {
+            throw new TypeError('Expected a string');
+        }
+        var str = String(glob);
+        // The regexp we are building, as a string.
+        var reStr = "";
+        // Whether we are matching so called "extended" globs (like bash) and should
+        // support single character matching, matching ranges of characters, group
+        // matching, etc.
+        var extended = opts ? !!opts.extended : false;
+        // When globstar is _false_ (default), '/foo/*' is translated a regexp like
+        // '^\/foo\/.*$' which will match any string beginning with '/foo/'
+        // When globstar is _true_, '/foo/*' is translated to regexp like
+        // '^\/foo\/[^/]*$' which will match any string beginning with '/foo/' BUT
+        // which does not have a '/' to the right of it.
+        // E.g. with '/foo/*' these will match: '/foo/bar', '/foo/bar.txt' but
+        // these will not '/foo/bar/baz', '/foo/bar/baz.txt'
+        // Lastely, when globstar is _true_, '/foo/**' is equivelant to '/foo/*' when
+        // globstar is _false_
+        var globstar = opts ? !!opts.globstar : false;
+        // If we are doing extended matching, this boolean is true when we are inside
+        // a group (eg {*.html,*.js}), and false otherwise.
+        var inGroup = false;
+        // RegExp flags (eg "i" ) to pass in to RegExp constructor.
+        var flags = opts && typeof (opts.flags) === "string" ? opts.flags : "";
+        var c;
+        for (var i = 0, len = str.length; i < len; i++) {
+            c = str[i];
+            switch (c) {
+                case "/":
+                case "$":
+                case "^":
+                case "+":
+                case ".":
+                case "(":
+                case ")":
+                case "=":
+                case "!":
+                case "|":
+                    reStr += "\\" + c;
+                    break;
+                case "?":
+                    if (extended) {
+                        reStr += ".";
+                        break;
+                    }
+                case "[":
+                case "]":
+                    if (extended) {
+                        reStr += c;
+                        break;
+                    }
+                case "{":
+                    if (extended) {
+                        inGroup = true;
+                        reStr += "(";
+                        break;
+                    }
+                case "}":
+                    if (extended) {
+                        inGroup = false;
+                        reStr += ")";
+                        break;
+                    }
+                case ",":
+                    if (inGroup) {
+                        reStr += "|";
+                        break;
+                    }
+                    reStr += "\\" + c;
+                    break;
+                case "*":
+                    // Move over all consecutive "*"'s.
+                    // Also store the previous and next characters
+                    var prevChar = str[i - 1];
+                    var starCount = 1;
+                    while (str[i + 1] === "*") {
+                        starCount++;
+                        i++;
+                    }
+                    var nextChar = str[i + 1];
+                    if (!globstar) {
+                        // globstar is disabled, so treat any number of "*" as one
+                        reStr += ".*";
+                    }
+                    else {
+                        // globstar is enabled, so determine if this is a globstar segment
+                        var isGlobstar = starCount > 1 // multiple "*"'s
+                            && (prevChar === "/" || prevChar === undefined || prevChar === '{' || prevChar === ',') // from the start of the segment
+                            && (nextChar === "/" || nextChar === undefined || nextChar === ',' || nextChar === '}'); // to the end of the segment
+                        if (isGlobstar) {
+                            if (nextChar === "/") {
+                                i++; // move over the "/"
+                            }
+                            else if (prevChar === '/' && reStr.endsWith('\\/')) {
+                                reStr = reStr.substr(0, reStr.length - 2);
+                            }
+                            // it's a globstar, so match zero or more path segments
+                            reStr += "((?:[^/]*(?:\/|$))*)";
+                        }
+                        else {
+                            // it's not a globstar, so only match one path segment
+                            reStr += "([^/]*)";
+                        }
+                    }
+                    break;
+                default:
+                    reStr += c;
+            }
+        }
+        // When regexp 'g' flag is specified don't
+        // constrain the regular expression with ^ & $
+        if (!flags || !~flags.indexOf('g')) {
+            reStr = "^" + reStr + "$";
+        }
+        return new RegExp(reStr, flags);
+    }
+    exports.createRegex = createRegex;
+    ;
+});
+
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -6504,7 +6666,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define('vscode-json-languageservice/services/jsonSchemaService',["require", "exports", "jsonc-parser", "vscode-uri", "../utils/strings", "../parser/jsonParser", "vscode-nls"], factory);
+        define('vscode-json-languageservice/services/jsonSchemaService',["require", "exports", "jsonc-parser", "vscode-uri", "../utils/strings", "../parser/jsonParser", "vscode-nls", "../utils/glob"], factory);
     }
 })(function (require, exports) {
     "use strict";
@@ -6515,36 +6677,44 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
     var Strings = require("../utils/strings");
     var Parser = require("../parser/jsonParser");
     var nls = require("vscode-nls");
+    var glob_1 = require("../utils/glob");
     var localize = nls.loadMessageBundle();
+    var BANG = '!';
+    var PATH_SEP = '/';
     var FilePatternAssociation = /** @class */ (function () {
         function FilePatternAssociation(pattern, uris) {
-            this.patternRegExps = [];
-            this.isInclude = [];
+            this.globWrappers = [];
             try {
                 for (var _i = 0, pattern_1 = pattern; _i < pattern_1.length; _i++) {
-                    var p = pattern_1[_i];
-                    var include = p[0] !== '!';
+                    var patternString = pattern_1[_i];
+                    var include = patternString[0] !== BANG;
                     if (!include) {
-                        p = p.substring(1);
+                        patternString = patternString.substring(1);
                     }
-                    this.patternRegExps.push(new RegExp(Strings.convertSimple2RegExpPattern(p) + '$'));
-                    this.isInclude.push(include);
+                    if (patternString.length > 0) {
+                        if (patternString[0] === PATH_SEP) {
+                            patternString = patternString.substring(1);
+                        }
+                        this.globWrappers.push({
+                            regexp: glob_1.createRegex('**/' + patternString, { extended: true, globstar: true }),
+                            include: include,
+                        });
+                    }
                 }
+                ;
                 this.uris = uris;
             }
             catch (e) {
-                // invalid pattern
-                this.patternRegExps.length = 0;
-                this.isInclude.length = 0;
+                this.globWrappers.length = 0;
                 this.uris = [];
             }
         }
         FilePatternAssociation.prototype.matchesPattern = function (fileName) {
             var match = false;
-            for (var i = 0; i < this.patternRegExps.length; i++) {
-                var regExp = this.patternRegExps[i];
-                if (regExp.test(fileName)) {
-                    match = this.isInclude[i];
+            for (var _i = 0, _a = this.globWrappers; _i < _a.length; _i++) {
+                var _b = _a[_i], regexp = _b.regexp, include = _b.include;
+                if (regexp.test(fileName)) {
+                    match = include;
                 }
             }
             return match;
@@ -6618,7 +6788,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
             else if (schema.patternProperties) {
                 for (var _i = 0, _a = Object.keys(schema.patternProperties); _i < _a.length; _i++) {
                     var pattern = _a[_i];
-                    var regex = new RegExp(pattern);
+                    var regex = Strings.extendedRegExp(pattern);
                     if (regex.test(next)) {
                         return this.getSectionRecursive(path, schema.patternProperties[pattern]);
                     }
@@ -6808,6 +6978,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                     path = path.substr(1);
                 }
                 path.split('/').some(function (part) {
+                    part = part.replace(/~1/g, '/').replace(/~0/g, '~');
                     current = current[part];
                     return !current;
                 });
@@ -6828,7 +6999,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                 }
             };
             var resolveExternalLink = function (node, uri, refSegment, parentSchemaURL, parentSchemaDependencies) {
-                if (contextService && !/^\w+:\/\/.*/.test(uri)) {
+                if (contextService && !/^[A-Za-z][A-Za-z0-9+\-.+]*:\/\/.*/.test(uri)) {
                     uri = contextService.resolveRelativePath(uri, parentSchemaURL);
                 }
                 uri = normalizeId(uri);
@@ -7010,7 +7181,7 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
         }
     }
     function normalizeResourceForMatching(resource) {
-        // remove querues and fragments, normalize drive capitalization
+        // remove queries and fragments, normalize drive capitalization
         try {
             return vscode_uri_1.URI.parse(resource).with({ fragment: null, query: null }).toString();
         }
@@ -7081,8 +7252,8 @@ define('vscode-uri', ['vscode-uri/index'], function (main) { return main; });
                 }
             };
             var getDiagnostics = function (schema) {
-                var trailingCommaSeverity = documentSettings ? toDiagnosticSeverity(documentSettings.trailingCommas) : jsonLanguageTypes_1.DiagnosticSeverity.Error;
-                var commentSeverity = documentSettings ? toDiagnosticSeverity(documentSettings.comments) : _this.commentSeverity;
+                var trailingCommaSeverity = (documentSettings === null || documentSettings === void 0 ? void 0 : documentSettings.trailingCommas) ? toDiagnosticSeverity(documentSettings.trailingCommas) : jsonLanguageTypes_1.DiagnosticSeverity.Error;
+                var commentSeverity = (documentSettings === null || documentSettings === void 0 ? void 0 : documentSettings.comments) ? toDiagnosticSeverity(documentSettings.comments) : _this.commentSeverity;
                 var schemaValidation = (documentSettings === null || documentSettings === void 0 ? void 0 : documentSettings.schemaValidation) ? toDiagnosticSeverity(documentSettings.schemaValidation) : jsonLanguageTypes_1.DiagnosticSeverity.Warning;
                 var schemaRequest = (documentSettings === null || documentSettings === void 0 ? void 0 : documentSettings.schemaRequest) ? toDiagnosticSeverity(documentSettings.schemaRequest) : jsonLanguageTypes_1.DiagnosticSeverity.Warning;
                 if (schema) {
@@ -8747,13 +8918,16 @@ define('vs/language/json/languageFeatures',["require", "exports", "./fillers/mon
             text: textEdit.newText
         };
     }
+    function toCommand(c) {
+        return c && c.command === 'editor.action.triggerSuggest' ? { id: c.command, title: c.title, arguments: c.arguments } : undefined;
+    }
     var CompletionAdapter = /** @class */ (function () {
         function CompletionAdapter(_worker) {
             this._worker = _worker;
         }
         Object.defineProperty(CompletionAdapter.prototype, "triggerCharacters", {
             get: function () {
-                return [' ', ':'];
+                return [' ', ':', '"'];
             },
             enumerable: false,
             configurable: true
@@ -8778,6 +8952,7 @@ define('vs/language/json/languageFeatures',["require", "exports", "./fillers/mon
                         filterText: entry.filterText,
                         documentation: entry.documentation,
                         detail: entry.detail,
+                        command: toCommand(entry.command),
                         range: wordRange,
                         kind: toCompletionItemKind(entry.kind)
                     };

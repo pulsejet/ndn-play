@@ -13,18 +13,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import * as arrays from '../../../base/common/arrays.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
+import { onUnexpectedExternalError } from '../../../base/common/errors.js';
 import { EditorAction, registerEditorAction, registerEditorContribution, registerModelCommand } from '../../browser/editorExtensions.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import * as modes from '../../common/modes.js';
+import { BracketSelectionRangeProvider } from './bracketSelections.js';
+import { WordSelectionRangeProvider } from './wordSelections.js';
 import * as nls from '../../../nls.js';
 import { MenuId } from '../../../platform/actions/common/actions.js';
-import { WordSelectionRangeProvider } from './wordSelections.js';
-import { BracketSelectionRangeProvider } from './bracketSelections.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { onUnexpectedExternalError } from '../../../base/common/errors.js';
 class SelectionRanges {
     constructor(index, ranges) {
         this.index = index;
@@ -66,7 +66,7 @@ class SmartSelectController {
                 return;
             }
             if (!this._state) {
-                yield provideSelectionRanges(model, selections.map(s => s.getPosition()), this._editor.getOption(99 /* smartSelect */), CancellationToken.None).then(ranges => {
+                yield provideSelectionRanges(model, selections.map(s => s.getPosition()), this._editor.getOption(101 /* smartSelect */), CancellationToken.None).then(ranges => {
                     var _a;
                     if (!arrays.isNonEmptyArray(ranges) || ranges.length !== selections.length) {
                         // invalid result

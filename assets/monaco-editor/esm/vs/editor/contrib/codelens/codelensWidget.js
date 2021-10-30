@@ -2,14 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './codelensWidget.css';
 import * as dom from '../../../base/browser/dom.js';
+import { renderLabelWithIcons } from '../../../base/browser/ui/iconLabel/iconLabels.js';
+import './codelensWidget.css';
 import { Range } from '../../common/core/range.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { editorCodeLensForeground } from '../../common/view/editorColorRegistry.js';
 import { editorActiveLinkForeground } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { renderLabelWithIcons } from '../../../base/browser/ui/iconLabel/iconLabels.js';
 class CodeLensViewZone {
     constructor(afterLineNumber, heightInPx, onHeight) {
         this.afterLineNumber = afterLineNumber;

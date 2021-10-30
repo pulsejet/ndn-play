@@ -11,15 +11,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
-import { DisposableStore } from '../../../base/common/lifecycle.js';
 import * as dom from '../../../base/browser/dom.js';
 import { DomScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';
-import { MarkdownRenderer } from '../../browser/core/markdownRenderer.js';
-import { MarkdownString } from '../../../base/common/htmlContent.js';
 import { Codicon } from '../../../base/common/codicons.js';
 import { Emitter } from '../../../base/common/event.js';
+import { MarkdownString } from '../../../base/common/htmlContent.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { MarkdownRenderer } from '../../browser/core/markdownRenderer.js';
 import { ResizableHTMLElement } from './resizable.js';
+import * as nls from '../../../nls.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 export function canExpandCompletionItem(item) {
     return !!item && Boolean(item.completion.documentation || item.completion.detail && item.completion.detail !== item.completion.label);
@@ -49,7 +49,7 @@ let SuggestDetailsWidget = class SuggestDetailsWidget {
         this._docs = dom.append(this._body, dom.$('p.docs'));
         this._configureFont();
         this._disposables.add(this._editor.onDidChangeConfiguration(e => {
-            if (e.hasChanged(40 /* fontInfo */)) {
+            if (e.hasChanged(43 /* fontInfo */)) {
                 this._configureFont();
             }
         }));
@@ -60,10 +60,10 @@ let SuggestDetailsWidget = class SuggestDetailsWidget {
     }
     _configureFont() {
         const options = this._editor.getOptions();
-        const fontInfo = options.get(40 /* fontInfo */);
+        const fontInfo = options.get(43 /* fontInfo */);
         const fontFamily = fontInfo.fontFamily;
-        const fontSize = options.get(104 /* suggestFontSize */) || fontInfo.fontSize;
-        const lineHeight = options.get(105 /* suggestLineHeight */) || fontInfo.lineHeight;
+        const fontSize = options.get(106 /* suggestFontSize */) || fontInfo.fontSize;
+        const lineHeight = options.get(107 /* suggestLineHeight */) || fontInfo.lineHeight;
         const fontWeight = fontInfo.fontWeight;
         const fontSizePx = `${fontSize}px`;
         const lineHeightPx = `${lineHeight}px`;
@@ -76,7 +76,7 @@ let SuggestDetailsWidget = class SuggestDetailsWidget {
         this._close.style.width = lineHeightPx;
     }
     getLayoutInfo() {
-        const lineHeight = this._editor.getOption(105 /* suggestLineHeight */) || this._editor.getOption(40 /* fontInfo */).lineHeight;
+        const lineHeight = this._editor.getOption(107 /* suggestLineHeight */) || this._editor.getOption(43 /* fontInfo */).lineHeight;
         const borderWidth = this._borderWidth;
         const borderHeight = borderWidth * 2;
         return {
@@ -258,6 +258,7 @@ export class SuggestDetailsOverlay {
         }));
     }
     dispose() {
+        this._resizable.dispose();
         this._disposables.dispose();
         this.hide();
     }

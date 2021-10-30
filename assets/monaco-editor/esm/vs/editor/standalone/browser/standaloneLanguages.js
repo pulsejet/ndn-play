@@ -35,8 +35,8 @@ export function getEncodedLanguageId(languageId) {
  * @event
  */
 export function onLanguage(languageId, callback) {
-    let disposable = StaticServices.modeService.get().onDidCreateMode((mode) => {
-        if (mode.getId() === languageId) {
+    let disposable = StaticServices.modeService.get().onDidEncounterLanguage((languageIdentifier) => {
+        if (languageIdentifier.language === languageId) {
             // stop listening
             disposable.dispose();
             // invoke actual listener
@@ -311,14 +311,16 @@ export function registerCodeLensProvider(languageId, provider) {
 /**
  * Register a code action provider (used by e.g. quick fix).
  */
-export function registerCodeActionProvider(languageId, provider) {
+export function registerCodeActionProvider(languageId, provider, metadata) {
     return modes.CodeActionProviderRegistry.register(languageId, {
+        providedCodeActionKinds: metadata === null || metadata === void 0 ? void 0 : metadata.providedCodeActionKinds,
         provideCodeActions: (model, range, context, token) => {
             let markers = StaticServices.markerService.get().read({ resource: model.uri }).filter(m => {
                 return Range.areIntersectingOrTouching(m, range);
             });
             return provider.provideCodeActions(model, range, { markers, only: context.only }, token);
-        }
+        },
+        resolveCodeAction: provider.resolveCodeAction
     });
 }
 /**
@@ -388,6 +390,18 @@ export function registerDocumentRangeSemanticTokensProvider(languageId, provider
     return modes.DocumentRangeSemanticTokensProviderRegistry.register(languageId, provider);
 }
 /**
+ * Register an inline completions provider.
+ */
+export function registerInlineCompletionsProvider(languageId, provider) {
+    return modes.InlineCompletionsProviderRegistry.register(languageId, provider);
+}
+/**
+ * Register an inlay hints provider.
+ */
+export function registerInlayHintsProvider(languageId, provider) {
+    return modes.InlayHintsProviderRegistry.register(languageId, provider);
+}
+/**
  * @internal
  */
 export function createMonacoLanguagesAPI() {
@@ -424,6 +438,8 @@ export function createMonacoLanguagesAPI() {
         registerSelectionRangeProvider: registerSelectionRangeProvider,
         registerDocumentSemanticTokensProvider: registerDocumentSemanticTokensProvider,
         registerDocumentRangeSemanticTokensProvider: registerDocumentRangeSemanticTokensProvider,
+        registerInlineCompletionsProvider: registerInlineCompletionsProvider,
+        registerInlayHintsProvider: registerInlayHintsProvider,
         // enums
         DocumentHighlightKind: standaloneEnums.DocumentHighlightKind,
         CompletionItemKind: standaloneEnums.CompletionItemKind,
@@ -434,7 +450,8 @@ export function createMonacoLanguagesAPI() {
         IndentAction: standaloneEnums.IndentAction,
         CompletionTriggerKind: standaloneEnums.CompletionTriggerKind,
         SignatureHelpTriggerKind: standaloneEnums.SignatureHelpTriggerKind,
-        InlineHintKind: standaloneEnums.InlineHintKind,
+        InlayHintKind: standaloneEnums.InlayHintKind,
+        InlineCompletionTriggerKind: standaloneEnums.InlineCompletionTriggerKind,
         // classes
         FoldingRangeKind: modes.FoldingRangeKind,
     };

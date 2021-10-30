@@ -22,6 +22,7 @@ import { Selection } from '../../common/core/selection.js';
 import { MOUSE_CURSOR_TEXT_CSS_CLASS_NAME } from '../../../base/browser/ui/mouseCursor/mouseCursor.js';
 class VisibleTextAreaData {
     constructor(top, left, width) {
+        this._visibleTextAreaBrand = undefined;
         this.top = top;
         this.left = left;
         this.width = width;
@@ -42,15 +43,15 @@ export class TextAreaHandler extends ViewPart {
         this._scrollLeft = 0;
         this._scrollTop = 0;
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
         this._setAccessibilityOptions(options);
         this._contentLeft = layoutInfo.contentLeft;
         this._contentWidth = layoutInfo.contentWidth;
         this._contentHeight = layoutInfo.height;
-        this._fontInfo = options.get(40 /* fontInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._emptySelectionClipboard = options.get(30 /* emptySelectionClipboard */);
-        this._copyWithSyntaxHighlighting = options.get(19 /* copyWithSyntaxHighlighting */);
+        this._fontInfo = options.get(43 /* fontInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._emptySelectionClipboard = options.get(32 /* emptySelectionClipboard */);
+        this._copyWithSyntaxHighlighting = options.get(21 /* copyWithSyntaxHighlighting */);
         this._visibleTextArea = null;
         this._selections = [new Selection(1, 1, 1, 1)];
         this._modelSelections = [new Selection(1, 1, 1, 1)];
@@ -65,13 +66,13 @@ export class TextAreaHandler extends ViewPart {
         this.textArea.setAttribute('autocomplete', 'off');
         this.textArea.setAttribute('spellcheck', 'false');
         this.textArea.setAttribute('aria-label', this._getAriaLabel(options));
-        this.textArea.setAttribute('tabindex', String(options.get(109 /* tabIndex */)));
+        this.textArea.setAttribute('tabindex', String(options.get(111 /* tabIndex */)));
         this.textArea.setAttribute('role', 'textbox');
         this.textArea.setAttribute('aria-roledescription', nls.localize('editor', "editor"));
         this.textArea.setAttribute('aria-multiline', 'true');
         this.textArea.setAttribute('aria-haspopup', 'false');
         this.textArea.setAttribute('aria-autocomplete', 'both');
-        if (options.get(28 /* domReadOnly */) && options.get(77 /* readOnly */)) {
+        if (options.get(30 /* domReadOnly */) && options.get(80 /* readOnly */)) {
             this.textArea.setAttribute('readonly', 'true');
         }
         this.textAreaCover = createFastDomNode(document.createElement('div'));
@@ -275,7 +276,7 @@ export class TextAreaHandler extends ViewPart {
     }
     _getWordBeforePosition(position) {
         const lineContent = this._context.model.getLineContent(position.lineNumber);
-        const wordSeparators = getMapForWordSeparators(this._context.configuration.options.get(113 /* wordSeparators */));
+        const wordSeparators = getMapForWordSeparators(this._context.configuration.options.get(115 /* wordSeparators */));
         let column = position.column;
         let distance = 0;
         while (column > 1) {
@@ -320,19 +321,19 @@ export class TextAreaHandler extends ViewPart {
     // --- begin event handlers
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
         this._setAccessibilityOptions(options);
         this._contentLeft = layoutInfo.contentLeft;
         this._contentWidth = layoutInfo.contentWidth;
         this._contentHeight = layoutInfo.height;
-        this._fontInfo = options.get(40 /* fontInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._emptySelectionClipboard = options.get(30 /* emptySelectionClipboard */);
-        this._copyWithSyntaxHighlighting = options.get(19 /* copyWithSyntaxHighlighting */);
+        this._fontInfo = options.get(43 /* fontInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._emptySelectionClipboard = options.get(32 /* emptySelectionClipboard */);
+        this._copyWithSyntaxHighlighting = options.get(21 /* copyWithSyntaxHighlighting */);
         this.textArea.setAttribute('aria-label', this._getAriaLabel(options));
-        this.textArea.setAttribute('tabindex', String(options.get(109 /* tabIndex */)));
-        if (e.hasChanged(28 /* domReadOnly */) || e.hasChanged(77 /* readOnly */)) {
-            if (options.get(28 /* domReadOnly */) && options.get(77 /* readOnly */)) {
+        this.textArea.setAttribute('tabindex', String(options.get(111 /* tabIndex */)));
+        if (e.hasChanged(30 /* domReadOnly */) || e.hasChanged(80 /* readOnly */)) {
+            if (options.get(30 /* domReadOnly */) && options.get(80 /* readOnly */)) {
                 this.textArea.setAttribute('readonly', 'true');
             }
             else {
@@ -477,11 +478,11 @@ export class TextAreaHandler extends ViewPart {
         tac.setWidth(1);
         tac.setHeight(1);
         const options = this._context.configuration.options;
-        if (options.get(46 /* glyphMargin */)) {
+        if (options.get(49 /* glyphMargin */)) {
             tac.setClassName('monaco-editor-background textAreaCover ' + Margin.OUTER_CLASS_NAME);
         }
         else {
-            if (options.get(56 /* lineNumbers */).renderType !== 0 /* Off */) {
+            if (options.get(59 /* lineNumbers */).renderType !== 0 /* Off */) {
                 tac.setClassName('monaco-editor-background textAreaCover ' + LineNumbersOverlay.CLASS_NAME);
             }
             else {

@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { onUnexpectedExternalError } from '../../../base/common/errors.js';
-import { MAX_LINE_NUMBER, FoldingRegions } from './foldingRanges.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { FoldingRegions, MAX_LINE_NUMBER } from './foldingRanges.js';
 const MAX_FOLDING_REGIONS = 5000;
 const foldingContext = {};
 export const ID_SYNTAX_PROVIDER = 'syntax';

@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { contrastBorder, listFocusBackground, listFocusForeground, listActiveSelectionBackground, listActiveSelectionForeground, listInactiveSelectionForeground, listInactiveSelectionBackground, listInactiveFocusBackground, listHoverBackground, listHoverForeground, listDropBackground, widgetShadow, activeContrastBorder, badgeBackground, badgeForeground, menuForeground, menuBackground, menuSelectionForeground, menuSelectionBackground, menuSelectionBorder, menuBorder, menuSeparatorBackground, listFilterWidgetOutline, listFilterWidgetNoMatchesOutline, listFilterWidgetBackground, treeIndentGuidesStroke, resolveColorValue, listFocusOutline, listInactiveFocusOutline, tableColumnsBorder } from './colorRegistry.js';
+import { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, listActiveSelectionBackground, listActiveSelectionForeground, listActiveSelectionIconForeground, listDropBackground, listFilterWidgetBackground, listFilterWidgetNoMatchesOutline, listFilterWidgetOutline, listFocusBackground, listFocusForeground, listFocusOutline, listHoverBackground, listHoverForeground, listInactiveFocusBackground, listInactiveFocusOutline, listInactiveSelectionBackground, listInactiveSelectionForeground, listInactiveSelectionIconForeground, menuBackground, menuBorder, menuForeground, menuSelectionBackground, menuSelectionBorder, menuSelectionForeground, menuSeparatorBackground, resolveColorValue, tableColumnsBorder, treeIndentGuidesStroke, widgetShadow } from './colorRegistry.js';
 export function computeStyles(theme, styleMap) {
     const styles = Object.create(null);
     for (let key in styleMap) {
@@ -14,7 +14,7 @@ export function computeStyles(theme, styleMap) {
     return styles;
 }
 export function attachStyler(themeService, styleMap, widgetOrCallback) {
-    function applyStyles(theme) {
+    function applyStyles() {
         const styles = computeStyles(themeService.getColorTheme(), styleMap);
         if (typeof widgetOrCallback === 'function') {
             widgetOrCallback(styles);
@@ -23,7 +23,7 @@ export function attachStyler(themeService, styleMap, widgetOrCallback) {
             widgetOrCallback.style(styles);
         }
     }
-    applyStyles(themeService.getColorTheme());
+    applyStyles();
     return themeService.onDidColorThemeChange(applyStyles);
 }
 export function attachBadgeStyler(widget, themeService, style) {
@@ -42,9 +42,11 @@ export const defaultListStyles = {
     listFocusOutline,
     listActiveSelectionBackground,
     listActiveSelectionForeground,
+    listActiveSelectionIconForeground,
     listFocusAndSelectionBackground: listActiveSelectionBackground,
     listFocusAndSelectionForeground: listActiveSelectionForeground,
     listInactiveSelectionBackground,
+    listInactiveSelectionIconForeground,
     listInactiveSelectionForeground,
     listInactiveFocusBackground,
     listInactiveFocusOutline,

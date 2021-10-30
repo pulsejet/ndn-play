@@ -11,14 +11,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import './actionbar.css';
-import { Disposable, dispose } from '../../../common/lifecycle.js';
-import { ActionRunner } from '../../../common/actions.js';
 import * as DOM from '../../dom.js';
-import * as types from '../../../common/types.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
-import { Emitter } from '../../../common/event.js';
 import { ActionViewItem, BaseActionViewItem } from './actionViewItems.js';
+import { ActionRunner } from '../../../common/actions.js';
+import { Emitter } from '../../../common/event.js';
+import { Disposable, dispose } from '../../../common/lifecycle.js';
+import * as types from '../../../common/types.js';
+import './actionbar.css';
 export class ActionBar extends Disposable {
     constructor(container, options = {}) {
         var _a, _b, _c, _d, _e, _f;

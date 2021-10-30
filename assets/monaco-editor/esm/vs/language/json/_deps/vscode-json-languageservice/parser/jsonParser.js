@@ -10,15 +10,18 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-import * as Json from '../../jsonc-parser/main.js';
+import * as Json from './../../jsonc-parser/main.js';
 import { isNumber, equals, isBoolean, isString, isDefined } from '../utils/objects.js';
+import { extendedRegExp } from '../utils/strings.js';
 import { ErrorCode, Diagnostic, DiagnosticSeverity, Range } from '../jsonLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var formats = {
     'color-hex': { errorMessage: localize('colorHexFormatWarning', 'Invalid color format. Use #RGB, #RGBA, #RRGGBB or #RRGGBBAA.'), pattern: /^#([0-9A-Fa-f]{3,4}|([0-9A-Fa-f]{2}){3,4})$/ },
@@ -613,7 +616,7 @@ function validate(n, schema, validationResult, matchingSchemas) {
             });
         }
         if (isString(schema.pattern)) {
-            var regex = new RegExp(schema.pattern);
+            var regex = extendedRegExp(schema.pattern);
             if (!regex.test(node.value)) {
                 validationResult.problems.push({
                     location: { offset: node.offset, length: node.length },
@@ -805,7 +808,7 @@ function validate(n, schema, validationResult, matchingSchemas) {
         if (schema.patternProperties) {
             for (var _f = 0, _g = Object.keys(schema.patternProperties); _f < _g.length; _f++) {
                 var propertyPattern = _g[_f];
-                var regex = new RegExp(propertyPattern);
+                var regex = extendedRegExp(propertyPattern);
                 for (var _h = 0, _j = unprocessedProperties.slice(0); _h < _j.length; _h++) {
                     var propertyName = _j[_h];
                     if (regex.test(propertyName)) {

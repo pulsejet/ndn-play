@@ -11,15 +11,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import * as nls from '../../../nls.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
-import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
+import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
-import { registerEditorAction, registerEditorContribution, EditorAction, EditorCommand, registerEditorCommand } from '../../browser/editorExtensions.js';
-import { ParameterHintsWidget } from './parameterHintsWidget.js';
-import { Context } from './provideSignatureHelp.js';
 import * as modes from '../../common/modes.js';
+import { Context } from './provideSignatureHelp.js';
+import * as nls from '../../../nls.js';
+import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
+import { ParameterHintsWidget } from './parameterHintsWidget.js';
 let ParameterHintsController = class ParameterHintsController extends Disposable {
     constructor(editor, instantiationService) {
         super();

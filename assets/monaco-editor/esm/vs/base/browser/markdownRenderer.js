@@ -2,30 +2,27 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-var _a;
 import * as DOM from './dom.js';
+import * as dompurify from './dompurify/dompurify.js';
+import { DomEmitter } from './event.js';
 import { createElement } from './formattedTextRenderer.js';
-import { onUnexpectedError } from '../common/errors.js';
-import { parseHrefAndDimensions, removeMarkdownEscapes } from '../common/htmlContent.js';
-import { defaultGenerator } from '../common/idGenerator.js';
-import * as marked from '../common/marked/marked.js';
-import { insane } from '../common/insane/insane.js';
-import { parse } from '../common/marshalling.js';
-import { cloneAndChange } from '../common/objects.js';
-import { escape } from '../common/strings.js';
-import { URI } from '../common/uri.js';
-import { FileAccess, Schemas } from '../common/network.js';
-import { markdownEscapeEscapedIcons } from '../common/iconLabels.js';
-import { resolvePath } from '../common/resources.js';
 import { StandardMouseEvent } from './mouseEvent.js';
 import { renderLabelWithIcons } from './ui/iconLabel/iconLabels.js';
+import { raceCancellation } from '../common/async.js';
+import { CancellationTokenSource } from '../common/cancellation.js';
+import { onUnexpectedError } from '../common/errors.js';
 import { Event } from '../common/event.js';
-import { domEvent } from './event.js';
-const _ttpInsane = (_a = window.trustedTypes) === null || _a === void 0 ? void 0 : _a.createPolicy('insane', {
-    createHTML(value, options) {
-        return insane(value, options);
-    }
-});
+import { parseHrefAndDimensions, removeMarkdownEscapes } from '../common/htmlContent.js';
+import { markdownEscapeEscapedIcons } from '../common/iconLabels.js';
+import { defaultGenerator } from '../common/idGenerator.js';
+import { DisposableStore } from '../common/lifecycle.js';
+import * as marked from '../common/marked/marked.js';
+import { parse } from '../common/marshalling.js';
+import { FileAccess, Schemas } from '../common/network.js';
+import { cloneAndChange } from '../common/objects.js';
+import { resolvePath } from '../common/resources.js';
+import { escape } from '../common/strings.js';
+import { URI } from '../common/uri.js';
 /**
  * Low-level way create a html element from a markdown string.
  *
@@ -34,6 +31,9 @@ const _ttpInsane = (_a = window.trustedTypes) === null || _a === void 0 ? void 0
  */
 export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
     var _a;
+    const disposables = new DisposableStore();
+    let isDisposed = false;
+    const cts = disposables.add(new CancellationTokenSource());
     const element = createElement(options);
     const _uriMassage = function (part) {
         let data;
@@ -62,15 +62,18 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
             return href; // no uri exists
         }
         let uri = URI.revive(data);
-        if (URI.parse(href).toString() === uri.toString()) {
-            return href; // no tranformation performed
-        }
         if (isDomUri) {
+            if (href.startsWith(Schemas.data + ':')) {
+                return href;
+            }
             // this URI will end up as "src"-attribute of a dom node
             // and because of that special rewriting needs to be done
             // so that the URI uses a protocol that's understood by
             // browsers (like http or https)
             return FileAccess.asBrowserUri(uri).toString(true);
+        }
+        if (URI.parse(href).toString() === uri.toString()) {
+            return href; // no transformation performed
         }
         if (uri.query) {
             uri = uri.with({ query: _uriMassage(uri.query) });
@@ -152,22 +155,25 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
             // when code-block rendering is async we return sync
             // but update the node with the real result later.
             const id = defaultGenerator.nextId();
-            const promise = Promise.all([value, withInnerHTML]).then(values => {
-                const span = element.querySelector(`div[data-code="${id}"]`);
-                if (span) {
-                    DOM.reset(span, values[0]);
+            raceCancellation(Promise.all([value, withInnerHTML]), cts.token).then(values => {
+                var _a;
+                if (!isDisposed && values) {
+                    const span = element.querySelector(`div[data-code="${id}"]`);
+                    if (span) {
+                        DOM.reset(span, values[0]);
+                    }
+                    (_a = options.asyncRenderCallback) === null || _a === void 0 ? void 0 : _a.call(options);
                 }
-            }).catch(_err => {
+            }).catch(() => {
                 // ignore
             });
-            if (options.asyncRenderCallback) {
-                promise.then(options.asyncRenderCallback);
-            }
             return `<div class="code" data-code="${id}">${escape(code)}</div>`;
         };
     }
     if (options.actionHandler) {
-        options.actionHandler.disposeables.add(Event.any(domEvent(element, 'click'), domEvent(element, 'auxclick'))(e => {
+        const onClick = options.actionHandler.disposables.add(new DomEmitter(element, 'click'));
+        const onAuxClick = options.actionHandler.disposables.add(new DomEmitter(element, 'auxclick'));
+        options.actionHandler.disposables.add(Event.any(onClick.event, onAuxClick.event)(e => {
             const mouseEvent = new StandardMouseEvent(e);
             if (!mouseEvent.leftButton && !mouseEvent.middleButton) {
                 return;
@@ -193,17 +199,20 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
             }
         }));
     }
-    // Use our own sanitizer so that we can let through only spans.
-    // Otherwise, we'd be letting all html be rendered.
-    // If we want to allow markdown permitted tags, then we can delete sanitizer and sanitize.
-    // We always pass the output through insane after this so that we don't rely on
-    // marked for sanitization.
-    markedOptions.sanitizer = (html) => {
-        const match = markdown.isTrusted ? html.match(/^(<span[^>]+>)|(<\/\s*span>)$/) : undefined;
-        return match ? html : '';
-    };
-    markedOptions.sanitize = true;
-    markedOptions.silent = true;
+    if (!markdown.supportHtml) {
+        // TODO: Can we deprecated this in favor of 'supportHtml'?
+        // Use our own sanitizer so that we can let through only spans.
+        // Otherwise, we'd be letting all html be rendered.
+        // If we want to allow markdown permitted tags, then we can delete sanitizer and sanitize.
+        // We always pass the output through dompurify after this so that we don't rely on
+        // marked for sanitization.
+        markedOptions.sanitizer = (html) => {
+            const match = markdown.isTrusted ? html.match(/^(<span[^>]+>)|(<\/\s*span>)$/) : undefined;
+            return match ? html : '';
+        };
+        markedOptions.sanitize = true;
+        markedOptions.silent = true;
+    }
     markedOptions.renderer = renderer;
     // values that are too long will freeze the UI
     let value = (_a = markdown.value) !== null && _a !== void 0 ? _a : '';
@@ -215,33 +224,75 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
         value = markdownEscapeEscapedIcons(value);
     }
     const renderedMarkdown = marked.parse(value, markedOptions);
-    // sanitize with insane
     element.innerHTML = sanitizeRenderedMarkdown(markdown, renderedMarkdown);
     // signal that async code blocks can be now be inserted
     signalInnerHTML();
     // signal size changes for image tags
     if (options.asyncRenderCallback) {
         for (const img of element.getElementsByTagName('img')) {
-            const listener = DOM.addDisposableListener(img, 'load', () => {
+            const listener = disposables.add(DOM.addDisposableListener(img, 'load', () => {
                 listener.dispose();
                 options.asyncRenderCallback();
-            });
+            }));
         }
     }
-    return element;
+    return {
+        element,
+        dispose: () => {
+            isDisposed = true;
+            cts.cancel();
+            disposables.dispose();
+        }
+    };
 }
 function sanitizeRenderedMarkdown(options, renderedMarkdown) {
-    var _a;
-    const insaneOptions = getInsaneOptions(options);
-    return (_a = _ttpInsane === null || _ttpInsane === void 0 ? void 0 : _ttpInsane.createHTML(renderedMarkdown, insaneOptions)) !== null && _a !== void 0 ? _a : insane(renderedMarkdown, insaneOptions);
+    const { config, allowedSchemes } = getSanitizerOptions(options);
+    dompurify.addHook('uponSanitizeAttribute', (element, e) => {
+        if (e.attrName === 'style' || e.attrName === 'class') {
+            if (element.tagName === 'SPAN') {
+                if (e.attrName === 'style') {
+                    e.keepAttr = /^(color\:#[0-9a-fA-F]+;)?(background-color\:#[0-9a-fA-F]+;)?$/.test(e.attrValue);
+                    return;
+                }
+                else if (e.attrName === 'class') {
+                    e.keepAttr = /^codicon codicon-[a-z\-]+( codicon-modifier-[a-z\-]+)?$/.test(e.attrValue);
+                    return;
+                }
+            }
+            e.keepAttr = false;
+            return;
+        }
+    });
+    // build an anchor to map URLs to
+    const anchor = document.createElement('a');
+    // https://github.com/cure53/DOMPurify/blob/main/demos/hooks-scheme-allowlist.html
+    dompurify.addHook('afterSanitizeAttributes', (node) => {
+        // check all href/src attributes for validity
+        for (const attr of ['href', 'src']) {
+            if (node.hasAttribute(attr)) {
+                anchor.href = node.getAttribute(attr);
+                if (!allowedSchemes.includes(anchor.protocol.replace(/:$/, ''))) {
+                    node.removeAttribute(attr);
+                }
+            }
+        }
+    });
+    try {
+        return dompurify.sanitize(renderedMarkdown, Object.assign(Object.assign({}, config), { RETURN_TRUSTED_TYPE: true }));
+    }
+    finally {
+        dompurify.removeHook('uponSanitizeAttribute');
+        dompurify.removeHook('afterSanitizeAttributes');
+    }
 }
-function getInsaneOptions(options) {
+function getSanitizerOptions(options) {
     const allowedSchemes = [
         Schemas.http,
         Schemas.https,
         Schemas.mailto,
         Schemas.data,
         Schemas.file,
+        Schemas.vscodeFileResource,
         Schemas.vscodeRemote,
         Schemas.vscodeRemoteResource,
     ];
@@ -249,33 +300,15 @@ function getInsaneOptions(options) {
         allowedSchemes.push(Schemas.command);
     }
     return {
-        allowedSchemes,
-        // allowedTags should included everything that markdown renders to.
-        // Since we have our own sanitize function for marked, it's possible we missed some tag so let insane make sure.
-        // HTML tags that can result from markdown are from reading https://spec.commonmark.org/0.29/
-        // HTML table tags that can result from markdown are from https://github.github.com/gfm/#tables-extension-
-        allowedTags: ['ul', 'li', 'p', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'],
-        allowedAttributes: {
-            'a': ['href', 'name', 'target', 'data-href'],
-            'img': ['src', 'title', 'alt', 'width', 'height'],
-            'div': ['class', 'data-code'],
-            'span': ['class', 'style'],
-            // https://github.com/microsoft/vscode/issues/95937
-            'th': ['align'],
-            'td': ['align']
+        config: {
+            // allowedTags should included everything that markdown renders to.
+            // Since we have our own sanitize function for marked, it's possible we missed some tag so let dompurify make sure.
+            // HTML tags that can result from markdown are from reading https://spec.commonmark.org/0.29/
+            // HTML table tags that can result from markdown are from https://github.github.com/gfm/#tables-extension-
+            ALLOWED_TAGS: ['ul', 'li', 'p', 'b', 'i', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'],
+            ALLOWED_ATTR: ['href', 'data-href', 'target', 'title', 'src', 'alt', 'class', 'style', 'data-code', 'width', 'height', 'align'],
+            ALLOW_UNKNOWN_PROTOCOLS: true,
         },
-        filter(token) {
-            if (token.tag === 'span' && options.isTrusted) {
-                if (token.attrs['style'] && (Object.keys(token.attrs).length === 1)) {
-                    return !!token.attrs['style'].match(/^(color\:#[0-9a-fA-F]+;)?(background-color\:#[0-9a-fA-F]+;)?$/);
-                }
-                else if (token.attrs['class']) {
-                    // The class should match codicon rendering in src\vs\base\common\codicons.ts
-                    return !!token.attrs['class'].match(/^codicon codicon-[a-z\-]+( codicon-modifier-[a-z\-]+)?$/);
-                }
-                return false;
-            }
-            return true;
-        }
+        allowedSchemes
     };
 }

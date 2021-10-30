@@ -3,12 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as arrays from '../../../base/common/arrays.js';
+import { LineTokens } from '../core/lineTokens.js';
 import { Position } from '../core/position.js';
 import { Range } from '../core/range.js';
 import { ModelDecorationOptions } from '../model/textModel.js';
 import * as viewEvents from '../view/viewEvents.js';
 import { PrefixSumIndexOfResult } from './prefixSumComputer.js';
-import { LineBreakData, ViewLineData } from './viewModel.js';
+import { SingleLineInlineDecoration, ViewLineData } from './viewModel.js';
+import { LineInjectedText } from '../model/textModelEvents.js';
 export class CoordinatesConverter {
     constructor(lines) {
         this._lines = lines;
@@ -27,11 +29,11 @@ export class CoordinatesConverter {
         return this._lines.validateViewRange(viewRange, expectedModelRange);
     }
     // Model -> View conversion and related methods
-    convertModelPositionToViewPosition(modelPosition) {
-        return this._lines.convertModelPositionToViewPosition(modelPosition.lineNumber, modelPosition.column);
+    convertModelPositionToViewPosition(modelPosition, affinity) {
+        return this._lines.convertModelPositionToViewPosition(modelPosition.lineNumber, modelPosition.column, affinity);
     }
-    convertModelRangeToViewRange(modelRange) {
-        return this._lines.convertModelRangeToViewRange(modelRange);
+    convertModelRangeToViewRange(modelRange, affinity) {
+        return this._lines.convertModelRangeToViewRange(modelRange, affinity);
     }
     modelPositionIsVisible(modelPosition) {
         return this._lines.modelPositionIsVisible(modelPosition.lineNumber, modelPosition.column);
@@ -103,7 +105,8 @@ class LineNumberMapper {
     }
 }
 export class SplitLinesCollection {
-    constructor(model, domLineBreaksComputerFactory, monospaceLineBreaksComputerFactory, fontInfo, tabSize, wrappingStrategy, wrappingColumn, wrappingIndent) {
+    constructor(editorId, model, domLineBreaksComputerFactory, monospaceLineBreaksComputerFactory, fontInfo, tabSize, wrappingStrategy, wrappingColumn, wrappingIndent) {
+        this._editorId = editorId;
         this.model = model;
         this._validModelVersionId = -1;
         this._domLineBreaksComputerFactory = domLineBreaksComputerFactory;
@@ -126,11 +129,14 @@ export class SplitLinesCollection {
         if (resetHiddenAreas) {
             this.hiddenAreasIds = [];
         }
-        let linesContent = this.model.getLinesContent();
+        const linesContent = this.model.getLinesContent();
+        const injectedTextDecorations = this.model.getInjectedTextDecorations(this._editorId);
         const lineCount = linesContent.length;
         const lineBreaksComputer = this.createLineBreaksComputer();
+        const injectedTextQueue = new arrays.ArrayQueue(LineInjectedText.fromDecorations(injectedTextDecorations));
         for (let i = 0; i < lineCount; i++) {
-            lineBreaksComputer.addRequest(linesContent[i], previousLineBreaks ? previousLineBreaks[i] : null);
+            const lineInjectedText = injectedTextQueue.takeWhile(t => t.lineNumber === i + 1);
+            lineBreaksComputer.addRequest(linesContent[i], lineInjectedText, previousLineBreaks ? previousLineBreaks[i] : null);
         }
         const linesBreaks = lineBreaksComputer.finalize();
         let values = [];
@@ -301,7 +307,7 @@ export class SplitLinesCollection {
         this._constructLines(/*resetHiddenAreas*/ true, null);
     }
     onModelLinesDeleted(versionId, fromLineNumber, toLineNumber) {
-        if (versionId <= this._validModelVersionId) {
+        if (!versionId || versionId <= this._validModelVersionId) {
             // Here we check for versionId in case the lines were reconstructed in the meantime.
             // We don't want to apply stale change events on top of a newer read model state.
             return null;
@@ -313,7 +319,7 @@ export class SplitLinesCollection {
         return new viewEvents.ViewLinesDeletedEvent(outputFromLineNumber, outputToLineNumber);
     }
     onModelLinesInserted(versionId, fromLineNumber, _toLineNumber, lineBreaks) {
-        if (versionId <= this._validModelVersionId) {
+        if (!versionId || versionId <= this._validModelVersionId) {
             // Here we check for versionId in case the lines were reconstructed in the meantime.
             // We don't want to apply stale change events on top of a newer read model state.
             return null;
@@ -337,7 +343,7 @@ export class SplitLinesCollection {
         return new viewEvents.ViewLinesInsertedEvent(outputFromLineNumber, outputFromLineNumber + totalOutputLineCount - 1);
     }
     onModelLineChanged(versionId, lineNumber, lineBreakData) {
-        if (versionId <= this._validModelVersionId) {
+        if (versionId !== null && versionId <= this._validModelVersionId) {
             // Here we check for versionId in case the lines were reconstructed in the meantime.
             // We don't want to apply stale change events on top of a newer read model state.
             return [false, null, null, null];
@@ -415,7 +421,89 @@ export class SplitLinesCollection {
             indent: result.indent
         };
     }
+    // #region ViewLineInfo
+    getViewLineInfo(viewLineNumber) {
+        viewLineNumber = this._toValidViewLineNumber(viewLineNumber);
+        let r = this.prefixSumComputer.getIndexOf(viewLineNumber - 1);
+        let lineIndex = r.index;
+        let remainder = r.remainder;
+        return new ViewLineInfo(lineIndex + 1, remainder);
+    }
+    getMinColumnOfViewLine(viewLineInfo) {
+        return this.lines[viewLineInfo.modelLineNumber - 1].getViewLineMinColumn(this.model, viewLineInfo.modelLineNumber, viewLineInfo.modelLineWrappedLineIdx);
+    }
+    getModelStartPositionOfViewLine(viewLineInfo) {
+        const line = this.lines[viewLineInfo.modelLineNumber - 1];
+        const minViewColumn = line.getViewLineMinColumn(this.model, viewLineInfo.modelLineNumber, viewLineInfo.modelLineWrappedLineIdx);
+        const column = line.getModelColumnOfViewPosition(viewLineInfo.modelLineWrappedLineIdx, minViewColumn);
+        return new Position(viewLineInfo.modelLineNumber, column);
+    }
+    getModelEndPositionOfViewLine(viewLineInfo) {
+        const line = this.lines[viewLineInfo.modelLineNumber - 1];
+        const maxViewColumn = line.getViewLineMaxColumn(this.model, viewLineInfo.modelLineNumber, viewLineInfo.modelLineWrappedLineIdx);
+        const column = line.getModelColumnOfViewPosition(viewLineInfo.modelLineWrappedLineIdx, maxViewColumn);
+        return new Position(viewLineInfo.modelLineNumber, column);
+    }
+    getViewLineInfosGroupedByModelRanges(viewStartLineNumber, viewEndLineNumber) {
+        const startViewLine = this.getViewLineInfo(viewStartLineNumber);
+        const endViewLine = this.getViewLineInfo(viewEndLineNumber);
+        const result = new Array();
+        let lastVisibleModelPos = this.getModelStartPositionOfViewLine(startViewLine);
+        let viewLines = new Array();
+        for (let curModelLine = startViewLine.modelLineNumber; curModelLine <= endViewLine.modelLineNumber; curModelLine++) {
+            const line = this.lines[curModelLine - 1];
+            if (line.isVisible()) {
+                let startOffset = curModelLine === startViewLine.modelLineNumber
+                    ? startViewLine.modelLineWrappedLineIdx
+                    : 0;
+                let endOffset = curModelLine === endViewLine.modelLineNumber
+                    ? endViewLine.modelLineWrappedLineIdx + 1
+                    : line.getViewLineCount();
+                for (let i = startOffset; i < endOffset; i++) {
+                    viewLines.push(new ViewLineInfo(curModelLine, i));
+                }
+            }
+            if (!line.isVisible() && lastVisibleModelPos) {
+                const lastVisibleModelPos2 = new Position(curModelLine - 1, this.model.getLineMaxColumn(curModelLine - 1) + 1);
+                const modelRange = Range.fromPositions(lastVisibleModelPos, lastVisibleModelPos2);
+                result.push(new ViewLineInfoGroupedByModelRange(modelRange, viewLines));
+                viewLines = [];
+                lastVisibleModelPos = null;
+            }
+            else if (line.isVisible() && !lastVisibleModelPos) {
+                lastVisibleModelPos = new Position(curModelLine, 1);
+            }
+        }
+        if (lastVisibleModelPos) {
+            const modelRange = Range.fromPositions(lastVisibleModelPos, this.getModelEndPositionOfViewLine(endViewLine));
+            result.push(new ViewLineInfoGroupedByModelRange(modelRange, viewLines));
+        }
+        return result;
+    }
+    // #endregion
+    getViewLinesBracketGuides(viewStartLineNumber, viewEndLineNumber, activeViewPosition, highlightActiveGuides, includeNonActiveGuides) {
+        const modelActivePosition = activeViewPosition ? this.convertViewPositionToModelPosition(activeViewPosition.lineNumber, activeViewPosition.column) : null;
+        const resultPerViewLine = [];
+        for (const group of this.getViewLineInfosGroupedByModelRanges(viewStartLineNumber, viewEndLineNumber)) {
+            const modelRangeStartLineNumber = group.modelRange.startLineNumber;
+            const bracketGuidesPerModelLine = this.model.getLinesBracketGuides(modelRangeStartLineNumber, group.modelRange.endLineNumber, modelActivePosition, highlightActiveGuides, includeNonActiveGuides);
+            for (const viewLineInfo of group.viewLines) {
+                if (viewLineInfo.isWrappedLineContinuation && this.getMinColumnOfViewLine(viewLineInfo) === 1) {
+                    // Don't add indent guides when the wrapped line continuation has no wrapping-indentation.
+                    resultPerViewLine.push([]);
+                }
+                else {
+                    const bracketGuides = bracketGuidesPerModelLine[viewLineInfo.modelLineNumber - modelRangeStartLineNumber];
+                    resultPerViewLine.push(bracketGuides);
+                }
+            }
+        }
+        return resultPerViewLine;
+    }
     getViewLinesIndentGuides(viewStartLineNumber, viewEndLineNumber) {
+        // TODO: Use the same code as in `getViewLinesBracketGuides`.
+        // Future TODO: Merge with `getViewLinesBracketGuides`.
+        // However, this requires more refactoring of indent guides.
         viewStartLineNumber = this._toValidViewLineNumber(viewStartLineNumber);
         viewEndLineNumber = this._toValidViewLineNumber(viewEndLineNumber);
         const modelStart = this.convertViewPositionToModelPosition(viewStartLineNumber, this.getViewLineMinColumn(viewStartLineNumber));
@@ -586,7 +674,7 @@ export class SplitLinesCollection {
         const end = this.convertViewPositionToModelPosition(viewRange.endLineNumber, viewRange.endColumn);
         return new Range(start.lineNumber, start.column, end.lineNumber, end.column);
     }
-    convertModelPositionToViewPosition(_modelLineNumber, _modelColumn) {
+    convertModelPositionToViewPosition(_modelLineNumber, _modelColumn, affinity = 2 /* None */) {
         const validPosition = this.model.validatePosition(new Position(_modelLineNumber, _modelColumn));
         const inputLineNumber = validPosition.lineNumber;
         const inputColumn = validPosition.column;
@@ -603,25 +691,27 @@ export class SplitLinesCollection {
         const deltaLineNumber = 1 + (lineIndex === 0 ? 0 : this.prefixSumComputer.getAccumulatedValue(lineIndex - 1));
         let r;
         if (lineIndexChanged) {
-            r = this.lines[lineIndex].getViewPositionOfModelPosition(deltaLineNumber, this.model.getLineMaxColumn(lineIndex + 1));
+            r = this.lines[lineIndex].getViewPositionOfModelPosition(deltaLineNumber, this.model.getLineMaxColumn(lineIndex + 1), affinity);
         }
         else {
-            r = this.lines[inputLineNumber - 1].getViewPositionOfModelPosition(deltaLineNumber, inputColumn);
+            r = this.lines[inputLineNumber - 1].getViewPositionOfModelPosition(deltaLineNumber, inputColumn, affinity);
         }
         // console.log('in -> out ' + inputLineNumber + ',' + inputColumn + ' ===> ' + r.lineNumber + ',' + r);
         return r;
     }
-    convertModelRangeToViewRange(modelRange) {
-        let start = this.convertModelPositionToViewPosition(modelRange.startLineNumber, modelRange.startColumn);
-        let end = this.convertModelPositionToViewPosition(modelRange.endLineNumber, modelRange.endColumn);
-        if (modelRange.startLineNumber === modelRange.endLineNumber && start.lineNumber !== end.lineNumber) {
-            // This is a single line range that ends up taking more lines due to wrapping
-            if (end.column === this.getViewLineMinColumn(end.lineNumber)) {
-                // the end column lands on the first column of the next line
-                return new Range(start.lineNumber, start.column, end.lineNumber - 1, this.getViewLineMaxColumn(end.lineNumber - 1));
-            }
+    /**
+     * @param affinity The affinity in case of an empty range. Has no effect for non-empty ranges.
+    */
+    convertModelRangeToViewRange(modelRange, affinity = 0 /* Left */) {
+        if (modelRange.isEmpty()) {
+            const start = this.convertModelPositionToViewPosition(modelRange.startLineNumber, modelRange.startColumn, affinity);
+            return Range.fromPositions(start);
         }
-        return new Range(start.lineNumber, start.column, end.lineNumber, end.column);
+        else {
+            const start = this.convertModelPositionToViewPosition(modelRange.startLineNumber, modelRange.startColumn, 1 /* Right */);
+            const end = this.convertModelPositionToViewPosition(modelRange.endLineNumber, modelRange.endColumn, 0 /* Left */);
+            return new Range(start.lineNumber, start.column, end.lineNumber, end.column);
+        }
     }
     _getViewLineNumberForModelPosition(inputLineNumber, inputColumn) {
         let lineIndex = inputLineNumber - 1;
@@ -717,6 +807,54 @@ export class SplitLinesCollection {
         }
         return finalResult;
     }
+    getInjectedTextAt(position) {
+        const viewLineNumber = this._toValidViewLineNumber(position.lineNumber);
+        const r = this.prefixSumComputer.getIndexOf(viewLineNumber - 1);
+        const lineIndex = r.index;
+        const remainder = r.remainder;
+        return this.lines[lineIndex].getInjectedTextAt(remainder, position.column);
+    }
+    normalizePosition(position, affinity) {
+        const viewLineNumber = this._toValidViewLineNumber(position.lineNumber);
+        const r = this.prefixSumComputer.getIndexOf(viewLineNumber - 1);
+        const lineIndex = r.index;
+        const remainder = r.remainder;
+        return this.lines[lineIndex].normalizePosition(this.model, lineIndex + 1, remainder, position, affinity);
+    }
+    getLineIndentColumn(lineNumber) {
+        const viewLineNumber = this._toValidViewLineNumber(lineNumber);
+        const r = this.prefixSumComputer.getIndexOf(viewLineNumber - 1);
+        const lineIndex = r.index;
+        const remainder = r.remainder;
+        if (remainder === 0) {
+            return this.model.getLineIndentColumn(lineIndex + 1);
+        }
+        // wrapped lines have no indentation.
+        // We deliberately don't handle the case that indentation is wrapped
+        // to avoid two view lines reporting indentation for the very same model line.
+        return 0;
+    }
+}
+/**
+ * Represents a view line. Can be used to efficiently query more information about it.
+ */
+class ViewLineInfo {
+    constructor(modelLineNumber, modelLineWrappedLineIdx) {
+        this.modelLineNumber = modelLineNumber;
+        this.modelLineWrappedLineIdx = modelLineWrappedLineIdx;
+    }
+    get isWrappedLineContinuation() {
+        return this.modelLineWrappedLineIdx > 0;
+    }
+}
+/**
+ * A list of view lines that have a contiguous span in the model.
+*/
+class ViewLineInfoGroupedByModelRange {
+    constructor(modelRange, viewLines) {
+        this.modelRange = modelRange;
+        this.viewLines = viewLines;
+    }
 }
 class VisibleIdentitySplitLine {
     constructor() { }
@@ -750,7 +888,7 @@ class VisibleIdentitySplitLine {
     getViewLineData(model, modelLineNumber, _outputLineIndex) {
         let lineTokens = model.getLineTokens(modelLineNumber);
         let lineContent = lineTokens.getLineContent();
-        return new ViewLineData(lineContent, false, 1, lineContent.length + 1, 0, lineTokens.inflate());
+        return new ViewLineData(lineContent, false, 1, lineContent.length + 1, 0, lineTokens.inflate(), null);
     }
     getViewLinesData(model, modelLineNumber, _fromOuputLineIndex, _toOutputLineIndex, globalStartIndex, needed, result) {
         if (!needed[globalStartIndex]) {
@@ -767,6 +905,12 @@ class VisibleIdentitySplitLine {
     }
     getViewLineNumberOfModelPosition(deltaLineNumber, _inputColumn) {
         return deltaLineNumber;
+    }
+    normalizePosition(model, modelLineNumber, outputLineIndex, outputPosition, affinity) {
+        return outputPosition;
+    }
+    getInjectedTextAt(_outputLineIndex, _outputColumn) {
+        return null;
     }
 }
 VisibleIdentitySplitLine.INSTANCE = new VisibleIdentitySplitLine();
@@ -814,6 +958,12 @@ class InvisibleIdentitySplitLine {
     getViewLineNumberOfModelPosition(_deltaLineNumber, _inputColumn) {
         throw new Error('Not supported');
     }
+    normalizePosition(model, modelLineNumber, outputLineIndex, outputPosition, affinity) {
+        throw new Error('Not supported');
+    }
+    getInjectedTextAt(_outputLineIndex, _outputColumn) {
+        throw new Error('Not supported');
+    }
 }
 InvisibleIdentitySplitLine.INSTANCE = new InvisibleIdentitySplitLine();
 export class SplitLine {
@@ -838,37 +988,53 @@ export class SplitLine {
         return this._lineBreakData.breakOffsets.length;
     }
     getInputStartOffsetOfOutputLineIndex(outputLineIndex) {
-        return LineBreakData.getInputOffsetOfOutputPosition(this._lineBreakData.breakOffsets, outputLineIndex, 0);
+        return this._lineBreakData.getInputOffsetOfOutputPosition(outputLineIndex, 0);
     }
     getInputEndOffsetOfOutputLineIndex(model, modelLineNumber, outputLineIndex) {
         if (outputLineIndex + 1 === this._lineBreakData.breakOffsets.length) {
             return model.getLineMaxColumn(modelLineNumber) - 1;
         }
-        return LineBreakData.getInputOffsetOfOutputPosition(this._lineBreakData.breakOffsets, outputLineIndex + 1, 0);
+        return this._lineBreakData.getInputOffsetOfOutputPosition(outputLineIndex + 1, 0);
     }
     getViewLineContent(model, modelLineNumber, outputLineIndex) {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        let startOffset = this.getInputStartOffsetOfOutputLineIndex(outputLineIndex);
-        let endOffset = this.getInputEndOffsetOfOutputLineIndex(model, modelLineNumber, outputLineIndex);
-        let r = model.getValueInRange({
-            startLineNumber: modelLineNumber,
-            startColumn: startOffset + 1,
-            endLineNumber: modelLineNumber,
-            endColumn: endOffset + 1
-        });
+        // These offsets refer to model text with injected text.
+        const startOffset = outputLineIndex > 0 ? this._lineBreakData.breakOffsets[outputLineIndex - 1] : 0;
+        const endOffset = outputLineIndex < this._lineBreakData.breakOffsets.length
+            ? this._lineBreakData.breakOffsets[outputLineIndex]
+            // This case might not be possible anyway, but we clamp the value to be on the safe side.
+            : this._lineBreakData.breakOffsets[this._lineBreakData.breakOffsets.length - 1];
+        let r;
+        if (this._lineBreakData.injectionOffsets !== null) {
+            const injectedTexts = this._lineBreakData.injectionOffsets.map((offset, idx) => new LineInjectedText(0, 0, offset + 1, this._lineBreakData.injectionOptions[idx], 0));
+            r = LineInjectedText.applyInjectedText(model.getLineContent(modelLineNumber), injectedTexts).substring(startOffset, endOffset);
+        }
+        else {
+            r = model.getValueInRange({
+                startLineNumber: modelLineNumber,
+                startColumn: startOffset + 1,
+                endLineNumber: modelLineNumber,
+                endColumn: endOffset + 1
+            });
+        }
         if (outputLineIndex > 0) {
             r = spaces(this._lineBreakData.wrappedTextIndentLength) + r;
         }
         return r;
     }
     getViewLineLength(model, modelLineNumber, outputLineIndex) {
+        // TODO @hediet make this method a member of LineBreakData.
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        let startOffset = this.getInputStartOffsetOfOutputLineIndex(outputLineIndex);
-        let endOffset = this.getInputEndOffsetOfOutputLineIndex(model, modelLineNumber, outputLineIndex);
+        // These offsets refer to model text with injected text.
+        const startOffset = outputLineIndex > 0 ? this._lineBreakData.breakOffsets[outputLineIndex - 1] : 0;
+        const endOffset = outputLineIndex < this._lineBreakData.breakOffsets.length
+            ? this._lineBreakData.breakOffsets[outputLineIndex]
+            // This case might not be possible anyway, but we clamp the value to be on the safe side.
+            : this._lineBreakData.breakOffsets[this._lineBreakData.breakOffsets.length - 1];
         let r = endOffset - startOffset;
         if (outputLineIndex > 0) {
             r = this._lineBreakData.wrappedTextIndentLength + r;
@@ -879,6 +1045,9 @@ export class SplitLine {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
+        return this._getViewLineMinColumn(outputLineIndex);
+    }
+    _getViewLineMinColumn(outputLineIndex) {
         if (outputLineIndex > 0) {
             return this._lineBreakData.wrappedTextIndentLength + 1;
         }
@@ -888,33 +1057,75 @@ export class SplitLine {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        return this.getViewLineContent(model, modelLineNumber, outputLineIndex).length + 1;
+        return this.getViewLineLength(model, modelLineNumber, outputLineIndex) + 1;
     }
     getViewLineData(model, modelLineNumber, outputLineIndex) {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        let startOffset = this.getInputStartOffsetOfOutputLineIndex(outputLineIndex);
-        let endOffset = this.getInputEndOffsetOfOutputLineIndex(model, modelLineNumber, outputLineIndex);
-        let lineContent = model.getValueInRange({
-            startLineNumber: modelLineNumber,
-            startColumn: startOffset + 1,
-            endLineNumber: modelLineNumber,
-            endColumn: endOffset + 1
-        });
-        if (outputLineIndex > 0) {
-            lineContent = spaces(this._lineBreakData.wrappedTextIndentLength) + lineContent;
+        const lineBreakData = this._lineBreakData;
+        const deltaStartIndex = (outputLineIndex > 0 ? lineBreakData.wrappedTextIndentLength : 0);
+        const injectionOffsets = lineBreakData.injectionOffsets;
+        const injectionOptions = lineBreakData.injectionOptions;
+        let lineContent;
+        let tokens;
+        let inlineDecorations;
+        if (injectionOffsets) {
+            const lineTokens = model.getLineTokens(modelLineNumber).withInserted(injectionOffsets.map((offset, idx) => ({
+                offset,
+                text: injectionOptions[idx].content,
+                tokenMetadata: LineTokens.defaultTokenMetadata
+            })));
+            const lineStartOffsetInUnwrappedLine = outputLineIndex > 0 ? lineBreakData.breakOffsets[outputLineIndex - 1] : 0;
+            const lineEndOffsetInUnwrappedLine = lineBreakData.breakOffsets[outputLineIndex];
+            lineContent = lineTokens.getLineContent().substring(lineStartOffsetInUnwrappedLine, lineEndOffsetInUnwrappedLine);
+            tokens = lineTokens.sliceAndInflate(lineStartOffsetInUnwrappedLine, lineEndOffsetInUnwrappedLine, deltaStartIndex);
+            inlineDecorations = new Array();
+            let totalInjectedTextLengthBefore = 0;
+            for (let i = 0; i < injectionOffsets.length; i++) {
+                const length = injectionOptions[i].content.length;
+                const injectedTextStartOffsetInUnwrappedLine = injectionOffsets[i] + totalInjectedTextLengthBefore;
+                const injectedTextEndOffsetInUnwrappedLine = injectionOffsets[i] + totalInjectedTextLengthBefore + length;
+                if (injectedTextStartOffsetInUnwrappedLine > lineEndOffsetInUnwrappedLine) {
+                    // Injected text only starts in later wrapped lines.
+                    break;
+                }
+                if (lineStartOffsetInUnwrappedLine < injectedTextEndOffsetInUnwrappedLine) {
+                    // Injected text ends after or in this line (but also starts in or before this line).
+                    const options = injectionOptions[i];
+                    if (options.inlineClassName) {
+                        const offset = (outputLineIndex > 0 ? lineBreakData.wrappedTextIndentLength : 0);
+                        const start = offset + Math.max(injectedTextStartOffsetInUnwrappedLine - lineStartOffsetInUnwrappedLine, 0);
+                        const end = offset + Math.min(injectedTextEndOffsetInUnwrappedLine - lineStartOffsetInUnwrappedLine, lineEndOffsetInUnwrappedLine);
+                        if (start !== end) {
+                            inlineDecorations.push(new SingleLineInlineDecoration(start, end, options.inlineClassName, options.inlineClassNameAffectsLetterSpacing));
+                        }
+                    }
+                }
+                totalInjectedTextLengthBefore += length;
+            }
         }
-        let minColumn = (outputLineIndex > 0 ? this._lineBreakData.wrappedTextIndentLength + 1 : 1);
-        let maxColumn = lineContent.length + 1;
-        let continuesWithWrappedLine = (outputLineIndex + 1 < this.getViewLineCount());
-        let deltaStartIndex = 0;
-        if (outputLineIndex > 0) {
-            deltaStartIndex = this._lineBreakData.wrappedTextIndentLength;
+        else {
+            const startOffset = this.getInputStartOffsetOfOutputLineIndex(outputLineIndex);
+            const endOffset = this.getInputEndOffsetOfOutputLineIndex(model, modelLineNumber, outputLineIndex);
+            const lineTokens = model.getLineTokens(modelLineNumber);
+            lineContent = model.getValueInRange({
+                startLineNumber: modelLineNumber,
+                startColumn: startOffset + 1,
+                endLineNumber: modelLineNumber,
+                endColumn: endOffset + 1
+            });
+            tokens = lineTokens.sliceAndInflate(startOffset, endOffset, deltaStartIndex);
+            inlineDecorations = null;
         }
-        let lineTokens = model.getLineTokens(modelLineNumber);
-        const startVisibleColumn = (outputLineIndex === 0 ? 0 : this._lineBreakData.breakOffsetsVisibleColumn[outputLineIndex - 1]);
-        return new ViewLineData(lineContent, continuesWithWrappedLine, minColumn, maxColumn, startVisibleColumn, lineTokens.sliceAndInflate(startOffset, endOffset, deltaStartIndex));
+        if (outputLineIndex > 0) {
+            lineContent = spaces(lineBreakData.wrappedTextIndentLength) + lineContent;
+        }
+        const minColumn = (outputLineIndex > 0 ? lineBreakData.wrappedTextIndentLength + 1 : 1);
+        const maxColumn = lineContent.length + 1;
+        const continuesWithWrappedLine = (outputLineIndex + 1 < this.getViewLineCount());
+        const startVisibleColumn = (outputLineIndex === 0 ? 0 : lineBreakData.breakOffsetsVisibleColumn[outputLineIndex - 1]);
+        return new ViewLineData(lineContent, continuesWithWrappedLine, minColumn, maxColumn, startVisibleColumn, tokens, inlineDecorations);
     }
     getViewLinesData(model, modelLineNumber, fromOuputLineIndex, toOutputLineIndex, globalStartIndex, needed, result) {
         if (!this._isVisible) {
@@ -942,13 +1153,13 @@ export class SplitLine {
                 adjustedColumn -= this._lineBreakData.wrappedTextIndentLength;
             }
         }
-        return LineBreakData.getInputOffsetOfOutputPosition(this._lineBreakData.breakOffsets, outputLineIndex, adjustedColumn) + 1;
+        return this._lineBreakData.getInputOffsetOfOutputPosition(outputLineIndex, adjustedColumn) + 1;
     }
-    getViewPositionOfModelPosition(deltaLineNumber, inputColumn) {
+    getViewPositionOfModelPosition(deltaLineNumber, inputColumn, affinity = 2 /* None */) {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        let r = LineBreakData.getOutputPositionOfInputOffset(this._lineBreakData.breakOffsets, inputColumn - 1);
+        let r = this._lineBreakData.getOutputPositionOfInputOffset(inputColumn - 1, affinity);
         let outputLineIndex = r.outputLineIndex;
         let outputColumn = r.outputOffset + 1;
         if (outputLineIndex > 0) {
@@ -961,8 +1172,34 @@ export class SplitLine {
         if (!this._isVisible) {
             throw new Error('Not supported');
         }
-        const r = LineBreakData.getOutputPositionOfInputOffset(this._lineBreakData.breakOffsets, inputColumn - 1);
+        const r = this._lineBreakData.getOutputPositionOfInputOffset(inputColumn - 1);
         return (deltaLineNumber + r.outputLineIndex);
+    }
+    normalizePosition(model, modelLineNumber, outputLineIndex, outputPosition, affinity) {
+        if (this._lineBreakData.injectionOffsets !== null) {
+            const baseViewLineNumber = outputPosition.lineNumber - outputLineIndex;
+            const offsetInUnwrappedLine = this._lineBreakData.outputPositionToOffsetInUnwrappedLine(outputLineIndex, outputPosition.column - 1);
+            const normalizedOffsetInUnwrappedLine = this._lineBreakData.normalizeOffsetAroundInjections(offsetInUnwrappedLine, affinity);
+            if (normalizedOffsetInUnwrappedLine !== offsetInUnwrappedLine) {
+                // injected text caused a change
+                return this._lineBreakData.getOutputPositionOfOffsetInUnwrappedLine(normalizedOffsetInUnwrappedLine, affinity).toPosition(baseViewLineNumber, this._lineBreakData.wrappedTextIndentLength);
+            }
+        }
+        if (affinity === 0 /* Left */) {
+            if (outputLineIndex > 0 && outputPosition.column === this._getViewLineMinColumn(outputLineIndex)) {
+                return new Position(outputPosition.lineNumber - 1, this.getViewLineMaxColumn(model, modelLineNumber, outputLineIndex - 1));
+            }
+        }
+        else if (affinity === 1 /* Right */) {
+            const maxOutputLineIndex = this.getViewLineCount() - 1;
+            if (outputLineIndex < maxOutputLineIndex && outputPosition.column === this.getViewLineMaxColumn(model, modelLineNumber, outputLineIndex)) {
+                return new Position(outputPosition.lineNumber + 1, this._getViewLineMinColumn(outputLineIndex + 1));
+            }
+        }
+        return outputPosition;
+    }
+    getInjectedTextAt(outputLineIndex, outputColumn) {
+        return this._lineBreakData.getInjectedText(outputLineIndex, outputColumn - 1);
     }
 }
 let _spaces = [''];
@@ -1055,7 +1292,7 @@ export class IdentityLinesCollection {
     createLineBreaksComputer() {
         let result = [];
         return {
-            addRequest: (lineText, previousLineBreakData) => {
+            addRequest: (lineText, injectedText, previousLineBreakData) => {
                 result.push(null);
             },
             finalize: () => {
@@ -1086,6 +1323,9 @@ export class IdentityLinesCollection {
             indent: 0
         };
     }
+    getViewLinesBracketGuides(startLineNumber, endLineNumber, activePosition) {
+        return new Array(endLineNumber - startLineNumber + 1).fill([]);
+    }
     getViewLinesIndentGuides(viewStartLineNumber, viewEndLineNumber) {
         const viewLineCount = viewEndLineNumber - viewStartLineNumber + 1;
         let result = new Array(viewLineCount);
@@ -1109,7 +1349,7 @@ export class IdentityLinesCollection {
     getViewLineData(viewLineNumber) {
         let lineTokens = this.model.getLineTokens(viewLineNumber);
         let lineContent = lineTokens.getLineContent();
-        return new ViewLineData(lineContent, false, 1, lineContent.length + 1, 0, lineTokens.inflate());
+        return new ViewLineData(lineContent, false, 1, lineContent.length + 1, 0, lineTokens.inflate(), null);
     }
     getViewLinesData(viewStartLineNumber, viewEndLineNumber, needed) {
         const lineCount = this.model.getLineCount();
@@ -1143,6 +1383,16 @@ export class IdentityLinesCollection {
     }
     getDecorationsInRange(range, ownerId, filterOutValidation) {
         return this.model.getDecorationsInRange(range, ownerId, filterOutValidation);
+    }
+    normalizePosition(position, affinity) {
+        return this.model.normalizePosition(position, affinity);
+    }
+    getLineIndentColumn(lineNumber) {
+        return this.model.getLineIndentColumn(lineNumber);
+    }
+    getInjectedTextAt(position) {
+        // Identity lines collection does not support injected text.
+        return null;
     }
 }
 class OverviewRulerDecorations {

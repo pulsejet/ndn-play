@@ -2,24 +2,24 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
+import { status } from '../../../base/browser/ui/aria/aria.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
 import { KeyChord } from '../../../base/common/keyCodes.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { status } from '../../../base/browser/ui/aria/aria.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { CursorMoveCommands } from '../../common/controller/cursorMoveCommands.js';
 import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { OverviewRulerLane } from '../../common/model.js';
+import { OverviewRulerLane, MinimapPosition } from '../../common/model.js';
 import { ModelDecorationOptions } from '../../common/model/textModel.js';
 import { DocumentHighlightProviderRegistry } from '../../common/modes.js';
 import { CommonFindController } from '../find/findController.js';
+import * as nls from '../../../nls.js';
 import { MenuId } from '../../../platform/actions/common/actions.js';
-import { overviewRulerSelectionHighlightForeground } from '../../../platform/theme/common/colorRegistry.js';
-import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { overviewRulerSelectionHighlightForeground, minimapSelectionOccurrenceHighlight } from '../../../platform/theme/common/colorRegistry.js';
+import { themeColorFromId } from '../../../platform/theme/common/themeService.js';
 function announceCursorChange(previousCursorState, cursorState) {
     const cursorDiff = cursorState.filter(cs => !previousCursorState.find(pcs => pcs.equals(cs)));
     if (cursorDiff.length >= 1) {
@@ -306,7 +306,7 @@ export class MultiCursorSession {
         this.findController.highlightFindOptions();
         const allSelections = this._editor.getSelections();
         const lastAddedSelection = allSelections[allSelections.length - 1];
-        const nextMatch = this._editor.getModel().findNextMatch(this.searchText, lastAddedSelection.getEndPosition(), false, this.matchCase, this.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false);
+        const nextMatch = this._editor.getModel().findNextMatch(this.searchText, lastAddedSelection.getEndPosition(), false, this.matchCase, this.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false);
         if (!nextMatch) {
             return null;
         }
@@ -346,7 +346,7 @@ export class MultiCursorSession {
         this.findController.highlightFindOptions();
         const allSelections = this._editor.getSelections();
         const lastAddedSelection = allSelections[allSelections.length - 1];
-        const previousMatch = this._editor.getModel().findPreviousMatch(this.searchText, lastAddedSelection.getStartPosition(), false, this.matchCase, this.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false);
+        const previousMatch = this._editor.getModel().findPreviousMatch(this.searchText, lastAddedSelection.getStartPosition(), false, this.matchCase, this.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false);
         if (!previousMatch) {
             return null;
         }
@@ -357,7 +357,7 @@ export class MultiCursorSession {
             return [];
         }
         this.findController.highlightFindOptions();
-        return this._editor.getModel().findMatches(this.searchText, true, false, this.matchCase, this.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
+        return this._editor.getModel().findMatches(this.searchText, true, false, this.matchCase, this.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
     }
 }
 export class MultiCursorSelectionController extends Disposable {
@@ -502,7 +502,7 @@ export class MultiCursorSelectionController extends Disposable {
         // - and the search string is non-empty
         // - and we're searching for a regex
         if (findState.isRevealed && findState.searchString.length > 0 && findState.isRegex) {
-            matches = this._editor.getModel().findMatches(findState.searchString, true, findState.isRegex, findState.matchCase, findState.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
+            matches = this._editor.getModel().findMatches(findState.searchString, true, findState.isRegex, findState.matchCase, findState.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false, 1073741824 /* MAX_SAFE_SMALL_INTEGER */);
         }
         else {
             this._beginSessionIfNeeded(findController);
@@ -706,12 +706,12 @@ export class SelectionHighlighter extends Disposable {
     constructor(editor) {
         super();
         this.editor = editor;
-        this._isEnabled = editor.getOption(94 /* selectionHighlight */);
+        this._isEnabled = editor.getOption(96 /* selectionHighlight */);
         this.decorations = [];
         this.updateSoon = this._register(new RunOnceScheduler(() => this._update(), 300));
         this.state = null;
         this._register(editor.onDidChangeConfiguration((e) => {
-            this._isEnabled = editor.getOption(94 /* selectionHighlight */);
+            this._isEnabled = editor.getOption(96 /* selectionHighlight */);
         }));
         this._register(editor.onDidChangeCursorSelection((e) => {
             if (!this._isEnabled) {
@@ -816,7 +816,7 @@ export class SelectionHighlighter extends Disposable {
                 return null;
             }
         }
-        return new SelectionHighlighterState(r.searchText, r.matchCase, r.wholeWord ? editor.getOption(113 /* wordSeparators */) : null, editor.getModel().getVersionId());
+        return new SelectionHighlighterState(r.searchText, r.matchCase, r.wholeWord ? editor.getOption(115 /* wordSeparators */) : null, editor.getModel().getVersionId());
     }
     _setState(state) {
         if (SelectionHighlighterState.softEquals(this.state, state)) {
@@ -836,7 +836,7 @@ export class SelectionHighlighter extends Disposable {
             // the file is too large, so searching word under cursor in the whole document takes is blocking the UI.
             return;
         }
-        const hasFindOccurrences = DocumentHighlightProviderRegistry.has(model) && this.editor.getOption(68 /* occurrencesHighlight */);
+        const hasFindOccurrences = DocumentHighlightProviderRegistry.has(model) && this.editor.getOption(71 /* occurrencesHighlight */);
         let allMatches = model.findMatches(this.state.searchText, true, false, this.state.matchCase, this.state.wordSeparators, false).map(m => m.range);
         allMatches.sort(Range.compareRangesUsingStarts);
         let selections = this.editor.getSelections();
@@ -886,14 +886,20 @@ export class SelectionHighlighter extends Disposable {
 }
 SelectionHighlighter.ID = 'editor.contrib.selectionHighlighter';
 SelectionHighlighter._SELECTION_HIGHLIGHT_OVERVIEW = ModelDecorationOptions.register({
+    description: 'selection-highlight-overview',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'selectionHighlight',
+    minimap: {
+        color: themeColorFromId(minimapSelectionOccurrenceHighlight),
+        position: MinimapPosition.Inline
+    },
     overviewRuler: {
         color: themeColorFromId(overviewRulerSelectionHighlightForeground),
         position: OverviewRulerLane.Center
     }
 });
 SelectionHighlighter._SELECTION_HIGHLIGHT = ModelDecorationOptions.register({
+    description: 'selection-highlight',
     stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
     className: 'selectionHighlight',
 });

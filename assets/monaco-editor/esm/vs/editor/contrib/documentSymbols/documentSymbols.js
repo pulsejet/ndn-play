@@ -11,13 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { CancellationToken } from '../../../base/common/cancellation.js';
+import { assertType } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
 import { IModelService } from '../../common/services/modelService.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
 import { ITextModelService } from '../../common/services/resolverService.js';
 import { OutlineModel } from './outlineModel.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { assertType } from '../../../base/common/types.js';
 export function getDocumentSymbols(document, flat, token) {
     return __awaiter(this, void 0, void 0, function* () {
         const model = yield OutlineModel.create(document, token);

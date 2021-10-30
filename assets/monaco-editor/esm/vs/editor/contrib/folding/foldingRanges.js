@@ -71,6 +71,18 @@ export class FoldingRegions {
             this._collapseStates[arrayIndex] = value & ~(1 << bit);
         }
     }
+    setCollapsedAllOfType(type, newState) {
+        let hasChanged = false;
+        if (this._types) {
+            for (let i = 0; i < this._types.length; i++) {
+                if (this._types[i] === type) {
+                    this.setCollapsed(i, newState);
+                    hasChanged = true;
+                }
+            }
+        }
+        return hasChanged;
+    }
     toRegion(index) {
         return new FoldingRegion(this, index);
     }

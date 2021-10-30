@@ -11,27 +11,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import './goToDefinitionAtPosition.css';
-import * as nls from '../../../../nls.js';
 import { createCancelablePromise } from '../../../../base/common/async.js';
 import { onUnexpectedError } from '../../../../base/common/errors.js';
 import { MarkdownString } from '../../../../base/common/htmlContent.js';
-import { IModeService } from '../../../common/services/modeService.js';
+import { DisposableStore } from '../../../../base/common/lifecycle.js';
+import { withNullAsUndefined } from '../../../../base/common/types.js';
+import './goToDefinitionAtPosition.css';
+import { EditorState } from '../../../browser/core/editorState.js';
+import { registerEditorContribution } from '../../../browser/editorExtensions.js';
+import { Position } from '../../../common/core/position.js';
 import { Range } from '../../../common/core/range.js';
 import { DefinitionProviderRegistry } from '../../../common/modes.js';
-import { registerEditorContribution } from '../../../browser/editorExtensions.js';
-import { getDefinitionsAtPosition } from '../goToSymbol.js';
-import { DisposableStore } from '../../../../base/common/lifecycle.js';
+import { IModeService } from '../../../common/services/modeService.js';
 import { ITextModelService } from '../../../common/services/resolverService.js';
-import { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';
-import { editorActiveLinkForeground } from '../../../../platform/theme/common/colorRegistry.js';
-import { EditorState } from '../../../browser/core/editorState.js';
-import { DefinitionAction } from '../goToCommands.js';
 import { ClickLinkGesture } from './clickLinkGesture.js';
-import { Position } from '../../../common/core/position.js';
-import { withNullAsUndefined } from '../../../../base/common/types.js';
 import { PeekContext } from '../../peekView/peekView.js';
+import * as nls from '../../../../nls.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
+import { editorActiveLinkForeground } from '../../../../platform/theme/common/colorRegistry.js';
+import { registerThemingParticipant } from '../../../../platform/theme/common/themeService.js';
+import { DefinitionAction } from '../goToCommands.js';
+import { getDefinitionsAtPosition } from '../goToSymbol.js';
 let GotoDefinitionAtPositionEditorContribution = class GotoDefinitionAtPositionEditorContribution {
     constructor(editor, textModelResolverService, modeService) {
         this.textModelResolverService = textModelResolverService;
@@ -243,6 +243,7 @@ let GotoDefinitionAtPositionEditorContribution = class GotoDefinitionAtPositionE
         const newDecorations = {
             range: range,
             options: {
+                description: 'goto-definition-link',
                 inlineClassName: 'goto-definition-link',
                 hoverMessage
             }
@@ -271,7 +272,7 @@ let GotoDefinitionAtPositionEditorContribution = class GotoDefinitionAtPositionE
     gotoDefinition(position, openToSide) {
         this.editor.setPosition(position);
         return this.editor.invokeWithinContext((accessor) => {
-            const canPeek = !openToSide && this.editor.getOption(74 /* definitionLinkOpensInPeek */) && !this.isInPeekEditor(accessor);
+            const canPeek = !openToSide && this.editor.getOption(77 /* definitionLinkOpensInPeek */) && !this.isInPeekEditor(accessor);
             const action = new DefinitionAction({ openToSide, openInPeek: canPeek, muteMessage: true }, { alias: '', label: '', id: '', precondition: undefined });
             return action.run(accessor, this.editor);
         });

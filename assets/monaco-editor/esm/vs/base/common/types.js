@@ -137,3 +137,6 @@ export function createProxyObject(methodNames, invoke) {
 export function withNullAsUndefined(x) {
     return x === null ? undefined : x;
 }
+export function assertNever(value, message = 'Unreachable') {
+    throw new Error(message);
+}

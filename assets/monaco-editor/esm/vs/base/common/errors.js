@@ -85,3 +85,11 @@ export function illegalState(name) {
         return new Error('Illegal state');
     }
 }
+export class NotSupportedError extends Error {
+    constructor(message) {
+        super('NotSupported');
+        if (message) {
+            this.message = message;
+        }
+    }
+}

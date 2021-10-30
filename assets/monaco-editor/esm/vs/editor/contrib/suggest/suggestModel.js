@@ -21,21 +21,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { TimeoutTimer } from '../../../base/common/async.js';
+import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { Emitter } from '../../../base/common/event.js';
-import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
+import { DisposableStore, dispose } from '../../../base/common/lifecycle.js';
+import { getLeadingWhitespace, isHighSurrogate, isLowSurrogate } from '../../../base/common/strings.js';
 import { Selection } from '../../common/core/selection.js';
 import { CompletionProviderRegistry } from '../../common/modes.js';
-import { CompletionModel } from './completionModel.js';
-import { getSuggestionComparator, provideSuggestionItems, getSnippetSuggestSupport, CompletionOptions } from './suggest.js';
-import { SnippetController2 } from '../snippet/snippetController2.js';
-import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { IEditorWorkerService } from '../../common/services/editorWorkerService.js';
+import { SnippetController2 } from '../snippet/snippetController2.js';
 import { WordDistance } from './wordDistance.js';
-import { isLowSurrogate, isHighSurrogate, getLeadingWhitespace } from '../../../base/common/strings.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
-import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
+import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
+import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { ILogService } from '../../../platform/log/common/log.js';
+import { ITelemetryService } from '../../../platform/telemetry/common/telemetry.js';
+import { CompletionModel } from './completionModel.js';
+import { CompletionOptions, getSnippetSuggestSupport, getSuggestionComparator, provideSuggestionItems } from './suggest.js';
 export class LineContext {
     constructor(model, position, auto, shy) {
         this.leadingLineContent = model.getLineContent(position.lineNumber).substr(0, position.column - 1);
@@ -65,13 +67,46 @@ export class LineContext {
         return true;
     }
 }
+function isSuggestPreviewEnabled(editor) {
+    return editor.getOption(105 /* suggest */).preview;
+}
+function canShowQuickSuggest(editor, contextKeyService, configurationService) {
+    if (!Boolean(contextKeyService.getContextKeyValue('inlineSuggestionVisible'))) {
+        // Allow if there is no inline suggestion.
+        return true;
+    }
+    const allowQuickSuggestions = configurationService.getValue('editor.inlineSuggest.allowQuickSuggestions');
+    if (allowQuickSuggestions !== undefined) {
+        // Use setting if available.
+        return Boolean(allowQuickSuggestions);
+    }
+    // Don't allow if inline suggestions are visible and no suggest preview is configured.
+    // TODO disabled for copilot
+    return false && isSuggestPreviewEnabled(editor);
+}
+function canShowSuggestOnTriggerCharacters(editor, contextKeyService, configurationService) {
+    if (!Boolean(contextKeyService.getContextKeyValue('inlineSuggestionVisible'))) {
+        // Allow if there is no inline suggestion.
+        return true;
+    }
+    const allowQuickSuggestions = configurationService.getValue('editor.inlineSuggest.allowSuggestOnTriggerCharacters');
+    if (allowQuickSuggestions !== undefined) {
+        // Use setting if available.
+        return Boolean(allowQuickSuggestions);
+    }
+    // Don't allow if inline suggestions are visible and no suggest preview is configured.
+    // TODO disabled for copilot
+    return false && isSuggestPreviewEnabled(editor);
+}
 let SuggestModel = class SuggestModel {
-    constructor(_editor, _editorWorkerService, _clipboardService, _telemetryService, _logService) {
+    constructor(_editor, _editorWorkerService, _clipboardService, _telemetryService, _logService, _contextKeyService, _configurationService) {
         this._editor = _editor;
         this._editorWorkerService = _editorWorkerService;
         this._clipboardService = _clipboardService;
         this._telemetryService = _telemetryService;
         this._logService = _logService;
+        this._contextKeyService = _contextKeyService;
+        this._configurationService = _configurationService;
         this._toDispose = new DisposableStore();
         this._quickSuggestDelay = 10;
         this._triggerCharacterListener = new DisposableStore();
@@ -135,16 +170,16 @@ let SuggestModel = class SuggestModel {
     }
     // --- handle configuration & precondition changes
     _updateQuickSuggest() {
-        this._quickSuggestDelay = this._editor.getOption(76 /* quickSuggestionsDelay */);
+        this._quickSuggestDelay = this._editor.getOption(79 /* quickSuggestionsDelay */);
         if (isNaN(this._quickSuggestDelay) || (!this._quickSuggestDelay && this._quickSuggestDelay !== 0) || this._quickSuggestDelay < 0) {
             this._quickSuggestDelay = 10;
         }
     }
     _updateTriggerCharacters() {
         this._triggerCharacterListener.clear();
-        if (this._editor.getOption(77 /* readOnly */)
+        if (this._editor.getOption(80 /* readOnly */)
             || !this._editor.hasModel()
-            || !this._editor.getOption(106 /* suggestOnTriggerCharacters */)) {
+            || !this._editor.getOption(108 /* suggestOnTriggerCharacters */)) {
             return;
         }
         const supportsByTriggerCharacter = new Map();
@@ -160,6 +195,13 @@ let SuggestModel = class SuggestModel {
             }
         }
         const checkTriggerCharacter = (text) => {
+            if (!canShowSuggestOnTriggerCharacters(this._editor, this._contextKeyService, this._configurationService)) {
+                return;
+            }
+            if (LineContext.shouldAutoTrigger(this._editor)) {
+                // don't trigger by trigger characters when this is a case for quick suggest
+                return;
+            }
             if (!text) {
                 // came here from the compositionEnd-event
                 const position = this._editor.getPosition();
@@ -236,7 +278,7 @@ let SuggestModel = class SuggestModel {
             return;
         }
         if (this._state === 0 /* Idle */ && e.reason === 0 /* NotSet */) {
-            if (this._editor.getOption(75 /* quickSuggestions */) === false) {
+            if (this._editor.getOption(78 /* quickSuggestions */) === false) {
                 // not enabled
                 return;
             }
@@ -244,7 +286,7 @@ let SuggestModel = class SuggestModel {
                 // cursor didn't move RIGHT
                 return;
             }
-            if (this._editor.getOption(103 /* suggest */).snippetsPreventQuickSuggestions && SnippetController2.get(this._editor).isInSnippet()) {
+            if (this._editor.getOption(105 /* suggest */).snippetsPreventQuickSuggestions && SnippetController2.get(this._editor).isInSnippet()) {
                 // no quick suggestion when in snippet mode
                 return;
             }
@@ -262,7 +304,7 @@ let SuggestModel = class SuggestModel {
                 const model = this._editor.getModel();
                 const pos = this._editor.getPosition();
                 // validate enabled now
-                const quickSuggestions = this._editor.getOption(75 /* quickSuggestions */);
+                const quickSuggestions = this._editor.getOption(78 /* quickSuggestions */);
                 if (quickSuggestions === false) {
                     return;
                 }
@@ -280,6 +322,10 @@ let SuggestModel = class SuggestModel {
                     if (!inValidScope) {
                         return;
                     }
+                }
+                if (!canShowQuickSuggest(this._editor, this._contextKeyService, this._configurationService)) {
+                    // do not trigger quick suggestions if inline suggestions are shown
+                    return;
                 }
                 // we made it till here -> trigger now
                 this.trigger({ auto: true, shy: false });
@@ -334,7 +380,7 @@ let SuggestModel = class SuggestModel {
         }
         this._requestToken = new CancellationTokenSource();
         // kind filter and snippet sort rules
-        const snippetSuggestions = this._editor.getOption(98 /* snippetSuggestions */);
+        const snippetSuggestions = this._editor.getOption(100 /* snippetSuggestions */);
         let snippetSortOrder = 1 /* Inline */;
         switch (snippetSuggestions) {
             case 'top':
@@ -348,9 +394,9 @@ let SuggestModel = class SuggestModel {
                 snippetSortOrder = 2 /* Bottom */;
                 break;
         }
-        const itemKindFilter = SuggestModel._createItemKindFilter(this._editor);
+        const { itemKind: itemKindFilter, showDeprecated } = SuggestModel._createSuggestFilter(this._editor);
         const wordDistance = WordDistance.create(this._editorWorkerService, this._editor);
-        const completions = provideSuggestionItems(model, this._editor.getPosition(), new CompletionOptions(snippetSortOrder, itemKindFilter, onlyFrom), suggestCtx, this._requestToken.token);
+        const completions = provideSuggestionItems(model, this._editor.getPosition(), new CompletionOptions(snippetSortOrder, itemKindFilter, onlyFrom, showDeprecated), suggestCtx, this._requestToken.token);
         Promise.all([completions, wordDistance]).then(([completions, wordDistance]) => __awaiter(this, void 0, void 0, function* () {
             var _b;
             (_b = this._requestToken) === null || _b === void 0 ? void 0 : _b.dispose();
@@ -374,7 +420,7 @@ let SuggestModel = class SuggestModel {
             this._completionModel = new CompletionModel(items, this._context.column, {
                 leadingLineContent: ctx.leadingLineContent,
                 characterCountDelta: ctx.column - this._context.column
-            }, wordDistance, this._editor.getOption(103 /* suggest */), this._editor.getOption(98 /* snippetSuggestions */), clipboardText);
+            }, wordDistance, this._editor.getOption(105 /* suggest */), this._editor.getOption(100 /* snippetSuggestions */), clipboardText);
             // store containers so that they can be disposed later
             this._completionDisposables.add(completions.disposable);
             this._onNewContext(ctx);
@@ -391,16 +437,16 @@ let SuggestModel = class SuggestModel {
             this._logService.debug('suggest.durations.json', durations);
         });
     }
-    static _createItemKindFilter(editor) {
+    static _createSuggestFilter(editor) {
         // kind filter and snippet sort rules
         const result = new Set();
         // snippet setting
-        const snippetSuggestions = editor.getOption(98 /* snippetSuggestions */);
+        const snippetSuggestions = editor.getOption(100 /* snippetSuggestions */);
         if (snippetSuggestions === 'none') {
             result.add(27 /* Snippet */);
         }
         // type setting
-        const suggestOptions = editor.getOption(103 /* suggest */);
+        const suggestOptions = editor.getOption(105 /* suggest */);
         if (!suggestOptions.showMethods) {
             result.add(0 /* Method */);
         }
@@ -485,7 +531,7 @@ let SuggestModel = class SuggestModel {
         if (!suggestOptions.showIssues) {
             result.add(26 /* Issue */);
         }
-        return result;
+        return { itemKind: result, showDeprecated: suggestOptions.showDeprecated };
     }
     _onNewContext(ctx) {
         if (!this._context) {
@@ -579,6 +625,8 @@ SuggestModel = __decorate([
     __param(1, IEditorWorkerService),
     __param(2, IClipboardService),
     __param(3, ITelemetryService),
-    __param(4, ILogService)
+    __param(4, ILogService),
+    __param(5, IContextKeyService),
+    __param(6, IConfigurationService)
 ], SuggestModel);
 export { SuggestModel };

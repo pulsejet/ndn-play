@@ -65,7 +65,7 @@ export function isMultilineRegexSource(searchString) {
                 break;
             }
             const nextChCode = searchString.charCodeAt(i);
-            if (nextChCode === 110 /* n */ || nextChCode === 114 /* r */ || nextChCode === 87 /* W */ || nextChCode === 119 /* w */) {
+            if (nextChCode === 110 /* n */ || nextChCode === 114 /* r */ || nextChCode === 87 /* W */) {
                 return true;
             }
         }

@@ -31,6 +31,7 @@ import { isEditStackElement } from '../model/editStack.js';
 import { Schemas } from '../../../base/common/network.js';
 import { SemanticTokensProviderStyling, toMultilineTokens2 } from './semanticTokensProviderStyling.js';
 import { getDocumentSemanticTokens, isSemanticTokens, isSemanticTokensEdits } from './getSemanticTokens.js';
+import { equals } from '../../../base/common/objects.js';
 function MODEL_ID(resource) {
     return resource.toString();
 }
@@ -83,13 +84,6 @@ class DisposedModelInfo {
         this.alternativeVersionId = alternativeVersionId;
     }
 }
-function schemaShouldMaintainUndoRedoElements(resource) {
-    return (resource.scheme === Schemas.file
-        || resource.scheme === Schemas.vscodeRemote
-        || resource.scheme === Schemas.userData
-        || resource.scheme === 'fake-fs' // for tests
-    );
-}
 let ModelServiceImpl = class ModelServiceImpl extends Disposable {
     constructor(_configurationService, _resourcePropertiesService, _themeService, _logService, _undoRedoService) {
         super();
@@ -114,6 +108,7 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
         this._register(new SemanticColoringFeature(this, this._themeService, this._configurationService, this._semanticStyling));
     }
     static _readModelOptions(config, isForSimpleWidget) {
+        var _a;
         let tabSize = EDITOR_MODEL_DEFAULTS.tabSize;
         if (config.editor && typeof config.editor.tabSize !== 'undefined') {
             const parsedTabSize = parseInt(config.editor.tabSize, 10);
@@ -158,6 +153,12 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
         if (config.editor && typeof config.editor.largeFileOptimizations !== 'undefined') {
             largeFileOptimizations = (config.editor.largeFileOptimizations === 'false' ? false : Boolean(config.editor.largeFileOptimizations));
         }
+        let bracketPairColorizationOptions = EDITOR_MODEL_DEFAULTS.bracketPairColorizationOptions;
+        if (((_a = config.editor) === null || _a === void 0 ? void 0 : _a.bracketPairColorization) && typeof config.editor.bracketPairColorization === 'object') {
+            bracketPairColorizationOptions = {
+                enabled: !!config.editor.bracketPairColorization.enabled
+            };
+        }
         return {
             isForSimpleWidget: isForSimpleWidget,
             tabSize: tabSize,
@@ -166,7 +167,8 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
             detectIndentation: detectIndentation,
             defaultEOL: newDefaultEOL,
             trimAutoWhitespace: trimAutoWhitespace,
-            largeFileOptimizations: largeFileOptimizations
+            largeFileOptimizations: largeFileOptimizations,
+            bracketPairColorizationOptions
         };
     }
     _getEOL(resource, language) {
@@ -174,7 +176,7 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
             return this._resourcePropertiesService.getEOL(resource, language);
         }
         const eol = this._configurationService.getValue('files.eol', { overrideIdentifier: language });
-        if (eol && eol !== 'auto') {
+        if (eol && typeof eol === 'string' && eol !== 'auto') {
             return eol;
         }
         return platform.OS === 3 /* Linux */ || platform.OS === 2 /* Macintosh */ ? '\n' : '\r\n';
@@ -220,14 +222,16 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
             && (currentOptions.insertSpaces === newOptions.insertSpaces)
             && (currentOptions.tabSize === newOptions.tabSize)
             && (currentOptions.indentSize === newOptions.indentSize)
-            && (currentOptions.trimAutoWhitespace === newOptions.trimAutoWhitespace)) {
+            && (currentOptions.trimAutoWhitespace === newOptions.trimAutoWhitespace)
+            && equals(currentOptions.bracketPairColorizationOptions, newOptions.bracketPairColorizationOptions)) {
             // Same indent opts, no need to touch the model
             return;
         }
         if (newOptions.detectIndentation) {
             model.detectIndentation(newOptions.insertSpaces, newOptions.tabSize);
             model.updateOptions({
-                trimAutoWhitespace: newOptions.trimAutoWhitespace
+                trimAutoWhitespace: newOptions.trimAutoWhitespace,
+                bracketColorizationOptions: newOptions.bracketPairColorizationOptions
             });
         }
         else {
@@ -235,7 +239,8 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
                 insertSpaces: newOptions.insertSpaces,
                 tabSize: newOptions.tabSize,
                 indentSize: newOptions.indentSize,
-                trimAutoWhitespace: newOptions.trimAutoWhitespace
+                trimAutoWhitespace: newOptions.trimAutoWhitespace,
+                bracketColorizationOptions: newOptions.bracketPairColorizationOptions
             });
         }
     }
@@ -355,13 +360,21 @@ let ModelServiceImpl = class ModelServiceImpl extends Disposable {
         return this._semanticStyling.get(provider);
     }
     // --- end IModelService
+    _schemaShouldMaintainUndoRedoElements(resource) {
+        return (resource.scheme === Schemas.file
+            || resource.scheme === Schemas.vscodeRemote
+            || resource.scheme === Schemas.userData
+            || resource.scheme === Schemas.vscodeNotebookCell
+            || resource.scheme === 'fake-fs' // for tests
+        );
+    }
     _onWillDispose(model) {
         const modelId = MODEL_ID(model.uri);
         const modelData = this._models[modelId];
         const sharesUndoRedoStack = (this._undoRedoService.getUriComparisonKey(model.uri) !== model.uri.toString());
         let maintainUndoRedoStack = false;
         let heapSize = 0;
-        if (sharesUndoRedoStack || (this._shouldRestoreUndoStack() && schemaShouldMaintainUndoRedoElements(model.uri))) {
+        if (sharesUndoRedoStack || (this._shouldRestoreUndoStack() && this._schemaShouldMaintainUndoRedoElements(model.uri))) {
             const elements = this._undoRedoService.getElements(model.uri);
             if (elements.past.length > 0 || elements.future.length > 0) {
                 for (const element of elements.past) {

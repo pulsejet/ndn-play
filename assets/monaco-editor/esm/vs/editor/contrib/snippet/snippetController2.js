@@ -17,10 +17,10 @@ import { Range } from '../../common/core/range.js';
 import { Selection } from '../../common/core/selection.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { showSimpleSuggestions } from '../suggest/suggest.js';
+import { localize } from '../../../nls.js';
 import { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
 import { ILogService } from '../../../platform/log/common/log.js';
 import { SnippetSession } from './snippetSession.js';
-import { localize } from '../../../nls.js';
 const _defaultOptions = {
     overwriteBefore: 0,
     overwriteAfter: 0,

@@ -18,6 +18,7 @@ export class BareFontInfo {
      * @internal
      */
     constructor(opts) {
+        this._bareFontInfoBrand = undefined;
         this.zoomLevel = opts.zoomLevel;
         this.pixelRatio = opts.pixelRatio;
         this.fontFamily = String(opts.fontFamily);
@@ -31,12 +32,12 @@ export class BareFontInfo {
      * @internal
      */
     static createFromValidatedSettings(options, zoomLevel, pixelRatio, ignoreEditorZoom) {
-        const fontFamily = options.get(39 /* fontFamily */);
-        const fontWeight = options.get(43 /* fontWeight */);
-        const fontSize = options.get(42 /* fontSize */);
-        const fontFeatureSettings = options.get(41 /* fontLigatures */);
-        const lineHeight = options.get(55 /* lineHeight */);
-        const letterSpacing = options.get(52 /* letterSpacing */);
+        const fontFamily = options.get(42 /* fontFamily */);
+        const fontWeight = options.get(46 /* fontWeight */);
+        const fontSize = options.get(45 /* fontSize */);
+        const fontFeatureSettings = options.get(44 /* fontLigatures */);
+        const lineHeight = options.get(58 /* lineHeight */);
+        const letterSpacing = options.get(55 /* letterSpacing */);
         return BareFontInfo._create(fontFamily, fontWeight, fontSize, fontFeatureSettings, lineHeight, letterSpacing, zoomLevel, pixelRatio, ignoreEditorZoom);
     }
     /**
@@ -44,9 +45,15 @@ export class BareFontInfo {
      */
     static _create(fontFamily, fontWeight, fontSize, fontFeatureSettings, lineHeight, letterSpacing, zoomLevel, pixelRatio, ignoreEditorZoom) {
         if (lineHeight === 0) {
-            lineHeight = Math.round(GOLDEN_LINE_HEIGHT_RATIO * fontSize);
+            lineHeight = GOLDEN_LINE_HEIGHT_RATIO * fontSize;
         }
         else if (lineHeight < MINIMUM_LINE_HEIGHT) {
+            // Values too small to be line heights in pixels are probably in ems. Accept them gracefully.
+            lineHeight = lineHeight * fontSize;
+        }
+        // Enforce integer, minimum constraints
+        lineHeight = Math.round(lineHeight);
+        if (lineHeight < MINIMUM_LINE_HEIGHT) {
             lineHeight = MINIMUM_LINE_HEIGHT;
         }
         const editorZoomLevelMultiplier = 1 + (ignoreEditorZoom ? 0 : EditorZoom.getZoomLevel() * 0.1);
@@ -72,16 +79,23 @@ export class BareFontInfo {
     /**
      * @internal
      */
-    getMassagedFontFamily() {
-        if (/[,"']/.test(this.fontFamily)) {
+    getMassagedFontFamily(fallbackFontFamily) {
+        const fontFamily = BareFontInfo._wrapInQuotes(this.fontFamily);
+        if (fallbackFontFamily && this.fontFamily !== fallbackFontFamily) {
+            return `${fontFamily}, ${fallbackFontFamily}`;
+        }
+        return fontFamily;
+    }
+    static _wrapInQuotes(fontFamily) {
+        if (/[,"']/.test(fontFamily)) {
             // Looks like the font family might be already escaped
-            return this.fontFamily;
+            return fontFamily;
         }
-        if (/[+ ]/.test(this.fontFamily)) {
+        if (/[+ ]/.test(fontFamily)) {
             // Wrap a font family using + or <space> with quotes
-            return `"${this.fontFamily}"`;
+            return `"${fontFamily}"`;
         }
-        return this.fontFamily;
+        return fontFamily;
     }
 }
 // change this whenever `FontInfo` members are changed
@@ -92,6 +106,7 @@ export class FontInfo extends BareFontInfo {
      */
     constructor(opts, isTrusted) {
         super(opts);
+        this._editorStylingBrand = undefined;
         this.version = SERIALIZED_FONT_INFO_VERSION;
         this.isTrusted = isTrusted;
         this.isMonospace = opts.isMonospace;

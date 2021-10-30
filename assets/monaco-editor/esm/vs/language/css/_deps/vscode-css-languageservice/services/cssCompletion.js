@@ -44,7 +44,7 @@ import { Symbols } from '../parser/cssSymbolScope.js';
 import * as languageFacts from '../languageFacts/facts.js';
 import * as strings from '../utils/strings.js';
 import { Position, CompletionItemKind, Range, TextEdit, InsertTextFormat, MarkupKind, CompletionItemTag } from '../cssLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 import { isDefined } from '../utils/objects.js';
 import { PathCompletionParticipant } from './pathCompletion.js';
 var localize = nls.loadMessageBundle();

@@ -169,6 +169,7 @@ function migrateOptions(options) {
         mapping['method'] = 'showMethods';
         mapping['function'] = 'showFunctions';
         mapping['constructor'] = 'showConstructors';
+        mapping['deprecated'] = 'showDeprecated';
         mapping['field'] = 'showFields';
         mapping['variable'] = 'showVariables';
         mapping['class'] = 'showClasses';
@@ -234,6 +235,16 @@ function migrateOptions(options) {
     }
     else if (matchBrackets === false) {
         options.matchBrackets = 'never';
+    }
+    const { renderIndentGuides, highlightActiveIndentGuide } = options;
+    if (!options.guides) {
+        options.guides = {};
+    }
+    if (renderIndentGuides !== undefined) {
+        options.guides.indentation = !!renderIndentGuides;
+    }
+    if (highlightActiveIndentGuide !== undefined) {
+        options.guides.highlightActiveIndentation = !!highlightActiveIndentGuide;
     }
 }
 function deepCloneAndMigrateOptions(_options) {
@@ -456,6 +467,11 @@ const editorConfiguration = Object.assign(Object.assign({}, editorConfigurationB
             type: 'number',
             default: 5000,
             description: nls.localize('maxComputationTime', "Timeout in milliseconds after which diff computation is cancelled. Use 0 for no timeout.")
+        },
+        'diffEditor.maxFileSize': {
+            type: 'number',
+            default: 50,
+            description: nls.localize('maxFileSize', "Maximum file size in MB for which to compute diffs. Use 0 for no limit.")
         },
         'diffEditor.renderSideBySide': {
             type: 'boolean',

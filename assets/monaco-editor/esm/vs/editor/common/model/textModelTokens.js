@@ -162,13 +162,11 @@ export class TextModelTokenization extends Disposable {
             this._resetTokenizationState();
             this._textModel.clearTokens();
         }));
-        this._register(this._textModel.onDidChangeRawContentFast((e) => {
-            if (e.containsEvent(1 /* Flush */)) {
+        this._register(this._textModel.onDidChangeContentFast((e) => {
+            if (e.isFlush) {
                 this._resetTokenizationState();
                 return;
             }
-        }));
-        this._register(this._textModel.onDidChangeContentFast((e) => {
             for (let i = 0, len = e.changes.length; i < len; i++) {
                 const change = e.changes[i];
                 const [eolCount] = countEOL(change.text);
@@ -206,27 +204,29 @@ export class TextModelTokenization extends Disposable {
             });
         }
     }
-    _revalidateTokensNow(toLineNumber = this._textModel.getLineCount()) {
+    _revalidateTokensNow() {
+        const textModelLastLineNumber = this._textModel.getLineCount();
         const MAX_ALLOWED_TIME = 1;
         const builder = new MultilineTokensBuilder();
         const sw = StopWatch.create(false);
+        let tokenizedLineNumber = -1;
         while (this._hasLinesToTokenize()) {
             if (sw.elapsed() > MAX_ALLOWED_TIME) {
                 // Stop if MAX_ALLOWED_TIME is reached
                 break;
             }
-            const tokenizedLineNumber = this._tokenizeOneInvalidLine(builder);
-            if (tokenizedLineNumber >= toLineNumber) {
+            tokenizedLineNumber = this._tokenizeOneInvalidLine(builder);
+            if (tokenizedLineNumber >= textModelLastLineNumber) {
                 break;
             }
         }
         this._beginBackgroundTokenization();
-        this._textModel.setTokens(builder.tokens);
+        this._textModel.setTokens(builder.tokens, !this._hasLinesToTokenize());
     }
     tokenizeViewport(startLineNumber, endLineNumber) {
         const builder = new MultilineTokensBuilder();
         this._tokenizeViewport(builder, startLineNumber, endLineNumber);
-        this._textModel.setTokens(builder.tokens);
+        this._textModel.setTokens(builder.tokens, !this._hasLinesToTokenize());
     }
     reset() {
         this._resetTokenizationState();
@@ -235,7 +235,7 @@ export class TextModelTokenization extends Disposable {
     forceTokenization(lineNumber) {
         const builder = new MultilineTokensBuilder();
         this._updateTokensUntilLine(builder, lineNumber);
-        this._textModel.setTokens(builder.tokens);
+        this._textModel.setTokens(builder.tokens, !this._hasLinesToTokenize());
     }
     isCheapToTokenize(lineNumber) {
         if (!this._tokenizationSupport) {

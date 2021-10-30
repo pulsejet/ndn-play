@@ -2,41 +2,49 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as Json from '../../jsonc-parser/main.js';
-import { URI } from '../../vscode-uri/index.js';
+import * as Json from './../../jsonc-parser/main.js';
+import { URI } from './../../vscode-uri/index.js';
 import * as Strings from '../utils/strings.js';
 import * as Parser from '../parser/jsonParser.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
+import { createRegex } from '../utils/glob.js';
 var localize = nls.loadMessageBundle();
+var BANG = '!';
+var PATH_SEP = '/';
 var FilePatternAssociation = /** @class */ (function () {
     function FilePatternAssociation(pattern, uris) {
-        this.patternRegExps = [];
-        this.isInclude = [];
+        this.globWrappers = [];
         try {
             for (var _i = 0, pattern_1 = pattern; _i < pattern_1.length; _i++) {
-                var p = pattern_1[_i];
-                var include = p[0] !== '!';
+                var patternString = pattern_1[_i];
+                var include = patternString[0] !== BANG;
                 if (!include) {
-                    p = p.substring(1);
+                    patternString = patternString.substring(1);
                 }
-                this.patternRegExps.push(new RegExp(Strings.convertSimple2RegExpPattern(p) + '$'));
-                this.isInclude.push(include);
+                if (patternString.length > 0) {
+                    if (patternString[0] === PATH_SEP) {
+                        patternString = patternString.substring(1);
+                    }
+                    this.globWrappers.push({
+                        regexp: createRegex('**/' + patternString, { extended: true, globstar: true }),
+                        include: include,
+                    });
+                }
             }
+            ;
             this.uris = uris;
         }
         catch (e) {
-            // invalid pattern
-            this.patternRegExps.length = 0;
-            this.isInclude.length = 0;
+            this.globWrappers.length = 0;
             this.uris = [];
         }
     }
     FilePatternAssociation.prototype.matchesPattern = function (fileName) {
         var match = false;
-        for (var i = 0; i < this.patternRegExps.length; i++) {
-            var regExp = this.patternRegExps[i];
-            if (regExp.test(fileName)) {
-                match = this.isInclude[i];
+        for (var _i = 0, _a = this.globWrappers; _i < _a.length; _i++) {
+            var _b = _a[_i], regexp = _b.regexp, include = _b.include;
+            if (regexp.test(fileName)) {
+                match = include;
             }
         }
         return match;
@@ -110,7 +118,7 @@ var ResolvedSchema = /** @class */ (function () {
         else if (schema.patternProperties) {
             for (var _i = 0, _a = Object.keys(schema.patternProperties); _i < _a.length; _i++) {
                 var pattern = _a[_i];
-                var regex = new RegExp(pattern);
+                var regex = Strings.extendedRegExp(pattern);
                 if (regex.test(next)) {
                     return this.getSectionRecursive(path, schema.patternProperties[pattern]);
                 }
@@ -300,6 +308,7 @@ var JSONSchemaService = /** @class */ (function () {
                 path = path.substr(1);
             }
             path.split('/').some(function (part) {
+                part = part.replace(/~1/g, '/').replace(/~0/g, '~');
                 current = current[part];
                 return !current;
             });
@@ -320,7 +329,7 @@ var JSONSchemaService = /** @class */ (function () {
             }
         };
         var resolveExternalLink = function (node, uri, refSegment, parentSchemaURL, parentSchemaDependencies) {
-            if (contextService && !/^\w+:\/\/.*/.test(uri)) {
+            if (contextService && !/^[A-Za-z][A-Za-z0-9+\-.+]*:\/\/.*/.test(uri)) {
                 uri = contextService.resolveRelativePath(uri, parentSchemaURL);
             }
             uri = normalizeId(uri);
@@ -502,7 +511,7 @@ function normalizeId(id) {
     }
 }
 function normalizeResourceForMatching(resource) {
-    // remove querues and fragments, normalize drive capitalization
+    // remove queries and fragments, normalize drive capitalization
     try {
         return URI.parse(resource).with({ fragment: null, query: null }).toString();
     }

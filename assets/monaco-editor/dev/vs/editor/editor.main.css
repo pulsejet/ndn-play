@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.24.0(89cdf8577cdd4881a366f9f7ef6abaa78453fd4b)
+ * Version: 0.29.2(df04357573e045be658960bd50ff0a45d6d1eadb)
  * Released under the MIT license
  * https://github.com/microsoft/vscode/blob/main/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -85,6 +85,16 @@
 	margin-right: .8em;
 }
 
+.monaco-action-bar .action-item .action-label.separator {
+	width: 1px;
+	height: 16px;
+	margin: 5px 4px !important;
+	cursor: default;
+	min-width: 1px;
+	padding: 0;
+	background-color: #bbb;
+}
+
 .secondary-actions .monaco-action-bar .action-label {
 	margin-left: 6px;
 }
@@ -155,6 +165,7 @@
 
 .monaco-button-dropdown {
 	display: flex;
+	cursor: pointer;
 }
 
 .monaco-button-dropdown > .monaco-dropdown-button {
@@ -231,6 +242,7 @@
 
 @font-face {
 	font-family: "codicon";
+	font-display: block;
 	src: url(../base/browser/ui/codicons/codicon/codicon.ttf) format("truetype");
 }
 
@@ -364,7 +376,14 @@
 	padding-left: 0px;
 	padding-right: 0px;
 	line-height: 16px;
-	margin-left: -4px;
+	margin-left: -3px;
+}
+
+.monaco-dropdown-with-primary > .dropdown-action-container > .monaco-dropdown > .dropdown-label > .action-label {
+	display: block;
+	background-size: 16px;
+	background-position: center center;
+	background-repeat: no-repeat;
 }
 
 /*---------------------------------------------------------------------------------------------
@@ -454,7 +473,7 @@
 	display: none;
 }
 
-.monaco-hover .hover-contents {
+.monaco-hover .hover-contents:not(.html-hover-contents) {
 	padding: 4px 8px;
 }
 
@@ -550,16 +569,19 @@
 	vertical-align: middle;
 }
 
+.monaco-hover .hover-contents a.code-link:hover,
+.monaco-hover .hover-contents a.code-link {
+	color: inherit;
+}
+
 .monaco-hover .hover-contents a.code-link:before {
 	content: '(';
 }
+
 .monaco-hover .hover-contents a.code-link:after {
 	content: ')';
 }
 
-.monaco-hover .hover-contents a.code-link {
-	color: inherit;
-}
 .monaco-hover .hover-contents a.code-link > span {
 	text-decoration: underline;
 	/** Hack to force underline to show **/
@@ -568,9 +590,20 @@
 }
 
 /** Spans in markdown hovers need a margin-bottom to avoid looking cramped: https://github.com/microsoft/vscode/issues/101496 **/
-.monaco-hover .markdown-hover .hover-contents:not(.code-hover-contents) span {
+.monaco-hover .markdown-hover .hover-contents:not(.code-hover-contents):not(.html-hover-contents) span {
 	margin-bottom: 4px;
 	display: inline-block;
+}
+
+.monaco-hover-content .action-container a {
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.monaco-hover-content .action-container.disabled {
+	pointer-events: none;
+	opacity: 0.4;
+	cursor: default;
 }
 
 /*---------------------------------------------------------------------------------------------
@@ -662,7 +695,7 @@
 	opacity: 0.75;
 	font-size: 90%;
 	font-weight: 600;
-	padding: 0 16px 0 5px;
+	margin: auto 16px 0 5px; /* https://github.com/microsoft/vscode/issues/113223 */
 	text-align: center;
 }
 
@@ -883,10 +916,6 @@
 .monaco-list.selection-single,
 .monaco-list.selection-multiple {
 	outline: 0 !important;
-}
-
-.monaco-list:focus .monaco-list-row.selected .codicon {
-	color: inherit;
 }
 
 /* Dnd */
@@ -1492,7 +1521,6 @@
 	display: flex !important;
 	align-items: center;
 	justify-content: center;
-	color: inherit !important;
 	transform: translateX(3px);
 }
 
@@ -1523,7 +1551,7 @@
 	position: absolute;
 	width: 600px;
 	z-index: 2000;
-	padding: 0 1px 6px 1px;
+	padding: 0 1px 1px 1px;
 	left: 50%;
 	margin-left: -300px;
 }
@@ -1542,6 +1570,8 @@
 .quick-input-title {
 	padding: 3px 0px;
 	text-align: center;
+	text-overflow: ellipsis;
+	overflow: hidden;
 }
 
 .quick-input-right-action-bar {
@@ -1584,6 +1614,7 @@
 	display: flex;
 	flex-direction: column;
 	flex-grow: 1;
+	min-width: 0;
 	position: relative;
 }
 
@@ -1643,6 +1674,7 @@
 .quick-input-message {
 	margin-top: -1px;
 	padding: 5px 5px 2px 5px;
+	overflow-wrap: break-word;
 }
 
 .quick-input-message > .codicon {
@@ -1686,7 +1718,7 @@
 	border-top-style: solid;
 }
 
-.quick-input-list .monaco-list-row:first-child .quick-input-list-entry.quick-input-list-separator-border {
+.quick-input-list .monaco-list-row[data-index="0"] .quick-input-list-entry.quick-input-list-separator-border {
 	border-top-style: none;
 }
 
@@ -1734,7 +1766,7 @@
 }
 
 .quick-input-list .quick-input-list-rows > .quick-input-list-row .codicon[class*='codicon-'] {
-	vertical-align: sub;
+	vertical-align: text-bottom;
 }
 
 .quick-input-list .quick-input-list-rows .monaco-highlighted-label span {
@@ -1776,7 +1808,7 @@
 
 .quick-input-list .quick-input-list-entry-action-bar .action-label.codicon {
 	margin-right: 4px;
-	padding: 2px;
+	padding: 0px 2px 2px 2px;
 }
 
 .quick-input-list .quick-input-list-entry-action-bar {
@@ -1791,6 +1823,15 @@
 .quick-input-list .quick-input-list-entry:hover .quick-input-list-entry-action-bar .action-label,
 .quick-input-list .monaco-list-row.focused .quick-input-list-entry-action-bar .action-label {
 	display: flex;
+}
+
+/* focused items in quick pick */
+.quick-input-list .monaco-list-row.focused .monaco-keybinding-key,
+.quick-input-list .monaco-list-row.focused .quick-input-list-entry .quick-input-list-separator {
+	color: inherit
+}
+.quick-input-list .monaco-list-row.focused .monaco-keybinding-key {
+	background: none;
 }
 
 /*---------------------------------------------------------------------------------------------
@@ -1891,14 +1932,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/*
-	Keeping name short for faster parsing.
-	cigr = core ident guides rendering (div)
-*/
-.monaco-editor .lines-content .cigr {
-	position: absolute;
-}
-.monaco-editor .lines-content .cigra {
+.monaco-editor .lines-content .core-guide {
 	position: absolute;
 }
 
@@ -2693,8 +2727,10 @@
 }
 
 .monaco-editor .find-widget .button {
-	width: 20px;
-	height: 20px;
+	width: 16px;
+	height: 16px;
+	padding: 3px;
+	border-radius: 5px;
 	display: flex;
 	flex: initial;
 	margin-left: 3px;
@@ -2704,6 +2740,14 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+/* find in selection button */
+.monaco-editor .find-widget .codicon-find-selection {
+	width: 22px;
+	height: 22px;
+	padding: 3px;
+	border-radius: 5px;
 }
 
 .monaco-editor .find-widget .button.left {
@@ -2723,6 +2767,7 @@
 	left: 3px;
 	width: 18px;
 	height: 100%;
+	border-radius: 0;
 	box-sizing: border-box;
 }
 
@@ -2879,12 +2924,15 @@
 	opacity: 0.6;
 	color: inherit;
 }
+
 .monaco-editor .marker-widget .descriptioncontainer .message a.code-link:before {
 	content: '(';
 }
+
 .monaco-editor .marker-widget .descriptioncontainer .message a.code-link:after {
 	content: ')';
 }
+
 .monaco-editor .marker-widget .descriptioncontainer .message a.code-link > span {
 	text-decoration: underline;
 	/** Hack to force underline to show **/
@@ -2956,6 +3004,40 @@
 
 .monaco-editor.hc-black .reference-zone-widget .ref-tree .reference-file {
 	font-weight: bold;
+}
+
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.monaco-editor .suggest-preview-additional-widget {
+	white-space: nowrap;
+}
+
+.monaco-editor .suggest-preview-additional-widget .content-spacer {
+	color: transparent;
+	white-space: pre;
+}
+
+.monaco-editor .suggest-preview-additional-widget .button {
+	display: inline-block;
+	cursor: pointer;
+	text-decoration: underline;
+	text-underline-position: under;
+}
+
+.monaco-editor .ghost-text-hidden {
+	opacity: 0;
+	font-size: 0;
+}
+
+.monaco-editor .ghost-text-decoration {
+	font-style: italic;
+}
+
+.monaco-editor .suggest-preview-text {
+	font-style: italic;
 }
 
 /*---------------------------------------------------------------------------------------------
@@ -3155,8 +3237,11 @@
 	align-items: center;
 	font-size: 13px;
 	margin-left: 20px;
-	cursor: pointer;
 	min-width: 0;
+}
+
+.monaco-editor .peekview-widget .head .peekview-title.clickable {
+	cursor: pointer;
 }
 
 .monaco-editor .peekview-widget .head .peekview-title .dirname:not(:empty) {
@@ -3175,6 +3260,7 @@
 .monaco-editor .peekview-widget .head .peekview-title .filename {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .monaco-editor .peekview-widget .head .peekview-title .meta:not(:empty)::before {
@@ -3204,6 +3290,10 @@
 
 .monaco-editor .peekview-widget .head .peekview-title .codicon {
 	margin-right: 4px;
+}
+
+.monaco-editor .peekview-widget .monaco-list .monaco-list-row.focused .codicon {
+	color: inherit !important;
 }
 
 /*---------------------------------------------------------------------------------------------
@@ -3407,8 +3497,6 @@
 
 /** signature, qualifier, type/details opacity **/
 
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.left>.signature-label,
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.left>.qualifier-label,
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.right>.details-label {
 	opacity: 0.7;
 }
@@ -3416,12 +3504,14 @@
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.left>.signature-label {
 	overflow: hidden;
 	text-overflow: ellipsis;
+	opacity: 0.6;
 }
 
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.left>.qualifier-label {
-	margin-left: 4px;
+	margin-left: 12px;
 	opacity: 0.4;
-	font-size: 90%;
+	font-size: 85%;
+	line-height: initial;
 	text-overflow: ellipsis;
 	overflow: hidden;
 	align-self: center;
@@ -3430,6 +3520,7 @@
 /** Type Info and icon next to the label in the focused completion item **/
 
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row>.contents>.main>.right>.details-label {
+	font-size: 85%;
 	margin-left: 1.1em;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -3778,6 +3869,11 @@
 	color: #0066BF;
 }
 
+.vs .quick-input-widget .monaco-list-row.focused .monaco-highlighted-label .highlight,
+.vs .quick-input-widget .monaco-list-row.focused .monaco-highlighted-label .highlight {
+	color: #9DDDFF;
+}
+
 .vs-dark .quick-input-widget .monaco-highlighted-label .highlight,
 .vs-dark .quick-input-widget .monaco-highlighted-label .highlight {
 	color: #0097fb;
@@ -3839,6 +3935,7 @@
 /* See https://github.com/microsoft/monaco-editor/issues/2168#issuecomment-780078600 */
 .monaco-aria-container {
 	position: absolute !important;
+	top: 0; /* avoid being placed underneath a sibling element */
 	height: 1px;
 	width: 1px;
 	margin: -1px;
@@ -4080,6 +4177,49 @@
 .vs-dark .monaco-action-bar .action-item.menu-entry .action-label,
 .hc-black .monaco-action-bar .action-item.menu-entry .action-label {
 	background-image: var(--menu-entry-icon-dark);
+}
+
+
+.monaco-dropdown-with-default {
+	display: flex !important;
+	flex-direction: row;
+	border-radius: 5px;
+}
+
+.monaco-dropdown-with-default > .action-container > .action-label {
+	margin-right: 0;
+}
+
+.monaco-dropdown-with-default > .action-container.menu-entry > .action-label.icon {
+	width: 16px;
+	height: 16px;
+	background-repeat: no-repeat;
+	background-position: 50%;
+	background-size: 16px;
+}
+
+.monaco-dropdown-with-default > .action-container.menu-entry > .action-label {
+	background-image: var(--menu-entry-icon-light);
+}
+
+.vs-dark .monaco-dropdown-with-default > .action-container.menu-entry > .action-label,
+.hc-black .monaco-dropdown-with-default > .action-container.menu-entry > .action-label {
+	background-image: var(--menu-entry-icon-dark);
+}
+
+.monaco-dropdown-with-default > .dropdown-action-container > .monaco-dropdown > .dropdown-label .codicon[class*='codicon-'] {
+	font-size: 12px;
+	padding-left: 0px;
+	padding-right: 0px;
+	line-height: 16px;
+	margin-left: -3px;
+}
+
+.monaco-dropdown-with-default > .dropdown-action-container > .monaco-dropdown > .dropdown-label > .action-label {
+	display: block;
+	background-size: 16px;
+	background-position: center center;
+	background-repeat: no-repeat;
 }
 
 /*---------------------------------------------------------------------------------------------

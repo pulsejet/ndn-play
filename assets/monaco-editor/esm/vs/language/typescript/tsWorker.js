@@ -76,10 +76,17 @@ var TypeScriptWorker = /** @class */ (function () {
         this._ctx = ctx;
         this._compilerOptions = createData.compilerOptions;
         this._extraLibs = createData.extraLibs;
+        this._inlayHintsOptions = createData.inlayHintsOptions;
     }
     // --- language service host ---------------
     TypeScriptWorker.prototype.getCompilationSettings = function () {
         return this._compilerOptions;
+    };
+    TypeScriptWorker.prototype.getLanguageService = function () {
+        return this._languageService;
+    };
+    TypeScriptWorker.prototype.getExtraLibs = function () {
+        return this._extraLibs;
     };
     TypeScriptWorker.prototype.getScriptFileNames = function () {
         var allModels = this._ctx.getMirrorModels().map(function (model) { return model.uri; });
@@ -222,7 +229,9 @@ var TypeScriptWorker = /** @class */ (function () {
                 for (var _a = 0, _b = tsDiagnostic.relatedInformation; _a < _b.length; _a++) {
                     var tsRelatedDiagnostic = _b[_a];
                     var relatedDiagnostic = __assign({}, tsRelatedDiagnostic);
-                    relatedDiagnostic.file = relatedDiagnostic.file ? { fileName: relatedDiagnostic.file.fileName } : undefined;
+                    relatedDiagnostic.file = relatedDiagnostic.file
+                        ? { fileName: relatedDiagnostic.file.fileName }
+                        : undefined;
                     diagnostic.relatedInformation.push(relatedDiagnostic);
                 }
             }
@@ -291,7 +300,7 @@ var TypeScriptWorker = /** @class */ (function () {
     TypeScriptWorker.prototype.getCompletionEntryDetails = function (fileName, position, entry) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
-                return [2 /*return*/, this._languageService.getCompletionEntryDetails(fileName, position, entry, undefined, undefined, undefined)];
+                return [2 /*return*/, this._languageService.getCompletionEntryDetails(fileName, position, entry, undefined, undefined, undefined, undefined)];
             });
         });
     };
@@ -437,6 +446,29 @@ var TypeScriptWorker = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 this._extraLibs = extraLibs;
+                return [2 /*return*/];
+            });
+        });
+    };
+    TypeScriptWorker.prototype.provideInlayHints = function (fileName, start, end) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function () {
+            var preferences, span;
+            return __generator(this, function (_b) {
+                if (fileNameIsLib(fileName)) {
+                    return [2 /*return*/, []];
+                }
+                preferences = (_a = this._inlayHintsOptions) !== null && _a !== void 0 ? _a : {};
+                span = {
+                    start: start,
+                    length: end - start
+                };
+                try {
+                    return [2 /*return*/, this._languageService.provideInlayHints(fileName, span, preferences)];
+                }
+                catch (_c) {
+                    return [2 /*return*/, []];
+                }
                 return [2 /*return*/];
             });
         });

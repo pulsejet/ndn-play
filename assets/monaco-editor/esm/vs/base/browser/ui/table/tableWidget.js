@@ -2,11 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './table.css';
-import { List } from '../list/listWidget.js';
 import { $, append, clearNode, createStyleSheet } from '../../dom.js';
+import { List } from '../list/listWidget.js';
 import { SplitView } from '../splitview/splitview.js';
 import { Emitter, Event } from '../../../common/event.js';
+import './table.css';
 class TableListRenderer {
     constructor(columns, renderers, getColumnSize) {
         this.columns = columns;

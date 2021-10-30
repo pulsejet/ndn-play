@@ -151,6 +151,7 @@ export var language = {
             { include: '@strings' },
             [/[{}\[\]()]/, '@brackets'],
             { include: '@operators' },
+            [/#'$/, 'comment.doc'],
             [/#'/, 'comment.doc', '@roxygen'],
             [/(^#.*$)/, 'comment'],
             [/\s+/, 'white'],

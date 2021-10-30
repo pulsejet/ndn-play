@@ -100,7 +100,8 @@ var WorkerManager = /** @class */ (function () {
                 createData: {
                     compilerOptions: this._defaults.getCompilerOptions(),
                     extraLibs: this._defaults.getExtraLibs(),
-                    customWorkerPath: this._defaults.workerOptions.customWorkerPath
+                    customWorkerPath: this._defaults.workerOptions.customWorkerPath,
+                    inlayHintsOptions: this._defaults.inlayHintsOptions
                 }
             });
             var p = this._worker.getProxy();

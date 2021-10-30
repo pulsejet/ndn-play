@@ -6,6 +6,7 @@ import './glyphMargin.css';
 import { DynamicViewOverlay } from '../../view/dynamicViewOverlay.js';
 export class DecorationToRender {
     constructor(startLineNumber, endLineNumber, className) {
+        this._decorationToRenderBrand = undefined;
         this.startLineNumber = +startLineNumber;
         this.endLineNumber = +endLineNumber;
         this.className = String(className);
@@ -57,9 +58,9 @@ export class GlyphMarginOverlay extends DedupOverlay {
         super();
         this._context = context;
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._glyphMargin = options.get(46 /* glyphMargin */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._glyphMargin = options.get(49 /* glyphMargin */);
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;
         this._glyphMarginWidth = layoutInfo.glyphMarginWidth;
         this._renderResult = null;
@@ -73,9 +74,9 @@ export class GlyphMarginOverlay extends DedupOverlay {
     // --- begin event handlers
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
-        this._lineHeight = options.get(55 /* lineHeight */);
-        this._glyphMargin = options.get(46 /* glyphMargin */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
+        this._lineHeight = options.get(58 /* lineHeight */);
+        this._glyphMargin = options.get(49 /* glyphMargin */);
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;
         this._glyphMarginWidth = layoutInfo.glyphMarginWidth;
         return true;

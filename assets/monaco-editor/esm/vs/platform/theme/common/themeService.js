@@ -2,12 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { createDecorator } from '../../instantiation/common/instantiation.js';
-import { toDisposable, Disposable } from '../../../base/common/lifecycle.js';
-import * as platform from '../../registry/common/platform.js';
-import { Emitter } from '../../../base/common/event.js';
-import { ColorScheme } from './theme.js';
 import { CSSIcon } from '../../../base/common/codicons.js';
+import { Emitter } from '../../../base/common/event.js';
+import { Disposable, toDisposable } from '../../../base/common/lifecycle.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
+import * as platform from '../../registry/common/platform.js';
+import { ColorScheme } from './theme.js';
 export const IThemeService = createDecorator('themeService');
 export var ThemeColor;
 (function (ThemeColor) {
@@ -52,6 +52,10 @@ export var ThemeIcon;
         return ti1.id === ti2.id && ((_a = ti1.color) === null || _a === void 0 ? void 0 : _a.id) === ((_b = ti2.color) === null || _b === void 0 ? void 0 : _b.id);
     }
     ThemeIcon.isEqual = isEqual;
+    function asThemeIcon(codicon, color) {
+        return { id: codicon.id, color: color ? themeColorFromId(color) : undefined };
+    }
+    ThemeIcon.asThemeIcon = asThemeIcon;
     ThemeIcon.asClassNameArray = CSSIcon.asClassNameArray;
     ThemeIcon.asClassName = CSSIcon.asClassName;
     ThemeIcon.asCSSSelector = CSSIcon.asCSSSelector;

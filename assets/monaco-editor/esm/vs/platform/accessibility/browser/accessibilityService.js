@@ -1,7 +1,3 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -11,11 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Disposable } from '../../../base/common/lifecycle.js';
-import { CONTEXT_ACCESSIBILITY_MODE_ENABLED } from './accessibility.js';
 import { Emitter } from '../../../base/common/event.js';
-import { IContextKeyService } from '../../contextkey/common/contextkey.js';
+import { Disposable } from '../../../base/common/lifecycle.js';
+import { CONTEXT_ACCESSIBILITY_MODE_ENABLED } from '../common/accessibility.js';
 import { IConfigurationService } from '../../configuration/common/configuration.js';
+import { IContextKeyService } from '../../contextkey/common/contextkey.js';
 let AccessibilityService = class AccessibilityService extends Disposable {
     constructor(_contextKeyService, _configurationService) {
         super();

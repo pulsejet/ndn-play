@@ -11,10 +11,10 @@ export class EditorScrollbar extends ViewPart {
     constructor(context, linesContent, viewDomNode, overflowGuardDomNode) {
         super(context);
         const options = this._context.configuration.options;
-        const scrollbar = options.get(89 /* scrollbar */);
-        const mouseWheelScrollSensitivity = options.get(63 /* mouseWheelScrollSensitivity */);
-        const fastScrollSensitivity = options.get(32 /* fastScrollSensitivity */);
-        const scrollPredominantAxis = options.get(92 /* scrollPredominantAxis */);
+        const scrollbar = options.get(91 /* scrollbar */);
+        const mouseWheelScrollSensitivity = options.get(66 /* mouseWheelScrollSensitivity */);
+        const fastScrollSensitivity = options.get(34 /* fastScrollSensitivity */);
+        const scrollPredominantAxis = options.get(94 /* scrollPredominantAxis */);
         const scrollbarOptions = {
             listenOnDomNode: viewDomNode.domNode,
             className: 'editor-scrollable' + ' ' + getThemeTypeSelector(context.theme.type),
@@ -73,9 +73,9 @@ export class EditorScrollbar extends ViewPart {
     }
     _setLayout() {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(127 /* layoutInfo */);
+        const layoutInfo = options.get(129 /* layoutInfo */);
         this.scrollbarDomNode.setLeft(layoutInfo.contentLeft);
-        const minimap = options.get(61 /* minimap */);
+        const minimap = options.get(64 /* minimap */);
         const side = minimap.side;
         if (side === 'right') {
             this.scrollbarDomNode.setWidth(layoutInfo.contentWidth + layoutInfo.minimap.minimapWidth);
@@ -96,15 +96,20 @@ export class EditorScrollbar extends ViewPart {
     }
     // --- begin event handlers
     onConfigurationChanged(e) {
-        if (e.hasChanged(89 /* scrollbar */)
-            || e.hasChanged(63 /* mouseWheelScrollSensitivity */)
-            || e.hasChanged(32 /* fastScrollSensitivity */)) {
+        if (e.hasChanged(91 /* scrollbar */)
+            || e.hasChanged(66 /* mouseWheelScrollSensitivity */)
+            || e.hasChanged(34 /* fastScrollSensitivity */)) {
             const options = this._context.configuration.options;
-            const scrollbar = options.get(89 /* scrollbar */);
-            const mouseWheelScrollSensitivity = options.get(63 /* mouseWheelScrollSensitivity */);
-            const fastScrollSensitivity = options.get(32 /* fastScrollSensitivity */);
-            const scrollPredominantAxis = options.get(92 /* scrollPredominantAxis */);
+            const scrollbar = options.get(91 /* scrollbar */);
+            const mouseWheelScrollSensitivity = options.get(66 /* mouseWheelScrollSensitivity */);
+            const fastScrollSensitivity = options.get(34 /* fastScrollSensitivity */);
+            const scrollPredominantAxis = options.get(94 /* scrollPredominantAxis */);
             const newOpts = {
+                vertical: scrollbar.vertical,
+                horizontal: scrollbar.horizontal,
+                verticalScrollbarSize: scrollbar.verticalScrollbarSize,
+                horizontalScrollbarSize: scrollbar.horizontalScrollbarSize,
+                scrollByPage: scrollbar.scrollByPage,
                 handleMouseWheel: scrollbar.handleMouseWheel,
                 mouseWheelScrollSensitivity: mouseWheelScrollSensitivity,
                 fastScrollSensitivity: fastScrollSensitivity,
@@ -112,7 +117,7 @@ export class EditorScrollbar extends ViewPart {
             };
             this.scrollbar.updateOptions(newOpts);
         }
-        if (e.hasChanged(127 /* layoutInfo */)) {
+        if (e.hasChanged(129 /* layoutInfo */)) {
             this._setLayout();
         }
         return true;

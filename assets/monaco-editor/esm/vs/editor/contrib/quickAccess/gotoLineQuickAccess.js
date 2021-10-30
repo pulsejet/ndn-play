@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { localize } from '../../../nls.js';
-import { DisposableStore, Disposable, toDisposable } from '../../../base/common/lifecycle.js';
-import { AbstractEditorNavigationQuickAccessProvider } from './editorNavigationQuickAccess.js';
+import { Disposable, DisposableStore, toDisposable } from '../../../base/common/lifecycle.js';
 import { getCodeEditor } from '../../browser/editorBrowser.js';
+import { AbstractEditorNavigationQuickAccessProvider } from './editorNavigationQuickAccess.js';
+import { localize } from '../../../nls.js';
 export class AbstractGotoLineQuickAccessProvider extends AbstractEditorNavigationQuickAccessProvider {
     constructor() {
         super({ canAcceptInBackground: true });
@@ -61,7 +61,7 @@ export class AbstractGotoLineQuickAccessProvider extends AbstractEditorNavigatio
         const codeEditor = getCodeEditor(editor);
         if (codeEditor) {
             const options = codeEditor.getOptions();
-            const lineNumbers = options.get(56 /* lineNumbers */);
+            const lineNumbers = options.get(59 /* lineNumbers */);
             if (lineNumbers.renderType === 2 /* Relative */) {
                 codeEditor.updateOptions({ lineNumbers: 'on' });
                 disposables.add(toDisposable(() => codeEditor.updateOptions({ lineNumbers: 'relative' })));

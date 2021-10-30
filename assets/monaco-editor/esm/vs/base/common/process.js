@@ -2,13 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { isWindows, isMacintosh, setImmediate, globals } from './platform.js';
+import { globals, isMacintosh, isWindows, setImmediate } from './platform.js';
 let safeProcess;
 // Native sandbox environment
 if (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== 'undefined') {
     const sandboxProcess = globals.vscode.process;
     safeProcess = {
         get platform() { return sandboxProcess.platform; },
+        get arch() { return sandboxProcess.arch; },
         get env() { return sandboxProcess.env; },
         cwd() { return sandboxProcess.cwd(); },
         nextTick(callback) { return setImmediate(callback); }
@@ -18,6 +19,7 @@ if (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== '
 else if (typeof process !== 'undefined') {
     safeProcess = {
         get platform() { return process.platform; },
+        get arch() { return process.arch; },
         get env() { return process.env; },
         cwd() { return process.env['VSCODE_CWD'] || process.cwd(); },
         nextTick(callback) { return process.nextTick(callback); }
@@ -28,9 +30,10 @@ else {
     safeProcess = {
         // Supported
         get platform() { return isWindows ? 'win32' : isMacintosh ? 'darwin' : 'linux'; },
+        get arch() { return undefined; /* arch is undefined in web */ },
         nextTick(callback) { return setImmediate(callback); },
         // Unsupported
-        get env() { return Object.create(null); },
+        get env() { return {}; },
         cwd() { return '/'; }
     };
 }

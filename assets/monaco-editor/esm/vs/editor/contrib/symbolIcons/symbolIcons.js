@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { localize } from '../../../nls.js';
-import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
-import { registerColor, foreground } from '../../../platform/theme/common/colorRegistry.js';
 import { Codicon } from '../../../base/common/codicons.js';
+import { localize } from '../../../nls.js';
+import { foreground, registerColor } from '../../../platform/theme/common/colorRegistry.js';
+import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 export const SYMBOL_ICON_ARRAY_FOREGROUND = registerColor('symbolIcon.arrayForeground', {
     dark: foreground,
     light: foreground,

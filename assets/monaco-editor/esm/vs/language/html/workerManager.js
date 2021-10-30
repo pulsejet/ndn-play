@@ -63,7 +63,9 @@ var WorkerManager = /** @class */ (function () {
             _client = client;
         })
             .then(function (_) {
-            return _this._worker.withSyncedResources(resources);
+            if (_this._worker) {
+                return _this._worker.withSyncedResources(resources);
+            }
         })
             .then(function (_) { return _client; });
     };

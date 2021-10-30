@@ -75,9 +75,6 @@ let EditorWorkerServiceImpl = class EditorWorkerServiceImpl extends Disposable {
     dispose() {
         super.dispose();
     }
-    canComputeDiff(original, modified) {
-        return (canSyncModel(this._modelService, original) && canSyncModel(this._modelService, modified));
-    }
     computeDiff(original, modified, ignoreTrimWhitespace, maxComputationTime) {
         return this._workerManager.withWorker().then(client => client.computeDiff(original, modified, ignoreTrimWhitespace, maxComputationTime));
     }
@@ -247,11 +244,11 @@ class EditorModelManager extends Disposable {
         this._syncedModelsLastUsedTime = Object.create(null);
         super.dispose();
     }
-    ensureSyncedResources(resources) {
+    ensureSyncedResources(resources, forceLargeModels) {
         for (const resource of resources) {
             let resourceStr = resource.toString();
             if (!this._syncedModels[resourceStr]) {
-                this._beginModelSync(resource);
+                this._beginModelSync(resource, forceLargeModels);
             }
             if (this._syncedModels[resourceStr]) {
                 this._syncedModelsLastUsedTime[resourceStr] = (new Date()).getTime();
@@ -271,12 +268,12 @@ class EditorModelManager extends Disposable {
             this._stopModelSync(e);
         }
     }
-    _beginModelSync(resource) {
+    _beginModelSync(resource, forceLargeModels) {
         let model = this._modelService.getModel(resource);
         if (!model) {
             return;
         }
-        if (model.isTooLargeForSyncing()) {
+        if (!forceLargeModels && model.isTooLargeForSyncing()) {
             return;
         }
         let modelUrl = resource.toString();
@@ -365,17 +362,19 @@ export class EditorWorkerClient extends Disposable {
         }
         return this._modelManager;
     }
-    _withSyncedResources(resources) {
-        if (this._disposed) {
-            return Promise.reject(canceled());
-        }
-        return this._getProxy().then((proxy) => {
-            this._getOrCreateModelManager(proxy).ensureSyncedResources(resources);
-            return proxy;
+    _withSyncedResources(resources, forceLargeModels = false) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._disposed) {
+                return Promise.reject(canceled());
+            }
+            return this._getProxy().then((proxy) => {
+                this._getOrCreateModelManager(proxy).ensureSyncedResources(resources, forceLargeModels);
+                return proxy;
+            });
         });
     }
     computeDiff(original, modified, ignoreTrimWhitespace, maxComputationTime) {
-        return this._withSyncedResources([original, modified]).then(proxy => {
+        return this._withSyncedResources([original, modified], /* forceLargeModels */ true).then(proxy => {
             return proxy.computeDiff(original.toString(), modified.toString(), ignoreTrimWhitespace, maxComputationTime);
         });
     }

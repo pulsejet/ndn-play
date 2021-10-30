@@ -13,6 +13,7 @@ export class PageCoordinates {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this._pageCoordinatesBrand = undefined;
     }
     toClientCoordinates() {
         return new ClientCoordinates(this.x - dom.StandardWindow.scrollX, this.y - dom.StandardWindow.scrollY);
@@ -29,6 +30,7 @@ export class ClientCoordinates {
     constructor(clientX, clientY) {
         this.clientX = clientX;
         this.clientY = clientY;
+        this._clientCoordinatesBrand = undefined;
     }
     toPageCoordinates() {
         return new PageCoordinates(this.clientX + dom.StandardWindow.scrollX, this.clientY + dom.StandardWindow.scrollY);
@@ -43,6 +45,7 @@ export class EditorPagePosition {
         this.y = y;
         this.width = width;
         this.height = height;
+        this._editorPagePositionBrand = undefined;
     }
 }
 export function createEditorPagePosition(editorViewDomNode) {
@@ -52,6 +55,7 @@ export function createEditorPagePosition(editorViewDomNode) {
 export class EditorMouseEvent extends StandardMouseEvent {
     constructor(e, editorViewDomNode) {
         super(e);
+        this._editorMouseEventBrand = undefined;
         this.pos = new PageCoordinates(this.posx, this.posy);
         this.editorPos = createEditorPagePosition(editorViewDomNode);
     }

@@ -2,12 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { illegalState } from '../../../base/common/errors.js';
-import { Graph } from './graph.js';
-import { SyncDescriptor } from './descriptors.js';
-import { IInstantiationService, _util, optional } from './instantiation.js';
-import { ServiceCollection } from './serviceCollection.js';
 import { IdleValue } from '../../../base/common/async.js';
+import { illegalState } from '../../../base/common/errors.js';
+import { SyncDescriptor } from './descriptors.js';
+import { Graph } from './graph.js';
+import { IInstantiationService, optional, _util } from './instantiation.js';
+import { ServiceCollection } from './serviceCollection.js';
 // TRACING
 const _enableTracing = false;
 class CyclicDependencyError extends Error {

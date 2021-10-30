@@ -11,16 +11,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { coalesce } from '../../../base/common/arrays.js';
 import { CancellationToken } from '../../../base/common/cancellation.js';
 import { onUnexpectedExternalError } from '../../../base/common/errors.js';
+import { DisposableStore, isDisposable } from '../../../base/common/lifecycle.js';
+import { assertType } from '../../../base/common/types.js';
 import { URI } from '../../../base/common/uri.js';
 import { Range } from '../../common/core/range.js';
 import { LinkProviderRegistry } from '../../common/modes.js';
 import { IModelService } from '../../common/services/modelService.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
-import { isDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
-import { coalesce } from '../../../base/common/arrays.js';
-import { assertType } from '../../../base/common/types.js';
 export class Link {
     constructor(link, provider) {
         this._link = link;

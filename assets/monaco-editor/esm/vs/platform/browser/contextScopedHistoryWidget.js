@@ -11,12 +11,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { IContextKeyService, ContextKeyExpr, RawContextKey } from '../contextkey/common/contextkey.js';
 import { FindInput } from '../../base/browser/ui/findinput/findInput.js';
-import { KeybindingsRegistry } from '../keybinding/common/keybindingsRegistry.js';
 import { ReplaceInput } from '../../base/browser/ui/findinput/replaceInput.js';
+import { ContextKeyExpr, IContextKeyService, RawContextKey } from '../contextkey/common/contextkey.js';
+import { KeybindingsRegistry } from '../keybinding/common/keybindingsRegistry.js';
+import { Context as SuggestContext } from '../../editor/contrib/suggest/suggest.js';
 export const HistoryNavigationWidgetContext = 'historyNavigationWidget';
-export const HistoryNavigationEnablementContext = 'historyNavigationEnabled';
+const HistoryNavigationForwardsEnablementContext = 'historyNavigationForwardsEnabled';
+const HistoryNavigationBackwardsEnablementContext = 'historyNavigationBackwardsEnabled';
 function bindContextScopedWidget(contextKeyService, widget, contextKey) {
     new RawContextKey(contextKey, widget).bindTo(contextKeyService);
 }
@@ -29,8 +31,13 @@ function getContextScopedWidget(contextKeyService, contextKey) {
 export function createAndBindHistoryNavigationWidgetScopedContextKeyService(contextKeyService, widget) {
     const scopedContextKeyService = createWidgetScopedContextKeyService(contextKeyService, widget);
     bindContextScopedWidget(scopedContextKeyService, widget, HistoryNavigationWidgetContext);
-    const historyNavigationEnablement = new RawContextKey(HistoryNavigationEnablementContext, true).bindTo(scopedContextKeyService);
-    return { scopedContextKeyService, historyNavigationEnablement };
+    const historyNavigationForwardsEnablement = new RawContextKey(HistoryNavigationForwardsEnablementContext, true).bindTo(scopedContextKeyService);
+    const historyNavigationBackwardsEnablement = new RawContextKey(HistoryNavigationBackwardsEnablementContext, true).bindTo(scopedContextKeyService);
+    return {
+        scopedContextKeyService,
+        historyNavigationForwardsEnablement,
+        historyNavigationBackwardsEnablement,
+    };
 }
 let ContextScopedFindInput = class ContextScopedFindInput extends FindInput {
     constructor(container, contextViewProvider, options, contextKeyService, showFindOptions = false) {
@@ -55,10 +62,10 @@ export { ContextScopedReplaceInput };
 KeybindingsRegistry.registerCommandAndKeybindingRule({
     id: 'history.showPrevious',
     weight: 200 /* WorkbenchContrib */,
-    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationEnablementContext, true)),
+    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationBackwardsEnablementContext, true), SuggestContext.Visible.isEqualTo(false)),
     primary: 16 /* UpArrow */,
     secondary: [512 /* Alt */ | 16 /* UpArrow */],
-    handler: (accessor, arg2) => {
+    handler: (accessor) => {
         const widget = getContextScopedWidget(accessor.get(IContextKeyService), HistoryNavigationWidgetContext);
         if (widget) {
             const historyInputBox = widget.historyNavigator;
@@ -69,10 +76,10 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 KeybindingsRegistry.registerCommandAndKeybindingRule({
     id: 'history.showNext',
     weight: 200 /* WorkbenchContrib */,
-    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationEnablementContext, true)),
+    when: ContextKeyExpr.and(ContextKeyExpr.has(HistoryNavigationWidgetContext), ContextKeyExpr.equals(HistoryNavigationForwardsEnablementContext, true), SuggestContext.Visible.isEqualTo(false)),
     primary: 18 /* DownArrow */,
     secondary: [512 /* Alt */ | 18 /* DownArrow */],
-    handler: (accessor, arg2) => {
+    handler: (accessor) => {
         const widget = getContextScopedWidget(accessor.get(IContextKeyService), HistoryNavigationWidgetContext);
         if (widget) {
             const historyInputBox = widget.historyNavigator;

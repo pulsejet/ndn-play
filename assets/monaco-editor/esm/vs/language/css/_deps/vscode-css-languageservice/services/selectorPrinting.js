@@ -20,7 +20,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import * as nodes from '../parser/cssNodes.js';
 import { Scanner } from '../parser/cssScanner.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var Element = /** @class */ (function () {
     function Element() {

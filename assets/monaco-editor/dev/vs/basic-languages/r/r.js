@@ -155,6 +155,7 @@ define('vs/basic-languages/r/r',["require", "exports"], function (require, expor
                 { include: '@strings' },
                 [/[{}\[\]()]/, '@brackets'],
                 { include: '@operators' },
+                [/#'$/, 'comment.doc'],
                 [/#'/, 'comment.doc', '@roxygen'],
                 [/(^#.*$)/, 'comment'],
                 [/\s+/, 'white'],

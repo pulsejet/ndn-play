@@ -12,23 +12,23 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 var _a;
-import * as nls from '../../../nls.js';
-import { createMatches } from '../../../base/common/filters.js';
-import { DisposableStore } from '../../../base/common/lifecycle.js';
-import { append, $, hide, show } from '../../../base/browser/dom.js';
-import { IThemeService, ThemeIcon } from '../../../platform/theme/common/themeService.js';
-import { IModeService } from '../../common/services/modeService.js';
-import { completionKindToCssClass } from '../../common/modes.js';
+import { $, append, hide, show } from '../../../base/browser/dom.js';
 import { IconLabel } from '../../../base/browser/ui/iconLabel/iconLabel.js';
-import { getIconClasses } from '../../common/services/getIconClasses.js';
-import { IModelService } from '../../common/services/modelService.js';
-import { URI } from '../../../base/common/uri.js';
-import { FileKind } from '../../../platform/files/common/files.js';
 import { flatten } from '../../../base/common/arrays.js';
-import { canExpandCompletionItem } from './suggestWidgetDetails.js';
 import { Codicon } from '../../../base/common/codicons.js';
 import { Emitter } from '../../../base/common/event.js';
+import { createMatches } from '../../../base/common/filters.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { URI } from '../../../base/common/uri.js';
+import { completionKindToCssClass } from '../../common/modes.js';
+import { getIconClasses } from '../../common/services/getIconClasses.js';
+import { IModelService } from '../../common/services/modelService.js';
+import { IModeService } from '../../common/services/modeService.js';
+import * as nls from '../../../nls.js';
+import { FileKind } from '../../../platform/files/common/files.js';
 import { registerIcon } from '../../../platform/theme/common/iconRegistry.js';
+import { IThemeService, ThemeIcon } from '../../../platform/theme/common/themeService.js';
+import { canExpandCompletionItem } from './suggestWidgetDetails.js';
 export function getAriaId(index) {
     return `suggest-aria-id:${index}`;
 }
@@ -90,11 +90,11 @@ let ItemRenderer = class ItemRenderer {
         data.readMore.title = nls.localize('readMore', "Read More");
         const configureFont = () => {
             const options = this._editor.getOptions();
-            const fontInfo = options.get(40 /* fontInfo */);
+            const fontInfo = options.get(43 /* fontInfo */);
             const fontFamily = fontInfo.fontFamily;
             const fontFeatureSettings = fontInfo.fontFeatureSettings;
-            const fontSize = options.get(104 /* suggestFontSize */) || fontInfo.fontSize;
-            const lineHeight = options.get(105 /* suggestLineHeight */) || fontInfo.lineHeight;
+            const fontSize = options.get(106 /* suggestFontSize */) || fontInfo.fontSize;
+            const lineHeight = options.get(107 /* suggestLineHeight */) || fontInfo.lineHeight;
             const fontWeight = fontInfo.fontWeight;
             const fontSizePx = `${fontSize}px`;
             const lineHeightPx = `${lineHeight}px`;
@@ -110,14 +110,13 @@ let ItemRenderer = class ItemRenderer {
         };
         configureFont();
         data.disposables.add(this._editor.onDidChangeConfiguration(e => {
-            if (e.hasChanged(40 /* fontInfo */) || e.hasChanged(104 /* suggestFontSize */) || e.hasChanged(105 /* suggestLineHeight */)) {
+            if (e.hasChanged(43 /* fontInfo */) || e.hasChanged(106 /* suggestFontSize */) || e.hasChanged(107 /* suggestLineHeight */)) {
                 configureFont();
             }
         }));
         return data;
     }
     renderElement(element, index, data) {
-        var _b, _c, _d;
         const { completion } = element;
         data.root.id = getAriaId(index);
         data.colorspan.style.backgroundColor = '';
@@ -162,19 +161,15 @@ let ItemRenderer = class ItemRenderer {
         data.iconLabel.setLabel(element.textLabel, undefined, labelOptions);
         if (typeof completion.label === 'string') {
             data.parametersLabel.textContent = '';
-            data.qualifierLabel.textContent = '';
-            data.detailsLabel.textContent = (completion.detail || '').replace(/\n.*$/m, '');
+            data.detailsLabel.textContent = stripNewLines(completion.detail || '');
             data.root.classList.add('string-label');
-            data.root.title = '';
         }
         else {
-            data.parametersLabel.textContent = (completion.label.parameters || '').replace(/\n.*$/m, '');
-            data.qualifierLabel.textContent = (completion.label.qualifier || '').replace(/\n.*$/m, '');
-            data.detailsLabel.textContent = (completion.label.type || '').replace(/\n.*$/m, '');
+            data.parametersLabel.textContent = stripNewLines(completion.label.detail || '');
+            data.detailsLabel.textContent = stripNewLines(completion.label.description || '');
             data.root.classList.remove('string-label');
-            data.root.title = `${element.textLabel}${(_b = completion.label.parameters) !== null && _b !== void 0 ? _b : ''}  ${(_c = completion.label.qualifier) !== null && _c !== void 0 ? _c : ''}  ${(_d = completion.label.type) !== null && _d !== void 0 ? _d : ''}`;
         }
-        if (this._editor.getOption(103 /* suggest */).showInlineDetails) {
+        if (this._editor.getOption(105 /* suggest */).showInlineDetails) {
             show(data.detailsLabel);
         }
         else {
@@ -210,3 +205,6 @@ ItemRenderer = __decorate([
     __param(3, IThemeService)
 ], ItemRenderer);
 export { ItemRenderer };
+function stripNewLines(str) {
+    return str.replace(/\r\n|\r|\n/g, '');
+}

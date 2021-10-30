@@ -45,12 +45,14 @@ export class ViewModelDecorations {
             const options = modelDecoration.options;
             let viewRange;
             if (options.isWholeLine) {
-                const start = this._coordinatesConverter.convertModelPositionToViewPosition(new Position(modelRange.startLineNumber, 1));
-                const end = this._coordinatesConverter.convertModelPositionToViewPosition(new Position(modelRange.endLineNumber, this.model.getLineMaxColumn(modelRange.endLineNumber)));
+                const start = this._coordinatesConverter.convertModelPositionToViewPosition(new Position(modelRange.startLineNumber, 1), 0 /* Left */);
+                const end = this._coordinatesConverter.convertModelPositionToViewPosition(new Position(modelRange.endLineNumber, this.model.getLineMaxColumn(modelRange.endLineNumber)), 1 /* Right */);
                 viewRange = new Range(start.lineNumber, start.column, end.lineNumber, end.column);
             }
             else {
-                viewRange = this._coordinatesConverter.convertModelRangeToViewRange(modelRange);
+                // For backwards compatibility reasons, we want injected text before any decoration.
+                // Thus, move decorations to the right.
+                viewRange = this._coordinatesConverter.convertModelRangeToViewRange(modelRange, 1 /* Right */);
             }
             r = new ViewModelDecoration(viewRange, options);
             this._decorationsCache[id] = r;

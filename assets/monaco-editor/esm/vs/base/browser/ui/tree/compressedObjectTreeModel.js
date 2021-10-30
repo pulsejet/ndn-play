@@ -2,10 +2,10 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Iterable } from '../../../common/iterator.js';
-import { Event } from '../../../common/event.js';
-import { TreeError, WeakMapper } from './tree.js';
 import { ObjectTreeModel } from './objectTreeModel.js';
+import { TreeError, WeakMapper } from './tree.js';
+import { Event } from '../../../common/event.js';
+import { Iterable } from '../../../common/iterator.js';
 function noCompress(element) {
     const elements = [element.element];
     const incompressible = element.incompressible || false;

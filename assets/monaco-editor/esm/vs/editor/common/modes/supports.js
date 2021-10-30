@@ -18,6 +18,7 @@ export function createScopedLineTokens(context, offset) {
 }
 export class ScopedLineTokens {
     constructor(actual, languageId, firstTokenIndex, lastTokenIndex, firstCharOffset, lastCharOffset) {
+        this._scopedLineTokensBrand = undefined;
         this._actual = actual;
         this.languageId = languageId;
         this._firstTokenIndex = firstTokenIndex;

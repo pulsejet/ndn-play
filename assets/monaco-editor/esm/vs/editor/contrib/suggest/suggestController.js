@@ -13,38 +13,38 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 import { alert } from '../../../base/browser/ui/aria/aria.js';
 import { isNonEmptyArray } from '../../../base/common/arrays.js';
+import { IdleValue } from '../../../base/common/async.js';
+import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
+import { Event } from '../../../base/common/event.js';
 import { SimpleKeybinding } from '../../../base/common/keyCodes.js';
-import { dispose, DisposableStore, toDisposable, MutableDisposable } from '../../../base/common/lifecycle.js';
+import { DisposableStore, dispose, MutableDisposable, toDisposable } from '../../../base/common/lifecycle.js';
+import * as platform from '../../../base/common/platform.js';
+import { StopWatch } from '../../../base/common/stopwatch.js';
+import { assertType, isObject } from '../../../base/common/types.js';
 import { StableEditorScrollState } from '../../browser/core/editorState.js';
 import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution } from '../../browser/editorExtensions.js';
 import { EditOperation } from '../../common/core/editOperation.js';
+import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
 import { SnippetController2 } from '../snippet/snippetController2.js';
 import { SnippetParser } from '../snippet/snippetParser.js';
 import { ISuggestMemoryService } from './suggestMemory.js';
+import { WordContextKey } from './wordContextKey.js';
 import * as nls from '../../../nls.js';
-import { ICommandService, CommandsRegistry } from '../../../platform/commands/common/commands.js';
+import { MenuRegistry } from '../../../platform/actions/common/actions.js';
+import { CommandsRegistry, ICommandService } from '../../../platform/commands/common/commands.js';
 import { ContextKeyExpr, IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 import { KeybindingsRegistry } from '../../../platform/keybinding/common/keybindingsRegistry.js';
+import { ILogService } from '../../../platform/log/common/log.js';
 import { Context as SuggestContext, suggestWidgetStatusbarMenu } from './suggest.js';
 import { SuggestAlternatives } from './suggestAlternatives.js';
-import { SuggestModel } from './suggestModel.js';
-import { SuggestWidget } from './suggestWidget.js';
-import { WordContextKey } from './wordContextKey.js';
-import { Event } from '../../../base/common/event.js';
-import { IdleValue } from '../../../base/common/async.js';
-import { isObject, assertType } from '../../../base/common/types.js';
 import { CommitCharacterController } from './suggestCommitCharacters.js';
+import { SuggestModel } from './suggestModel.js';
 import { OvertypingCapturer } from './suggestOvertypingCapturer.js';
-import { Position } from '../../common/core/position.js';
-import * as platform from '../../../base/common/platform.js';
-import { MenuRegistry } from '../../../platform/actions/common/actions.js';
-import { CancellationTokenSource } from '../../../base/common/cancellation.js';
-import { ILogService } from '../../../platform/log/common/log.js';
-import { StopWatch } from '../../../base/common/stopwatch.js';
+import { SuggestWidget } from './suggestWidget.js';
 // sticky suggest widget which doesn't disappear on focus out and such
 let _sticky = false;
 // _sticky = Boolean("true"); // done "weirdly" so that a lint warning prevents you from pushing this
@@ -61,7 +61,7 @@ class LineSuffix {
             const end = _model.getPositionAt(offset + 1);
             this._marker = _model.deltaDecorations([], [{
                     range: Range.fromPositions(_position, end),
-                    options: { stickiness: 1 /* NeverGrowsWhenTypingAtEdges */ }
+                    options: { description: 'suggest-line-suffix', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */ }
                 }]);
         }
     }
@@ -96,12 +96,13 @@ let SuggestController = class SuggestController {
         this._logService = _logService;
         this._lineSuffix = new MutableDisposable();
         this._toDispose = new DisposableStore();
+        this._selectors = new PriorityRegistry(s => s.priority);
         this.editor = editor;
         this.model = _instantiationService.createInstance(SuggestModel, this.editor);
         // context key: update insert/replace mode
         const ctxInsertMode = SuggestContext.InsertMode.bindTo(_contextKeyService);
-        ctxInsertMode.set(editor.getOption(103 /* suggest */).insertMode);
-        this.model.onDidTrigger(() => ctxInsertMode.set(editor.getOption(103 /* suggest */).insertMode));
+        ctxInsertMode.set(editor.getOption(105 /* suggest */).insertMode);
+        this.model.onDidTrigger(() => ctxInsertMode.set(editor.getOption(105 /* suggest */).insertMode));
         this.widget = this._toDispose.add(new IdleValue(() => {
             const widget = this._instantiationService.createInstance(SuggestWidget, this.editor);
             this._toDispose.add(widget);
@@ -176,7 +177,16 @@ let SuggestController = class SuggestController {
         }));
         this._toDispose.add(this.model.onDidSuggest(e => {
             if (!e.shy) {
-                let index = this._memoryService.select(this.editor.getModel(), this.editor.getPosition(), e.completionModel.items);
+                let index = -1;
+                for (const selector of this._selectors.itemsOrderedByPriorityDesc) {
+                    index = selector.select(this.editor.getModel(), this.editor.getPosition(), e.completionModel.items);
+                    if (index !== -1) {
+                        break;
+                    }
+                }
+                if (index === -1) {
+                    index = this._memoryService.select(this.editor.getModel(), this.editor.getPosition(), e.completionModel.items);
+                }
                 this.widget.value.showSuggestions(e.completionModel, index, e.isFrozen, e.auto);
             }
         }));
@@ -345,7 +355,7 @@ let SuggestController = class SuggestController {
     }
     getOverwriteInfo(item, toggleMode) {
         assertType(this.editor.hasModel());
-        let replace = this.editor.getOption(103 /* suggest */).insertMode === 'replace';
+        let replace = this.editor.getOption(105 /* suggest */).insertMode === 'replace';
         if (toggleMode) {
             replace = !replace;
         }
@@ -482,6 +492,19 @@ let SuggestController = class SuggestController {
     resetWidgetSize() {
         this.widget.value.resetPersistedSize();
     }
+    forceRenderingAbove() {
+        this.widget.value.forceRenderingAbove();
+    }
+    stopForceRenderingAbove() {
+        if (!this.widget.isInitialized) {
+            // This method has no effect if the widget is not initialized yet.
+            return;
+        }
+        this.widget.value.stopForceRenderingAbove();
+    }
+    registerSelector(selector) {
+        return this._selectors.register(selector);
+    }
 };
 SuggestController.ID = 'editor.contrib.suggestController';
 SuggestController = __decorate([
@@ -492,6 +515,30 @@ SuggestController = __decorate([
     __param(5, ILogService)
 ], SuggestController);
 export { SuggestController };
+class PriorityRegistry {
+    constructor(prioritySelector) {
+        this.prioritySelector = prioritySelector;
+        this._items = new Array();
+    }
+    register(value) {
+        if (this._items.indexOf(value) !== -1) {
+            throw new Error('Value is already registered');
+        }
+        this._items.push(value);
+        this._items.sort((s1, s2) => this.prioritySelector(s2) - this.prioritySelector(s1));
+        return {
+            dispose: () => {
+                const idx = this._items.indexOf(value);
+                if (idx >= 0) {
+                    this._items.splice(idx, 1);
+                }
+            }
+        };
+    }
+    get itemsOrderedByPriorityDesc() {
+        return this._items;
+    }
+}
 export class TriggerSuggestAction extends EditorAction {
     constructor() {
         super({
@@ -663,7 +710,8 @@ registerEditorCommand(new SuggestCommand({
         weight: weight,
         kbExpr: EditorContextKeys.textInputFocus,
         primary: 2048 /* CtrlCmd */ | 10 /* Space */,
-        mac: { primary: 256 /* WinCtrl */ | 10 /* Space */ }
+        secondary: [2048 /* CtrlCmd */ | 39 /* KEY_I */],
+        mac: { primary: 256 /* WinCtrl */ | 10 /* Space */, secondary: [2048 /* CtrlCmd */ | 39 /* KEY_I */] }
     },
     menuOpts: [{
             menuId: suggestWidgetStatusbarMenu,

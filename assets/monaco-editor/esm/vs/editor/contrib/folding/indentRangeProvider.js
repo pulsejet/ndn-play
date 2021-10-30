@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { FoldingRegions, MAX_LINE_NUMBER } from './foldingRanges.js';
 import { TextModel } from '../../common/model/textModel.js';
 import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
+import { FoldingRegions, MAX_LINE_NUMBER } from './foldingRanges.js';
 const MAX_FOLDING_REGIONS_FOR_INDENT_LIMIT = 5000;
 export const ID_INDENT_PROVIDER = 'indent';
 export class IndentRangeProvider {

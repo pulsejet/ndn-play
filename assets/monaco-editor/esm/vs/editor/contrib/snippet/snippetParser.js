@@ -280,6 +280,9 @@ export class FormatString extends Marker {
         else if (this.shorthandName === 'pascalcase') {
             return !value ? '' : this._toPascalCase(value);
         }
+        else if (this.shorthandName === 'camelcase') {
+            return !value ? '' : this._toCamelCase(value);
+        }
         else if (Boolean(value) && typeof this.ifValue === 'string') {
             return this.ifValue;
         }
@@ -291,13 +294,29 @@ export class FormatString extends Marker {
         }
     }
     _toPascalCase(value) {
-        const match = value.match(/[a-z]+/gi);
+        const match = value.match(/[a-z0-9]+/gi);
         if (!match) {
             return value;
         }
-        return match.map(function (word) {
+        return match.map(word => {
             return word.charAt(0).toUpperCase()
                 + word.substr(1).toLowerCase();
+        })
+            .join('');
+    }
+    _toCamelCase(value) {
+        const match = value.match(/[a-z0-9]+/gi);
+        if (!match) {
+            return value;
+        }
+        return match.map((word, index) => {
+            if (index === 0) {
+                return word.toLowerCase();
+            }
+            else {
+                return word.charAt(0).toUpperCase()
+                    + word.substr(1).toLowerCase();
+            }
         })
             .join('');
     }

@@ -3,16 +3,15 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as browser from './browser.js';
-import { domEvent } from './event.js';
+import { BrowserFeatures } from './canIUse.js';
 import { StandardKeyboardEvent } from './keyboardEvent.js';
 import { StandardMouseEvent } from './mouseEvent.js';
 import { TimeoutTimer } from '../common/async.js';
 import { onUnexpectedError } from '../common/errors.js';
 import { Emitter } from '../common/event.js';
 import { Disposable, DisposableStore, toDisposable } from '../common/lifecycle.js';
-import * as platform from '../common/platform.js';
 import { FileAccess, RemoteAuthorities } from '../common/network.js';
-import { BrowserFeatures } from './canIUse.js';
+import * as platform from '../common/platform.js';
 export function clearNode(node) {
     while (node.firstChild) {
         node.firstChild.remove();
@@ -247,14 +246,7 @@ export function getClientArea(element) {
     }
     // If visual view port exits and it's on mobile, it should be used instead of window innerWidth / innerHeight, or document.body.clientWidth / document.body.clientHeight
     if (platform.isIOS && window.visualViewport) {
-        const width = window.visualViewport.width;
-        const height = window.visualViewport.height - (browser.isStandalone
-            // in PWA mode, the visual viewport always includes the safe-area-inset-bottom (which is for the home indicator)
-            // even when you are using the onscreen monitor, the visual viewport will include the area between system statusbar and the onscreen keyboard
-            // plus the area between onscreen keyboard and the bottom bezel, which is 20px on iOS.
-            ? (20 + 4) // + 4px for body margin
-            : 0);
-        return new Dimension(width, height);
+        return new Dimension(window.visualViewport.width, window.visualViewport.height);
     }
     // Try innerWidth / innerHeight
     if (window.innerWidth && window.innerHeight) {
@@ -695,8 +687,8 @@ class FocusTracker extends Disposable {
                 }
             }
         };
-        this._register(domEvent(element, EventType.FOCUS, true)(onFocus));
-        this._register(domEvent(element, EventType.BLUR, true)(onBlur));
+        this._register(addDisposableListener(element, EventType.FOCUS, onFocus, true));
+        this._register(addDisposableListener(element, EventType.BLUR, onBlur, true));
     }
 }
 export function trackFocus(element) {
@@ -707,6 +699,10 @@ export function append(parent, ...children) {
     if (children.length === 1 && typeof children[0] !== 'string') {
         return children[0];
     }
+}
+export function prepend(parent, child) {
+    parent.insertBefore(child, parent.firstChild);
+    return child;
 }
 /**
  * Removes all children from `parent` and appends `children`
@@ -796,7 +792,7 @@ export function computeScreenAwareSize(cssPx) {
 }
 /**
  * Open safely a new window. This is the best way to do so, but you cannot tell
- * if the window was opened or if it was blocked by the brower's popup blocker.
+ * if the window was opened or if it was blocked by the browser's popup blocker.
  * If you want to tell if the browser blocked the new window, use `windowOpenNoOpenerWithSuccess`.
  *
  * See https://github.com/microsoft/monaco-editor/issues/601
@@ -845,7 +841,10 @@ export class ModifierKeyEmitter extends Emitter {
             ctrlKey: false,
             metaKey: false
         };
-        this._subscriptions.add(domEvent(window, 'keydown', true)(e => {
+        this._subscriptions.add(addDisposableListener(window, 'keydown', e => {
+            if (e.defaultPrevented) {
+                return;
+            }
             const event = new StandardKeyboardEvent(e);
             // If Alt-key keydown event is repeated, ignore it #112347
             // Only known to be necessary for Alt-Key at the moment #115810
@@ -878,8 +877,11 @@ export class ModifierKeyEmitter extends Emitter {
                 this._keyStatus.event = e;
                 this.fire(this._keyStatus);
             }
-        }));
-        this._subscriptions.add(domEvent(window, 'keyup', true)(e => {
+        }, true));
+        this._subscriptions.add(addDisposableListener(window, 'keyup', e => {
+            if (e.defaultPrevented) {
+                return;
+            }
             if (!e.altKey && this._keyStatus.altKey) {
                 this._keyStatus.lastKeyReleased = 'alt';
             }
@@ -906,19 +908,19 @@ export class ModifierKeyEmitter extends Emitter {
                 this._keyStatus.event = e;
                 this.fire(this._keyStatus);
             }
-        }));
-        this._subscriptions.add(domEvent(document.body, 'mousedown', true)(e => {
+        }, true));
+        this._subscriptions.add(addDisposableListener(document.body, 'mousedown', () => {
             this._keyStatus.lastKeyPressed = undefined;
-        }));
-        this._subscriptions.add(domEvent(document.body, 'mouseup', true)(e => {
+        }, true));
+        this._subscriptions.add(addDisposableListener(document.body, 'mouseup', () => {
             this._keyStatus.lastKeyPressed = undefined;
-        }));
-        this._subscriptions.add(domEvent(document.body, 'mousemove', true)(e => {
+        }, true));
+        this._subscriptions.add(addDisposableListener(document.body, 'mousemove', e => {
             if (e.buttons) {
                 this._keyStatus.lastKeyPressed = undefined;
             }
-        }));
-        this._subscriptions.add(domEvent(window, 'blur')(e => {
+        }, true));
+        this._subscriptions.add(addDisposableListener(window, 'blur', () => {
             this.resetKeyStatus();
         }));
     }

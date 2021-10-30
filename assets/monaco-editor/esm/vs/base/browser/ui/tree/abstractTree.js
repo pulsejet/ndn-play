@@ -2,25 +2,25 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './media/tree.css';
-import { dispose, Disposable, toDisposable, DisposableStore } from '../../../common/lifecycle.js';
-import { List, MouseController, DefaultKeyboardNavigationDelegate, isInputElement, isMonacoEditor } from '../list/listWidget.js';
-import { append, $, getDomNodePagePosition, hasParentWithClass, createStyleSheet, clearNode } from '../../dom.js';
-import { Event, Relay, Emitter, EventBufferer } from '../../../common/event.js';
+import { DragAndDropData, StaticDND } from '../../dnd.js';
+import { $, addDisposableListener, append, clearNode, createStyleSheet, getDomNodePagePosition, hasParentWithClass } from '../../dom.js';
+import { DomEmitter } from '../../event.js';
 import { StandardKeyboardEvent } from '../../keyboardEvent.js';
-import { TreeMouseEventTarget } from './tree.js';
-import { StaticDND, DragAndDropData } from '../../dnd.js';
-import { range, equals, distinctES6 } from '../../../common/arrays.js';
 import { ElementsDragAndDropData } from '../list/listView.js';
-import { domEvent } from '../../event.js';
-import { fuzzyScore, FuzzyScore } from '../../../common/filters.js';
+import { DefaultKeyboardNavigationDelegate, isInputElement, isMonacoEditor, List, MouseController } from '../list/listWidget.js';
 import { getVisibleState, isFilterResult } from './indexTreeModel.js';
-import { localize } from '../../../../nls.js';
+import { TreeMouseEventTarget } from './tree.js';
+import { treeFilterClearIcon, treeFilterOnTypeOffIcon, treeFilterOnTypeOnIcon, treeItemExpandedIcon } from './treeIcons.js';
+import { distinctES6, equals, range } from '../../../common/arrays.js';
 import { disposableTimeout } from '../../../common/async.js';
-import { isMacintosh } from '../../../common/platform.js';
-import { clamp } from '../../../common/numbers.js';
 import { SetMap } from '../../../common/collections.js';
-import { treeItemExpandedIcon, treeFilterOnTypeOnIcon, treeFilterOnTypeOffIcon, treeFilterClearIcon } from './treeIcons.js';
+import { Emitter, Event, EventBufferer, Relay } from '../../../common/event.js';
+import { fuzzyScore, FuzzyScore } from '../../../common/filters.js';
+import { Disposable, DisposableStore, dispose, toDisposable } from '../../../common/lifecycle.js';
+import { clamp } from '../../../common/numbers.js';
+import { isMacintosh } from '../../../common/platform.js';
+import './media/tree.css';
+import { localize } from '../../../../nls.js';
 class TreeElementsDragAndDropData extends ElementsDragAndDropData {
     constructor(data) {
         super(data.elements.map(node => node.element));
@@ -458,7 +458,7 @@ class TypeFilterController {
         this.disposables = new DisposableStore();
         this.domNode = $(`.monaco-list-type-filter.${this.positionClassName}`);
         this.domNode.draggable = true;
-        domEvent(this.domNode, 'dragstart')(this.onDragStart, this, this.disposables);
+        this.disposables.add(addDisposableListener(this.domNode, 'dragstart', () => this.onDragStart()));
         this.messageDomNode = append(view.getHTMLElement(), $(`.monaco-list-type-filter-message`));
         this.labelDomNode = append(this.domNode, $('span.label'));
         const controls = append(this.domNode, $('.controls'));
@@ -468,7 +468,7 @@ class TypeFilterController {
         this.filterOnTypeDomNode.checked = this._filterOnType;
         this.filterOnTypeDomNode.tabIndex = -1;
         this.updateFilterOnTypeTitleAndIcon();
-        domEvent(this.filterOnTypeDomNode, 'input')(this.onDidChangeFilterOnType, this, this.disposables);
+        this.disposables.add(addDisposableListener(this.filterOnTypeDomNode, 'input', () => this.onDidChangeFilterOnType()));
         this.clearDomNode = append(controls, $('button.clear' + treeFilterClearIcon.cssSelector));
         this.clearDomNode.tabIndex = -1;
         this.clearDomNode.title = localize('clear', "Clear");
@@ -504,7 +504,8 @@ class TypeFilterController {
         if (this._enabled) {
             return;
         }
-        const onKeyDown = Event.chain(domEvent(this.view.getHTMLElement(), 'keydown'))
+        const onRawKeyDown = this.enabledDisposables.add(new DomEmitter(this.view.getHTMLElement(), 'keydown'));
+        const onKeyDown = Event.chain(onRawKeyDown.event)
             .filter(e => !isInputElement(e.target) || e.target === this.filterOnTypeDomNode)
             .filter(e => e.key !== 'Dead' && !/^Media/.test(e.key))
             .map(e => new StandardKeyboardEvent(e))
@@ -513,8 +514,8 @@ class TypeFilterController {
             .filter(e => (this.keyboardNavigationDelegate.mightProducePrintableCharacter(e) && !(e.keyCode === 18 /* DownArrow */ || e.keyCode === 16 /* UpArrow */ || e.keyCode === 15 /* LeftArrow */ || e.keyCode === 17 /* RightArrow */)) || ((this.pattern.length > 0 || this.triggered) && ((e.keyCode === 9 /* Escape */ || e.keyCode === 1 /* Backspace */) && !e.altKey && !e.ctrlKey && !e.metaKey) || (e.keyCode === 1 /* Backspace */ && (isMacintosh ? (e.altKey && !e.metaKey) : e.ctrlKey) && !e.shiftKey)))
             .forEach(e => { e.stopPropagation(); e.preventDefault(); })
             .event;
-        const onClear = domEvent(this.clearDomNode, 'click');
-        Event.chain(Event.any(onKeyDown, onClear))
+        const onClearClick = this.enabledDisposables.add(new DomEmitter(this.clearDomNode, 'click'));
+        Event.chain(Event.any(onKeyDown, onClearClick.event))
             .event(this.onEventOrInput, this, this.enabledDisposables);
         this.filter.pattern = '';
         this.tree.refilter();
@@ -620,8 +621,8 @@ class TypeFilterController {
         this.domNode.classList.remove(positionClassName);
         this.domNode.classList.add('dragging');
         disposables.add(toDisposable(() => this.domNode.classList.remove('dragging')));
-        domEvent(document, 'dragover')(onDragOver, null, disposables);
-        domEvent(this.domNode, 'dragend')(onDragEnd, null, disposables);
+        disposables.add(addDisposableListener(document, 'dragover', e => onDragOver(e)));
+        disposables.add(addDisposableListener(this.domNode, 'dragend', () => onDragEnd()));
         StaticDND.CurrentDragAndDropData = new DragAndDropData('vscode-ui');
         disposables.add(toDisposable(() => StaticDND.CurrentDragAndDropData = undefined));
     }
@@ -709,7 +710,8 @@ function dfs(node, fn) {
  * tree nodes will not be known by the list.
  */
 class Trait {
-    constructor(identityProvider) {
+    constructor(getFirstViewElementWithTrait, identityProvider) {
+        this.getFirstViewElementWithTrait = getFirstViewElementWithTrait;
         this.identityProvider = identityProvider;
         this.nodes = [];
         this._onDidChange = new Emitter();
@@ -775,6 +777,12 @@ class Trait {
                 if (insertedNode) {
                     nodes.push(insertedNode);
                 }
+            }
+        }
+        if (this.nodes.length > 0 && nodes.length === 0) {
+            const node = this.getFirstViewElementWithTrait();
+            if (node) {
+                nodes.push(node);
             }
         }
         this._set(nodes, true);
@@ -928,9 +936,9 @@ export class AbstractTree {
             _options = Object.assign(Object.assign({}, _options), { filter: filter }); // TODO need typescript help here
             this.disposables.add(filter);
         }
-        this.focus = new Trait(_options.identityProvider);
-        this.selection = new Trait(_options.identityProvider);
-        this.anchor = new Trait(_options.identityProvider);
+        this.focus = new Trait(() => this.view.getFocusedElements()[0], _options.identityProvider);
+        this.selection = new Trait(() => this.view.getSelectedElements()[0], _options.identityProvider);
+        this.anchor = new Trait(() => this.view.getAnchorElement(), _options.identityProvider);
         this.view = new TreeNodeList(user, container, treeDelegate, this.renderers, this.focus, this.selection, this.anchor, Object.assign(Object.assign({}, asListOptions(() => this.model, _options)), { tree: this }));
         this.model = this.createModel(user, this.view, _options);
         onDidChangeCollapseStateRelay.input = this.model.onDidChangeCollapseState;
@@ -989,12 +997,7 @@ export class AbstractTree {
         for (const renderer of this.renderers) {
             renderer.updateOptions(optionsUpdate);
         }
-        this.view.updateOptions({
-            enableKeyboardNavigation: this._options.simpleKeyboardNavigation,
-            automaticKeyboardNavigation: this._options.automaticKeyboardNavigation,
-            smoothScrolling: this._options.smoothScrolling,
-            horizontalScrolling: this._options.horizontalScrolling
-        });
+        this.view.updateOptions(Object.assign(Object.assign({}, this._options), { enableKeyboardNavigation: this._options.simpleKeyboardNavigation }));
         if (this.typeFilterController) {
             this.typeFilterController.updateOptions(this._options);
         }

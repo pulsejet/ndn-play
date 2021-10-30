@@ -20,25 +20,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../../../nls.js';
+import { createCancelablePromise } from '../../../../base/common/async.js';
 import { onUnexpectedError } from '../../../../base/common/errors.js';
+import { KeyChord } from '../../../../base/common/keyCodes.js';
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import { ICodeEditorService } from '../../../browser/services/codeEditorService.js';
-import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
-import { IContextKeyService, RawContextKey, ContextKeyExpr } from '../../../../platform/contextkey/common/contextkey.js';
+import { Position } from '../../../common/core/position.js';
+import { Range } from '../../../common/core/range.js';
+import { getOuterEditor, PeekContext } from '../../peekView/peekView.js';
+import * as nls from '../../../../nls.js';
+import { CommandsRegistry } from '../../../../platform/commands/common/commands.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { ContextKeyExpr, IContextKeyService, RawContextKey } from '../../../../platform/contextkey/common/contextkey.js';
+import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
+import { KeybindingsRegistry } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
+import { IListService, WorkbenchListFocusContextKey } from '../../../../platform/list/browser/listService.js';
+import { INotificationService } from '../../../../platform/notification/common/notification.js';
 import { IStorageService } from '../../../../platform/storage/common/storage.js';
 import { OneReference } from '../referencesModel.js';
-import { ReferenceWidget, LayoutData } from './referencesWidget.js';
-import { Range } from '../../../common/core/range.js';
-import { Position } from '../../../common/core/position.js';
-import { INotificationService } from '../../../../platform/notification/common/notification.js';
-import { createCancelablePromise } from '../../../../base/common/async.js';
-import { getOuterEditor, PeekContext } from '../../peekView/peekView.js';
-import { IListService, WorkbenchListFocusContextKey } from '../../../../platform/list/browser/listService.js';
-import { KeybindingsRegistry } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
-import { KeyChord } from '../../../../base/common/keyCodes.js';
-import { CommandsRegistry } from '../../../../platform/commands/common/commands.js';
+import { LayoutData, ReferenceWidget } from './referencesWidget.js';
 export const ctxReferenceSearchVisible = new RawContextKey('referenceSearchVisible', false, nls.localize('referenceSearchVisible', "Whether reference peek is visible, like 'Peek References' or 'Peek Definition'"));
 let ReferencesController = class ReferencesController {
     constructor(_defaultTreeKeyboardSupport, _editor, contextKeyService, _editorService, _notificationService, _instantiationService, _storageService, _configurationService) {
@@ -150,7 +150,7 @@ let ReferencesController = class ReferencesController {
                     let selection = this._model.nearestReference(uri, pos);
                     if (selection) {
                         return this._widget.setSelection(selection).then(() => {
-                            if (this._widget && this._editor.getOption(73 /* peekWidgetDefaultFocus */) === 'editor') {
+                            if (this._widget && this._editor.getOption(76 /* peekWidgetDefaultFocus */) === 'editor') {
                                 this._widget.focusOnPreviewEditor();
                             }
                         });

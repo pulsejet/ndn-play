@@ -11,15 +11,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { LRUCache, TernarySearchTree } from '../../../base/common/map.js';
-import { IStorageService, WillSaveStateReason } from '../../../platform/storage/common/storage.js';
-import { completionKindFromString } from '../../common/modes.js';
-import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { RunOnceScheduler } from '../../../base/common/async.js';
-import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
+import { LRUCache, TernarySearchTree } from '../../../base/common/map.js';
+import { completionKindFromString } from '../../common/modes.js';
+import { IModeService } from '../../common/services/modeService.js';
 import { IConfigurationService } from '../../../platform/configuration/common/configuration.js';
 import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
-import { IModeService } from '../../common/services/modeService.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { IStorageService, WillSaveStateReason } from '../../../platform/storage/common/storage.js';
 export class Memory {
     constructor(name) {
         this.name = name;

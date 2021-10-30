@@ -2,12 +2,12 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './progressbar.css';
-import { Disposable } from '../../../common/lifecycle.js';
-import { Color } from '../../../common/color.js';
-import { mixin } from '../../../common/objects.js';
 import { show } from '../../dom.js';
 import { RunOnceScheduler } from '../../../common/async.js';
+import { Color } from '../../../common/color.js';
+import { Disposable } from '../../../common/lifecycle.js';
+import { mixin } from '../../../common/objects.js';
+import './progressbar.css';
 const CSS_DONE = 'done';
 const CSS_ACTIVE = 'active';
 const CSS_INFINITE = 'infinite';

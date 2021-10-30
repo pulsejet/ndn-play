@@ -2,8 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { findFirstInSorted } from '../../../base/common/arrays.js';
 import { RunOnceScheduler, TimeoutTimer } from '../../../base/common/async.js';
-import { dispose, DisposableStore } from '../../../base/common/lifecycle.js';
+import { DisposableStore, dispose } from '../../../base/common/lifecycle.js';
 import { ReplaceCommand, ReplaceCommandThatPreservesSelection } from '../../common/commands/replaceCommand.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
@@ -11,9 +12,8 @@ import { Selection } from '../../common/core/selection.js';
 import { SearchParams } from '../../common/model/textModelSearch.js';
 import { FindDecorations } from './findDecorations.js';
 import { ReplaceAllCommand } from './replaceAllCommand.js';
-import { ReplacePattern, parseReplaceString } from './replacePattern.js';
+import { parseReplaceString, ReplacePattern } from './replacePattern.js';
 import { RawContextKey } from '../../../platform/contextkey/common/contextkey.js';
-import { findFirstInSorted } from '../../../base/common/arrays.js';
 export const CONTEXT_FIND_WIDGET_VISIBLE = new RawContextKey('findWidgetVisible', false);
 // Keep ContextKey use of 'Focussed' to not break when clauses
 export const CONTEXT_FIND_INPUT_FOCUSED = new RawContextKey('findInputFocussed', false);
@@ -173,7 +173,7 @@ export class FindModelBoundToEditorModel {
             currentMatchesPosition = matchAfterSelection > 0 ? matchAfterSelection - 1 + 1 /** match position is one based */ : currentMatchesPosition;
         }
         this._state.changeMatchInfo(currentMatchesPosition, this._decorations.getCount(), undefined);
-        if (moveCursor && this._editor.getOption(33 /* find */).cursorMoveOnType) {
+        if (moveCursor && this._editor.getOption(35 /* find */).cursorMoveOnType) {
             this._moveToNextMatch(this._decorations.getStartPosition());
         }
     }
@@ -253,11 +253,11 @@ export class FindModelBoundToEditorModel {
         let { lineNumber, column } = before;
         let model = this._editor.getModel();
         let position = new Position(lineNumber, column);
-        let prevMatch = model.findPreviousMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false);
+        let prevMatch = model.findPreviousMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false);
         if (prevMatch && prevMatch.range.isEmpty() && prevMatch.range.getStartPosition().equals(position)) {
             // Looks like we're stuck at this position, unacceptable!
             position = this._prevSearchPosition(position);
-            prevMatch = model.findPreviousMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, false);
+            prevMatch = model.findPreviousMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, false);
         }
         if (!prevMatch) {
             // there is precisely one match and selection is on top of it
@@ -334,11 +334,11 @@ export class FindModelBoundToEditorModel {
         let { lineNumber, column } = after;
         let model = this._editor.getModel();
         let position = new Position(lineNumber, column);
-        let nextMatch = model.findNextMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, captureMatches);
+        let nextMatch = model.findNextMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, captureMatches);
         if (forceMove && nextMatch && nextMatch.range.isEmpty() && nextMatch.range.getStartPosition().equals(position)) {
             // Looks like we're stuck at this position, unacceptable!
             position = this._nextSearchPosition(position);
-            nextMatch = model.findNextMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, captureMatches);
+            nextMatch = model.findNextMatch(this._state.searchString, position, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, captureMatches);
         }
         if (!nextMatch) {
             // there is precisely one match and selection is on top of it
@@ -382,7 +382,7 @@ export class FindModelBoundToEditorModel {
     }
     _findMatches(findScopes, captureMatches, limitResultCount) {
         const searchRanges = (findScopes || [null]).map((scope) => FindModelBoundToEditorModel._getSearchRange(this._editor.getModel(), scope));
-        return this._editor.getModel().findMatches(this._state.searchString, searchRanges, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null, captureMatches, limitResultCount);
+        return this._editor.getModel().findMatches(this._state.searchString, searchRanges, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null, captureMatches, limitResultCount);
     }
     replaceAll() {
         if (!this._hasMatches()) {
@@ -399,7 +399,7 @@ export class FindModelBoundToEditorModel {
         this.research(false);
     }
     _largeReplaceAll() {
-        const searchParams = new SearchParams(this._state.searchString, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(113 /* wordSeparators */) : null);
+        const searchParams = new SearchParams(this._state.searchString, this._state.isRegex, this._state.matchCase, this._state.wholeWord ? this._editor.getOption(115 /* wordSeparators */) : null);
         const searchData = searchParams.parseSearchRequest();
         if (!searchData) {
             return;

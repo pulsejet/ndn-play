@@ -7,6 +7,7 @@ import { Emitter } from '../../../base/common/event.js';
 import { LanguageIdentifier } from '../modes.js';
 import { LanguageConfigurationRegistry } from './languageConfigurationRegistry.js';
 import { Registry } from '../../../platform/registry/common/platform.js';
+import { Mimes } from '../../../base/common/mime.js';
 // Define extension point ids
 export const Extensions = {
     ModesRegistry: 'editor.modesRegistry'
@@ -46,7 +47,7 @@ ModesRegistry.registerLanguage({
     id: PLAINTEXT_MODE_ID,
     extensions: [PLAINTEXT_EXTENSION],
     aliases: [nls.localize('plainText.alias', "Plain Text"), 'text'],
-    mimetypes: ['text/plain']
+    mimetypes: [Mimes.text]
 });
 LanguageConfigurationRegistry.register(PLAINTEXT_LANGUAGE_IDENTIFIER, {
     brackets: [
@@ -63,6 +64,7 @@ LanguageConfigurationRegistry.register(PLAINTEXT_LANGUAGE_IDENTIFIER, {
         { open: '\'', close: '\'' },
         { open: '`', close: '`' },
     ],
+    colorizedBracketPairs: [],
     folding: {
         offSide: true
     }

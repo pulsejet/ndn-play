@@ -12,26 +12,25 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 import * as dom from '../../../base/browser/dom.js';
-import { domEvent, stop } from '../../../base/browser/event.js';
 import * as aria from '../../../base/browser/ui/aria/aria.js';
 import { DomScrollableElement } from '../../../base/browser/ui/scrollbar/scrollableElement.js';
+import { Codicon } from '../../../base/common/codicons.js';
 import { Event } from '../../../base/common/event.js';
 import { Disposable, DisposableStore } from '../../../base/common/lifecycle.js';
+import { escapeRegExpCharacters } from '../../../base/common/strings.js';
+import { assertIsDefined } from '../../../base/common/types.js';
 import './parameterHints.css';
-import { IModeService } from '../../common/services/modeService.js';
 import { MarkdownRenderer } from '../../browser/core/markdownRenderer.js';
+import { IModeService } from '../../common/services/modeService.js';
+import { ParameterHintsModel } from './parameterHintsModel.js';
 import { Context } from './provideSignatureHelp.js';
 import * as nls from '../../../nls.js';
 import { IContextKeyService } from '../../../platform/contextkey/common/contextkey.js';
 import { IOpenerService } from '../../../platform/opener/common/opener.js';
-import { editorHoverBackground, editorHoverBorder, textCodeBlockBackground, textLinkForeground, editorHoverForeground } from '../../../platform/theme/common/colorRegistry.js';
-import { registerThemingParticipant, ThemeIcon } from '../../../platform/theme/common/themeService.js';
-import { ParameterHintsModel } from './parameterHintsModel.js';
-import { escapeRegExpCharacters } from '../../../base/common/strings.js';
-import { Codicon } from '../../../base/common/codicons.js';
-import { assertIsDefined } from '../../../base/common/types.js';
-import { ColorScheme } from '../../../platform/theme/common/theme.js';
+import { editorHoverBackground, editorHoverBorder, editorHoverForeground, textCodeBlockBackground, textLinkActiveForeground, textLinkForeground } from '../../../platform/theme/common/colorRegistry.js';
 import { registerIcon } from '../../../platform/theme/common/iconRegistry.js';
+import { ColorScheme } from '../../../platform/theme/common/theme.js';
+import { registerThemingParticipant, ThemeIcon } from '../../../platform/theme/common/themeService.js';
 const $ = dom.$;
 const parameterHintsNextIcon = registerIcon('parameter-hints-next', Codicon.chevronDown, nls.localize('parameterHintsNextIcon', 'Icon for show next parameter hint.'));
 const parameterHintsPreviousIcon = registerIcon('parameter-hints-previous', Codicon.chevronUp, nls.localize('parameterHintsPreviousIcon', 'Icon for show previous parameter hint.'));
@@ -58,7 +57,7 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
             }
         }));
     }
-    createParamaterHintDOMNodes() {
+    createParameterHintDOMNodes() {
         const element = $('.editor-widget.parameter-hints-widget');
         const wrapper = dom.append(element, $('.phwrapper'));
         wrapper.tabIndex = -1;
@@ -66,10 +65,14 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
         const previous = dom.append(controls, $('.button' + ThemeIcon.asCSSSelector(parameterHintsPreviousIcon)));
         const overloads = dom.append(controls, $('.overloads'));
         const next = dom.append(controls, $('.button' + ThemeIcon.asCSSSelector(parameterHintsNextIcon)));
-        const onPreviousClick = stop(domEvent(previous, 'click'));
-        this._register(onPreviousClick(this.previous, this));
-        const onNextClick = stop(domEvent(next, 'click'));
-        this._register(onNextClick(this.next, this));
+        this._register(dom.addDisposableListener(previous, 'click', e => {
+            dom.EventHelper.stop(e);
+            this.previous();
+        }));
+        this._register(dom.addDisposableListener(next, 'click', e => {
+            dom.EventHelper.stop(e);
+            this.next();
+        }));
         const body = $('.body');
         const scrollbar = new DomScrollableElement(body, {});
         this._register(scrollbar);
@@ -95,12 +98,12 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
             if (!this.domNodes) {
                 return;
             }
-            const fontInfo = this.editor.getOption(40 /* fontInfo */);
+            const fontInfo = this.editor.getOption(43 /* fontInfo */);
             this.domNodes.element.style.fontSize = `${fontInfo.fontSize}px`;
         };
         updateFont();
         this._register(Event.chain(this.editor.onDidChangeConfiguration.bind(this.editor))
-            .filter(e => e.hasChanged(40 /* fontInfo */))
+            .filter(e => e.hasChanged(43 /* fontInfo */))
             .on(updateFont, null));
         this._register(this.editor.onDidLayoutChange(e => this.updateMaxHeight()));
         this.updateMaxHeight();
@@ -110,7 +113,7 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
             return;
         }
         if (!this.domNodes) {
-            this.createParamaterHintDOMNodes();
+            this.createParameterHintDOMNodes();
         }
         this.keyVisible.set(true);
         this.visible = true;
@@ -159,7 +162,7 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
             return;
         }
         const code = dom.append(this.domNodes.signature, $('.code'));
-        const fontInfo = this.editor.getOption(40 /* fontInfo */);
+        const fontInfo = this.editor.getOption(43 /* fontInfo */);
         code.style.fontSize = `${fontInfo.fontSize}px`;
         code.style.fontFamily = fontInfo.fontFamily;
         const hasParameters = signature.parameters.length > 0;
@@ -199,7 +202,20 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
         this.domNodes.overloads.textContent =
             String(hints.activeSignature + 1).padStart(hints.signatures.length.toString().length, '0') + '/' + hints.signatures.length;
         if (activeParameter) {
-            const labelToAnnounce = this.getParameterLabel(signature, activeParameterIndex);
+            let labelToAnnounce = '';
+            const param = signature.parameters[activeParameterIndex];
+            if (Array.isArray(param.label)) {
+                labelToAnnounce = signature.label.substring(param.label[0], param.label[1]);
+            }
+            else {
+                labelToAnnounce = param.label;
+            }
+            if (param.documentation) {
+                labelToAnnounce += typeof param.documentation === 'string' ? `, ${param.documentation}` : `, ${param.documentation.value}`;
+            }
+            if (signature.documentation) {
+                labelToAnnounce += typeof signature.documentation === 'string' ? `, ${signature.documentation}` : `, ${signature.documentation.value}`;
+            }
             // Select method gets called on every user type while parameter hints are visible.
             // We do not want to spam the user with same announcements, so we only announce if the current parameter changed.
             if (this.announcedLabel !== labelToAnnounce) {
@@ -246,15 +262,6 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
         afterSpan.textContent = signature.label.substring(end);
         dom.append(parent, beforeSpan, paramSpan, afterSpan);
     }
-    getParameterLabel(signature, paramIdx) {
-        const param = signature.parameters[paramIdx];
-        if (Array.isArray(param.label)) {
-            return signature.label.substring(param.label[0], param.label[1]);
-        }
-        else {
-            return param.label;
-        }
-    }
     getParameterLabelOffsets(signature, paramIdx) {
         const param = signature.parameters[paramIdx];
         if (!param) {
@@ -288,7 +295,7 @@ let ParameterHintsWidget = class ParameterHintsWidget extends Disposable {
     }
     getDomNode() {
         if (!this.domNodes) {
-            this.createParamaterHintDOMNodes();
+            this.createParameterHintDOMNodes();
         }
         return this.domNodes.element;
     }
@@ -333,6 +340,10 @@ registerThemingParticipant((theme, collector) => {
     const link = theme.getColor(textLinkForeground);
     if (link) {
         collector.addRule(`.monaco-editor .parameter-hints-widget a { color: ${link}; }`);
+    }
+    const linkHover = theme.getColor(textLinkActiveForeground);
+    if (linkHover) {
+        collector.addRule(`.monaco-editor .parameter-hints-widget a:hover { color: ${linkHover}; }`);
     }
     const foreground = theme.getColor(editorHoverForeground);
     if (foreground) {

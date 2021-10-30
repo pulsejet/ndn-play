@@ -88,6 +88,7 @@ let CodeActionUi = class CodeActionUi extends Disposable {
                     const validActionToApply = this.tryGetValidActionToApply(newState.trigger, actions);
                     if (validActionToApply) {
                         try {
+                            this._lightBulbWidget.getValue().hide();
                             yield this.delegate.applyCodeAction(validActionToApply, false);
                         }
                         finally {

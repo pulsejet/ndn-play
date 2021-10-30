@@ -11,9 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { LinkedList } from '../../../base/common/linkedList.js';
 import { Position } from '../../common/core/position.js';
 import { Range } from '../../common/core/range.js';
-import { LinkedList } from '../../../base/common/linkedList.js';
 export class BracketSelectionRangeProvider {
     provideSelectionRanges(model, positions) {
         return __awaiter(this, void 0, void 0, function* () {

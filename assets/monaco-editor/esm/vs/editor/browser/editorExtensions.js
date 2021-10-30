@@ -32,36 +32,36 @@ export class Command {
             this._registerMenuItem(this._menuOpts);
         }
         if (this._kbOpts) {
-            let kbWhen = this._kbOpts.kbExpr;
-            if (this.precondition) {
-                if (kbWhen) {
-                    kbWhen = ContextKeyExpr.and(kbWhen, this.precondition);
+            const kbOptsArr = Array.isArray(this._kbOpts) ? this._kbOpts : [this._kbOpts];
+            for (const kbOpts of kbOptsArr) {
+                let kbWhen = kbOpts.kbExpr;
+                if (this.precondition) {
+                    if (kbWhen) {
+                        kbWhen = ContextKeyExpr.and(kbWhen, this.precondition);
+                    }
+                    else {
+                        kbWhen = this.precondition;
+                    }
                 }
-                else {
-                    kbWhen = this.precondition;
-                }
+                const desc = {
+                    id: this.id,
+                    weight: kbOpts.weight,
+                    args: kbOpts.args,
+                    when: kbWhen,
+                    primary: kbOpts.primary,
+                    secondary: kbOpts.secondary,
+                    win: kbOpts.win,
+                    linux: kbOpts.linux,
+                    mac: kbOpts.mac,
+                };
+                KeybindingsRegistry.registerKeybindingRule(desc);
             }
-            KeybindingsRegistry.registerCommandAndKeybindingRule({
-                id: this.id,
-                handler: (accessor, args) => this.runCommand(accessor, args),
-                weight: this._kbOpts.weight,
-                args: this._kbOpts.args,
-                when: kbWhen,
-                primary: this._kbOpts.primary,
-                secondary: this._kbOpts.secondary,
-                win: this._kbOpts.win,
-                linux: this._kbOpts.linux,
-                mac: this._kbOpts.mac,
-                description: this._description
-            });
         }
-        else {
-            CommandsRegistry.registerCommand({
-                id: this.id,
-                handler: (accessor, args) => this.runCommand(accessor, args),
-                description: this._description
-            });
-        }
+        CommandsRegistry.registerCommand({
+            id: this.id,
+            handler: (accessor, args) => this.runCommand(accessor, args),
+            description: this._description
+        });
     }
     _registerMenuItem(item) {
         MenuRegistry.appendMenuItem(item.menuId, {
@@ -101,6 +101,7 @@ export class MultiCommand extends Command {
     }
     runCommand(accessor, args) {
         const logService = accessor.get(ILogService);
+        logService.trace(`Executing Command '${this.id}' which has ${this._implementations.length} bound.`);
         for (const impl of this._implementations) {
             const result = impl.implementation(accessor, args);
             if (result) {
@@ -111,6 +112,7 @@ export class MultiCommand extends Command {
                 return result;
             }
         }
+        logService.trace(`The Command '${this.id}' was not handled by any implementation.`);
     }
 }
 //#endregion

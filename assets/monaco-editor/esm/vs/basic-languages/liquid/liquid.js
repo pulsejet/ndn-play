@@ -148,9 +148,9 @@ export var language = {
             [/\{\%\s*comment\s*\%\}/, 'comment.start.liquid', '@comment'],
             [/\{\{/, { token: '@rematch', switchTo: '@liquidState.root' }],
             [/\{\%/, { token: '@rematch', switchTo: '@liquidState.root' }],
-            [/(<)(\w+)(\/>)/, ['delimiter.html', 'tag.html', 'delimiter.html']],
+            [/(<)([\w\-]+)(\/>)/, ['delimiter.html', 'tag.html', 'delimiter.html']],
             [/(<)([:\w]+)/, ['delimiter.html', { token: 'tag.html', next: '@otherTag' }]],
-            [/(<\/)(\w+)/, ['delimiter.html', { token: 'tag.html', next: '@otherTag' }]],
+            [/(<\/)([\w\-]+)/, ['delimiter.html', { token: 'tag.html', next: '@otherTag' }]],
             [/</, 'delimiter.html'],
             [/\{/, 'delimiter.html'],
             [/[^<{]+/] // text
@@ -193,7 +193,7 @@ export var language = {
             [/^(?!\{\%\s*endraw\s*\%\}).+/],
             [/\{\%/, 'delimiter.tag.liquid'],
             [/@identifier/],
-            [/\%\}/, { token: 'delimiter.tag.liquid', next: '@root' }],
+            [/\%\}/, { token: 'delimiter.tag.liquid', next: '@root' }]
         ],
         liquidRoot: [
             [/\d+(\.\d+)?/, 'number.liquid'],

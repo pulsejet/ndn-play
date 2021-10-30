@@ -11,14 +11,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../../nls.js';
 import * as browser from '../../../base/browser/browser.js';
 import * as platform from '../../../base/common/platform.js';
 import { CopyOptions, InMemoryClipboardMetadataManager } from '../../browser/controller/textAreaInput.js';
-import { EditorAction, registerEditorAction, MultiCommand } from '../../browser/editorExtensions.js';
+import { EditorAction, MultiCommand, registerEditorAction } from '../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
 import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { MenuRegistry, MenuId } from '../../../platform/actions/common/actions.js';
+import * as nls from '../../../nls.js';
+import { MenuId, MenuRegistry } from '../../../platform/actions/common/actions.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
 const CLIPBOARD_CONTEXT_MENU_GROUP = '9_cutcopypaste';
 const supportsCut = (platform.isNative || document.queryCommandSupported('cut'));
@@ -58,6 +58,12 @@ export const CutAction = supportsCut ? registerCommand(new MultiCommand({
             group: '',
             title: nls.localize('actions.clipboard.cutLabel', "Cut"),
             order: 1
+        }, {
+            menuId: MenuId.SimpleEditorContext,
+            group: CLIPBOARD_CONTEXT_MENU_GROUP,
+            title: nls.localize('actions.clipboard.cutLabel', "Cut"),
+            when: EditorContextKeys.writable,
+            order: 1,
         }]
 })) : undefined;
 export const CopyAction = supportsCopy ? registerCommand(new MultiCommand({
@@ -86,6 +92,11 @@ export const CopyAction = supportsCopy ? registerCommand(new MultiCommand({
             group: '',
             title: nls.localize('actions.clipboard.copyLabel', "Copy"),
             order: 1
+        }, {
+            menuId: MenuId.SimpleEditorContext,
+            group: CLIPBOARD_CONTEXT_MENU_GROUP,
+            title: nls.localize('actions.clipboard.copyLabel', "Copy"),
+            order: 2,
         }]
 })) : undefined;
 MenuRegistry.appendMenuItem(MenuId.MenubarEditMenu, { submenu: MenuId.MenubarCopy, title: { value: nls.localize('copy as', "Copy As"), original: 'Copy As', }, group: '2_ccp', order: 3 });
@@ -118,6 +129,12 @@ export const PasteAction = supportsPaste ? registerCommand(new MultiCommand({
             group: '',
             title: nls.localize('actions.clipboard.pasteLabel', "Paste"),
             order: 1
+        }, {
+            menuId: MenuId.SimpleEditorContext,
+            group: CLIPBOARD_CONTEXT_MENU_GROUP,
+            title: nls.localize('actions.clipboard.pasteLabel', "Paste"),
+            when: EditorContextKeys.writable,
+            order: 4,
         }]
 })) : undefined;
 class ExecCommandCopyWithSyntaxHighlightingAction extends EditorAction {
@@ -138,7 +155,7 @@ class ExecCommandCopyWithSyntaxHighlightingAction extends EditorAction {
         if (!editor.hasModel()) {
             return;
         }
-        const emptySelectionClipboard = editor.getOption(30 /* emptySelectionClipboard */);
+        const emptySelectionClipboard = editor.getOption(32 /* emptySelectionClipboard */);
         if (!emptySelectionClipboard && editor.getSelection().isEmpty()) {
             return;
         }
@@ -158,7 +175,7 @@ function registerExecCommandImpl(target, browserCommand) {
         const focusedEditor = accessor.get(ICodeEditorService).getFocusedCodeEditor();
         if (focusedEditor && focusedEditor.hasTextFocus()) {
             // Do not execute if there is no selection and empty selection clipboard is off
-            const emptySelectionClipboard = focusedEditor.getOption(30 /* emptySelectionClipboard */);
+            const emptySelectionClipboard = focusedEditor.getOption(32 /* emptySelectionClipboard */);
             const selection = focusedEditor.getSelection();
             if (selection && selection.isEmpty() && !emptySelectionClipboard) {
                 return true;
@@ -187,7 +204,7 @@ if (PasteAction) {
             const result = document.execCommand('paste');
             // Use the clipboard service if document.execCommand('paste') was not successful
             if (!result && platform.isWeb) {
-                (() => __awaiter(void 0, void 0, void 0, function* () {
+                return (() => __awaiter(void 0, void 0, void 0, function* () {
                     const clipboardText = yield clipboardService.readText();
                     if (clipboardText !== '') {
                         const metadata = InMemoryClipboardMetadataManager.INSTANCE.get(clipboardText);
@@ -195,7 +212,7 @@ if (PasteAction) {
                         let multicursorText = null;
                         let mode = null;
                         if (metadata) {
-                            pasteOnNewLine = (focusedEditor.getOption(30 /* emptySelectionClipboard */) && !!metadata.isFromEmptySelection);
+                            pasteOnNewLine = (focusedEditor.getOption(32 /* emptySelectionClipboard */) && !!metadata.isFromEmptySelection);
                             multicursorText = (typeof metadata.multicursorText !== 'undefined' ? metadata.multicursorText : null);
                             mode = metadata.mode;
                         }
@@ -207,7 +224,6 @@ if (PasteAction) {
                         });
                     }
                 }))();
-                return true;
             }
             return true;
         }

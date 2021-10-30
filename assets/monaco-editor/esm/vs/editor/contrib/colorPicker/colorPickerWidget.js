@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './colorPicker.css';
 import { onDidChangeZoomLevel } from '../../../base/browser/browser.js';
 import * as dom from '../../../base/browser/dom.js';
 import { GlobalMouseMoveMonitor, standardMouseMoveMerger } from '../../../base/browser/globalMouseMoveMonitor.js';
@@ -10,6 +9,7 @@ import { Widget } from '../../../base/browser/ui/widget.js';
 import { Color, HSVA, RGBA } from '../../../base/common/color.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
+import './colorPicker.css';
 import { editorHoverBackground } from '../../../platform/theme/common/colorRegistry.js';
 import { registerThemingParticipant } from '../../../platform/theme/common/themeService.js';
 const $ = dom.$;

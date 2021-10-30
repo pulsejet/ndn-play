@@ -21,9 +21,7 @@ import { Range } from '../core/range.js';
 import { Schemas } from '../../../base/common/network.js';
 import { Emitter } from '../../../base/common/event.js';
 import { minimapWarning, minimapError } from '../../../platform/theme/common/colorRegistry.js';
-function MODEL_ID(resource) {
-    return resource.toString();
-}
+import { ResourceMap } from '../../../base/common/map.js';
 class MarkerDecorations extends Disposable {
     constructor(model) {
         super();
@@ -52,7 +50,7 @@ let MarkerDecorationsService = class MarkerDecorationsService extends Disposable
         super();
         this._markerService = _markerService;
         this._onDidChangeMarker = this._register(new Emitter());
-        this._markerDecorations = new Map();
+        this._markerDecorations = new ResourceMap();
         modelService.getModels().forEach(model => this._onModelAdded(model));
         this._register(modelService.onModelAdded(this._onModelAdded, this));
         this._register(modelService.onModelRemoved(this._onModelRemoved, this));
@@ -64,12 +62,12 @@ let MarkerDecorationsService = class MarkerDecorationsService extends Disposable
         this._markerDecorations.clear();
     }
     getMarker(uri, decoration) {
-        const markerDecorations = this._markerDecorations.get(MODEL_ID(uri));
+        const markerDecorations = this._markerDecorations.get(uri);
         return markerDecorations ? (markerDecorations.getMarker(decoration) || null) : null;
     }
     _handleMarkerChange(changedResources) {
         changedResources.forEach((resource) => {
-            const markerDecorations = this._markerDecorations.get(MODEL_ID(resource));
+            const markerDecorations = this._markerDecorations.get(resource);
             if (markerDecorations) {
                 this._updateDecorations(markerDecorations);
             }
@@ -77,14 +75,14 @@ let MarkerDecorationsService = class MarkerDecorationsService extends Disposable
     }
     _onModelAdded(model) {
         const markerDecorations = new MarkerDecorations(model);
-        this._markerDecorations.set(MODEL_ID(model.uri), markerDecorations);
+        this._markerDecorations.set(model.uri, markerDecorations);
         this._updateDecorations(markerDecorations);
     }
     _onModelRemoved(model) {
-        const markerDecorations = this._markerDecorations.get(MODEL_ID(model.uri));
+        const markerDecorations = this._markerDecorations.get(model.uri);
         if (markerDecorations) {
             markerDecorations.dispose();
-            this._markerDecorations.delete(MODEL_ID(model.uri));
+            this._markerDecorations.delete(model.uri);
         }
         // clean up markers for internal, transient models
         if (model.uri.scheme === Schemas.inMemory
@@ -200,6 +198,7 @@ let MarkerDecorationsService = class MarkerDecorationsService extends Disposable
             }
         }
         return {
+            description: 'marker-decoration',
             stickiness: 1 /* NeverGrowsWhenTypingAtEdges */,
             className,
             showIfCollapsed: true,

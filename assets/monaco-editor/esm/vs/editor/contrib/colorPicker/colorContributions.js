@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 // import color detector contribution
-import './colorDetector.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { registerEditorContribution } from '../../browser/editorExtensions.js';
-import { ModesHoverController } from '../hover/hover.js';
 import { Range } from '../../common/core/range.js';
+import './colorDetector.js';
+import { ModesHoverController } from '../hover/hover.js';
 export class ColorContribution extends Disposable {
     constructor(_editor) {
         super();

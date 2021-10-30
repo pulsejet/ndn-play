@@ -40,13 +40,15 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 import { DocumentHighlightKind, Location, Range, SymbolKind, TextEdit, FileType } from '../cssLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 import * as nodes from '../parser/cssNodes.js';
 import { Symbols } from '../parser/cssSymbolScope.js';
 import { getColorValue, hslFromColor } from '../languageFacts/facts.js';
 import { startsWith } from '../utils/strings.js';
 import { dirname, joinPath } from '../utils/resources.js';
 var localize = nls.loadMessageBundle();
+var startsWithSchemeRegex = /^\w+:\/\//;
+var startsWithData = /^data:/;
 var CSSNavigation = /** @class */ (function () {
     function CSSNavigation(fileSystemProvider) {
         this.fileSystemProvider = fileSystemProvider;
@@ -114,48 +116,61 @@ var CSSNavigation = /** @class */ (function () {
         return node.type === nodes.NodeType.Import;
     };
     CSSNavigation.prototype.findDocumentLinks = function (document, stylesheet, documentContext) {
-        var links = this.findUnresolvedLinks(document, stylesheet);
-        for (var i = 0; i < links.length; i++) {
-            var target = links[i].target;
-            if (target && !(/^\w+:\/\//g.test(target))) {
+        var linkData = this.findUnresolvedLinks(document, stylesheet);
+        var resolvedLinks = [];
+        for (var _i = 0, linkData_1 = linkData; _i < linkData_1.length; _i++) {
+            var data = linkData_1[_i];
+            var link = data.link;
+            var target = link.target;
+            if (!target || startsWithData.test(target)) {
+                // no links for data:
+            }
+            else if (startsWithSchemeRegex.test(target)) {
+                resolvedLinks.push(link);
+            }
+            else {
                 var resolved = documentContext.resolveReference(target, document.uri);
                 if (resolved) {
-                    links[i].target = resolved;
+                    link.target = resolved;
                 }
+                resolvedLinks.push(link);
             }
         }
-        return links;
+        return resolvedLinks;
     };
     CSSNavigation.prototype.findDocumentLinks2 = function (document, stylesheet, documentContext) {
         return __awaiter(this, void 0, void 0, function () {
-            var links, resolvedLinks, _i, links_1, link, target, resolvedTarget;
+            var linkData, resolvedLinks, _i, linkData_2, data, link, target, resolvedTarget;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        links = this.findUnresolvedLinks(document, stylesheet);
+                        linkData = this.findUnresolvedLinks(document, stylesheet);
                         resolvedLinks = [];
-                        _i = 0, links_1 = links;
+                        _i = 0, linkData_2 = linkData;
                         _a.label = 1;
                     case 1:
-                        if (!(_i < links_1.length)) return [3 /*break*/, 5];
-                        link = links_1[_i];
+                        if (!(_i < linkData_2.length)) return [3 /*break*/, 6];
+                        data = linkData_2[_i];
+                        link = data.link;
                         target = link.target;
-                        if (!(target && !(/^\w+:\/\//g.test(target)))) return [3 /*break*/, 3];
-                        return [4 /*yield*/, this.resolveRelativeReference(target, document.uri, documentContext)];
+                        if (!(!target || startsWithData.test(target))) return [3 /*break*/, 2];
+                        return [3 /*break*/, 5];
                     case 2:
+                        if (!startsWithSchemeRegex.test(target)) return [3 /*break*/, 3];
+                        resolvedLinks.push(link);
+                        return [3 /*break*/, 5];
+                    case 3: return [4 /*yield*/, this.resolveRelativeReference(target, document.uri, documentContext, data.isRawLink)];
+                    case 4:
                         resolvedTarget = _a.sent();
                         if (resolvedTarget !== undefined) {
                             link.target = resolvedTarget;
                             resolvedLinks.push(link);
                         }
-                        return [3 /*break*/, 4];
-                    case 3:
-                        resolvedLinks.push(link);
-                        _a.label = 4;
-                    case 4:
+                        _a.label = 5;
+                    case 5:
                         _i++;
                         return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/, resolvedLinks];
+                    case 6: return [2 /*return*/, resolvedLinks];
                 }
             });
         });
@@ -173,7 +188,8 @@ var CSSNavigation = /** @class */ (function () {
             if (startsWith(rawUri, "'") || startsWith(rawUri, "\"")) {
                 rawUri = rawUri.slice(1, -1);
             }
-            result.push({ target: rawUri, range: range });
+            var isRawLink = uriStringNode.parent ? _this.isRawStringDocumentLinkNode(uriStringNode.parent) : false;
+            result.push({ link: { target: rawUri, range: range }, isRawLink: isRawLink });
         };
         stylesheet.accept(function (candidate) {
             if (candidate.type === nodes.NodeType.URILiteral) {
@@ -296,7 +312,7 @@ var CSSNavigation = /** @class */ (function () {
             changes: (_a = {}, _a[document.uri] = edits, _a)
         };
     };
-    CSSNavigation.prototype.resolveRelativeReference = function (ref, documentUri, documentContext) {
+    CSSNavigation.prototype.resolveRelativeReference = function (ref, documentUri, documentContext, isRawLink) {
         return __awaiter(this, void 0, void 0, function () {
             var moduleName, rootFolderUri, documentFolderUri, modulePath, pathWithinModule;
             return __generator(this, function (_a) {

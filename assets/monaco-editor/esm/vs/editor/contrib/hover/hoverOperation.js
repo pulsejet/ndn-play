@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { RunOnceScheduler, createCancelablePromise } from '../../../base/common/async.js';
+import { createCancelablePromise, RunOnceScheduler } from '../../../base/common/async.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 export class HoverOperation {
     constructor(computer, success, error, progress, hoverTime) {

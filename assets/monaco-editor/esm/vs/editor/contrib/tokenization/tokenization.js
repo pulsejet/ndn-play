@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
-import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
 import { StopWatch } from '../../../base/common/stopwatch.js';
+import { EditorAction, registerEditorAction } from '../../browser/editorExtensions.js';
+import * as nls from '../../../nls.js';
 class ForceRetokenizeAction extends EditorAction {
     constructor() {
         super({

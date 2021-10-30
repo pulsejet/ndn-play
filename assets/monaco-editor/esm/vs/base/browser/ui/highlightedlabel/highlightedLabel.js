@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as objects from '../../../common/objects.js';
 import * as dom from '../../dom.js';
 import { renderLabelWithIcons } from '../iconLabel/iconLabels.js';
+import * as objects from '../../../common/objects.js';
 export class HighlightedLabel {
     constructor(container, supportIcons) {
         this.supportIcons = supportIcons;

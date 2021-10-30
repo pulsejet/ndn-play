@@ -2,7 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import * as nls from '../../../nls.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
 import * as strings from '../../../base/common/strings.js';
 import { EditorAction, registerEditorAction, registerEditorContribution } from '../../browser/editorExtensions.js';
@@ -15,6 +14,7 @@ import { TextModel } from '../../common/model/textModel.js';
 import { LanguageConfigurationRegistry } from '../../common/modes/languageConfigurationRegistry.js';
 import { IModelService } from '../../common/services/modelService.js';
 import * as indentUtils from './indentUtils.js';
+import * as nls from '../../../nls.js';
 import { IQuickInputService } from '../../../platform/quickinput/common/quickInput.js';
 export function getReindentEditOperations(model, startLineNumber, endLineNumber, inheritedIndent) {
     if (model.getLineCount() === 1 && model.getLineMaxColumn(1) === 1) {
@@ -361,7 +361,7 @@ export class AutoIndentOnPaste {
         // clean up
         this.callOnModel.clear();
         // we are disabled
-        if (this.editor.getOption(9 /* autoIndent */) < 4 /* Full */ || this.editor.getOption(44 /* formatOnPaste */)) {
+        if (this.editor.getOption(9 /* autoIndent */) < 4 /* Full */ || this.editor.getOption(47 /* formatOnPaste */)) {
             return;
         }
         // no model

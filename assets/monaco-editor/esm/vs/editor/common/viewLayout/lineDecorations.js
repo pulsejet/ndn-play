@@ -9,6 +9,7 @@ export class LineDecoration {
         this.endColumn = endColumn;
         this.className = className;
         this.type = type;
+        this._lineDecorationBrand = undefined;
     }
     static _equals(a, b) {
         return (a.startColumn === b.startColumn
@@ -73,23 +74,20 @@ export class LineDecoration {
         return ORDER[a] - ORDER[b];
     }
     static compare(a, b) {
-        if (a.startColumn === b.startColumn) {
-            if (a.endColumn === b.endColumn) {
-                const typeCmp = LineDecoration._typeCompare(a.type, b.type);
-                if (typeCmp === 0) {
-                    if (a.className < b.className) {
-                        return -1;
-                    }
-                    if (a.className > b.className) {
-                        return 1;
-                    }
-                    return 0;
-                }
-                return typeCmp;
-            }
+        if (a.startColumn !== b.startColumn) {
+            return a.startColumn - b.startColumn;
+        }
+        if (a.endColumn !== b.endColumn) {
             return a.endColumn - b.endColumn;
         }
-        return a.startColumn - b.startColumn;
+        const typeCmp = LineDecoration._typeCompare(a.type, b.type);
+        if (typeCmp !== 0) {
+            return typeCmp;
+        }
+        if (a.className !== b.className) {
+            return a.className < b.className ? -1 : 1;
+        }
+        return 0;
     }
 }
 export class DecorationSegment {

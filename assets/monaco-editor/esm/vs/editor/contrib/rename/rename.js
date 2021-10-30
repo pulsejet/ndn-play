@@ -20,32 +20,32 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import * as nls from '../../../nls.js';
-import { onUnexpectedError } from '../../../base/common/errors.js';
-import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
-import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
-import { registerEditorAction, registerEditorContribution, EditorAction, EditorCommand, registerEditorCommand, registerModelAndPositionCommand } from '../../browser/editorExtensions.js';
-import { EditorContextKeys } from '../../common/editorContextKeys.js';
-import { RenameInputField, CONTEXT_RENAME_INPUT_VISIBLE } from './renameInputField.js';
-import { RenameProviderRegistry } from '../../common/modes.js';
-import { Position } from '../../common/core/position.js';
 import { alert } from '../../../base/browser/ui/aria/aria.js';
-import { Range } from '../../common/core/range.js';
-import { MessageController } from '../message/messageController.js';
-import { EditorStateCancellationTokenSource } from '../../browser/core/editorState.js';
-import { INotificationService } from '../../../platform/notification/common/notification.js';
-import { IBulkEditService, ResourceEdit } from '../../browser/services/bulkEditService.js';
-import { URI } from '../../../base/common/uri.js';
-import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
-import { CancellationToken, CancellationTokenSource } from '../../../base/common/cancellation.js';
-import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { IdleValue, raceCancellation } from '../../../base/common/async.js';
-import { ILogService } from '../../../platform/log/common/log.js';
-import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
-import { Registry } from '../../../platform/registry/common/platform.js';
-import { Extensions } from '../../../platform/configuration/common/configurationRegistry.js';
-import { ITextResourceConfigurationService } from '../../common/services/textResourceConfigurationService.js';
+import { CancellationToken, CancellationTokenSource } from '../../../base/common/cancellation.js';
+import { onUnexpectedError } from '../../../base/common/errors.js';
+import { DisposableStore } from '../../../base/common/lifecycle.js';
 import { assertType } from '../../../base/common/types.js';
+import { URI } from '../../../base/common/uri.js';
+import { EditorStateCancellationTokenSource } from '../../browser/core/editorState.js';
+import { EditorAction, EditorCommand, registerEditorAction, registerEditorCommand, registerEditorContribution, registerModelAndPositionCommand } from '../../browser/editorExtensions.js';
+import { IBulkEditService, ResourceEdit } from '../../browser/services/bulkEditService.js';
+import { ICodeEditorService } from '../../browser/services/codeEditorService.js';
+import { Position } from '../../common/core/position.js';
+import { Range } from '../../common/core/range.js';
+import { EditorContextKeys } from '../../common/editorContextKeys.js';
+import { RenameProviderRegistry } from '../../common/modes.js';
+import { ITextResourceConfigurationService } from '../../common/services/textResourceConfigurationService.js';
+import { MessageController } from '../message/messageController.js';
+import * as nls from '../../../nls.js';
+import { Extensions } from '../../../platform/configuration/common/configurationRegistry.js';
+import { ContextKeyExpr } from '../../../platform/contextkey/common/contextkey.js';
+import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
+import { ILogService } from '../../../platform/log/common/log.js';
+import { INotificationService } from '../../../platform/notification/common/notification.js';
+import { IEditorProgressService } from '../../../platform/progress/common/progress.js';
+import { Registry } from '../../../platform/registry/common/platform.js';
+import { CONTEXT_RENAME_INPUT_VISIBLE, RenameInputField } from './renameInputField.js';
 class RenameSkeleton {
     constructor(model, position) {
         this.model = model;
@@ -326,6 +326,16 @@ registerModelAndPositionCommand('_executeDocumentRenameProvider', function (mode
     const [newName] = args;
     assertType(typeof newName === 'string');
     return rename(model, position, newName);
+});
+registerModelAndPositionCommand('_executePrepareRename', function (model, position) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const skeleton = new RenameSkeleton(model, position);
+        const loc = yield skeleton.resolveRenameLocation(CancellationToken.None);
+        if (loc === null || loc === void 0 ? void 0 : loc.rejectReason) {
+            throw new Error(loc.rejectReason);
+        }
+        return loc;
+    });
 });
 //todo@jrieken use editor options world
 Registry.as(Extensions.Configuration).registerConfiguration({

@@ -22,7 +22,7 @@ import { IContextKeyService } from '../../../platform/contextkey/common/contextk
 import { IInstantiationService } from '../../../platform/instantiation/common/instantiation.js';
 class StatusBarViewItem extends MenuEntryActionViewItem {
     updateLabel() {
-        const kb = this._keybindingService.lookupKeybinding(this._action.id);
+        const kb = this._keybindingService.lookupKeybinding(this._action.id, this._contextKeyService);
         if (!kb) {
             return super.updateLabel();
         }
@@ -42,7 +42,7 @@ let SuggestWidgetStatus = class SuggestWidgetStatus {
         this._menuDisposables = new DisposableStore();
         this.element = dom.append(container, dom.$('.suggest-status-bar'));
         const actionViewItemProvider = (action => {
-            return action instanceof MenuItemAction ? instantiationService.createInstance(StatusBarViewItem, action) : undefined;
+            return action instanceof MenuItemAction ? instantiationService.createInstance(StatusBarViewItem, action, undefined) : undefined;
         });
         this._leftActions = new ActionBar(this.element, { actionViewItemProvider });
         this._rightActions = new ActionBar(this.element, { actionViewItemProvider });

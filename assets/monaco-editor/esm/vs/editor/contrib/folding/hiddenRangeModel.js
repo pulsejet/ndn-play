@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+import { findFirstInSorted } from '../../../base/common/arrays.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Range } from '../../common/core/range.js';
-import { findFirstInSorted } from '../../../base/common/arrays.js';
 export class HiddenRangeModel {
     constructor(model) {
         this._updateEventEmitter = new Emitter();

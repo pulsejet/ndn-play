@@ -38,6 +38,29 @@ export class USLayoutResolvedKeybinding extends BaseResolvedKeybinding {
         }
         return KeyCodeUtils.toString(keybinding.keyCode);
     }
+    _keyCodeToElectronAccelerator(keyCode) {
+        if (keyCode >= 93 /* NUMPAD_0 */ && keyCode <= 108 /* NUMPAD_DIVIDE */) {
+            // Electron cannot handle numpad keys
+            return null;
+        }
+        switch (keyCode) {
+            case 16 /* UpArrow */:
+                return 'Up';
+            case 18 /* DownArrow */:
+                return 'Down';
+            case 15 /* LeftArrow */:
+                return 'Left';
+            case 17 /* RightArrow */:
+                return 'Right';
+        }
+        return KeyCodeUtils.toString(keyCode);
+    }
+    _getElectronAccelerator(keybinding) {
+        if (keybinding.isDuplicateModifierCase()) {
+            return null;
+        }
+        return this._keyCodeToElectronAccelerator(keybinding.keyCode);
+    }
     _getDispatchPart(keybinding) {
         return USLayoutResolvedKeybinding.getDispatchStr(keybinding);
     }

@@ -11,16 +11,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { IMarkerService, MarkerSeverity } from '../../../platform/markers/common/markers.js';
-import { URI } from '../../../base/common/uri.js';
+import { binarySearch } from '../../../base/common/arrays.js';
 import { Emitter } from '../../../base/common/event.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
-import { Range } from '../../common/core/range.js';
-import { compare } from '../../../base/common/strings.js';
-import { binarySearch } from '../../../base/common/arrays.js';
-import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
-import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
 import { LinkedList } from '../../../base/common/linkedList.js';
+import { compare } from '../../../base/common/strings.js';
+import { URI } from '../../../base/common/uri.js';
+import { Range } from '../../common/core/range.js';
+import { registerSingleton } from '../../../platform/instantiation/common/extensions.js';
+import { createDecorator } from '../../../platform/instantiation/common/instantiation.js';
+import { IMarkerService, MarkerSeverity } from '../../../platform/markers/common/markers.js';
 export class MarkerCoordinate {
     constructor(marker, index, total) {
         this.marker = marker;

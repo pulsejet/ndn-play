@@ -263,7 +263,7 @@ export var language = {
     // we include these common regular expressions
     symbols: /[=><!~?:&|+\-*\/\^%]+/,
     escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
-    integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
+    integersuffix: /([uU](ll|LL|l|L)|(ll|LL|l|L)?[uU]?)/,
     floatsuffix: /[fFlL]?/,
     encoding: /u|u8|U|L/,
     // The main tokenizer for our languages
@@ -325,12 +325,18 @@ export var language = {
             [/[ \t\r\n]+/, ''],
             [/\/\*\*(?!\/)/, 'comment.doc', '@doccomment'],
             [/\/\*/, 'comment', '@comment'],
+            [/\/\/.*\\$/, 'comment', '@linecomment'],
             [/\/\/.*$/, 'comment']
         ],
         comment: [
             [/[^\/*]+/, 'comment'],
             [/\*\//, 'comment', '@pop'],
             [/[\/*]/, 'comment']
+        ],
+        //For use with continuous line comments
+        linecomment: [
+            [/.*[^\\]$/, 'comment', '@pop'],
+            [/[^]+/, 'comment']
         ],
         //Identical copy of comment above, except for the addition of .doc
         doccomment: [

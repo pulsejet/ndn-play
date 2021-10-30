@@ -2,9 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Iterable } from '../../../common/iterator.js';
 import { IndexTreeModel } from './indexTreeModel.js';
 import { TreeError } from './tree.js';
+import { Iterable } from '../../../common/iterator.js';
 export class ObjectTreeModel {
     constructor(user, list, options = {}) {
         this.user = user;

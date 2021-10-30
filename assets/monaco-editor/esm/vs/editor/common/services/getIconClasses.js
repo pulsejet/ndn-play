@@ -48,7 +48,7 @@ export function getIconClasses(modelService, modeService, resource, fileKind) {
     }
     return classes;
 }
-export function detectModeId(modelService, modeService, resource) {
+function detectModeId(modelService, modeService, resource) {
     if (!resource) {
         return null; // we need a resource at least
     }

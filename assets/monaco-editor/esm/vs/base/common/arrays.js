@@ -129,7 +129,7 @@ export function isNonEmptyArray(obj) {
 }
 /**
  * Removes duplicates from the given array. The optional keyFn allows to specify
- * how elements are checked for equalness by returning a unique string for each.
+ * how elements are checked for equality by returning a unique string for each.
  */
 export function distinct(array, keyFn) {
     if (!keyFn) {
@@ -156,6 +156,22 @@ export function distinctES6(array) {
         seen.add(element);
         return true;
     });
+}
+export function findLast(arr, predicate) {
+    const idx = lastIndex(arr, predicate);
+    if (idx === -1) {
+        return undefined;
+    }
+    return arr[idx];
+}
+export function lastIndex(array, fn) {
+    for (let i = array.length - 1; i >= 0; i--) {
+        const element = array[i];
+        if (fn(element)) {
+            return i;
+        }
+    }
+    return -1;
 }
 export function firstOrDefault(array, notFoundValue) {
     return array.length > 0 ? array[0] : notFoundValue;
@@ -216,4 +232,91 @@ export function pushToEnd(arr, value) {
 }
 export function asArray(x) {
     return Array.isArray(x) ? x : [x];
+}
+/**
+ * Insert the new items in the array.
+ * @param array The original array.
+ * @param start The zero-based location in the array from which to start inserting elements.
+ * @param newItems The items to be inserted
+ */
+export function insertInto(array, start, newItems) {
+    const startIdx = getActualStartIndex(array, start);
+    const originalLength = array.length;
+    const newItemsLength = newItems.length;
+    array.length = originalLength + newItemsLength;
+    // Move the items after the start index, start from the end so that we don't overwrite any value.
+    for (let i = originalLength - 1; i >= startIdx; i--) {
+        array[i + newItemsLength] = array[i];
+    }
+    for (let i = 0; i < newItemsLength; i++) {
+        array[i + startIdx] = newItems[i];
+    }
+}
+/**
+ * Removes elements from an array and inserts new elements in their place, returning the deleted elements. Alternative to the native Array.splice method, it
+ * can only support limited number of items due to the maximum call stack size limit.
+ * @param array The original array.
+ * @param start The zero-based location in the array from which to start removing elements.
+ * @param deleteCount The number of elements to remove.
+ * @returns An array containing the elements that were deleted.
+ */
+export function splice(array, start, deleteCount, newItems) {
+    const index = getActualStartIndex(array, start);
+    const result = array.splice(index, deleteCount);
+    insertInto(array, index, newItems);
+    return result;
+}
+/**
+ * Determine the actual start index (same logic as the native splice() or slice())
+ * If greater than the length of the array, start will be set to the length of the array. In this case, no element will be deleted but the method will behave as an adding function, adding as many element as item[n*] provided.
+ * If negative, it will begin that many elements from the end of the array. (In this case, the origin -1, meaning -n is the index of the nth last element, and is therefore equivalent to the index of array.length - n.) If array.length + start is less than 0, it will begin from index 0.
+ * @param array The target array.
+ * @param start The operation index.
+ */
+function getActualStartIndex(array, start) {
+    return start < 0 ? Math.max(start + array.length, 0) : Math.min(start, array.length);
+}
+export class ArrayQueue {
+    /**
+     * Constructs a queue that is backed by the given array. Runtime is O(1).
+    */
+    constructor(items) {
+        this.items = items;
+        this.firstIdx = 0;
+        this.lastIdx = this.items.length - 1;
+    }
+    /**
+     * Consumes elements from the beginning of the queue as long as the predicate returns true.
+     * If no elements were consumed, `null` is returned. Has a runtime of O(result.length).
+    */
+    takeWhile(predicate) {
+        // P(k) := k <= this.lastIdx && predicate(this.items[k])
+        // Find s := min { k | k >= this.firstIdx && !P(k) } and return this.data[this.firstIdx...s)
+        let startIdx = this.firstIdx;
+        while (startIdx < this.items.length && predicate(this.items[startIdx])) {
+            startIdx++;
+        }
+        const result = startIdx === this.firstIdx ? null : this.items.slice(this.firstIdx, startIdx);
+        this.firstIdx = startIdx;
+        return result;
+    }
+    /**
+     * Consumes elements from the end of the queue as long as the predicate returns true.
+     * If no elements were consumed, `null` is returned.
+     * The result has the same order as the underlying array!
+    */
+    takeFromEndWhile(predicate) {
+        // P(k) := this.firstIdx >= k && predicate(this.items[k])
+        // Find s := max { k | k <= this.lastIdx && !P(k) } and return this.data(s...this.lastIdx]
+        let endIdx = this.lastIdx;
+        while (endIdx >= 0 && predicate(this.items[endIdx])) {
+            endIdx--;
+        }
+        const result = endIdx === this.lastIdx ? null : this.items.slice(endIdx + 1, this.lastIdx + 1);
+        this.lastIdx = endIdx;
+        return result;
+    }
+    peek() {
+        return this.items[this.firstIdx];
+    }
 }

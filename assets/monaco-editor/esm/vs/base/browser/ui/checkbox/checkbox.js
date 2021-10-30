@@ -2,11 +2,11 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './checkbox.css';
 import { Widget } from '../widget.js';
+import { CSSIcon } from '../../../common/codicons.js';
 import { Color } from '../../../common/color.js';
 import { Emitter } from '../../../common/event.js';
-import { CSSIcon } from '../../../common/codicons.js';
+import './checkbox.css';
 const defaultOpts = {
     inputActiveOptionBorder: Color.fromHex('#007ACC00'),
     inputActiveOptionForeground: Color.fromHex('#FFFFFF'),
@@ -73,7 +73,7 @@ export class Checkbox extends Widget {
         this.applyStyles();
     }
     width() {
-        return 2 /*marginleft*/ + 2 /*border*/ + 2 /*padding*/ + 16 /* icon width */;
+        return 2 /*margin left*/ + 2 /*border*/ + 2 /*padding*/ + 16 /* icon width */;
     }
     style(styles) {
         if (styles.inputActiveOptionBorder) {

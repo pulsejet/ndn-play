@@ -2,8 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Disposable } from '../../../../base/common/lifecycle.js';
 import { Emitter } from '../../../../base/common/event.js';
+import { Disposable } from '../../../../base/common/lifecycle.js';
 import * as platform from '../../../../base/common/platform.js';
 function hasModifier(e, modifier) {
     return !!e[modifier];
@@ -65,13 +65,13 @@ export class ClickLinkGesture extends Disposable {
         this._onCancel = this._register(new Emitter());
         this.onCancel = this._onCancel.event;
         this._editor = editor;
-        this._opts = createOptions(this._editor.getOption(66 /* multiCursorModifier */));
+        this._opts = createOptions(this._editor.getOption(69 /* multiCursorModifier */));
         this._lastMouseMoveEvent = null;
         this._hasTriggerKeyOnMouseDown = false;
         this._lineNumberOnMouseDown = 0;
         this._register(this._editor.onDidChangeConfiguration((e) => {
-            if (e.hasChanged(66 /* multiCursorModifier */)) {
-                const newOpts = createOptions(this._editor.getOption(66 /* multiCursorModifier */));
+            if (e.hasChanged(69 /* multiCursorModifier */)) {
+                const newOpts = createOptions(this._editor.getOption(69 /* multiCursorModifier */));
                 if (this._opts.equals(newOpts)) {
                     return;
                 }

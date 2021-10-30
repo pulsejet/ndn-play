@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 export class RestrictedRenderingContext {
     constructor(viewLayout, viewportData) {
+        this._restrictedRenderingContextBrand = undefined;
         this._viewLayout = viewLayout;
         this.viewportData = viewportData;
         this.scrollWidth = this._viewLayout.getScrollWidth();
@@ -29,6 +30,7 @@ export class RestrictedRenderingContext {
 export class RenderingContext extends RestrictedRenderingContext {
     constructor(viewLayout, viewportData, viewLines) {
         super(viewLayout, viewportData);
+        this._renderingContextBrand = undefined;
         this._viewLines = viewLines;
     }
     linesVisibleRangesForRange(range, includeNewLines) {
@@ -47,17 +49,40 @@ export class LineVisibleRanges {
 }
 export class HorizontalRange {
     constructor(left, width) {
+        this._horizontalRangeBrand = undefined;
         this.left = Math.round(left);
         this.width = Math.round(width);
+    }
+    static from(ranges) {
+        const result = new Array(ranges.length);
+        for (let i = 0, len = ranges.length; i < len; i++) {
+            const range = ranges[i];
+            result[i] = new HorizontalRange(range.left, range.width);
+        }
+        return result;
     }
     toString() {
         return `[${this.left},${this.width}]`;
     }
 }
+export class FloatHorizontalRange {
+    constructor(left, width) {
+        this._floatHorizontalRangeBrand = undefined;
+        this.left = left;
+        this.width = width;
+    }
+    toString() {
+        return `[${this.left},${this.width}]`;
+    }
+    static compare(a, b) {
+        return a.left - b.left;
+    }
+}
 export class HorizontalPosition {
     constructor(outsideRenderedLine, left) {
         this.outsideRenderedLine = outsideRenderedLine;
-        this.left = Math.round(left);
+        this.originalLeft = left;
+        this.left = Math.round(this.originalLeft);
     }
 }
 export class VisibleRanges {

@@ -2,18 +2,17 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import './splitview.css';
-import { toDisposable, Disposable, combinedDisposable } from '../../../common/lifecycle.js';
-import { Event, Emitter } from '../../../common/event.js';
-import * as types from '../../../common/types.js';
-import { clamp } from '../../../common/numbers.js';
-import { range, pushToStart, pushToEnd } from '../../../common/arrays.js';
+import { $, addDisposableListener, append, scheduleAtNextAnimationFrame } from '../../dom.js';
 import { Sash } from '../sash/sash.js';
-import { Color } from '../../../common/color.js';
-import { domEvent } from '../../event.js';
-import { $, append, scheduleAtNextAnimationFrame } from '../../dom.js';
 import { SmoothScrollableElement } from '../scrollbar/scrollableElement.js';
+import { pushToEnd, pushToStart, range } from '../../../common/arrays.js';
+import { Color } from '../../../common/color.js';
+import { Emitter, Event } from '../../../common/event.js';
+import { combinedDisposable, Disposable, toDisposable } from '../../../common/lifecycle.js';
+import { clamp } from '../../../common/numbers.js';
 import { Scrollable } from '../../../common/scrollable.js';
+import * as types from '../../../common/types.js';
+import './splitview.css';
 const defaultStyles = {
     separatorBorder: Color.transparent
 };
@@ -132,7 +131,8 @@ export class SplitView extends Disposable {
             vertical: this.orientation === 0 /* VERTICAL */ ? ((_a = options.scrollbarVisibility) !== null && _a !== void 0 ? _a : 1 /* Auto */) : 2 /* Hidden */,
             horizontal: this.orientation === 1 /* HORIZONTAL */ ? ((_b = options.scrollbarVisibility) !== null && _b !== void 0 ? _b : 1 /* Auto */) : 2 /* Hidden */
         }, this.scrollable));
-        this._register(this.scrollableElement.onScroll(e => {
+        this.onDidScroll = this.scrollableElement.onScroll;
+        this._register(this.onDidScroll(e => {
             this.viewContainer.scrollTop = e.scrollTop;
             this.viewContainer.scrollLeft = e.scrollLeft;
         }));
@@ -224,7 +224,7 @@ export class SplitView extends Disposable {
         }
         const index = this.sashItems.findIndex(item => item.sash === sash);
         // This way, we can press Alt while we resize a sash, macOS style!
-        const disposable = combinedDisposable(domEvent(document.body, 'keydown')(e => resetSashDragState(this.sashDragState.current, e.altKey)), domEvent(document.body, 'keyup')(() => resetSashDragState(this.sashDragState.current, false)));
+        const disposable = combinedDisposable(addDisposableListener(document.body, 'keydown', e => resetSashDragState(this.sashDragState.current, e.altKey)), addDisposableListener(document.body, 'keyup', () => resetSashDragState(this.sashDragState.current, false)));
         const resetSashDragState = (start, alt) => {
             const sizes = this.viewItems.map(i => i.size);
             let minDelta = Number.NEGATIVE_INFINITY;

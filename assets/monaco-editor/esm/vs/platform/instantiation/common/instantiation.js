@@ -42,6 +42,7 @@ export function createDecorator(serviceId) {
 }
 /**
  * Mark a service dependency as optional.
+ * @deprecated Avoid, see https://github.com/microsoft/vscode/issues/119440
  */
 export function optional(serviceIdentifier) {
     return function (target, key, index) {

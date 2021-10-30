@@ -46,7 +46,7 @@ import { MarkerDecorationsService } from '../../common/services/markerDecoration
 import { IAccessibilityService } from '../../../platform/accessibility/common/accessibility.js';
 import { ILayoutService } from '../../../platform/layout/browser/layoutService.js';
 import { getSingletonServiceDescriptors } from '../../../platform/instantiation/common/extensions.js';
-import { AccessibilityService } from '../../../platform/accessibility/common/accessibilityService.js';
+import { AccessibilityService } from '../../../platform/accessibility/browser/accessibilityService.js';
 import { IClipboardService } from '../../../platform/clipboard/common/clipboardService.js';
 import { BrowserClipboardService } from '../../../platform/clipboard/browser/clipboardService.js';
 import { IUndoRedoService } from '../../../platform/undoRedo/common/undoRedo.js';

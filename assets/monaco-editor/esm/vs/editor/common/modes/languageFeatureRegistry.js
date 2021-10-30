@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { Emitter } from '../../../base/common/event.js';
-import { hash } from '../../../base/common/hash.js';
+import { doHash } from '../../../base/common/hash.js';
 import { toDisposable } from '../../../base/common/lifecycle.js';
 import { LRUCache } from '../../../base/common/map.js';
 import { MovingAverage } from '../../../base/common/numbers.js';
@@ -145,6 +145,16 @@ export class LanguageFeatureRegistry {
         }
     }
 }
+const _hashes = new WeakMap();
+let pool = 0;
+function weakHash(obj) {
+    let value = _hashes.get(obj);
+    if (value === undefined) {
+        value = ++pool;
+        _hashes.set(obj, value);
+    }
+    return value;
+}
 /**
  * Keeps moving average per model and set of providers so that requests
  * can be debounce according to the provider performance
@@ -157,7 +167,7 @@ export class LanguageFeatureRequestDelays {
         this._cache = new LRUCache(50, 0.7);
     }
     _key(model) {
-        return model.id + hash(this._registry.all(model));
+        return model.id + this._registry.all(model).reduce((hashVal, obj) => doHash(weakHash(obj), hashVal), 0);
     }
     _clamp(value) {
         if (value === undefined) {

@@ -439,7 +439,7 @@ export class DiffReview extends Disposable {
         container.className = 'diff-review-table';
         container.setAttribute('role', 'list');
         container.setAttribute('aria-label', 'Difference review. Use "Stage | Unstage | Revert Selected Ranges" commands');
-        Configuration.applyFontInfoSlow(container, modifiedOptions.get(40 /* fontInfo */));
+        Configuration.applyFontInfoSlow(container, modifiedOptions.get(43 /* fontInfo */));
         let minOriginalLine = 0;
         let maxOriginalLine = 0;
         let minModifiedLine = 0;
@@ -499,7 +499,7 @@ export class DiffReview extends Disposable {
         // @@ -504,7 +517,7 @@
         header.setAttribute('role', 'listitem');
         container.appendChild(header);
-        const lineHeight = modifiedOptions.get(55 /* lineHeight */);
+        const lineHeight = modifiedOptions.get(58 /* lineHeight */);
         let modLine = minModifiedLine;
         for (let i = 0, len = diffs.length; i < len; i++) {
             const diffEntry = diffs[i];
@@ -535,9 +535,9 @@ export class DiffReview extends Disposable {
         const modifiedLineStart = diffEntry.modifiedLineStart;
         const modifiedLineEnd = diffEntry.modifiedLineEnd;
         const cnt = Math.max(modifiedLineEnd - modifiedLineStart, originalLineEnd - originalLineStart);
-        const originalLayoutInfo = originalOptions.get(127 /* layoutInfo */);
+        const originalLayoutInfo = originalOptions.get(129 /* layoutInfo */);
         const originalLineNumbersWidth = originalLayoutInfo.glyphMarginWidth + originalLayoutInfo.lineNumbersWidth;
-        const modifiedLayoutInfo = modifiedOptions.get(127 /* layoutInfo */);
+        const modifiedLayoutInfo = modifiedOptions.get(129 /* layoutInfo */);
         const modifiedLineNumbersWidth = 10 + modifiedLayoutInfo.glyphMarginWidth + modifiedLayoutInfo.lineNumbersWidth;
         for (let i = 0; i <= cnt; i++) {
             const originalLine = (originalLineStart === 0 ? 0 : originalLineStart + i);
@@ -632,17 +632,11 @@ export class DiffReview extends Disposable {
     }
     static _renderLine(model, options, tabSize, lineNumber) {
         const lineContent = model.getLineContent(lineNumber);
-        const fontInfo = options.get(40 /* fontInfo */);
-        const defaultMetadata = ((0 /* None */ << 11 /* FONT_STYLE_OFFSET */)
-            | (1 /* DefaultForeground */ << 14 /* FOREGROUND_OFFSET */)
-            | (2 /* DefaultBackground */ << 23 /* BACKGROUND_OFFSET */)) >>> 0;
-        const tokens = new Uint32Array(2);
-        tokens[0] = lineContent.length;
-        tokens[1] = defaultMetadata;
-        const lineTokens = new LineTokens(tokens, lineContent);
+        const fontInfo = options.get(43 /* fontInfo */);
+        const lineTokens = LineTokens.createEmpty(lineContent);
         const isBasicASCII = ViewLineRenderingData.isBasicASCII(lineContent, model.mightContainNonBasicASCII());
         const containsRTL = ViewLineRenderingData.containsRTL(lineContent, isBasicASCII, model.mightContainRTL());
-        const r = renderViewLine(new RenderLineInput((fontInfo.isMonospace && !options.get(27 /* disableMonospaceOptimizations */)), fontInfo.canUseHalfwidthRightwardsArrow, lineContent, false, isBasicASCII, containsRTL, 0, lineTokens, [], tabSize, 0, fontInfo.spaceWidth, fontInfo.middotWidth, fontInfo.wsmiddotWidth, options.get(102 /* stopRenderingLineAfter */), options.get(85 /* renderWhitespace */), options.get(79 /* renderControlCharacters */), options.get(41 /* fontLigatures */) !== EditorFontLigatures.OFF, null));
+        const r = renderViewLine(new RenderLineInput((fontInfo.isMonospace && !options.get(29 /* disableMonospaceOptimizations */)), fontInfo.canUseHalfwidthRightwardsArrow, lineContent, false, isBasicASCII, containsRTL, 0, lineTokens, [], tabSize, 0, fontInfo.spaceWidth, fontInfo.middotWidth, fontInfo.wsmiddotWidth, options.get(104 /* stopRenderingLineAfter */), options.get(87 /* renderWhitespace */), options.get(82 /* renderControlCharacters */), options.get(44 /* fontLigatures */) !== EditorFontLigatures.OFF, null));
         return r.html;
     }
 }

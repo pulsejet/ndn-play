@@ -2,14 +2,16 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { $ } from '../../../base/browser/dom.js';
+import * as dom from '../../../base/browser/dom.js';
+import { asArray } from '../../../base/common/arrays.js';
 import { isEmptyMarkdownString } from '../../../base/common/htmlContent.js';
 import { DisposableStore } from '../../../base/common/lifecycle.js';
-import { HoverOperation } from './hoverOperation.js';
-import { GlyphHoverWidget } from './hoverWidgets.js';
 import { MarkdownRenderer } from '../../browser/core/markdownRenderer.js';
+import { HoverOperation } from './hoverOperation.js';
+import { Widget } from '../../../base/browser/ui/widget.js';
 import { NullOpenerService } from '../../../platform/opener/common/opener.js';
-import { asArray } from '../../../base/common/arrays.js';
+import { HoverWidget } from '../../../base/browser/ui/hover/hoverWidget.js';
+const $ = dom.$;
 class MarginComputer {
     constructor(editor) {
         this._editor = editor;
@@ -56,22 +58,64 @@ class MarginComputer {
         return this.getResult();
     }
 }
-export class ModesGlyphHoverWidget extends GlyphHoverWidget {
+export class ModesGlyphHoverWidget extends Widget {
     constructor(editor, modeService, openerService = NullOpenerService) {
-        super(ModesGlyphHoverWidget.ID, editor);
+        super();
         this._renderDisposeables = this._register(new DisposableStore());
+        this._editor = editor;
+        this._hover = this._register(new HoverWidget());
+        this._isVisible = false;
         this._messages = [];
         this._lastLineNumber = -1;
         this._markdownRenderer = this._register(new MarkdownRenderer({ editor: this._editor }, modeService, openerService));
         this._computer = new MarginComputer(this._editor);
         this._hoverOperation = new HoverOperation(this._computer, (result) => this._withResult(result), undefined, (result) => this._withResult(result), 300);
+        this._register(this._editor.onDidChangeConfiguration((e) => {
+            if (e.hasChanged(43 /* fontInfo */)) {
+                this._updateFont();
+            }
+        }));
+        this._editor.addOverlayWidget(this);
     }
     dispose() {
         this._hoverOperation.cancel();
+        this._editor.removeOverlayWidget(this);
         super.dispose();
     }
+    getId() {
+        return ModesGlyphHoverWidget.ID;
+    }
+    getDomNode() {
+        return this._hover.containerDomNode;
+    }
+    getPosition() {
+        return null;
+    }
+    _showAt(lineNumber) {
+        if (!this._isVisible) {
+            this._isVisible = true;
+            this._hover.containerDomNode.classList.toggle('hidden', !this._isVisible);
+        }
+        const editorLayout = this._editor.getLayoutInfo();
+        const topForLineNumber = this._editor.getTopForLineNumber(lineNumber);
+        const editorScrollTop = this._editor.getScrollTop();
+        const lineHeight = this._editor.getOption(58 /* lineHeight */);
+        const nodeHeight = this._hover.containerDomNode.clientHeight;
+        const top = topForLineNumber - editorScrollTop - ((nodeHeight - lineHeight) / 2);
+        this._hover.containerDomNode.style.left = `${editorLayout.glyphMarginLeft + editorLayout.glyphMarginWidth}px`;
+        this._hover.containerDomNode.style.top = `${Math.max(Math.round(top), 0)}px`;
+    }
+    _updateFont() {
+        const codeClasses = Array.prototype.slice.call(this._hover.contentsDomNode.getElementsByClassName('code'));
+        codeClasses.forEach(node => this._editor.applyFontInfo(node));
+    }
+    _updateContents(node) {
+        this._hover.contentsDomNode.textContent = '';
+        this._hover.contentsDomNode.appendChild(node);
+        this._updateFont();
+    }
     onModelDecorationsChanged() {
-        if (this.isVisible) {
+        if (this._isVisible) {
             // The decorations have changed and the hover is visible,
             // we need to recompute the displayed text
             this._hoverOperation.cancel();
@@ -93,7 +137,11 @@ export class ModesGlyphHoverWidget extends GlyphHoverWidget {
     hide() {
         this._lastLineNumber = -1;
         this._hoverOperation.cancel();
-        super.hide();
+        if (!this._isVisible) {
+            return;
+        }
+        this._isVisible = false;
+        this._hover.containerDomNode.classList.toggle('hidden', !this._isVisible);
     }
     _withResult(result) {
         this._messages = result;
@@ -108,12 +156,14 @@ export class ModesGlyphHoverWidget extends GlyphHoverWidget {
         this._renderDisposeables.clear();
         const fragment = document.createDocumentFragment();
         for (const msg of messages) {
-            const renderedContents = this._markdownRenderer.render(msg.value);
-            this._renderDisposeables.add(renderedContents);
-            fragment.appendChild($('div.hover-row', undefined, renderedContents.element));
+            const markdownHoverElement = $('div.hover-row.markdown-hover');
+            const hoverContentsElement = dom.append(markdownHoverElement, $('div.hover-contents'));
+            const renderedContents = this._renderDisposeables.add(this._markdownRenderer.render(msg.value));
+            hoverContentsElement.appendChild(renderedContents.element);
+            fragment.appendChild(markdownHoverElement);
         }
-        this.updateContents(fragment);
-        this.showAt(lineNumber);
+        this._updateContents(fragment);
+        this._showAt(lineNumber);
     }
 }
 ModesGlyphHoverWidget.ID = 'editor.contrib.modesGlyphHoverWidget';

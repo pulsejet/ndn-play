@@ -1,6 +1,6 @@
-import { Registry } from '../../registry/common/platform.js';
-import { createDecorator } from '../../instantiation/common/instantiation.js';
 import { Extensions } from './configurationRegistry.js';
+import { createDecorator } from '../../instantiation/common/instantiation.js';
+import { Registry } from '../../registry/common/platform.js';
 export const IConfigurationService = createDecorator('configurationService');
 export function toValuesTree(properties, conflictReporter) {
     const root = Object.create(null);

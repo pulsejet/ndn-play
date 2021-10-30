@@ -11,7 +11,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { TimeoutTimer, createCancelablePromise } from '../../../base/common/async.js';
+import { createCancelablePromise, TimeoutTimer } from '../../../base/common/async.js';
 import { RGBA } from '../../../base/common/color.js';
 import { onUnexpectedError } from '../../../base/common/errors.js';
 import { hash } from '../../../base/common/hash.js';
@@ -66,13 +66,13 @@ let ColorDetector = class ColorDetector extends Disposable {
         const languageId = model.getLanguageIdentifier();
         // handle deprecated settings. [languageId].colorDecorators.enable
         const deprecatedConfig = this._configurationService.getValue(languageId.language);
-        if (deprecatedConfig) {
+        if (deprecatedConfig && typeof deprecatedConfig === 'object') {
             const colorDecorators = deprecatedConfig['colorDecorators']; // deprecatedConfig.valueOf('.colorDecorators.enable');
             if (colorDecorators && colorDecorators['enable'] !== undefined && !colorDecorators['enable']) {
                 return colorDecorators['enable'];
             }
         }
-        return this._editor.getOption(15 /* colorDecorators */);
+        return this._editor.getOption(17 /* colorDecorators */);
     }
     static get(editor) {
         return editor.getContribution(this.ID);
@@ -151,7 +151,7 @@ let ColorDetector = class ColorDetector extends Disposable {
             let color = `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
             let key = 'colorBox-' + subKey;
             if (!this._decorationsTypes.has(key) && !newDecorationsTypes[key]) {
-                this._codeEditorService.registerDecorationType(key, {
+                this._codeEditorService.registerDecorationType('color-detector-color', key, {
                     before: {
                         contentText: ' ',
                         border: 'solid 0.1em #000',

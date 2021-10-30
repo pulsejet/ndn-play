@@ -14,9 +14,9 @@ import { Selection } from '../core/selection.js';
 import * as model from '../model.js';
 import { EditStack } from './editStack.js';
 import { guessIndentation } from './indentationGuesser.js';
-import { IntervalNode, IntervalTree, getNodeIsInOverviewRuler, recomputeMaxEnd } from './intervalTree.js';
+import { IntervalNode, IntervalTree, recomputeMaxEnd } from './intervalTree.js';
 import { PieceTreeTextBufferBuilder } from './pieceTreeTextBuffer/pieceTreeTextBufferBuilder.js';
-import { InternalModelContentChangeEvent, ModelRawContentChangedEvent, ModelRawEOLChanged, ModelRawFlush, ModelRawLineChanged, ModelRawLinesDeleted, ModelRawLinesInserted } from './textModelEvents.js';
+import { InternalModelContentChangeEvent, LineInjectedText, ModelInjectedTextChangedEvent, ModelRawContentChangedEvent, ModelRawEOLChanged, ModelRawFlush, ModelRawLineChanged, ModelRawLinesDeleted, ModelRawLinesInserted } from './textModelEvents.js';
 import { SearchParams, TextModelSearch } from './textModelSearch.js';
 import { TextModelTokenization } from './textModelTokens.js';
 import { getWordAtText } from './wordHelper.js';
@@ -27,6 +27,9 @@ import { BracketsUtils } from '../modes/supports/richEditBrackets.js';
 import { TokensStore, countEOL, TokensStore2 } from './tokensStore.js';
 import { Color } from '../../../base/common/color.js';
 import { PieceTreeTextBuffer } from './pieceTreeTextBuffer/pieceTreeTextBuffer.js';
+import { ArrayQueue, findLast } from '../../../base/common/arrays.js';
+import { BracketPairColorizer } from './bracketPairColorizer/bracketPairColorizer.js';
+import { CursorColumns } from '../controller/cursorColumns.js';
 function createTextBufferBuilder() {
     return new PieceTreeTextBufferBuilder();
 }
@@ -88,13 +91,12 @@ function stripBracketSearchCanceled(result) {
     return result;
 }
 export class TextModel extends Disposable {
-    //#endregion
     constructor(source, creationOptions, languageIdentifier, associatedResource = null, undoRedoService) {
         super();
         //#region Events
         this._onWillDispose = this._register(new Emitter());
         this.onWillDispose = this._onWillDispose.event;
-        this._onDidChangeDecorations = this._register(new DidChangeDecorationsEmitter());
+        this._onDidChangeDecorations = this._register(new DidChangeDecorationsEmitter(affectedInjectedTextLines => this.handleBeforeFireDecorationsChangedEvent(affectedInjectedTextLines)));
         this.onDidChangeDecorations = this._onDidChangeDecorations.event;
         this._onDidChangeLanguage = this._register(new Emitter());
         this.onDidChangeLanguage = this._onDidChangeLanguage.event;
@@ -106,7 +108,15 @@ export class TextModel extends Disposable {
         this.onDidChangeOptions = this._onDidChangeOptions.event;
         this._onDidChangeAttached = this._register(new Emitter());
         this.onDidChangeAttached = this._onDidChangeAttached.event;
+        this._onDidChangeContentOrInjectedText = this._register(new Emitter());
+        this.onDidChangeContentOrInjectedText = this._onDidChangeContentOrInjectedText.event;
         this._eventEmitter = this._register(new DidChangeContentEmitter());
+        this._backgroundTokenizationState = 0 /* Uninitialized */;
+        this._onBackgroundTokenizationStateChanged = this._register(new Emitter());
+        this.onBackgroundTokenizationStateChanged = this._onBackgroundTokenizationStateChanged.event;
+        this._register(this._eventEmitter.fastEvent((e) => {
+            this._onDidChangeContentOrInjectedText.fire(e.rawContentChangedEvent);
+        }));
         // Generate a new unique model id
         MODEL_ID++;
         this.id = '$model' + MODEL_ID;
@@ -158,6 +168,13 @@ export class TextModel extends Disposable {
         this._tokens = new TokensStore();
         this._tokens2 = new TokensStore2();
         this._tokenization = new TextModelTokenization(this);
+        this._bracketPairColorizer = this._register(new BracketPairColorizer(this));
+        this._decorationProvider = this._bracketPairColorizer;
+        this._register(this._decorationProvider.onDidChangeDecorations(() => {
+            this._onDidChangeDecorations.beginDeferredEmit();
+            this._onDidChangeDecorations.fire();
+            this._onDidChangeDecorations.endDeferredEmit();
+        }));
     }
     static resolveOptions(textBuffer, options) {
         if (options.detectIndentation) {
@@ -167,7 +184,8 @@ export class TextModel extends Disposable {
                 indentSize: guessedIndentation.tabSize,
                 insertSpaces: guessedIndentation.insertSpaces,
                 trimAutoWhitespace: options.trimAutoWhitespace,
-                defaultEOL: options.defaultEOL
+                defaultEOL: options.defaultEOL,
+                bracketPairColorizationOptions: options.bracketPairColorizationOptions,
             });
         }
         return new model.TextModelResolvedOptions({
@@ -175,17 +193,29 @@ export class TextModel extends Disposable {
             indentSize: options.indentSize,
             insertSpaces: options.insertSpaces,
             trimAutoWhitespace: options.trimAutoWhitespace,
-            defaultEOL: options.defaultEOL
+            defaultEOL: options.defaultEOL,
+            bracketPairColorizationOptions: options.bracketPairColorizationOptions,
         });
-    }
-    onDidChangeRawContentFast(listener) {
-        return this._eventEmitter.fastEvent((e) => listener(e.rawContentChangedEvent));
     }
     onDidChangeContentFast(listener) {
         return this._eventEmitter.fastEvent((e) => listener(e.contentChangedEvent));
     }
     onDidChangeContent(listener) {
         return this._eventEmitter.slowEvent((e) => listener(e.contentChangedEvent));
+    }
+    get backgroundTokenizationState() {
+        return this._backgroundTokenizationState;
+    }
+    handleTokenizationProgress(completed) {
+        if (this._backgroundTokenizationState === 2 /* Completed */) {
+            // We already did a full tokenization and don't go back to progressing.
+            return;
+        }
+        const newState = completed ? 2 /* Completed */ : 1 /* InProgress */;
+        if (this._backgroundTokenizationState !== newState) {
+            this._backgroundTokenizationState = newState;
+            this._onBackgroundTokenizationStateChanged.fire();
+        }
     }
     dispose() {
         this._isDisposing = true;
@@ -208,6 +238,7 @@ export class TextModel extends Disposable {
         }
     }
     _emitContentChangedEvent(rawChange, change) {
+        this._bracketPairColorizer.handleContentChanged(change);
         if (this._isDisposing) {
             // Do not confuse listeners by emitting any event after disposing
             return;
@@ -282,9 +313,7 @@ export class TextModel extends Disposable {
     }
     _onBeforeEOLChange() {
         // Ensure all decorations get their `range` set.
-        const versionId = this.getVersionId();
-        const allDecorations = this._decorationsTree.search(0, false, false, versionId);
-        this._ensureNodesHaveRanges(allDecorations);
+        this._decorationsTree.ensureAllNodesHaveRanges(this);
     }
     _onAfterEOLChange() {
         // Transform back `range` to offsets
@@ -292,9 +321,10 @@ export class TextModel extends Disposable {
         const allDecorations = this._decorationsTree.collectNodesPostOrder();
         for (let i = 0, len = allDecorations.length; i < len; i++) {
             const node = allDecorations[i];
+            const range = node.range; // the range is defined due to `_onBeforeEOLChange`
             const delta = node.cachedAbsoluteStart - node.start;
-            const startOffset = this._buffer.getOffsetAt(node.range.startLineNumber, node.range.startColumn);
-            const endOffset = this._buffer.getOffsetAt(node.range.endLineNumber, node.range.endColumn);
+            const startOffset = this._buffer.getOffsetAt(range.startLineNumber, range.startColumn);
+            const endOffset = this._buffer.getOffsetAt(range.endLineNumber, range.endColumn);
             node.cachedAbsoluteStart = startOffset;
             node.cachedAbsoluteEnd = endOffset;
             node.cachedVersionId = versionId;
@@ -370,12 +400,14 @@ export class TextModel extends Disposable {
         let indentSize = (typeof _newOpts.indentSize !== 'undefined') ? _newOpts.indentSize : this._options.indentSize;
         let insertSpaces = (typeof _newOpts.insertSpaces !== 'undefined') ? _newOpts.insertSpaces : this._options.insertSpaces;
         let trimAutoWhitespace = (typeof _newOpts.trimAutoWhitespace !== 'undefined') ? _newOpts.trimAutoWhitespace : this._options.trimAutoWhitespace;
+        let bracketPairColorizationOptions = (typeof _newOpts.bracketColorizationOptions !== 'undefined') ? _newOpts.bracketColorizationOptions : this._options.bracketPairColorizationOptions;
         let newOpts = new model.TextModelResolvedOptions({
             tabSize: tabSize,
             indentSize: indentSize,
             insertSpaces: insertSpaces,
             defaultEOL: this._options.defaultEOL,
-            trimAutoWhitespace: trimAutoWhitespace
+            trimAutoWhitespace: trimAutoWhitespace,
+            bracketPairColorizationOptions,
         });
         if (this._options.equals(newOpts)) {
             return;
@@ -1027,25 +1059,42 @@ export class TextModel extends Disposable {
         const contentChanges = result.changes;
         this._trimAutoWhitespaceLines = result.trimAutoWhitespaceLineNumbers;
         if (contentChanges.length !== 0) {
-            let rawContentChanges = [];
-            let lineCount = oldLineCount;
+            // We do a first pass to update tokens and decorations
+            // because we want to read decorations in the second pass
+            // where we will emit content change events
+            // and we want to read the final decorations
             for (let i = 0, len = contentChanges.length; i < len; i++) {
                 const change = contentChanges[i];
                 const [eolCount, firstLineLength, lastLineLength] = countEOL(change.text);
                 this._tokens.acceptEdit(change.range, eolCount, firstLineLength);
                 this._tokens2.acceptEdit(change.range, eolCount, firstLineLength, lastLineLength, change.text.length > 0 ? change.text.charCodeAt(0) : 0 /* Null */);
-                this._onDidChangeDecorations.fire();
                 this._decorationsTree.acceptReplace(change.rangeOffset, change.rangeLength, change.text.length, change.forceMoveMarkers);
+            }
+            let rawContentChanges = [];
+            this._increaseVersionId();
+            let lineCount = oldLineCount;
+            for (let i = 0, len = contentChanges.length; i < len; i++) {
+                const change = contentChanges[i];
+                const [eolCount] = countEOL(change.text);
+                this._onDidChangeDecorations.fire();
                 const startLineNumber = change.range.startLineNumber;
                 const endLineNumber = change.range.endLineNumber;
                 const deletingLinesCnt = endLineNumber - startLineNumber;
                 const insertingLinesCnt = eolCount;
                 const editingLinesCnt = Math.min(deletingLinesCnt, insertingLinesCnt);
                 const changeLineCountDelta = (insertingLinesCnt - deletingLinesCnt);
+                const currentEditStartLineNumber = newLineCount - lineCount - changeLineCountDelta + startLineNumber;
+                const firstEditLineNumber = currentEditStartLineNumber;
+                const lastInsertedLineNumber = currentEditStartLineNumber + insertingLinesCnt;
+                const decorationsWithInjectedTextInEditedRange = this._decorationsTree.getInjectedTextInInterval(this, this.getOffsetAt(new Position(firstEditLineNumber, 1)), this.getOffsetAt(new Position(lastInsertedLineNumber, this.getLineMaxColumn(lastInsertedLineNumber))), 0);
+                const injectedTextInEditedRange = LineInjectedText.fromDecorations(decorationsWithInjectedTextInEditedRange);
+                const injectedTextInEditedRangeQueue = new ArrayQueue(injectedTextInEditedRange);
                 for (let j = editingLinesCnt; j >= 0; j--) {
                     const editLineNumber = startLineNumber + j;
-                    const currentEditLineNumber = newLineCount - lineCount - changeLineCountDelta + editLineNumber;
-                    rawContentChanges.push(new ModelRawLineChanged(editLineNumber, this.getLineContent(currentEditLineNumber)));
+                    const currentEditLineNumber = currentEditStartLineNumber + j;
+                    injectedTextInEditedRangeQueue.takeFromEndWhile(r => r.lineNumber > currentEditLineNumber);
+                    const decorationsInCurrentLine = injectedTextInEditedRangeQueue.takeFromEndWhile(r => r.lineNumber === currentEditLineNumber);
+                    rawContentChanges.push(new ModelRawLineChanged(editLineNumber, this.getLineContent(currentEditLineNumber), decorationsInCurrentLine));
                 }
                 if (editingLinesCnt < deletingLinesCnt) {
                     // Must delete some lines
@@ -1053,20 +1102,23 @@ export class TextModel extends Disposable {
                     rawContentChanges.push(new ModelRawLinesDeleted(spliceStartLineNumber + 1, endLineNumber));
                 }
                 if (editingLinesCnt < insertingLinesCnt) {
+                    const injectedTextInEditedRangeQueue = new ArrayQueue(injectedTextInEditedRange);
                     // Must insert some lines
                     const spliceLineNumber = startLineNumber + editingLinesCnt;
                     const cnt = insertingLinesCnt - editingLinesCnt;
                     const fromLineNumber = newLineCount - lineCount - cnt + spliceLineNumber + 1;
+                    let injectedTexts = [];
                     let newLines = [];
                     for (let i = 0; i < cnt; i++) {
                         let lineNumber = fromLineNumber + i;
-                        newLines[lineNumber - fromLineNumber] = this.getLineContent(lineNumber);
+                        newLines[i] = this.getLineContent(lineNumber);
+                        injectedTextInEditedRangeQueue.takeWhile(r => r.lineNumber < lineNumber);
+                        injectedTexts[i] = injectedTextInEditedRangeQueue.takeWhile(r => r.lineNumber === lineNumber);
                     }
-                    rawContentChanges.push(new ModelRawLinesInserted(spliceLineNumber + 1, startLineNumber + insertingLinesCnt, newLines));
+                    rawContentChanges.push(new ModelRawLinesInserted(spliceLineNumber + 1, startLineNumber + insertingLinesCnt, newLines, injectedTexts));
                 }
                 lineCount += changeLineCountDelta;
             }
-            this._increaseVersionId();
             this._emitContentChangedEvent(new ModelRawContentChangedEvent(rawContentChanges, this.getVersionId(), this._isUndoing, this._isRedoing), {
                 changes: contentChanges,
                 eol: this._buffer.getEOL(),
@@ -1092,6 +1144,15 @@ export class TextModel extends Disposable {
     }
     //#endregion
     //#region Decorations
+    handleBeforeFireDecorationsChangedEvent(affectedInjectedTextLines) {
+        // This is called before the decoration changed event is fired.
+        if (affectedInjectedTextLines === null || affectedInjectedTextLines.size === 0) {
+            return;
+        }
+        const affectedLines = [...affectedInjectedTextLines];
+        const lineChangeEvents = affectedLines.map(lineNumber => new ModelRawLineChanged(lineNumber, this.getLineContent(lineNumber), this._getInjectedTextInLine(lineNumber)));
+        this._onDidChangeContentOrInjectedText.fire(new ModelInjectedTextChangedEvent(lineChangeEvents));
+    }
     changeDecorations(callback, ownerId = 0) {
         this._assertNotDisposed();
         try {
@@ -1208,14 +1269,7 @@ export class TextModel extends Disposable {
         if (!node) {
             return null;
         }
-        const versionId = this.getVersionId();
-        if (node.cachedVersionId !== versionId) {
-            this._decorationsTree.resolveNode(node, versionId);
-        }
-        if (node.range === null) {
-            node.range = this._getRangeAt(node.cachedAbsoluteStart, node.cachedAbsoluteEnd);
-        }
-        return node.range;
+        return this._decorationsTree.getNodeRange(this, node);
     }
     getLineDecorations(lineNumber, ownerId = 0, filterOutValidation = false) {
         if (lineNumber < 1 || lineNumber > this.getLineCount()) {
@@ -1228,45 +1282,54 @@ export class TextModel extends Disposable {
         let startLineNumber = Math.min(lineCount, Math.max(1, _startLineNumber));
         let endLineNumber = Math.min(lineCount, Math.max(1, _endLineNumber));
         let endColumn = this.getLineMaxColumn(endLineNumber);
-        return this._getDecorationsInRange(new Range(startLineNumber, 1, endLineNumber, endColumn), ownerId, filterOutValidation);
+        const range = new Range(startLineNumber, 1, endLineNumber, endColumn);
+        const decorations = this._getDecorationsInRange(range, ownerId, filterOutValidation);
+        decorations.push(...this._decorationProvider.getDecorationsInRange(range, ownerId, filterOutValidation));
+        return decorations;
     }
     getDecorationsInRange(range, ownerId = 0, filterOutValidation = false) {
         let validatedRange = this.validateRange(range);
-        return this._getDecorationsInRange(validatedRange, ownerId, filterOutValidation);
+        const decorations = this._getDecorationsInRange(validatedRange, ownerId, filterOutValidation);
+        decorations.push(...this._decorationProvider.getDecorationsInRange(validatedRange, ownerId, filterOutValidation));
+        return decorations;
     }
     getOverviewRulerDecorations(ownerId = 0, filterOutValidation = false) {
-        const versionId = this.getVersionId();
-        const result = this._decorationsTree.search(ownerId, filterOutValidation, true, versionId);
-        return this._ensureNodesHaveRanges(result);
+        return this._decorationsTree.getAll(this, ownerId, filterOutValidation, true);
+    }
+    getInjectedTextDecorations(ownerId = 0) {
+        return this._decorationsTree.getAllInjectedText(this, ownerId);
+    }
+    _getInjectedTextInLine(lineNumber) {
+        const startOffset = this._buffer.getOffsetAt(lineNumber, 1);
+        const endOffset = startOffset + this._buffer.getLineLength(lineNumber);
+        const result = this._decorationsTree.getInjectedTextInInterval(this, startOffset, endOffset, 0);
+        return LineInjectedText.fromDecorations(result).filter(t => t.lineNumber === lineNumber);
     }
     getAllDecorations(ownerId = 0, filterOutValidation = false) {
-        const versionId = this.getVersionId();
-        const result = this._decorationsTree.search(ownerId, filterOutValidation, false, versionId);
-        return this._ensureNodesHaveRanges(result);
+        let result = this._decorationsTree.getAll(this, ownerId, filterOutValidation, false);
+        result = result.concat(this._decorationProvider.getAllDecorations(ownerId, filterOutValidation));
+        return result;
     }
     _getDecorationsInRange(filterRange, filterOwnerId, filterOutValidation) {
         const startOffset = this._buffer.getOffsetAt(filterRange.startLineNumber, filterRange.startColumn);
         const endOffset = this._buffer.getOffsetAt(filterRange.endLineNumber, filterRange.endColumn);
-        const versionId = this.getVersionId();
-        const result = this._decorationsTree.intervalSearch(startOffset, endOffset, filterOwnerId, filterOutValidation, versionId);
-        return this._ensureNodesHaveRanges(result);
+        return this._decorationsTree.getAllInInterval(this, startOffset, endOffset, filterOwnerId, filterOutValidation);
     }
-    _ensureNodesHaveRanges(nodes) {
-        for (let i = 0, len = nodes.length; i < len; i++) {
-            const node = nodes[i];
-            if (node.range === null) {
-                node.range = this._getRangeAt(node.cachedAbsoluteStart, node.cachedAbsoluteEnd);
-            }
-        }
-        return nodes;
-    }
-    _getRangeAt(start, end) {
+    getRangeAt(start, end) {
         return this._buffer.getRangeAt(start, end - start);
     }
     _changeDecorationImpl(decorationId, _range) {
         const node = this._decorations[decorationId];
         if (!node) {
             return;
+        }
+        if (node.options.after) {
+            const oldRange = this.getDecorationRange(decorationId);
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(oldRange.endLineNumber);
+        }
+        if (node.options.before) {
+            const oldRange = this.getDecorationRange(decorationId);
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(oldRange.startLineNumber);
         }
         const range = this._validateRangeRelaxedNoAllocations(_range);
         const startOffset = this._buffer.getOffsetAt(range.startLineNumber, range.startColumn);
@@ -1275,6 +1338,12 @@ export class TextModel extends Disposable {
         node.reset(this.getVersionId(), startOffset, endOffset, range);
         this._decorationsTree.insert(node);
         this._onDidChangeDecorations.checkAffectedAndFire(node.options);
+        if (node.options.after) {
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(range.endLineNumber);
+        }
+        if (node.options.before) {
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(range.startLineNumber);
+        }
     }
     _changeDecorationOptionsImpl(decorationId, options) {
         const node = this._decorations[decorationId];
@@ -1285,6 +1354,14 @@ export class TextModel extends Disposable {
         const nodeIsInOverviewRuler = (options.overviewRuler && options.overviewRuler.color ? true : false);
         this._onDidChangeDecorations.checkAffectedAndFire(node.options);
         this._onDidChangeDecorations.checkAffectedAndFire(options);
+        if (node.options.after || options.after) {
+            const nodeRange = this._decorationsTree.getNodeRange(this, node);
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(nodeRange.endLineNumber);
+        }
+        if (node.options.before || options.before) {
+            const nodeRange = this._decorationsTree.getNodeRange(this, node);
+            this._onDidChangeDecorations.recordLineAffectedByInjectedText(nodeRange.startLineNumber);
+        }
         if (nodeWasInOverviewRuler !== nodeIsInOverviewRuler) {
             // Delete + Insert due to an overview ruler status change
             this._decorationsTree.delete(node);
@@ -1311,6 +1388,14 @@ export class TextModel extends Disposable {
                 } while (!node && oldDecorationIndex < oldDecorationsLen);
                 // (2) remove the node from the tree (if it exists)
                 if (node) {
+                    if (node.options.after) {
+                        const nodeRange = this._decorationsTree.getNodeRange(this, node);
+                        this._onDidChangeDecorations.recordLineAffectedByInjectedText(nodeRange.endLineNumber);
+                    }
+                    if (node.options.before) {
+                        const nodeRange = this._decorationsTree.getNodeRange(this, node);
+                        this._onDidChangeDecorations.recordLineAffectedByInjectedText(nodeRange.startLineNumber);
+                    }
                     this._decorationsTree.delete(node);
                     this._onDidChangeDecorations.checkAffectedAndFire(node.options);
                 }
@@ -1332,6 +1417,12 @@ export class TextModel extends Disposable {
                 node.ownerId = ownerId;
                 node.reset(versionId, startOffset, endOffset, range);
                 node.setOptions(options);
+                if (node.options.after) {
+                    this._onDidChangeDecorations.recordLineAffectedByInjectedText(range.endLineNumber);
+                }
+                if (node.options.before) {
+                    this._onDidChangeDecorations.recordLineAffectedByInjectedText(range.startLineNumber);
+                }
                 this._onDidChangeDecorations.checkAffectedAndFire(options);
                 this._decorationsTree.insert(node);
                 result[newDecorationIndex] = node.id;
@@ -1345,42 +1436,42 @@ export class TextModel extends Disposable {
         }
         return result;
     }
-    setTokens(tokens) {
-        if (tokens.length === 0) {
-            return;
-        }
-        let ranges = [];
-        for (let i = 0, len = tokens.length; i < len; i++) {
-            const element = tokens[i];
-            let minChangedLineNumber = 0;
-            let maxChangedLineNumber = 0;
-            let hasChange = false;
-            for (let j = 0, lenJ = element.tokens.length; j < lenJ; j++) {
-                const lineNumber = element.startLineNumber + j;
-                if (hasChange) {
-                    this._tokens.setTokens(this._languageIdentifier.id, lineNumber - 1, this._buffer.getLineLength(lineNumber), element.tokens[j], false);
-                    maxChangedLineNumber = lineNumber;
-                }
-                else {
-                    const lineHasChange = this._tokens.setTokens(this._languageIdentifier.id, lineNumber - 1, this._buffer.getLineLength(lineNumber), element.tokens[j], true);
-                    if (lineHasChange) {
-                        hasChange = true;
-                        minChangedLineNumber = lineNumber;
+    setTokens(tokens, backgroundTokenizationCompleted = false) {
+        if (tokens.length !== 0) {
+            let ranges = [];
+            for (let i = 0, len = tokens.length; i < len; i++) {
+                const element = tokens[i];
+                let minChangedLineNumber = 0;
+                let maxChangedLineNumber = 0;
+                let hasChange = false;
+                for (let j = 0, lenJ = element.tokens.length; j < lenJ; j++) {
+                    const lineNumber = element.startLineNumber + j;
+                    if (hasChange) {
+                        this._tokens.setTokens(this._languageIdentifier.id, lineNumber - 1, this._buffer.getLineLength(lineNumber), element.tokens[j], false);
                         maxChangedLineNumber = lineNumber;
                     }
+                    else {
+                        const lineHasChange = this._tokens.setTokens(this._languageIdentifier.id, lineNumber - 1, this._buffer.getLineLength(lineNumber), element.tokens[j], true);
+                        if (lineHasChange) {
+                            hasChange = true;
+                            minChangedLineNumber = lineNumber;
+                            maxChangedLineNumber = lineNumber;
+                        }
+                    }
+                }
+                if (hasChange) {
+                    ranges.push({ fromLineNumber: minChangedLineNumber, toLineNumber: maxChangedLineNumber });
                 }
             }
-            if (hasChange) {
-                ranges.push({ fromLineNumber: minChangedLineNumber, toLineNumber: maxChangedLineNumber });
+            if (ranges.length > 0) {
+                this._emitModelTokensChangedEvent({
+                    tokenizationSupportChanged: false,
+                    semanticTokensApplied: false,
+                    ranges: ranges
+                });
             }
         }
-        if (ranges.length > 0) {
-            this._emitModelTokensChangedEvent({
-                tokenizationSupportChanged: false,
-                semanticTokensApplied: false,
-                ranges: ranges
-            });
-        }
+        this.handleTokenizationProgress(backgroundTokenizationCompleted);
     }
     setSemanticTokens(tokens, isComplete) {
         this._tokens2.set(tokens, isComplete);
@@ -2291,6 +2382,62 @@ export class TextModel extends Disposable {
         }
         return { startLineNumber, endLineNumber, indent };
     }
+    getLinesBracketGuides(startLineNumber, endLineNumber, activePosition, highlightActiveGuides, includeNonActiveGuides) {
+        var _a, _b, _c;
+        const result = [];
+        const bracketPairs = this._bracketPairColorizer.getBracketPairsInRange(new Range(startLineNumber, 1, endLineNumber, this.getLineMaxColumn(endLineNumber)));
+        let activeBracketPairRange = undefined;
+        if (activePosition && bracketPairs.length > 0) {
+            const bracketsContainingActivePosition = (startLineNumber <= activePosition.lineNumber && activePosition.lineNumber <= endLineNumber)
+                // Does active position intersect with the view port? -> Intersect bracket pairs with activePosition
+                ? bracketPairs.filter(bp => bp.range.containsPosition(activePosition))
+                : this._bracketPairColorizer.getBracketPairsInRange(Range.fromPositions(activePosition));
+            activeBracketPairRange = (_a = findLast(bracketsContainingActivePosition, 
+            /* Exclude single line bracket pairs for cases such as
+             * ```
+             * function test() {
+             * 		if (true) { | }
+             * }
+             * ```
+             */
+            (i) => i.range.startLineNumber !== i.range.endLineNumber)) === null || _a === void 0 ? void 0 : _a.range;
+        }
+        const queue = new ArrayQueue(bracketPairs);
+        const activeBracketPairs = new Array();
+        const colorProvider = new BracketPairGuidesClassNames();
+        for (let lineNumber = startLineNumber; lineNumber <= endLineNumber; lineNumber++) {
+            const guides = new Array();
+            result.push(guides);
+            for (const pair of queue.takeWhile(b => b.openingBracketRange.startLineNumber < lineNumber) || []) {
+                activeBracketPairs[pair.nestingLevel] = pair;
+            }
+            let lastVisibleColumnCount = Number.MAX_SAFE_INTEGER;
+            // Going backwards, so the last guide is before the others
+            for (let i = activeBracketPairs.length - 1; i >= 0; i--) {
+                const pair = activeBracketPairs[i];
+                if (pair.range.endLineNumber <= lineNumber) {
+                    continue;
+                }
+                const minIndentation = Math.min(this.getVisibleColumnFromPosition(pair.openingBracketRange.getStartPosition()), this.getVisibleColumnFromPosition((_c = (_b = pair.closingBracketRange) === null || _b === void 0 ? void 0 : _b.getStartPosition()) !== null && _c !== void 0 ? _c : pair.range.getEndPosition()));
+                if (minIndentation > lastVisibleColumnCount) {
+                    continue;
+                }
+                lastVisibleColumnCount = minIndentation;
+                const isActive = highlightActiveGuides && activeBracketPairRange &&
+                    pair.range.equalsRange(activeBracketPairRange);
+                const className = colorProvider.getInlineClassNameOfLevel(pair.nestingLevel) +
+                    (isActive ? ' ' + colorProvider.activeClassName : '');
+                if (isActive || includeNonActiveGuides) {
+                    guides.push(new model.IndentGuide(minIndentation, className));
+                }
+            }
+            guides.reverse();
+        }
+        return result;
+    }
+    getVisibleColumnFromPosition(position) {
+        return CursorColumns.visibleColumnFromColumn(this.getLineContent(position.lineNumber), position.column, this._options.tabSize) + 1;
+    }
     getLinesIndentGuides(startLineNumber, endLineNumber) {
         this._assertNotDisposed();
         const lineCount = this.getLineCount();
@@ -2372,6 +2519,18 @@ export class TextModel extends Disposable {
             }
         }
     }
+    //#endregion
+    normalizePosition(position, affinity) {
+        return position;
+    }
+    /**
+     * Gets the column at which indentation stops at a given line.
+     * @internal
+    */
+    getLineIndentColumn(lineNumber) {
+        // Columns start with 1.
+        return indentOfLine(this.getLineContent(lineNumber)) + 1;
+    }
 }
 TextModel.MODEL_SYNC_LIMIT = 50 * 1024 * 1024; // 50 MB
 TextModel.LARGE_FILE_SIZE_THRESHOLD = 20 * 1024 * 1024; // 20 MB;
@@ -2385,40 +2544,108 @@ TextModel.DEFAULT_CREATION_OPTIONS = {
     defaultEOL: 1 /* LF */,
     trimAutoWhitespace: EDITOR_MODEL_DEFAULTS.trimAutoWhitespace,
     largeFileOptimizations: EDITOR_MODEL_DEFAULTS.largeFileOptimizations,
+    bracketPairColorizationOptions: EDITOR_MODEL_DEFAULTS.bracketPairColorizationOptions,
 };
+function indentOfLine(line) {
+    let indent = 0;
+    for (const c of line) {
+        if (c === ' ' || c === '\t') {
+            indent++;
+        }
+        else {
+            break;
+        }
+    }
+    return indent;
+}
+export class BracketPairGuidesClassNames {
+    constructor() {
+        this.activeClassName = 'indent-active';
+    }
+    getInlineClassNameOfLevel(level) {
+        // To support a dynamic amount of colors up to 6 colors,
+        // we use a number that is a lcm of all numbers from 1 to 6.
+        return `bracket-indent-guide lvl-${level % 30}`;
+    }
+}
 //#region Decorations
+function isNodeInOverviewRuler(node) {
+    return (node.options.overviewRuler && node.options.overviewRuler.color ? true : false);
+}
+function isNodeInjectedText(node) {
+    return !!node.options.after || !!node.options.before;
+}
 class DecorationsTrees {
     constructor() {
         this._decorationsTree0 = new IntervalTree();
         this._decorationsTree1 = new IntervalTree();
+        this._injectedTextDecorationsTree = new IntervalTree();
     }
-    intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId) {
+    ensureAllNodesHaveRanges(host) {
+        this.getAll(host, 0, false, false);
+    }
+    _ensureNodesHaveRanges(host, nodes) {
+        for (const node of nodes) {
+            if (node.range === null) {
+                node.range = host.getRangeAt(node.cachedAbsoluteStart, node.cachedAbsoluteEnd);
+            }
+        }
+        return nodes;
+    }
+    getAllInInterval(host, start, end, filterOwnerId, filterOutValidation) {
+        const versionId = host.getVersionId();
+        const result = this._intervalSearch(start, end, filterOwnerId, filterOutValidation, versionId);
+        return this._ensureNodesHaveRanges(host, result);
+    }
+    _intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId) {
         const r0 = this._decorationsTree0.intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId);
         const r1 = this._decorationsTree1.intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId);
-        return r0.concat(r1);
+        const r2 = this._injectedTextDecorationsTree.intervalSearch(start, end, filterOwnerId, filterOutValidation, cachedVersionId);
+        return r0.concat(r1).concat(r2);
     }
-    search(filterOwnerId, filterOutValidation, overviewRulerOnly, cachedVersionId) {
+    getInjectedTextInInterval(host, start, end, filterOwnerId) {
+        const versionId = host.getVersionId();
+        const result = this._injectedTextDecorationsTree.intervalSearch(start, end, filterOwnerId, false, versionId);
+        return this._ensureNodesHaveRanges(host, result).filter((i) => i.options.showIfCollapsed || !i.range.isEmpty());
+    }
+    getAllInjectedText(host, filterOwnerId) {
+        const versionId = host.getVersionId();
+        const result = this._injectedTextDecorationsTree.search(filterOwnerId, false, versionId);
+        return this._ensureNodesHaveRanges(host, result).filter((i) => i.options.showIfCollapsed || !i.range.isEmpty());
+    }
+    getAll(host, filterOwnerId, filterOutValidation, overviewRulerOnly) {
+        const versionId = host.getVersionId();
+        const result = this._search(filterOwnerId, filterOutValidation, overviewRulerOnly, versionId);
+        return this._ensureNodesHaveRanges(host, result);
+    }
+    _search(filterOwnerId, filterOutValidation, overviewRulerOnly, cachedVersionId) {
         if (overviewRulerOnly) {
             return this._decorationsTree1.search(filterOwnerId, filterOutValidation, cachedVersionId);
         }
         else {
             const r0 = this._decorationsTree0.search(filterOwnerId, filterOutValidation, cachedVersionId);
             const r1 = this._decorationsTree1.search(filterOwnerId, filterOutValidation, cachedVersionId);
-            return r0.concat(r1);
+            const r2 = this._injectedTextDecorationsTree.search(filterOwnerId, filterOutValidation, cachedVersionId);
+            return r0.concat(r1).concat(r2);
         }
     }
     collectNodesFromOwner(ownerId) {
         const r0 = this._decorationsTree0.collectNodesFromOwner(ownerId);
         const r1 = this._decorationsTree1.collectNodesFromOwner(ownerId);
-        return r0.concat(r1);
+        const r2 = this._injectedTextDecorationsTree.collectNodesFromOwner(ownerId);
+        return r0.concat(r1).concat(r2);
     }
     collectNodesPostOrder() {
         const r0 = this._decorationsTree0.collectNodesPostOrder();
         const r1 = this._decorationsTree1.collectNodesPostOrder();
-        return r0.concat(r1);
+        const r2 = this._injectedTextDecorationsTree.collectNodesPostOrder();
+        return r0.concat(r1).concat(r2);
     }
     insert(node) {
-        if (getNodeIsInOverviewRuler(node)) {
+        if (isNodeInjectedText(node)) {
+            this._injectedTextDecorationsTree.insert(node);
+        }
+        else if (isNodeInOverviewRuler(node)) {
             this._decorationsTree1.insert(node);
         }
         else {
@@ -2426,15 +2653,31 @@ class DecorationsTrees {
         }
     }
     delete(node) {
-        if (getNodeIsInOverviewRuler(node)) {
+        if (isNodeInjectedText(node)) {
+            this._injectedTextDecorationsTree.delete(node);
+        }
+        else if (isNodeInOverviewRuler(node)) {
             this._decorationsTree1.delete(node);
         }
         else {
             this._decorationsTree0.delete(node);
         }
     }
-    resolveNode(node, cachedVersionId) {
-        if (getNodeIsInOverviewRuler(node)) {
+    getNodeRange(host, node) {
+        const versionId = host.getVersionId();
+        if (node.cachedVersionId !== versionId) {
+            this._resolveNode(node, versionId);
+        }
+        if (node.range === null) {
+            node.range = host.getRangeAt(node.cachedAbsoluteStart, node.cachedAbsoluteEnd);
+        }
+        return node.range;
+    }
+    _resolveNode(node, cachedVersionId) {
+        if (isNodeInjectedText(node)) {
+            this._injectedTextDecorationsTree.resolveNode(node, cachedVersionId);
+        }
+        else if (isNodeInOverviewRuler(node)) {
             this._decorationsTree1.resolveNode(node, cachedVersionId);
         }
         else {
@@ -2444,6 +2687,7 @@ class DecorationsTrees {
     acceptReplace(offset, length, textLength, forceMoveMarkers) {
         this._decorationsTree0.acceptReplace(offset, length, textLength, forceMoveMarkers);
         this._decorationsTree1.acceptReplace(offset, length, textLength, forceMoveMarkers);
+        this._injectedTextDecorationsTree.acceptReplace(offset, length, textLength, forceMoveMarkers);
     }
 }
 function cleanClassName(className) {
@@ -2512,8 +2756,22 @@ export class ModelDecorationMinimapOptions extends DecorationOptions {
         return theme.getColor(color.id);
     }
 }
+export class ModelDecorationInjectedTextOptions {
+    constructor(options) {
+        this.content = options.content || '';
+        this.inlineClassName = options.inlineClassName || null;
+        this.inlineClassNameAffectsLetterSpacing = options.inlineClassNameAffectsLetterSpacing || false;
+    }
+    static from(options) {
+        if (options instanceof ModelDecorationInjectedTextOptions) {
+            return options;
+        }
+        return new ModelDecorationInjectedTextOptions(options);
+    }
+}
 export class ModelDecorationOptions {
     constructor(options) {
+        this.description = options.description;
         this.stickiness = options.stickiness || 0 /* AlwaysGrowsWhenTypingAtEdges */;
         this.zIndex = options.zIndex || 0;
         this.className = options.className ? cleanClassName(options.className) : null;
@@ -2532,6 +2790,8 @@ export class ModelDecorationOptions {
         this.inlineClassNameAffectsLetterSpacing = options.inlineClassNameAffectsLetterSpacing || false;
         this.beforeContentClassName = options.beforeContentClassName ? cleanClassName(options.beforeContentClassName) : null;
         this.afterContentClassName = options.afterContentClassName ? cleanClassName(options.afterContentClassName) : null;
+        this.after = options.after ? ModelDecorationInjectedTextOptions.from(options.after) : null;
+        this.before = options.before ? ModelDecorationInjectedTextOptions.from(options.before) : null;
     }
     static register(options) {
         return new ModelDecorationOptions(options);
@@ -2540,15 +2800,15 @@ export class ModelDecorationOptions {
         return new ModelDecorationOptions(options);
     }
 }
-ModelDecorationOptions.EMPTY = ModelDecorationOptions.register({});
+ModelDecorationOptions.EMPTY = ModelDecorationOptions.register({ description: 'empty' });
 /**
  * The order carefully matches the values of the enum.
  */
 const TRACKED_RANGE_OPTIONS = [
-    ModelDecorationOptions.register({ stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */ }),
-    ModelDecorationOptions.register({ stickiness: 1 /* NeverGrowsWhenTypingAtEdges */ }),
-    ModelDecorationOptions.register({ stickiness: 2 /* GrowsOnlyWhenTypingBefore */ }),
-    ModelDecorationOptions.register({ stickiness: 3 /* GrowsOnlyWhenTypingAfter */ }),
+    ModelDecorationOptions.register({ description: 'tracked-range-always-grows-when-typing-at-edges', stickiness: 0 /* AlwaysGrowsWhenTypingAtEdges */ }),
+    ModelDecorationOptions.register({ description: 'tracked-range-never-grows-when-typing-at-edges', stickiness: 1 /* NeverGrowsWhenTypingAtEdges */ }),
+    ModelDecorationOptions.register({ description: 'tracked-range-grows-only-when-typing-before', stickiness: 2 /* GrowsOnlyWhenTypingBefore */ }),
+    ModelDecorationOptions.register({ description: 'tracked-range-grows-only-when-typing-after', stickiness: 3 /* GrowsOnlyWhenTypingAfter */ }),
 ];
 function _normalizeOptions(options) {
     if (options instanceof ModelDecorationOptions) {
@@ -2557,10 +2817,12 @@ function _normalizeOptions(options) {
     return ModelDecorationOptions.createDynamic(options);
 }
 export class DidChangeDecorationsEmitter extends Disposable {
-    constructor() {
+    constructor(handleBeforeFire) {
         super();
+        this.handleBeforeFire = handleBeforeFire;
         this._actual = this._register(new Emitter());
         this.event = this._actual.event;
+        this._affectedInjectedTextLines = null;
         this._deferredCnt = 0;
         this._shouldFire = false;
         this._affectsMinimap = false;
@@ -2570,19 +2832,29 @@ export class DidChangeDecorationsEmitter extends Disposable {
         this._deferredCnt++;
     }
     endDeferredEmit() {
+        var _a;
         this._deferredCnt--;
         if (this._deferredCnt === 0) {
             if (this._shouldFire) {
+                this.handleBeforeFire(this._affectedInjectedTextLines);
                 const event = {
                     affectsMinimap: this._affectsMinimap,
-                    affectsOverviewRuler: this._affectsOverviewRuler,
+                    affectsOverviewRuler: this._affectsOverviewRuler
                 };
                 this._shouldFire = false;
                 this._affectsMinimap = false;
                 this._affectsOverviewRuler = false;
                 this._actual.fire(event);
             }
+            (_a = this._affectedInjectedTextLines) === null || _a === void 0 ? void 0 : _a.clear();
+            this._affectedInjectedTextLines = null;
         }
+    }
+    recordLineAffectedByInjectedText(lineNumber) {
+        if (!this._affectedInjectedTextLines) {
+            this._affectedInjectedTextLines = new Set();
+        }
+        this._affectedInjectedTextLines.add(lineNumber);
     }
     checkAffectedAndFire(options) {
         if (!this._affectsMinimap) {

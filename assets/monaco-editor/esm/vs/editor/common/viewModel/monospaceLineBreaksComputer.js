@@ -5,6 +5,7 @@
 import * as strings from '../../../base/common/strings.js';
 import { CharacterClassifier } from '../core/characterClassifier.js';
 import { LineBreakData } from './viewModel.js';
+import { LineInjectedText } from '../model/textModelEvents.js';
 class WrappingCharacterClassifier extends CharacterClassifier {
     constructor(BREAK_BEFORE, BREAK_AFTER) {
         super(0 /* NONE */);
@@ -40,28 +41,31 @@ export class MonospaceLineBreaksComputerFactory {
         this.classifier = new WrappingCharacterClassifier(breakBeforeChars, breakAfterChars);
     }
     static create(options) {
-        return new MonospaceLineBreaksComputerFactory(options.get(116 /* wordWrapBreakBeforeCharacters */), options.get(115 /* wordWrapBreakAfterCharacters */));
+        return new MonospaceLineBreaksComputerFactory(options.get(118 /* wordWrapBreakBeforeCharacters */), options.get(117 /* wordWrapBreakAfterCharacters */));
     }
     createLineBreaksComputer(fontInfo, tabSize, wrappingColumn, wrappingIndent) {
         tabSize = tabSize | 0; //@perf
         wrappingColumn = +wrappingColumn; //@perf
-        let requests = [];
-        let previousBreakingData = [];
+        const requests = [];
+        const injectedTexts = [];
+        const previousBreakingData = [];
         return {
-            addRequest: (lineText, previousLineBreakData) => {
+            addRequest: (lineText, injectedText, previousLineBreakData) => {
                 requests.push(lineText);
+                injectedTexts.push(injectedText);
                 previousBreakingData.push(previousLineBreakData);
             },
             finalize: () => {
                 const columnsForFullWidthChar = fontInfo.typicalFullwidthCharacterWidth / fontInfo.typicalHalfwidthCharacterWidth; //@perf
                 let result = [];
                 for (let i = 0, len = requests.length; i < len; i++) {
+                    const injectedText = injectedTexts[i];
                     const previousLineBreakData = previousBreakingData[i];
-                    if (previousLineBreakData) {
+                    if (previousLineBreakData && !previousLineBreakData.injectionOptions && !injectedText) {
                         result[i] = createLineBreaksFromPreviousLineBreaks(this.classifier, previousLineBreakData, requests[i], tabSize, wrappingColumn, columnsForFullWidthChar, wrappingIndent);
                     }
                     else {
-                        result[i] = createLineBreaks(this.classifier, requests[i], tabSize, wrappingColumn, columnsForFullWidthChar, wrappingIndent);
+                        result[i] = createLineBreaks(this.classifier, requests[i], injectedText, tabSize, wrappingColumn, columnsForFullWidthChar, wrappingIndent);
                     }
                 }
                 arrPool1.length = 0;
@@ -292,13 +296,34 @@ function createLineBreaksFromPreviousLineBreaks(classifier, previousBreakingData
     previousBreakingData.wrappedTextIndentLength = wrappedTextIndentLength;
     return previousBreakingData;
 }
-function createLineBreaks(classifier, lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent) {
+function createLineBreaks(classifier, _lineText, injectedTexts, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent) {
+    const lineText = LineInjectedText.applyInjectedText(_lineText, injectedTexts);
+    let injectionOptions;
+    let injectionOffsets;
+    if (injectedTexts && injectedTexts.length > 0) {
+        injectionOptions = injectedTexts.map(t => t.options);
+        injectionOffsets = injectedTexts.map(text => text.column - 1);
+    }
+    else {
+        injectionOptions = null;
+        injectionOffsets = null;
+    }
     if (firstLineBreakColumn === -1) {
-        return null;
+        if (!injectionOptions) {
+            return null;
+        }
+        // creating a `LineBreakData` with an invalid `breakOffsetsVisibleColumn` is OK
+        // because `breakOffsetsVisibleColumn` will never be used because it contains injected text
+        return new LineBreakData([lineText.length], [], 0, injectionOffsets, injectionOptions);
     }
     const len = lineText.length;
     if (len <= 1) {
-        return null;
+        if (!injectionOptions) {
+            return null;
+        }
+        // creating a `LineBreakData` with an invalid `breakOffsetsVisibleColumn` is OK
+        // because `breakOffsetsVisibleColumn` will never be used because it contains injected text
+        return new LineBreakData([lineText.length], [], 0, injectionOffsets, injectionOptions);
     }
     const wrappedTextIndentLength = computeWrappedTextIndentLength(lineText, tabSize, firstLineBreakColumn, columnsForFullWidthChar, wrappingIndent);
     const wrappedLineBreakColumn = firstLineBreakColumn - wrappedTextIndentLength;
@@ -356,13 +381,13 @@ function createLineBreaks(classifier, lineText, tabSize, firstLineBreakColumn, c
         prevCharCode = charCode;
         prevCharCodeClass = charCodeClass;
     }
-    if (breakingOffsetsCount === 0) {
+    if (breakingOffsetsCount === 0 && (!injectedTexts || injectedTexts.length === 0)) {
         return null;
     }
     // Add last segment
     breakingOffsets[breakingOffsetsCount] = len;
     breakingOffsetsVisibleColumn[breakingOffsetsCount] = visibleColumn;
-    return new LineBreakData(breakingOffsets, breakingOffsetsVisibleColumn, wrappedTextIndentLength);
+    return new LineBreakData(breakingOffsets, breakingOffsetsVisibleColumn, wrappedTextIndentLength, injectionOffsets, injectionOptions);
 }
 function computeCharWidth(charCode, visibleColumn, tabSize, columnsForFullWidthChar) {
     if (charCode === 9 /* Tab */) {

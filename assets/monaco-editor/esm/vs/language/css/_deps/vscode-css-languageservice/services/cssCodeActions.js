@@ -7,7 +7,7 @@ import * as nodes from '../parser/cssNodes.js';
 import { difference } from '../utils/strings.js';
 import { Rules } from '../services/lintRules.js';
 import { Command, TextEdit, CodeAction, CodeActionKind, TextDocumentEdit, VersionedTextDocumentIdentifier } from '../cssLanguageTypes.js';
-import * as nls from '../../../fillers/vscode-nls.js';
+import * as nls from './../../../fillers/vscode-nls.js';
 var localize = nls.loadMessageBundle();
 var CSSCodeActions = /** @class */ (function () {
     function CSSCodeActions(cssDataManager) {

@@ -81,4 +81,10 @@ export class HorizontalScrollbar extends AbstractScrollbar {
     writeScrollPosition(target, scrollPosition) {
         target.scrollLeft = scrollPosition;
     }
+    updateOptions(options) {
+        this.updateScrollbarSize(options.horizontal === 2 /* Hidden */ ? 0 : options.horizontalScrollbarSize);
+        this._scrollbarState.setOppositeScrollbarSize(options.vertical === 2 /* Hidden */ ? 0 : options.verticalScrollbarSize);
+        this._visibilityController.setVisibility(options.horizontal);
+        this._scrollByPage = options.scrollByPage;
+    }
 }

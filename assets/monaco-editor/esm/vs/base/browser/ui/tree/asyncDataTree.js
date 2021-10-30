@@ -11,17 +11,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { ComposedTreeDelegate } from './abstractTree.js';
-import { ObjectTree, CompressibleObjectTree } from './objectTree.js';
-import { TreeError, WeakMapper } from './tree.js';
-import { dispose, DisposableStore } from '../../../common/lifecycle.js';
-import { Emitter, Event } from '../../../common/event.js';
-import { timeout, createCancelablePromise, Promises } from '../../../common/async.js';
-import { Iterable } from '../../../common/iterator.js';
 import { ElementsDragAndDropData } from '../list/listView.js';
-import { isPromiseCanceledError, onUnexpectedError } from '../../../common/errors.js';
-import { isFilterResult, getVisibleState } from './indexTreeModel.js';
+import { ComposedTreeDelegate } from './abstractTree.js';
+import { getVisibleState, isFilterResult } from './indexTreeModel.js';
+import { CompressibleObjectTree, ObjectTree } from './objectTree.js';
+import { TreeError, WeakMapper } from './tree.js';
 import { treeItemLoadingIcon } from './treeIcons.js';
+import { createCancelablePromise, Promises, timeout } from '../../../common/async.js';
+import { isPromiseCanceledError, onUnexpectedError } from '../../../common/errors.js';
+import { Emitter, Event } from '../../../common/event.js';
+import { Iterable } from '../../../common/iterator.js';
+import { DisposableStore, dispose } from '../../../common/lifecycle.js';
 function createAsyncDataTreeNode(props) {
     return Object.assign(Object.assign({}, props), { children: [], refreshPromise: undefined, stale: true, slow: false, collapsedByDefault: undefined });
 }

@@ -126,6 +126,7 @@ define('vs/basic-languages/pascal/pascal',["require", "exports"], function (requ
             'shr',
             'specialize',
             'stored',
+            'strict',
             'then',
             'threadvar',
             'to',

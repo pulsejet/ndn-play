@@ -1,10 +1,6 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
 var _a, _b;
+import { compare, compareIgnoreCase, compareSubstring, compareSubstringIgnoreCase } from './strings.js';
 import { URI } from './uri.js';
-import { compareSubstringIgnoreCase, compare, compareSubstring, compareIgnoreCase } from './strings.js';
 export class StringIterator {
     constructor() {
         this._value = '';
@@ -419,18 +415,27 @@ export class TernarySearchTree {
         yield* this._entries(this._root);
     }
     *_entries(node) {
-        if (node) {
-            // left
-            yield* this._entries(node.left);
-            // node
-            if (node.value) {
-                // callback(node.value, this._iter.join(parts));
-                yield [node.key, node.value];
+        // DFS
+        if (!node) {
+            return;
+        }
+        const stack = [node];
+        while (stack.length > 0) {
+            const node = stack.pop();
+            if (node) {
+                if (node.value) {
+                    yield [node.key, node.value];
+                }
+                if (node.left) {
+                    stack.push(node.left);
+                }
+                if (node.mid) {
+                    stack.push(node.mid);
+                }
+                if (node.right) {
+                    stack.push(node.right);
+                }
             }
-            // mid
-            yield* this._entries(node.mid);
-            // right
-            yield* this._entries(node.right);
         }
     }
 }

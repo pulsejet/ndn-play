@@ -315,62 +315,8 @@ export class NFW {
                 this.updateColors();
 
                 if (success) {
-                    if (!this.connections[nextHop]?.face.running) {
-                        const tx = pushable<FwPacket>();
-                        const face = nextNFW.fw.addFace({
-                            rx: tx,
-                            tx: async (iterable) => {
-                                for await (const rpkt of iterable) {
-                                    // Flash nodes only for data
-                                    if (rpkt.l3 instanceof Data) {
-                                        nextNFW.node().extra.pendingTraffic++;
-                                        nextNFW.updateColors();
-                                    }
-
-                                    nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
-                                        if (revSuccess) {
-                                            // Get and get rid of token
-                                            const t = <any>rpkt.token;
-                                            rpkt.token = undefined;
-
-                                            // Remove PIT entry
-                                            const clear = () => {
-                                                if (!this.pit[t]) return;
-                                                clearTimeout(this.pit[t].timer);
-                                                delete this.pit[t];
-                                            };
-
-                                            if (rpkt.l3 instanceof Data) {
-                                                nextNFW.node().extra.pendingTraffic--;
-                                                nextNFW.updateColors();
-                                                (<any>rpkt).hop = nextNFW.nodeId;
-                                                this.faceRx.push(rpkt);
-
-                                                // Remove PIT entry
-                                                clear();
-                                            } else if (rpkt instanceof RejectInterest) {
-                                                if (!this.pit[t]) return;
-
-                                                this.pit[t].count--;
-
-                                                if (this.pit[t].count > 0) {
-                                                    this.pit[t].count--;
-                                                } else {
-                                                    // Reject the PIT entry
-                                                    this.faceRx.push(rpkt);
-                                                    clear();
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            },
-                        });
-                        (<any>face).hops = {};
-                        (<any>face).hops[this.nodeId] = nextHop,
-                        (<any>face).hops[nextHop] = this.nodeId,
-                        this.connections[nextHop] = { face, tx };
-                    }
+                    // Start the face if not running
+                    this.ensureConnectionRunning(nextNFW);
 
                     // Cheat cause we're not really a network
                     // Put the nonce in the DNL of the _next_ NFW,
@@ -390,6 +336,67 @@ export class NFW {
                     this.shark.capturePacket(this.connections[nextHop].face, pkt, "tx");
                 }
             });
+        }
+    }
+
+    private ensureConnectionRunning(nextNFW: NFW) {
+        const nextHop = nextNFW.nodeId;
+
+        if (!this.connections[nextHop]?.face.running) {
+            const tx = pushable<FwPacket>();
+            const face = nextNFW.fw.addFace({
+                rx: tx,
+                tx: async (iterable) => {
+                    for await (const rpkt of iterable) {
+                        // Flash nodes only for data
+                        if (rpkt.l3 instanceof Data) {
+                            nextNFW.node().extra.pendingTraffic++;
+                            nextNFW.updateColors();
+                        }
+
+                        nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
+                            if (revSuccess) {
+                                // Get and get rid of token
+                                const t = <any>rpkt.token;
+                                rpkt.token = undefined;
+
+                                // Remove PIT entry
+                                const clear = () => {
+                                    if (!this.pit[t]) return;
+                                    clearTimeout(this.pit[t].timer);
+                                    delete this.pit[t];
+                                };
+
+                                if (rpkt.l3 instanceof Data) {
+                                    nextNFW.node().extra.pendingTraffic--;
+                                    nextNFW.updateColors();
+                                    (<any>rpkt).hop = nextNFW.nodeId;
+                                    this.faceRx.push(rpkt);
+
+                                    // Remove PIT entry
+                                    clear();
+                                } else if (rpkt instanceof RejectInterest) {
+                                    if (!this.pit[t]) return;
+
+                                    this.pit[t].count--;
+
+                                    if (this.pit[t].count > 0) {
+                                        this.pit[t].count--;
+                                    } else {
+                                        // Reject the PIT entry
+                                        this.faceRx.push(rpkt);
+                                        clear();
+                                    }
+                                }
+                            }
+                        });
+                    }
+                },
+            });
+            (<any>face).hops = {};
+            (<any>face).hops[this.nodeId] = nextHop,
+            (<any>face).hops[nextHop] = this.nodeId,
+            this.connections[nextHop] = { face, tx };
         }
     }
 

@@ -355,6 +355,12 @@ export class NFW {
                         }
 
                         nextNFW.addLinkTraffic(this.nodeId, (revSuccess) => {
+                            // Clear pending traffic even if lost packet
+                            if (rpkt.l3 instanceof Data) {
+                                nextNFW.nodeExtra.pendingTraffic--;
+                                nextNFW.updateColors();
+                            }
+
                             if (revSuccess) {
                                 // Get and get rid of token
                                 const t = <any>rpkt.token;
@@ -368,8 +374,6 @@ export class NFW {
                                 };
 
                                 if (rpkt.l3 instanceof Data) {
-                                    nextNFW.nodeExtra.pendingTraffic--;
-                                    nextNFW.updateColors();
                                     (<any>rpkt).hop = nextNFW.nodeId;
                                     nextNFW.getConnection(this).tx.push(rpkt);
 

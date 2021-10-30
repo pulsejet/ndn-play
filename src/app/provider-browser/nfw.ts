@@ -4,12 +4,14 @@ import * as vis from 'vis-network/standalone';
 import { Endpoint, Producer } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
-import { Pit } from "@ndn/fw/lib/pit";
+
 import { Encoder, toUtf8 } from '@ndn/tlv';
 import { KeyChain } from "@ndn/keychain";
 import { Topology } from "../topo/topo";
-import pushable from "it-pushable";
 import { ProviderBrowser } from "./provider-browser";
+
+import { ForwarderImpl } from "@ndn/fw/lib/forwarder";
+import pushable from "it-pushable";
 
 export class NFW {
     /** NDNts forwarder */
@@ -271,7 +273,8 @@ export class NFW {
         }
 
         // Aggregate
-        if ((<Pit>this.fw.pit).lookup(pkt, false)) {
+        const fwImpl = <ForwarderImpl>this.fw;
+        if ((fwImpl.pit).lookup(pkt, false)) {
             return;
         }
 

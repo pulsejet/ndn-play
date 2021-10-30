@@ -15,12 +15,12 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "allowSyntheticDefaultImports": true,
-    "target": "es2015",
+    "target": "es2020",
     "module": "es2020",
     "lib": [
-      "es2019",
-      "dom"
-    ]
+      "es2020"
+    ],
+    "skipLibCheck": true,
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

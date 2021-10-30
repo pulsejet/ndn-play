@@ -38,9 +38,9 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    setTimeout(_ => {
+    window.setTimeout(() => {
       this.viewPort.scrollToOffset(this.gs.capturedListScrollOffset);
-    });
+    }, 0);
 
     this.viewPort.elementScrolled().subscribe(_ => {
       this.gs.capturedListScrollOffset = this.viewPort.measureScrollOffset();

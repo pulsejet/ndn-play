@@ -1,5 +1,6 @@
 declare namespace t {
 /// <reference types="node" />
+/// <reference types="web" />
 /**
  * Use this symbol to delete properies in deepObjectAssign.
  */
@@ -1183,7 +1184,7 @@ export class Network {
    * @param data network data
    * @param [options] optional network options
    */
-  constructor(container: HTMLElement, data: Data$1, options?: Options$4);
+  constructor(container: HTMLElement, data: Data$1, options?: Options$2);
 
   /**
    * 	Remove the network from the DOM and remove all Hammer bindings and references.
@@ -1207,7 +1208,7 @@ export class Network {
    *
    * @param options network options
    */
-  setOptions(options: Options$4): void;
+  setOptions(options: Options$2): void;
 
   /**
    * Set an event listener.
@@ -1448,7 +1449,7 @@ export class Network {
 
   /**
    * Returns the x y positions in canvas space of a requested node or array of nodes.
-   *
+   * 
    * @remarks
    * - If `nodeIds` is supplied as a single id that does not correspond
    * to a node in the network, this function will return an empty object.
@@ -1462,13 +1463,13 @@ export class Network {
 
   /**
    * Retrieves the x y position of a specific id.
-   *
+   * 
    * @param id - a node id
    * @returns the x y position in canvas space of the requested node.
-   *
-   * @throws {@link TypeError}
+   * 
+   * @throws {@link TypeError} 
    *  Thrown if an undefined or null id is provided as a parameter.
-   * @throws {@link ReferenceError}
+   * @throws {@link ReferenceError} 
    *  Thrown if the id provided as a parameter does not correspond to a node in the network.
    */
   getPosition(nodeId: IdType): Position;
@@ -1895,7 +1896,7 @@ interface LocaleMessages {
   editClusterError: string;
 }
 
-interface Options$4 {
+interface Options$2 {
   autoResize?: boolean;
 
   width?: string;
@@ -2279,9 +2280,10 @@ interface Decodable<R> {
 }
 /** TLV decoder. */
 export class Decoder {
-    private input;
+    private readonly input;
     /** Determine whether end of input has been reached. */
     get eof(): boolean;
+    private readonly dv;
     private offset;
     constructor(input: Uint8Array);
     /** Read TLV structure. */
@@ -2294,42 +2296,36 @@ export class Decoder {
     private skipValue;
 }
 export namespace Decoder {
-    /** Types acceptable to Decoder.from(). */
-    type Input = Decoder | Uint8Array;
-    /** Test whether obj is Decoder.Input. */
-    function isInput(obj: unknown): obj is Input;
-    /** Construct from Decoder.Input, or return existing Decoder. */
-    function from(obj: Input): Decoder;
     /** Decoded TLV. */
     interface Tlv {
-        /** TLV-TYPE */
+        /** TLV-TYPE. */
         readonly type: number;
-        /** TLV-LENGTH */
+        /** TLV-LENGTH. */
         readonly length: number;
-        /** TLV-VALUE */
+        /** TLV-VALUE. */
         readonly value: Uint8Array;
-        /** TLV buffer */
+        /** TLV buffer. */
         readonly tlv: Uint8Array;
-        /** sizeof tlv */
+        /** Size of TLV. */
         readonly size: number;
-        /** TLV as decoder */
+        /** TLV as decoder. */
         readonly decoder: Decoder;
-        /** TLV-VALUE as decoder */
+        /** TLV-VALUE as decoder. */
         readonly vd: Decoder;
-        /** TLV-VALUE as non-negative integer */
+        /** TLV-VALUE as non-negative integer. */
         readonly nni: number;
-        /** TLV-VALUE as UTF-8 string */
+        /** TLV-VALUE as non-negative integer bigint. */
+        readonly nniBig: bigint;
+        /** TLV-VALUE as UTF-8 string. */
         readonly text: string;
-        /** siblings before this TLV */
+        /** Siblings before this TLV. */
         readonly before: Uint8Array;
-        /** siblings after this TLV */
+        /** Siblings after this TLV. */
         readonly after: Uint8Array;
     }
 }
 
-/**
- * An object that knows how to prepend itself to an Encoder.
- */
+/** An object that knows how to prepend itself to an Encoder. */
 interface EncodableObj {
     encodeTo: (encoder: Encoder) => void;
 }
@@ -2341,9 +2337,7 @@ interface EncodableObj {
  * Subsequent items are Encodables for TLV-VALUE.
  */
 export type EncodableTlv = [number, ...any[]];
-/**
- * An object acceptable to Encoder.encode().
- */
+/** An object acceptable to Encoder.encode(). */
 export type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
 /** TLV encoder that accepts objects in reverse order. */
 export class Encoder {
@@ -2378,37 +2372,23 @@ export class Encoder {
     private grow;
 }
 export namespace Encoder {
+    /** Create a DataView over a Uint8Array. */
     function asDataView(a: Uint8Array): DataView;
+    namespace DataViewPolyfill {
+        function getBigUint64(dv: DataView, byteOffset: number, littleEndian?: boolean): bigint;
+        function setBigUint64(dv: DataView, byteOffset: number, value: bigint, littleEndian?: boolean): void;
+    }
+    /** DataView.prototype.getBigUint64 with polyfill for iOS 14. */
+    const getBigUint64: (dv: DataView, byteOffset: number, littleEndian?: boolean) => bigint;
+    /** DataView.prototype.setBigUint64 with polyfill for iOS 14. */
+    const setBigUint64: (dv: DataView, byteOffset: number, value: bigint, littleEndian?: boolean) => void;
     const OmitEmpty: unique symbol;
+    /** Encode a single object into Uint8Array. */
     function encode(obj: Encodable | readonly Encodable[], initBufSize?: number): Uint8Array;
     /** Extract the encoding output of an element while writing to a larger encoder. */
     function extract(obj: Encodable | readonly Encodable[], cb: (output: Uint8Array) => void): Encodable;
 }
 
-/** Invoked when a matching TLV element is found. */
-export type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
-interface Rule$1<T> {
-    cb: ElementCallback<T>;
-    /**
-     * Expected order of appearance.
-     * Default to the order in which rules were added to EvDecoder.
-     */
-    order: number;
-    /** Whether TLV element must appear at least once. */
-    required: boolean;
-    /** Whether TLV element may appear more than once. */
-    repeat: boolean;
-}
-export type RuleOptions<T> = Partial<Omit<Rule$1<T>, "cb">>;
-/**
- * Invoked when a TLV element does not match any rule.
- * 'order' denotes the order number of last recognized TLV element.
- * Return true if this TLV element is accepted, or false to follow evolvability guidelines.
- */
-export type UnknownElementCallback<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
-export type IsCriticalCallback = (tt: number) => boolean;
-export type TopElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
-export type TargetCallback<T> = (target: T) => void;
 /** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
 export class EvDecoder<T> {
     private readonly typeName;
@@ -2419,13 +2399,13 @@ export class EvDecoder<T> {
     private isCriticalCb;
     private unknownCb;
     /** Callbacks to receive top-level TLV before decoding TLV-VALUE. */
-    readonly beforeTopCallbacks: TopElementCallback<T>[];
+    readonly beforeTopCallbacks: Array<EvDecoder.TopElementCallback<T>>;
     /** Callbacks before decoding TLV-VALUE. */
-    readonly beforeValueCallbacks: TargetCallback<T>[];
+    readonly beforeValueCallbacks: Array<EvDecoder.TargetCallback<T>>;
     /** Callbacks after decoding TLV-VALUE. */
-    readonly afterValueCallbacks: TargetCallback<T>[];
+    readonly afterValueCallbacks: Array<EvDecoder.TargetCallback<T>>;
     /** Callbacks to receive top-level TLV after decoding TLV-VALUE. */
-    readonly afterTopCallbacks: TopElementCallback<T>[];
+    readonly afterTopCallbacks: Array<EvDecoder.TopElementCallback<T>>;
     /**
      * Constructor.
      * @param typeName type name, used in error messages.
@@ -2438,26 +2418,50 @@ export class EvDecoder<T> {
      * @param cb callback to handle element TLV.
      * @param options additional rule options.
      */
-    add(tt: number, cb: ElementCallback<T> | EvDecoder<T>, options?: RuleOptions<T>): this;
+    add(tt: number, cb: EvDecoder.ElementCallback<T> | EvDecoder<T>, options?: Partial<EvDecoder.RuleOptions>): this;
     /** Set callback to determine whether TLV-TYPE is critical. */
-    setIsCritical(cb: IsCriticalCallback): this;
+    setIsCritical(cb: EvDecoder.IsCriticalCallback): this;
     /** Set callback to handle unknown elements. */
-    setUnknown(cb: UnknownElementCallback<T>): this;
+    setUnknown(cb: EvDecoder.UnknownElementCallback<T>): this;
     /** Decode TLV to target object. */
     decode<R extends T = T>(target: R, decoder: Decoder): R;
     /** Decode TLV-VALUE to target object. */
     decodeValue<R extends T = T>(target: R, vd: Decoder): R;
     private handleUnrecognized;
 }
+export namespace EvDecoder {
+    /** Invoked when a matching TLV element is found. */
+    type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
+    interface RuleOptions {
+        /**
+         * Expected order of appearance.
+         * Default to the order in which rules were added to EvDecoder.
+         */
+        order: number;
+        /** Whether TLV element must appear at least once. */
+        required: boolean;
+        /** Whether TLV element may appear more than once. */
+        repeat: boolean;
+    }
+    /**
+     * Invoked when a TLV element does not match any rule.
+     * 'order' denotes the order number of last recognized TLV element.
+     * Return true if this TLV element is accepted, or false to follow evolvability guidelines.
+     */
+    type UnknownElementCallback<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
+    type IsCriticalCallback = (tt: number) => boolean;
+    type TopElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
+    type TargetCallback<T> = (target: T) => void;
+}
 
 /** An TLV element that allows extension sub element. */
 interface Extensible {
-    [Extensible.TAG]: Extensible.Records;
+    readonly [Extensible.TAG]: ExtensionRegistry<any>;
 }
 export namespace Extensible {
     const TAG: unique symbol;
-    type Records = Map<number, unknown>;
-    function newRecords(): Map<number, unknown>;
+    /** Clone extension fields of src to dst. */
+    function cloneRecord(dst: Extensible, src: Extensible): void;
 }
 /**
  * An extension sub element on a parent TLV element.
@@ -2485,15 +2489,23 @@ interface Extension<T, R = unknown> {
     encode: (obj: T, value: R) => Encodable;
 }
 export namespace Extension {
+    /** Retrieve value of an extension field. */
     function get(obj: Extensible, tt: number): unknown;
+    /** Assign value of an extension field. */
     function set(obj: Extensible, tt: number, value: unknown): void;
+    /** Clear value of an extension field. */
     function clear(obj: Extensible, tt: number): void;
 }
+/** Registry of known extension fields of a parent TLV element. */
 export class ExtensionRegistry<T extends Extensible> {
-    private table;
-    registerExtension: <R>(ext: Extension<T, R>) => void;
-    unregisterExtension: (tt: number) => void;
-    decodeUnknown: (target: T, tlv: Decoder.Tlv, order: number) => boolean;
+    private readonly table;
+    /** Add an extension. */
+    readonly registerExtension: <R>(ext: Extension<T, R>) => void;
+    /** Remove an extension. */
+    readonly unregisterExtension: (tt: number) => void;
+    /** UnknownElementCallback for EvDecoder. */
+    readonly decodeUnknown: (target: T, tlv: Decoder.Tlv, order: number) => boolean;
+    /** Encode extension fields. */
     encode(source: T): Encodable[];
 }
 
@@ -2518,7 +2530,7 @@ export class Nni8Number {
     encodeTo(encoder: Encoder): void;
 }
 export type Len = 1 | 2 | 4 | 8;
-interface Options$3<LenT = Len> {
+interface Options$1<LenT = Len> {
     /** If set, use/enforce specific TLV-LENGTH. */
     len?: LenT;
     /** If true, allow approximate integers. */
@@ -2531,16 +2543,16 @@ export const EncodeNniClass: {
     8: typeof Nni8Number;
 };
 /** Create Encodable from non-negative integer. */
-export function NNI(n: number | bigint, { len, unsafe, }?: Options$3<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
+export function NNI(n: number | bigint, { len, unsafe, }?: Options$1<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
 export namespace NNI {
     /** Determine if len is a valid length of encoded NNI. */
     function isValidLength(len: number): boolean;
     /** Decode non-negative integer as number. */
-    function decode(value: Uint8Array, opts?: Options$3 & {
+    function decode(value: Uint8Array, opts?: Options$1 & {
         big?: false;
     }): number;
     /** Decode non-negative integer as bigint. */
-    function decode(value: Uint8Array, opts: Options$3 & {
+    function decode(value: Uint8Array, opts: Options$1 & {
         big: true;
     }): bigint;
     /** Error if n exceeds [0,MAX_SAFE_INTEGER] range. */
@@ -2570,7 +2582,6 @@ type tlv_EncodableObj = EncodableObj;
 type tlv_EncodableTlv = EncodableTlv;
 type tlv_Encodable = Encodable;
 export const tlv_Encoder: typeof Encoder;
-type tlv_EvDecoder<_0> = EvDecoder<_0>;
 export const tlv_EvDecoder: typeof EvDecoder;
 export const tlv_Extensible: typeof Extensible;
 export const tlv_Extension: typeof Extension;
@@ -2749,7 +2760,7 @@ export namespace Name {
  * @param name target name.
  * @param get callback function to retrieve entry by hexadecimal name prefix.
  */
-export function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Entry | undefined;
+export function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Iterable<Entry>;
 
 /**
  * Functions to print and parse names in alternate/pretty URI syntax.
@@ -2812,7 +2823,9 @@ export const ParamsDigest: ParamsDigestComp;
 export class FwHint {
     static decodeValue(value: Uint8Array): FwHint;
     constructor(copy?: FwHint);
+    constructor(name: NameLike);
     constructor(delegations: readonly FwHint.Delegation[]);
+    private add;
     get delegations(): readonly FwHint.Delegation[];
     private readonly m;
     encodeTo(encoder: Encoder): void;
@@ -2854,8 +2867,8 @@ export class SigInfo {
     keyLocator?: KeyLocator;
     nonce?: Uint8Array;
     time?: number;
-    seqNum?: number;
-    [Extensible.TAG]: Map<number, unknown>;
+    seqNum?: bigint;
+    readonly [Extensible.TAG]: ExtensionRegistry<SigInfo>;
     /**
      * Construct from flexible arguments.
      *
@@ -2880,7 +2893,7 @@ export namespace SigInfo {
     /** Generate a random nonce. */
     function generateNonce(size?: number): Uint8Array;
     function Time(v?: number): CtorTag$2;
-    function SeqNum(v: number): {
+    function SeqNum(v: bigint): {
         [ctorAssign$2](si: SigInfo): void;
     };
     type CtorArg = SigInfo | number | KeyLocator.CtorArg | CtorTag$2;
@@ -3180,7 +3193,7 @@ export const noopEncryption: Encrypter<any> & Decrypter<any>;
 interface KeyState {
     nonces?: Set<string>;
     time?: number;
-    seqNum?: number;
+    seqNum?: bigint;
 }
 interface Rule {
     update: (si: SigInfo, state: KeyState) => void;
@@ -3315,9 +3328,9 @@ export namespace SignedInterestPolicy {
     interface SeqNumOptions {
         /**
          * Initial sequence number.
-         * @default 0
+         * @default 0n
          */
-        initialSeqNum?: number;
+        initialSeqNum?: bigint;
     }
     /**
      * Create a rule to assign or check SigSeqNum.
@@ -3537,368 +3550,7 @@ interface TypedEventEmitter<Events> {
   setMaxListeners (maxListeners: number): this
 }
 
-/**
- * Mnemonist DefaultMap Typings
- * =============================
- */
-export class DefaultMap<K, V> implements Iterable<[K, V]> {
-
-  // Members
-  size: number;
-
-  // Constructor
-  constructor(factory: (key: K, index: number) => V);
-
-  // Methods
-  clear(): void;
-  set(key: K, value: V): this;
-  delete(key: K): boolean;
-  has(key: K): boolean;
-  get(key: K): V;
-  peek(key: K): V | undefined;
-  forEach(callback: (value: V, key: K, map: this) => void, scope?: any): void;
-  keys(): IterableIterator<K>;
-  values(): IterableIterator<V>;
-  entries(): IterableIterator<[K, V]>;
-  [Symbol.iterator](): IterableIterator<[K, V]>;
-  inspect(): any;
-
-  // Statics
-  static autoIncrement(): number;
-}
-
-export class FibEntry {
-    readonly nexthops: Set<FaceImpl>;
-}
-export class Fib {
-    readonly table: DefaultMap<string, FibEntry>;
-    insert(face: FaceImpl, nameHex: string): void;
-    delete(face: FaceImpl, nameHex: string): void;
-    lpm(name: Name): FibEntry | undefined;
-}
-
-/** Downstream of pending Interest. */
-interface PitDn {
-    /** How many times this downstream has (re)transmitted the Interest. */
-    nRx: number;
-    /** Expiration time of this pending Interest at downstream. */
-    expire: number;
-    /** Last nonce from this downstream. */
-    nonce: number;
-    /** Last InterestToken from this downstream. */
-    token: unknown;
-}
-/** Aggregated pending Interests from one or more downstream faces. */
-export class PitEntry {
-    private readonly pit;
-    readonly key: string;
-    /** Representative Interest. */
-    readonly interest: Interest;
-    /** Outgoing numeric PIT token. */
-    token?: number;
-    /** Downstream records. */
-    dnRecords: DefaultMap<FaceImpl, PitDn>;
-    /** Last expiration time among downstream. */
-    lastExpire: number;
-    /** Entry expiration timer; should match this.lastExpire. */
-    expireTimer?: NodeJS.Timer | number;
-    constructor(pit: Pit, key: string, interest: Interest);
-    /** Record Interest from downstream. */
-    receiveInterest(face: FaceImpl, { l3: interest, token }: FwPacket<Interest>): void;
-    /** Record Interest cancellation from downstream. */
-    cancelInterest(face: FaceImpl): void;
-    /** Forward Interest to upstream. */
-    forwardInterest(face: FaceImpl): void;
-    /** Determine which downstream faces should receive Data from upstream. */
-    returnData(up: FaceImpl): Iterable<{
-        dn: FaceImpl;
-        token: unknown;
-    }>;
-    private updateExpire;
-    private expire;
-}
-/** Pending Interest table. */
-export class Pit {
-    readonly byName: Map<string, PitEntry>;
-    readonly byToken: Map<number, PitEntry>;
-    private lastToken;
-    /**
-     * true: try to match Data without token.
-     * false: Data without token.
-     * callback function: invoked when Data without token matches PIT entry.
-     *   return true: deliver matched PIT entry.
-     *   return false: drop Data.
-     */
-    dataNoTokenMatch: boolean | ((data: Data, key: string) => boolean);
-    private generateToken;
-    insertEntry(entry: PitEntry): void;
-    eraseEntry(entry: PitEntry): void;
-    /** Find or insert entry. */
-    lookup(interest: FwPacket<Interest>): PitEntry;
-    /** Find entry, disallow insertion. */
-    lookup(interest: FwPacket<Interest>, canInsert: false): PitEntry | undefined;
-    /**
-     * Satisfy pending Interests with incoming Data.
-     * @returns true if Data satisfies any pending Interest, or false if Data is unsolicited.
-     */
-    satisfy(face: FaceImpl, { l3: data, token }: FwPacket<Data>): Promise<boolean>;
-    private findPotentialMatches;
-}
-
-export namespace pushable {
-  export interface Pushable<T> extends AsyncIterable<T> {
-    push: (value: T) => this,
-    end: (err?: Error) => this
-  }
-
-  export interface PushableV<T> extends AsyncIterable<T[]> {
-    push: (value: T) => this,
-    end: (err?: Error) => this
-  }
-
-  type Options = {
-    onEnd?: (err?: Error) => void,
-    writev?: false
-  }
-
-  type OptionsV = {
-    onEnd?: (err?: Error) => void,
-    writev: true
-  }
-}
-
-export function pushable<T> (options?: pushable.Options): pushable.Pushable<T>
-export function pushable<T> (options: pushable.OptionsV): pushable.PushableV<T>
-
-interface MultiMapConstructor {
-  new <K, V>(container: SetConstructor): MultiMap<K, V, Set<V>>;
-  new <K, V>(container?: ArrayConstructor): MultiMap<K, V, V[]>;
-
-  from<K, V>(
-    iterable: Iterable<[K, V]> | {[key: string]: V},
-    Container: SetConstructor
-  ): MultiMap<K, V, Set<V>>;
-  from<K, V>(
-    iterable: Iterable<[K, V]> | {[key: string]: V},
-    Container?: ArrayConstructor
-  ): MultiMap<K, V, V[]>;
-}
-/**
- * Mnemonist MultiMap Typings
- * ===========================
- */
-
-interface MultiMap<K, V, C extends V[] | Set<V> = V[]> extends Iterable<[K, V]> {
-
-  // Members
-  dimension: number;
-  size: number;
-
-  // Methods
-  clear(): void;
-  set(key: K, value: V): this;
-  delete(key: K): boolean;
-  remove(key: K, value: V): boolean;
-  has(key: K): boolean;
-  get(key: K): C | undefined;
-  multiplicity(key: K): number;
-  forEach(callback: (value: V, key: K, map: this) => void, scope?: any): void;
-  forEachAssociation(callback: (value: C, key: K, map: this) => void, scope?: any): void;
-  keys(): IterableIterator<K>;
-  values(): IterableIterator<V>;
-  entries(): IterableIterator<[K, V]>;
-  containers(): IterableIterator<C>;
-  associations(): IterableIterator<[K, C]>;
-  [Symbol.iterator](): IterableIterator<[K, V]>;
-  inspect(): any;
-  toJSON(): any;
-}
-
-export const MultiMap: MultiMapConstructor;
-
-// Type definitions for retry 0.12
-// Project: https://github.com/tim-kos/node-retry
-// Definitions by: Stan Goldmann <https://github.com/krenor>
-//                 BendingBender <https://github.com/BendingBender>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.3
-
-interface RetryOperation {
-    /**
-     * Returns an array of all errors that have been passed to `retryOperation.retry()` so far.
-     * The returning array has the errors ordered chronologically based on when they were passed to
-     * `retryOperation.retry()`, which means the first passed error is at index zero and the last is at the last index.
-     */
-    errors(): Error[];
-
-    /**
-     * A reference to the error object that occured most frequently.
-     * Errors are compared using the `error.message` property.
-     * If multiple error messages occured the same amount of time, the last error object with that message is returned.
-     *
-     * @return If no errors occured so far the value will be `null`.
-     */
-    mainError(): Error | null;
-
-    /**
-     * Defines the function that is to be retried and executes it for the first time right away.
-     *
-     * @param fn The function that is to be retried. `currentAttempt` represents the number of attempts
-     * callback has been executed so far.
-     * @param [timeoutOps.timeout] A timeout in milliseconds.
-     * @param [timeoutOps.callback] Callback to execute when the operation takes longer than the timeout.
-     */
-    attempt(fn: (currentAttempt: number) => void, timeoutOps?: AttemptTimeoutOptions): void;
-
-    /**
-     * Returns `false` when no `error` value is given, or the maximum amount of retries has been reached.
-     * Otherwise it returns `true`, and retries the operation after the timeout for the current attempt number.
-     */
-    retry(err?: Error): boolean;
-
-    /**
-     * Stops the operation being retried. Useful for aborting the operation on a fatal error etc.
-     */
-    stop(): void;
-
-    /**
-     * Resets the internal state of the operation object, so that you can call `attempt()` again as if
-     * this was a new operation object.
-     */
-    reset(): void;
-
-    /**
-     * Returns an int representing the number of attempts it took to call `fn` before it was successful.
-     */
-    attempts(): number;
-}
-
-interface AttemptTimeoutOptions {
-    /**
-     * A timeout in milliseconds.
-     */
-    timeout?: number;
-    /**
-     * Callback to execute when the operation takes longer than the timeout.
-     */
-    callback?(): void;
-}
-
-interface OperationOptions extends TimeoutsOptions {
-    /**
-     * Whether to retry forever.
-     * @default false
-     */
-    forever?: boolean;
-    /**
-     * Whether to [unref](https://nodejs.org/api/timers.html#timers_unref) the setTimeout's.
-     * @default false
-     */
-    unref?: boolean;
-    /**
-     * The maximum time (in milliseconds) that the retried operation is allowed to run.
-     * @default Infinity
-     */
-    maxRetryTime?: number;
-}
-
-interface TimeoutsOptions extends CreateTimeoutOptions {
-    /**
-     * The maximum amount of times to retry the operation.
-     * @default 10
-     */
-    retries?: number;
-}
-
-interface CreateTimeoutOptions {
-    /**
-     * The exponential factor to use.
-     * @default 2
-     */
-    factor?: number;
-    /**
-     * The number of milliseconds before starting the first retry.
-     * @default 1000
-     */
-    minTimeout?: number;
-    /**
-     * The maximum number of milliseconds between two retries.
-     * @default Infinity
-     */
-    maxTimeout?: number;
-    /**
-     * Randomizes the timeouts by multiplying a factor between 1-2.
-     * @default false
-     */
-    randomize?: boolean;
-}
-
-/**
- * Manage advertised prefix of the forwarder.
- *
- * This class keeps track of what prefixes are announced by the owning forwarder.
- * It accepts announcements from faces attached to the forwarder, and then informs
- * each destination on what prefixes should be advertised.
- */
-export class Readvertise {
-    readonly fw: ForwarderImpl;
-    constructor(fw: ForwarderImpl);
-    readonly announcements: MultiMap<string, FaceImpl, Set<FaceImpl>>;
-    readonly destinations: Set<ReadvertiseDestination<{}>>;
-    addAnnouncement(face: FaceImpl, name: Name, nameHex: string): void;
-    removeAnnouncement(face: FaceImpl, name: Name | undefined, nameHex: string): void;
-}
-/**
- * A destination of prefix advertisement.
- *
- * Generally, a prefix advertised to a destination would cause Interests matching the prefix
- * to come to the forwarder. aka prefix registration.
- */
-export abstract class ReadvertiseDestination<State extends {} = {}> {
-    private readonly retryOptions;
-    private readvertise?;
-    protected readonly table: Map<string, ReadvertiseDestination.Record<State>>;
-    protected readonly queue: pushable.Pushable<string>;
-    protected closed: boolean;
-    constructor(retryOptions?: ReadvertiseDestination.RetryOptions);
-    /** Enable and attach to a forwarder. */
-    enable(fw: Forwarder): void;
-    /**
-     * Disable and detach from forwarder.
-     *
-     * Once detached, this instance is no longer usable.
-     */
-    disable(): void;
-    /** Set a prefix to be advertised. */
-    advertise(name: Name, nameHex: string): void;
-    /** Set a prefix to be withdrawn. */
-    withdraw(name: Name, nameHex: string): void;
-    private restart;
-    private process;
-    /** Create per-prefix state. */
-    protected makeState(name: Name, nameHex: string): State;
-    /** Advertise a prefix once. */
-    protected abstract doAdvertise(name: Name, state: State, nameHex: string): Promise<void>;
-    /** Withdraw a prefix once. */
-    protected abstract doWithdraw(name: Name, state: State, nameHex: string): Promise<void>;
-}
-export namespace ReadvertiseDestination {
-    type RetryOptions = OperationOptions;
-    enum Status {
-        ADVERTISING = 0,
-        ADVERTISED = 1,
-        WITHDRAWING = 2,
-        WITHDRAWN = 3
-    }
-    interface Record<State> {
-        name: Name;
-        status: Status;
-        retry?: RetryOperation;
-        state: State;
-    }
-}
-
-interface Events$6 {
+interface Events$7 {
     /** Emitted before adding face. */
     faceadd: (face: FwFace) => void;
     /** Emitted after removing face. */
@@ -3916,114 +3568,102 @@ interface Events$6 {
     /** Emitted before packet transmission. */
     pkttx: (face: FwFace, pkt: FwPacket) => void;
 }
-export const ForwarderImpl_base: new () => TypedEventEmitter<Events$6>;
-export class ForwarderImpl extends ForwarderImpl_base implements Forwarder {
-    readonly options: Forwarder.Options;
+/** Forwarding plane. */
+interface Forwarder extends TypedEventEmitter<Events$7> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
-    readonly faces: Set<FaceImpl>;
-    readonly fib: Fib;
-    readonly pit: Pit;
-    readonly readvertise: Readvertise;
-    constructor(options: Forwarder.Options);
-    /** Add a face to the forwarding plane. */
-    addFace(face: FwFace.RxTx | FwFace.RxTxTransform, attributes?: FwFace.Attributes): FwFace;
-    private pickInterestForwardingName;
-    /** Process incoming Interest. */
-    processInterest(face: FaceImpl, pkt: FwPacket<Interest>): void;
-    /** Process incoming cancel Interest request. */
-    cancelInterest(face: FaceImpl, pkt: FwPacket<Interest>): void;
-    /** Process incoming Data. */
-    processData(face: FaceImpl, pkt: FwPacket<Data>): void;
-    /** Process incoming Nack. */
-    processNack(face: FaceImpl, nack: FwPacket<Nack>): void;
-}
-/** Forwarding plane. */
-interface Forwarder extends Pick<ForwarderImpl, "nodeNames" | "addFace" | Exclude<keyof TypedEventEmitter<Events$6>, "emit">> {
+    /** Logical faces. */
     readonly faces: Set<FwFace>;
-    readonly pit: Pick<Pit, "dataNoTokenMatch">;
+    /** Add a logical face to the forwarding plane. */
+    addFace(face: FwFace.RxTx | FwFace.RxTxDuplex, attributes?: FwFace.Attributes): FwFace;
+    /**
+     * Cancel timers and other I/O resources.
+     * This instance should not be used after this operation.
+     */
+    close(): void;
 }
 export namespace Forwarder {
-    type Options = FaceImpl.Options;
+    interface Options {
+        /** Per-face RX buffer length. */
+        faceRxBuffer?: number;
+        /** Per-face TX buffer length. */
+        faceTxBuffer?: number;
+        /** Whether to try matching Data without PIT token. */
+        dataNoTokenMatch?: boolean;
+    }
+    const DefaultOptions: Required<Options>;
     /** Create a new forwarding plane. */
     function create(options?: Options): Forwarder;
     /** Access the default forwarding plane instance. */
     function getDefault(): Forwarder;
+    /** Replace the default forwarding plane instance. */
+    function replaceDefault(fw?: Forwarder): void;
     /** Delete default instance (mainly for unit testing). */
     function deleteDefault(): void;
 }
 
-interface Events$5 {
-    /** Emitted upon face closing. */
+interface Events$6 {
+    /** Emitted upon face is up as reported by lower layer. */
+    up: () => void;
+    /** Emitted upon face is down as reported by lower layer. */
+    down: () => void;
+    /** Emitted upon face is closed. */
     close: () => void;
 }
-export const FaceImpl_base: new () => TypedEventEmitter<Events$5>;
-export class FaceImpl extends FaceImpl_base {
-    readonly fw: ForwarderImpl;
+/** A socket or network interface associated with forwarding plane. */
+interface FwFace extends TypedEventEmitter<Events$6> {
+    readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
-    private readonly routes;
-    private readonly announcements;
-    private readonly stopping;
-    running: boolean;
-    private readonly txQueue;
-    txQueueLength: number;
-    constructor(fw: ForwarderImpl, rxtx: FwFace.RxTx | FwFace.RxTxTransform, attributes: FwFace.Attributes);
+    readonly running: boolean;
+    readonly txQueueLength: number;
     /** Shutdown the face. */
     close(): void;
     toString(): string;
     /** Determine if a route is present on the face. */
-    hasRoute(name: Name): boolean;
+    hasRoute(name: NameLike): boolean;
     /** Add a route toward the face. */
-    addRoute(name: Name, announcement?: FwFace.RouteAnnouncement): void;
+    addRoute(name: NameLike, announcement?: FwFace.RouteAnnouncement): void;
     /** Remove a route toward the face. */
-    removeRoute(name: Name, announcement?: FwFace.RouteAnnouncement): void;
+    removeRoute(name: NameLike, announcement?: FwFace.RouteAnnouncement): void;
     /** Add a prefix announcement associated with the face. */
-    addAnnouncement(name: Name): void;
+    addAnnouncement(name: NameLike): void;
     /** Remove a prefix announcement associated with the face. */
-    removeAnnouncement(name: Name): void;
-    /** Transmit a packet on the face. */
-    send(pkt: FwPacket): void;
-    private rxLoop;
-    private txLoop;
-}
-export namespace FaceImpl {
-    interface Options {
-        faceRxBuffer: number;
-        faceTxBuffer: number;
-    }
-    const DefaultOptions: Options;
-}
-/** A socket or network interface associated with forwarding plane. */
-interface FwFace extends Pick<FaceImpl, "attributes" | "close" | "toString" | "hasRoute" | "addRoute" | "removeRoute" | "addAnnouncement" | "removeAnnouncement" | Exclude<keyof TypedEventEmitter<Events$5>, "emit">> {
-    readonly fw: Forwarder;
-    readonly running: boolean;
-    readonly txQueueLength: number;
+    removeAnnouncement(name: NameLike): void;
 }
 export namespace FwFace {
-    export interface Attributes extends Record<string, any> {
+    interface Attributes extends Record<string, any> {
         /** Short string to identify the face. */
         describe?: string;
         /** Whether face is local. Default is false. */
         local?: boolean;
         /** Whether to readvertise registered routes. Default is true. */
         advertiseFrom?: boolean;
+        /**
+         * Whether routes registered on this face would cause FIB to stop matching onto shorter prefixes.
+         * Default is true.
+         * More explanation in @ndn/endpoint package ProducerOptions type.
+         */
+        routeCapture?: boolean;
     }
-    export type RouteAnnouncement = boolean | number | Name;
-    interface RxTxBase {
+    type RouteAnnouncement = boolean | number | NameLike;
+    interface RxTxEvents {
+        up: () => void;
+        down: () => void;
+    }
+    interface RxTxBase extends Partial<TypedEventEmitter<RxTxEvents>> {
         readonly attributes?: Attributes;
     }
-    export interface RxTx extends RxTxBase {
+    interface RxTx extends RxTxBase {
         rx: AsyncIterable<FwPacket>;
         tx: (iterable: AsyncIterable<FwPacket>) => void;
     }
-    export interface RxTxTransform extends RxTxBase {
+    interface RxTxDuplex extends RxTxBase {
         /**
          * The transform function takes an iterable of packets sent by the forwarder,
          * and returns an iterable of packets received by the forwarder.
          */
-        transform: (iterable: AsyncIterable<FwPacket>) => AsyncIterable<FwPacket>;
+        duplex: (iterable: AsyncIterable<FwPacket>) => AsyncIterable<FwPacket>;
     }
-    export {};
 }
 
 /**
@@ -4407,7 +4047,7 @@ export namespace EventTarget {
     export type Mode = "strict" | "standard" | "loose"
 }
 
-type Events$4 = {
+type Events$5 = {
     abort: any
 }
 type EventAttributes = {
@@ -4417,7 +4057,7 @@ type EventAttributes = {
  * The signal class.
  * @see https://dom.spec.whatwg.org/#abortsignal
  */
-export class AbortSignal extends EventTarget<Events$4, EventAttributes> {
+export class AbortSignal extends EventTarget<Events$5, EventAttributes> {
     /**
      * AbortSignal cannot be constructed directly.
      */
@@ -4428,9 +4068,11 @@ export class AbortSignal extends EventTarget<Events$4, EventAttributes> {
     readonly aborted: boolean
 }
 
-interface Options$2 {
+interface ConsumerOptions {
     /** Description for debugging purpose. */
     describe?: string;
+    /** AbortSignal that allows canceling the Interest via AbortController. */
+    signal?: AbortSignal | globalThis.AbortSignal;
     /**
      * Modify Interest according to specified options.
      * Default is no modification.
@@ -4441,8 +4083,6 @@ interface Options$2 {
      * Default is disabling retransmission.
      */
     retx?: RetxPolicy;
-    /** AbortSignal that allows canceling the Interest via AbortController. */
-    signal?: AbortSignal | globalThis.AbortSignal;
     /**
      * Data verifier.
      * Default is no verification.
@@ -4452,19 +4092,19 @@ interface Options$2 {
 /**
  * Progress of Data retrieval.
  *
- * This is a Promise that resolves with the retrieved Data, and rejects upon timeout.
- * Calling .cancel() cancels Data retrieval and rejects the Promise.
+ * This is a Promise that resolves with the retrieved Data and rejects upon timeout,
+ * annotated with the Interest and some counters.
  */
-export type Context = Promise<Data> & {
+interface ConsumerContext extends Promise<Data> {
     readonly interest: Interest;
     readonly nRetx: number;
-};
+}
 /** Consumer functionality of Endpoint. */
 export class EndpointConsumer {
     fw: Forwarder;
-    opts: Options$2;
+    opts: ConsumerOptions;
     /** Consume a single piece of Data. */
-    consume(interestInput: Interest | NameLike, opts?: Options$2): Context;
+    consume(interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext;
 }
 
 /** Outgoing Data buffer for producer. */
@@ -4483,10 +4123,21 @@ interface DataBuffer {
  * unless Options.autoBuffer is set to false. If the handler returns `undefined`, the Interest is used
  * to query the DataBuffer, and any matching Data may be sent.
  */
-export type Handler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
-interface Options$1 {
+export type ProducerHandler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
+interface ProducerOptions {
     /** Description for debugging purpose. */
     describe?: string;
+    /** AbortSignal that allows closing the producer via AbortController. */
+    signal?: AbortSignal | globalThis.AbortSignal;
+    /**
+     * Whether routes registered by producer would cause @ndn/fw internal FIB to stop matching toward
+     * shorter prefixes. Default is true.
+     *
+     * If all nexthops of a FIB entry are set to non-capture, FIB lookup may continue onto nexthops
+     * on FIB entries with shorter prefixes. One use case is in @ndn/sync package, where both local
+     * and remote sync participants want to receive each other's Interests.
+     */
+    routeCapture?: boolean;
     /**
      * What name to be readvertised.
      * Ignored if prefix is undefined.
@@ -4531,23 +4182,23 @@ interface Producer {
 /** Producer functionality of Endpoint. */
 export class EndpointProducer {
     fw: Forwarder;
-    opts: Options$1;
+    opts: ProducerOptions;
     /**
      * Start a producer.
      * @param prefixInput prefix registration; if undefined, prefixes may be added later.
      * @param handler function to handle incoming Interest.
      */
-    produce(prefixInput: NameLike | undefined, handler: Handler, opts?: Options$1): Producer;
+    produce(prefixInput: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
 }
 export namespace EndpointProducer {
     type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
-interface Options extends Options$2, Options$1 {
+interface Options extends ConsumerOptions, ProducerOptions {
     fw?: Forwarder;
 }
 /**
- * Endpoint is the main entrypoint for an application to interact with the forwarding plane.
+ * Endpoint is the main entry point for an application to interact with the forwarding plane.
  * It provides basic consumer and producer functionality.
  */
 export class Endpoint {
@@ -4563,84 +4214,6 @@ export namespace Endpoint {
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
 }
 
-export const crypto: Crypto;
-
-/** 'KEY' component. */
-export const KEY: Component;
-/** Default issuerId. */
-export const ISSUER_DEFAULT: Component;
-/** Self-signed issuerId. */
-export const ISSUER_SELF: Component;
-interface KeyNameFields {
-    subjectName: Name;
-    keyId: Component;
-}
-interface CertNameFields extends KeyNameFields {
-    issuerId: Component;
-    version: Component;
-    keyName: Name;
-}
-/** Get subject name from subject name, key name, or certificate name. */
-export function toSubjectName(name: Name): Name;
-/** Determine whether the name is a key name. */
-export function isKeyName(name: Name): boolean;
-/** Parse a key name into fields. */
-export function parseKeyName(name: Name): KeyNameFields;
-/**
- * Get key name from key name or certificate name.
- * @throws input name is neither key name nor certificate name.
- */
-export function toKeyName(name: Name): Name;
-/**
- * Create key name from subject name, key name, or certificate name.
- * @param name subject name, key name, or certificate name.
- * @param opts.keyId keyId component, used only if input name is subject name.
- */
-export function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
-/** Determine whether the name is a certificate name. */
-export function isCertName(name: Name): boolean;
-/** Parse a certificate name into fields. */
-export function parseCertName(name: Name): CertNameFields;
-/**
- * Create certificate name from subject name, key name, or certificate name.
- * @param name subject name, key name, or certificate name.
- * @param opts.keyId keyId component, used only if input name is subject name.
- * @param opts.issuerId keyId, used only if input name is subject name.
- * @param opts.version keyId, used only if input name is subject name.
- */
-export function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
-
-export const naming_d_KEY: typeof KEY;
-export const naming_d_ISSUER_DEFAULT: typeof ISSUER_DEFAULT;
-export const naming_d_ISSUER_SELF: typeof ISSUER_SELF;
-type naming_d_KeyNameFields = KeyNameFields;
-type naming_d_CertNameFields = CertNameFields;
-export const naming_d_toSubjectName: typeof toSubjectName;
-export const naming_d_isKeyName: typeof isKeyName;
-export const naming_d_parseKeyName: typeof parseKeyName;
-export const naming_d_toKeyName: typeof toKeyName;
-export const naming_d_makeKeyName: typeof makeKeyName;
-export const naming_d_isCertName: typeof isCertName;
-export const naming_d_parseCertName: typeof parseCertName;
-export const naming_d_makeCertName: typeof makeCertName;
-export namespace naming_d {
-  export {
-    naming_d_KEY as KEY,
-    naming_d_ISSUER_DEFAULT as ISSUER_DEFAULT,
-    naming_d_ISSUER_SELF as ISSUER_SELF,
-    naming_d_KeyNameFields as KeyNameFields,
-    naming_d_CertNameFields as CertNameFields,
-    naming_d_toSubjectName as toSubjectName,
-    naming_d_isKeyName as isKeyName,
-    naming_d_parseKeyName as parseKeyName,
-    naming_d_toKeyName as toKeyName,
-    naming_d_makeKeyName as makeKeyName,
-    naming_d_isCertName as isCertName,
-    naming_d_parseCertName as parseCertName,
-    naming_d_makeCertName as makeCertName,
-  };
-}
-
 // Type definitions for @root/asn1 1.0
 
 
@@ -4648,8 +4221,8 @@ interface Element$1<V extends string|Uint8Array> {
     type: number;
     lengthSize: number;
     length: number;
-    value?: V;
-    children?: Array<Element$1<V>>;
+    value?: V | undefined;
+    children?: Array<Element$1<V>> | undefined;
 }
 
 type ElementBuffer = Element$1<Uint8Array>;
@@ -5280,6 +4853,84 @@ export namespace RSA {
 /** RSA-OAEP encryption algorithm. */
 export const RSAOAEP: EncryptionAlgorithm<{}, true, RSA.GenParams>;
 
+export const crypto: Crypto;
+
+/** 'KEY' component. */
+export const KEY: Component;
+/** Default issuerId. */
+export const ISSUER_DEFAULT: Component;
+/** Self-signed issuerId. */
+export const ISSUER_SELF: Component;
+interface KeyNameFields {
+    subjectName: Name;
+    keyId: Component;
+}
+interface CertNameFields extends KeyNameFields {
+    issuerId: Component;
+    version: Component;
+    keyName: Name;
+}
+/** Get subject name from subject name, key name, or certificate name. */
+export function toSubjectName(name: Name): Name;
+/** Determine whether the name is a key name. */
+export function isKeyName(name: Name): boolean;
+/** Parse a key name into fields. */
+export function parseKeyName(name: Name): KeyNameFields;
+/**
+ * Get key name from key name or certificate name.
+ * @throws input name is neither key name nor certificate name.
+ */
+export function toKeyName(name: Name): Name;
+/**
+ * Create key name from subject name, key name, or certificate name.
+ * @param name subject name, key name, or certificate name.
+ * @param opts.keyId keyId component, used only if input name is subject name.
+ */
+export function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
+/** Determine whether the name is a certificate name. */
+export function isCertName(name: Name): boolean;
+/** Parse a certificate name into fields. */
+export function parseCertName(name: Name): CertNameFields;
+/**
+ * Create certificate name from subject name, key name, or certificate name.
+ * @param name subject name, key name, or certificate name.
+ * @param opts.keyId keyId component, used only if input name is subject name.
+ * @param opts.issuerId keyId, used only if input name is subject name.
+ * @param opts.version keyId, used only if input name is subject name.
+ */
+export function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
+
+export const naming_d_KEY: typeof KEY;
+export const naming_d_ISSUER_DEFAULT: typeof ISSUER_DEFAULT;
+export const naming_d_ISSUER_SELF: typeof ISSUER_SELF;
+type naming_d_KeyNameFields = KeyNameFields;
+type naming_d_CertNameFields = CertNameFields;
+export const naming_d_toSubjectName: typeof toSubjectName;
+export const naming_d_isKeyName: typeof isKeyName;
+export const naming_d_parseKeyName: typeof parseKeyName;
+export const naming_d_toKeyName: typeof toKeyName;
+export const naming_d_makeKeyName: typeof makeKeyName;
+export const naming_d_isCertName: typeof isCertName;
+export const naming_d_parseCertName: typeof parseCertName;
+export const naming_d_makeCertName: typeof makeCertName;
+export namespace naming_d {
+  export {
+    naming_d_KEY as KEY,
+    naming_d_ISSUER_DEFAULT as ISSUER_DEFAULT,
+    naming_d_ISSUER_SELF as ISSUER_SELF,
+    naming_d_KeyNameFields as KeyNameFields,
+    naming_d_CertNameFields as CertNameFields,
+    naming_d_toSubjectName as toSubjectName,
+    naming_d_isKeyName as isKeyName,
+    naming_d_parseKeyName as parseKeyName,
+    naming_d_toKeyName as toKeyName,
+    naming_d_makeKeyName as makeKeyName,
+    naming_d_isCertName as isCertName,
+    naming_d_parseCertName as parseCertName,
+    naming_d_makeCertName as makeCertName,
+  };
+}
+
 export const keychain_EcCurve: typeof EcCurve;
 export const keychain_ECDSA: typeof ECDSA;
 export const keychain_HMAC: typeof HMAC;
@@ -5289,6 +4940,8 @@ export const keychain_CryptoAlgorithmList: typeof CryptoAlgorithmList;
 export const keychain_RsaModulusLength: typeof RsaModulusLength;
 export const keychain_RSA: typeof RSA;
 export const keychain_RSAOAEP: typeof RSAOAEP;
+export const keychain_ValidityPeriod: typeof ValidityPeriod;
+export const keychain_Certificate: typeof Certificate;
 export const keychain_KeyKind: typeof KeyKind;
 type keychain_PrivateKey = PrivateKey;
 type keychain_PublicKey = PublicKey;
@@ -5315,8 +4968,6 @@ export const keychain_CounterIvChecker: typeof CounterIvChecker;
 export const keychain_createSigner: typeof createSigner;
 export const keychain_createVerifier: typeof createVerifier;
 export const keychain_generateSigningKey: typeof generateSigningKey;
-export const keychain_ValidityPeriod: typeof ValidityPeriod;
-export const keychain_Certificate: typeof Certificate;
 export const keychain_KeyStore: typeof KeyStore;
 type keychain_CertStore = CertStore;
 export const keychain_CertStore: typeof CertStore;
@@ -5335,6 +4986,8 @@ export namespace keychain {
     keychain_RsaModulusLength as RsaModulusLength,
     keychain_RSA as RSA,
     keychain_RSAOAEP as RSAOAEP,
+    keychain_ValidityPeriod as ValidityPeriod,
+    keychain_Certificate as Certificate,
     keychain_KeyKind as KeyKind,
     keychain_PrivateKey as PrivateKey,
     keychain_PublicKey as PublicKey,
@@ -5358,8 +5011,6 @@ export namespace keychain {
     keychain_createSigner as createSigner,
     keychain_createVerifier as createVerifier,
     keychain_generateSigningKey as generateSigningKey,
-    keychain_ValidityPeriod as ValidityPeriod,
-    keychain_Certificate as Certificate,
     keychain_KeyStore as KeyStore,
     keychain_CertStore as CertStore,
     keychain_KeyChain as KeyChain,
@@ -5901,25 +5552,24 @@ export namespace PSyncCodec {
     }
 }
 
-interface DebugEntry$3 {
+interface DebugEntry$4 {
     action: string;
     ownIblt: IBLT;
     recvIblt?: IBLT;
     state?: PSyncCore.State;
 }
-interface Events$3 extends SyncProtocol.Events<Name> {
-    debug: (entry: DebugEntry$3) => void;
+interface Events$4 extends SyncProtocol.Events<Name> {
+    debug: (entry: DebugEntry$4) => void;
 }
-export const PSyncFull_base: new () => TypedEventEmitter<Events$3>;
+export const PSyncFull_base: new () => TypedEventEmitter<Events$4>;
 /** PSync - FullSync participant. */
 export class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
-    constructor({ p, endpoint, describe, syncPrefix, addSyncPrefixOnUplinks, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
+    constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
     private readonly endpoint;
     readonly describe: string;
     private readonly syncPrefix;
     private readonly c;
     private readonly codec;
-    private readonly uplinkRouteMirror?;
     private closed;
     private readonly pFreshness;
     private readonly pBuffer;
@@ -5957,11 +5607,6 @@ export namespace PSyncFull {
         /** Sync group prefix. */
         syncPrefix: Name;
         /**
-         * Whether to automatically add sync group prefix as a route on uplinks.
-         * @default true
-         */
-        addSyncPrefixOnUplinks?: boolean;
-        /**
          * FreshnessPeriod of sync reply Data packet.
          * @default 1000
          */
@@ -5995,14 +5640,14 @@ export namespace PSyncFull {
     }
 }
 
-interface DebugEntry$2 {
+interface DebugEntry$3 {
     action: string;
     interestName?: Name;
 }
-interface Events$2 extends SyncProtocol.Events<Name> {
-    debug: (entry: DebugEntry$2) => void;
+interface Events$3 extends SyncProtocol.Events<Name> {
+    debug: (entry: DebugEntry$3) => void;
 }
-export const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$2>;
+export const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$3>;
 /** PSync - PartialSync publisher. */
 export class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PSyncPartialPublisher.Options);
@@ -6069,14 +5714,14 @@ export namespace PSyncPartialPublisher {
 
 export type Sub = Subscription<Name, SyncUpdate<Name>>;
 export type Update = SyncUpdate<Name>;
-interface DebugEntry$1 {
+interface DebugEntry$2 {
     action: string;
 }
-interface Events$1 {
-    debug: (entry: DebugEntry$1) => void;
+interface Events$2 {
+    debug: (entry: DebugEntry$2) => void;
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 }
-export const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$1>;
+export const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$2>;
 /** PSync - PartialSync subscriber. */
 export class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncPartialSubscriber.Options);
@@ -6189,6 +5834,102 @@ export namespace makePSyncCompatParam {
 /** Use zlib compression with PSync. */
 export const PSyncZlib: PSyncCodec.Compression;
 
+interface DebugEntry$1 {
+    action: string;
+    own: Record<string, number>;
+    recv?: Record<string, number>;
+    state: string;
+    nextState?: string;
+    ourOlder?: number;
+    ourNewer?: number;
+}
+interface Events$1 extends SyncProtocol.Events<SvSync.ID> {
+    debug: (entry: DebugEntry$1) => void;
+}
+export const SvSync_base: new () => TypedEventEmitter<Events$1>;
+/** StateVectorSync participant. */
+export class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
+    constructor({ endpoint, describe, syncPrefix, syncInterestLifetime, steadyTimer, suppressionTimer, signer, verifier, }: SvSync.Options);
+    private readonly endpoint;
+    readonly describe: string;
+    private readonly syncPrefix;
+    private readonly syncInterestLifetime;
+    private readonly steadyTimer;
+    private readonly suppressionTimer;
+    private readonly signer;
+    private readonly verifier?;
+    private readonly producer;
+    /** Own version vector. */
+    private readonly own;
+    /**
+     * In steady state, undefined.
+     * In suppression state, aggregated version vector of incoming sync Interests.
+     */
+    private aggregated?;
+    /** Sync Interest timer. */
+    private timer;
+    private debug;
+    close(): void;
+    get(id: SvSync.IDLike): SyncNode<SvSync.ID>;
+    add(id: SvSync.IDLike): SyncNode<SvSync.ID>;
+    private makeNode;
+    private readonly handlePublish;
+    private readonly handleSyncInterest;
+    private resetTimer;
+    private readonly handleTimer;
+    private sendSyncInterest;
+}
+export namespace SvSync {
+    /**
+     * Timer settings.
+     * ms: median interval in milliseconds.
+     * jitter: ± percentage, in [0.0, 1.0) range.
+     */
+    type Timer = [ms: number, jitter: number];
+    interface Options {
+        /** Endpoint for communication. */
+        endpoint?: Endpoint;
+        /** Description for debugging purpose. */
+        describe?: string;
+        /** Sync group prefix. */
+        syncPrefix: Name;
+        /**
+         * Sync Interest lifetime in milliseconds.
+         * @default 1000
+         */
+        syncInterestLifetime?: number;
+        /**
+         * Sync Interest timer in steady state.
+         * Default is [30000ms, ±10%]
+         */
+        steadyTimer?: Timer;
+        /**
+         * Sync Interest timer in suppression state.
+         * Default is [200ms, ±50%]
+         */
+        suppressionTimer?: Timer;
+        /**
+         * Sync Interest signer.
+         * Default is NullSigning.
+         */
+        signer?: Signer;
+        /**
+         * Sync Interest verifier.
+         * Default is no verification.
+         */
+        verifier?: Verifier;
+    }
+    type IDLike = string | Uint8Array | ID;
+    class ID {
+        constructor(input: IDLike, hex?: string);
+        readonly value: Uint8Array;
+        readonly hex: string;
+        get text(): string;
+    }
+    interface Node extends SyncNode<ID> {
+    }
+}
+
 export class SyncpsCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: SyncpsCodec.Parameters, ibltParams: IBLT.PreparedParameters);
@@ -6223,12 +5964,11 @@ interface Events {
 export const SyncpsPubsub_base: new () => TypedEventEmitter<Events>;
 /** syncps - pubsub service. */
 export class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data> {
-    constructor({ p, endpoint, describe, syncPrefix, addSyncPrefixOnUplinks, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
+    constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly endpoint;
     readonly describe: string;
     private readonly syncPrefix;
     private readonly codec;
-    private readonly uplinkRouteMirror?;
     private closed;
     private readonly iblt;
     private readonly pubs;
@@ -6318,11 +6058,6 @@ export namespace SyncpsPubsub {
         /** Sync group prefix. */
         syncPrefix: Name;
         /**
-         * Whether to automatically add sync group prefix as a route on uplinks.
-         * @default true
-         */
-        addSyncPrefixOnUplinks?: boolean;
-        /**
          * Sync Interest lifetime in milliseconds.
          * @default 4000
          */
@@ -6409,6 +6144,7 @@ export const sync_PSyncFull: typeof PSyncFull;
 export const sync_PSyncZlib: typeof PSyncZlib;
 export const sync_PSyncPartialPublisher: typeof PSyncPartialPublisher;
 export const sync_PSyncPartialSubscriber: typeof PSyncPartialSubscriber;
+export const sync_SvSync: typeof SvSync;
 export const sync_makeSyncpsCompatParam: typeof makeSyncpsCompatParam;
 export const sync_SyncpsPubsub: typeof SyncpsPubsub;
 export const sync_SyncProtocol: typeof SyncProtocol;
@@ -6425,6 +6161,7 @@ export namespace sync {
     sync_PSyncZlib as PSyncZlib,
     sync_PSyncPartialPublisher as PSyncPartialPublisher,
     sync_PSyncPartialSubscriber as PSyncPartialSubscriber,
+    sync_SvSync as SvSync,
     sync_makeSyncpsCompatParam as makeSyncpsCompatParam,
     sync_SyncpsPubsub as SyncpsPubsub,
     sync_SyncProtocol as SyncProtocol,

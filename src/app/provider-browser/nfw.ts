@@ -180,6 +180,9 @@ export class NFW {
         // Store hex so we can dump later
         const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
 
+        // Get from hop Id
+        const fromHopId: string = (<any>pkt).hop;
+
         // Create packet object
         const pack: ICapturedPacket = {
             t: performance.now(),
@@ -187,8 +190,8 @@ export class NFW {
             l: encoder.output.length,
             type: type,
             name: AltUri.ofName(pkt.l3.name).substr(0, 48),
-            from: (<any>pkt).hop || undefined,
-            to: (<any>pkt).hop ? this.nodeId as string : undefined,
+            from: fromHopId ? this.topo.nodes.get(fromHopId)?.label : undefined,
+            to: fromHopId ? this.node().label as string : undefined,
         };
 
         // Check if we want to capture this packet
@@ -281,7 +284,9 @@ export class NFW {
         // Check content store
         const csEntry = this.cs.get(interest);
         if (csEntry) {
-            this.faceRx.push(FwPacket.create(csEntry));
+            const pkt = FwPacket.create(csEntry);
+            (<any>pkt).hop = this.nodeId;
+            this.faceRx.push(pkt);
             return;
         }
 

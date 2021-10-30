@@ -1,7 +1,7 @@
 import { Interest, Name } from "@ndn/packet";
 import { ForwardingProvider } from "../forwarding-provider";
 import { IEdge, INode } from "../interfaces";
-import { NFW } from "./nfw";
+import { NFW } from "./nfw/nfw";
 import { SecurityController } from "./security-controller";
 import { Topology } from "../topo/topo";
 import { RoutingHelper } from "./routing-helper";

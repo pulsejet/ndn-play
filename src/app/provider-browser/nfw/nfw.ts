@@ -1,17 +1,20 @@
-import { ICapturedPacket, INode, INodeExtra } from "../interfaces";
+import { INode, INodeExtra } from "../../interfaces";
 import * as vis from 'vis-network/standalone';
 
-import { Endpoint, Producer } from "@ndn/endpoint";
+import { Endpoint } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 
-import { Encoder, toUtf8 } from '@ndn/tlv';
 import { KeyChain } from "@ndn/keychain";
-import { Topology } from "../topo/topo";
-import { ProviderBrowser } from "./provider-browser";
+
+import { ContentStore } from "./cs";
+import { Topology } from "../../topo/topo";
+import { ProviderBrowser } from "../provider-browser";
 
 import { ForwarderImpl } from "@ndn/fw/lib/forwarder";
 import pushable from "it-pushable";
+import { Shark } from "./shark";
+import { DefaultServers } from "./servers";
 
 export class NFW {
     /** NDNts forwarder */
@@ -50,11 +53,8 @@ export class NFW {
         { prefix: new Name('/ndn/multicast'), strategy: 'multicast' },
     ];
 
-    /** Server for ping */
-    private pingServer?: Producer;
-
-    /** Server for certificates */
-    private certServer?: Producer;
+    /** Default servers */
+    public defualtServers = new DefaultServers(this);
 
     /** Connections to other NFWs */
     private connections: { [nodeId: string]: {
@@ -74,12 +74,16 @@ export class NFW {
     /** Extra parameters of node */
     private nodeExtra: INodeExtra;
 
+    /** Packet capture */
+    private shark: Shark;
+
     constructor(
         private readonly topo: Topology,
         public readonly nodeId: vis.IdType,
     ) {
         this.provider = <ProviderBrowser>topo.provider;
         this.cs = new ContentStore(this.provider);
+        this.shark = new Shark(this, this.topo);
 
         // Set extra
         this.nodeExtra = this.node().extra;
@@ -89,7 +93,7 @@ export class NFW {
             if (pkt.cancel || pkt.reject) return;
 
             // Wireshark
-            this.capturePacket(face, pkt, "rx");
+            this.shark.capturePacket(face, pkt, "rx");
 
             // Put on NFW
             if (pkt.l3 instanceof Interest) {
@@ -101,7 +105,7 @@ export class NFW {
 
         this.fw.on("pkttx", (face, pkt) => {
             if (pkt.cancel || pkt.reject) return;
-            this.capturePacket(face, pkt, "tx");
+            this.shark.capturePacket(face, pkt, "tx");
         });
 
         this.face = this.fw.addFace({
@@ -136,86 +140,8 @@ export class NFW {
     }
 
     public nodeUpdated() {
-        this.setupPingServer();
-        this.setupCertServer();
-    }
-
-    private setupPingServer() {
-        // Close existing server
-        this.pingServer?.close();
-
-        // Start new server
-        const label = this.node().label;
-        this.pingServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}/ping`, async (interest) => {
-            const data = new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
-            this.securityOptions?.signer.sign(data);
-            return data;
-        });
-    }
-
-    private setupCertServer() {
-        // Close existing server
-        this.certServer?.close();
-
-        // Start new server
-        const label = this.node().label;
-        this.certServer = new Endpoint({ fw: this.fw }).produce(`/ndn/${label}/cert`, async (interest) => {
-            try {
-                const certName = (await this.securityOptions?.keyChain.listCerts(interest.name))?.[0];
-                return certName ? (await this.securityOptions?.keyChain.getCert(certName))?.data : undefined;
-            } catch {
-                return undefined;
-            }
-        });
-    }
-
-    public capturePacket(face: FwFace, pkt: FwPacket, event: "tx" | "rx") {
-        // Confirm we are capturing
-        if (!this.capture && !this.topo.captureAll) return;
-
-        // Skip if this came from content store
-        if ((<any>pkt).contentstore) return;
-
-        // Get type of packet
-        let type;
-        if (pkt.l3 instanceof Interest) {
-            type = 'Interest';
-        } else if (pkt.l3 instanceof Data) {
-            type = 'Data';
-        } else {
-            return;
-        }
-
-        const encoder = new Encoder();
-        encoder.encode(pkt.l3);
-
-        // Store hex so we can dump later
-        const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
-
-        // Get hops
-        // If hops field doesn't exist then it is a local face (SCK)
-        const thisHop: string = this.node().label!;
-        let otherHop: string = (<any>face).hops?.[this.nodeId] || (<any>pkt).hop;
-        otherHop = otherHop ? this.topo.nodes.get(otherHop)?.label! : 'SCK';
-        const fromHop = event == 'rx' ? otherHop : thisHop;
-        const toHop = event == 'rx' ? thisHop : otherHop;
-
-        // Create packet object
-        const pack: ICapturedPacket = {
-            t: performance.now(),
-            p: hex,
-            l: encoder.output.length,
-            type: type,
-            name: AltUri.ofName(pkt.l3.name).substr(0, 48),
-            from: fromHop,
-            to: toHop,
-        };
-
-        // Check if we want to capture this packet
-        if (!this.topo.globalCaptureFilter(pack)) {
-            return;
-        }
-        this.nodeExtra.capturedPackets.push(pack);
+        this.defualtServers.restart();
+        this.shark.nodeUpdated();
     }
 
     /** Update color of current node */
@@ -461,7 +387,7 @@ export class NFW {
                     const newPkt = FwPacket.create(interest, upstreamToken);
                     (<any>newPkt).hop = this.nodeId;
                     this.connections[nextHop].tx.push(newPkt);
-                    this.capturePacket(this.connections[nextHop].face, pkt, "tx");
+                    this.shark.capturePacket(this.connections[nextHop].face, pkt, "tx");
                 }
             });
         }
@@ -491,39 +417,4 @@ export class NFW {
     }
 }
 
-class ContentStore {
-    private cs: { recv: number; data: Data}[] = [];
 
-    constructor(private provider: ProviderBrowser) {}
-
-    public push(data: Data): void {
-        if (!data.freshnessPeriod) return;
-
-        // CS object
-        const obj = {
-            recv: (new Date()).getTime(),
-            data: data,
-        };
-
-        // Replace old object
-        const i = this.cs.findIndex((e) => e.data.name.equals(data.name));
-        if (i !== -1) {
-            this.cs[i] = obj;
-        } else {
-            this.cs.unshift(obj);
-        }
-
-        // Trim CS
-        if (this.cs.length > this.provider.contentStoreSize) {
-            this.cs = this.cs.slice(0, this.provider.contentStoreSize);
-        }
-    }
-
-    public get(interest: Interest): Data | undefined {
-        const entry = this.cs.find(e => {
-            return interest.name.isPrefixOf(e.data.name) &&
-                   e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime();
-        });
-        return entry?.data;
-    }
-}

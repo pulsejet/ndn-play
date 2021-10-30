@@ -1,5 +1,5 @@
 import * as vis from 'vis-network';
-import { NFW } from './provider-browser/nfw';
+import { NFW } from './provider-browser/nfw/nfw';
 
 export interface ICapturedPacket {
     /** Node for which this packet is captured */

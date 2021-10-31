@@ -1,15 +1,14 @@
-declare namespace t {
 /// <reference types="node" />
 /// <reference types="web" />
 /**
  * Use this symbol to delete properies in deepObjectAssign.
  */
-export const DELETE: unique symbol;
+declare const DELETE: unique symbol;
 /**
  * Turns `undefined` into `undefined | typeof DELETE` and makes everything
  * partial. Intended to be used with `deepObjectAssign`.
  */
-export type Assignable<T> = T extends undefined ? (T extends Function ? T : T extends object ? {
+declare type Assignable<T> = T extends undefined ? (T extends Function ? T : T extends object ? {
     [Key in keyof T]?: Assignable<T[Key]> | undefined;
 } : T) | typeof DELETE : T extends Function ? T | undefined : T extends object ? {
     [Key in keyof T]?: Assignable<T[Key]> | undefined;
@@ -40,7 +39,7 @@ interface QueueExtendOptions<T> {
  * - A function to be executed.
  * - An object with function, args, context (like function.bind(context, ...args)).
  */
-export type QueueCallEntry = Function | {
+declare type QueueCallEntry = Function | {
     fn: Function;
     args: unknown[];
 } | {
@@ -53,7 +52,7 @@ export type QueueCallEntry = Function | {
  *
  * @typeParam T - The type of method names to be replaced by queued versions.
  */
-export class Queue<T = never> {
+declare class Queue<T = never> {
     /** Delay in milliseconds. If defined the queue will be periodically flushed. */
     delay: null | number;
     /** Maximum number of entries in the queue before it will be flushed. */
@@ -118,7 +117,7 @@ export class Queue<T = never> {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-export abstract class DataSetPart<Item, IdProp extends string> implements Pick<DataInterface<Item, IdProp>, "on" | "off"> {
+declare abstract class DataSetPart<Item, IdProp extends string> implements Pick<DataInterface<Item, IdProp>, "on" | "off"> {
     private readonly _subscribers;
     protected _trigger(event: "add", payload: EventPayloads<Item, IdProp>["add"], senderId?: Id | null): void;
     protected _trigger(event: "update", payload: EventPayloads<Item, IdProp>["update"], senderId?: Id | null): void;
@@ -160,7 +159,7 @@ export abstract class DataSetPart<Item, IdProp extends string> implements Pick<D
  *
  * @typeParam Item - The item type this stream is going to work with.
  */
-export class DataStream<Item> implements Iterable<[Id, Item]> {
+declare class DataStream<Item> implements Iterable<[Id, Item]> {
     private readonly _pairs;
     /**
      * Create a new data stream.
@@ -419,7 +418,7 @@ interface DataSetOptions {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-export class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id"> extends DataSetPart<Item, IdProp> implements DataInterface<Item, IdProp> {
+declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id"> extends DataSetPart<Item, IdProp> implements DataInterface<Item, IdProp> {
     /** Flush all queued calls. */
     flush?: () => void;
     /** @inheritDoc */
@@ -685,13 +684,13 @@ export class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id"
 }
 
 /** Valid id type. */
-export type Id = number | string;
+declare type Id = number | string;
 /** Nullable id type. */
-export type OptId = undefined | null | Id;
+declare type OptId = undefined | null | Id;
 /**
  * Make an object deeply partial.
  */
-export type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
+declare type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
     [key in keyof T]?: DeepPartial<T[key]>;
 } : T;
 /**
@@ -699,21 +698,21 @@ export type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends o
  *
  * @typeParam IdProp - Name of the property that contains the id.
  */
-export type PartItem<IdProp extends string> = Partial<Record<IdProp, OptId>>;
+declare type PartItem<IdProp extends string> = Partial<Record<IdProp, OptId>>;
 /**
  * An item that has a property containing an id and all other required properties of given item type.
  *
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-export type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id>;
+declare type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id>;
 /**
  * An item that has a property containing an id and optionally other properties of given item type.
  *
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-export type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id>;
+declare type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id>;
 /** Add event payload. */
 interface AddEventPayload {
     /** Ids of added items. */
@@ -797,7 +796,7 @@ interface EventCallbacksWithAny<Item, IdProp extends string> extends EventCallba
  *
  * @typeParam Item - Item type that may or may not have an id.
  */
-export type DataInterfaceOrder<Item> = keyof Item | ((a: Item, b: Item) => number);
+declare type DataInterfaceOrder<Item> = keyof Item | ((a: Item, b: Item) => number);
 /**
  * Data interface get options (return type independent).
  *
@@ -847,7 +846,7 @@ interface DataInterfaceGetOptionsObject<Item> extends DataInterfaceGetOptionsBas
  *
  * @typeParam Item - Item type that may or may not have an id.
  */
-export type DataInterfaceGetOptions<Item> = DataInterfaceGetOptionsArray<Item> | DataInterfaceGetOptionsObject<Item>;
+declare type DataInterfaceGetOptions<Item> = DataInterfaceGetOptionsArray<Item> | DataInterfaceGetOptionsObject<Item>;
 /**
  * Data interface get ids options.
  *
@@ -1176,7 +1175,7 @@ type NetworkEvents =
  * The network visualization works smooth on any modern browser for up to a few thousand nodes and edges.
  * To handle a larger amount of nodes, Network has clustering support. Network uses HTML canvas for rendering.
  */
-export class Network {
+declare class Network {
   /**
    * Creates an instance of Network.
    *
@@ -2205,7 +2204,7 @@ interface OptionsShadow {
   y?: number;
 }
 
-export module 'keycharm' {
+declare module 'keycharm' {
   interface KeycharmOptions {
     preventDefault?: boolean;
     container?: Window | Element;
@@ -2266,20 +2265,20 @@ interface RetxOptions {
     max?: number;
 }
 /** A function to generate retx intervals. */
-export type RetxGenerator = (interestLifetime: number) => Iterable<number>;
+declare type RetxGenerator = (interestLifetime: number) => Iterable<number>;
 /**
  * Interest retransmission policy.
  *
  * A number is interpreted as the limit.
  * Set 0 to disable retransmissions.
  */
-export type RetxPolicy = RetxOptions | RetxGenerator | number;
+declare type RetxPolicy = RetxOptions | RetxGenerator | number;
 
 interface Decodable<R> {
     decodeFrom: (decoder: Decoder) => R;
 }
 /** TLV decoder. */
-export class Decoder {
+declare class Decoder {
     private readonly input;
     /** Determine whether end of input has been reached. */
     get eof(): boolean;
@@ -2295,7 +2294,7 @@ export class Decoder {
     private readLength;
     private skipValue;
 }
-export namespace Decoder {
+declare namespace Decoder {
     /** Decoded TLV. */
     interface Tlv {
         /** TLV-TYPE. */
@@ -2336,11 +2335,11 @@ interface EncodableObj {
  * Optional second item could be OmitEmpty to omit the TLV if TLV-VALUE is empty.
  * Subsequent items are Encodables for TLV-VALUE.
  */
-export type EncodableTlv = [number, ...any[]];
+declare type EncodableTlv = [number, ...any[]];
 /** An object acceptable to Encoder.encode(). */
-export type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
+declare type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
 /** TLV encoder that accepts objects in reverse order. */
-export class Encoder {
+declare class Encoder {
     private buf;
     private off;
     /** Return encoding output size. */
@@ -2371,7 +2370,7 @@ export class Encoder {
     encode(obj: Encodable | readonly Encodable[]): void;
     private grow;
 }
-export namespace Encoder {
+declare namespace Encoder {
     /** Create a DataView over a Uint8Array. */
     function asDataView(a: Uint8Array): DataView;
     namespace DataViewPolyfill {
@@ -2390,7 +2389,7 @@ export namespace Encoder {
 }
 
 /** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
-export class EvDecoder<T> {
+declare class EvDecoder<T> {
     private readonly typeName;
     private readonly topTT;
     private readonly rules;
@@ -2429,7 +2428,7 @@ export class EvDecoder<T> {
     decodeValue<R extends T = T>(target: R, vd: Decoder): R;
     private handleUnrecognized;
 }
-export namespace EvDecoder {
+declare namespace EvDecoder {
     /** Invoked when a matching TLV element is found. */
     type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
     interface RuleOptions {
@@ -2458,7 +2457,7 @@ export namespace EvDecoder {
 interface Extensible {
     readonly [Extensible.TAG]: ExtensionRegistry<any>;
 }
-export namespace Extensible {
+declare namespace Extensible {
     const TAG: unique symbol;
     /** Clone extension fields of src to dst. */
     function cloneRecord(dst: Extensible, src: Extensible): void;
@@ -2488,7 +2487,7 @@ interface Extension<T, R = unknown> {
      */
     encode: (obj: T, value: R) => Encodable;
 }
-export namespace Extension {
+declare namespace Extension {
     /** Retrieve value of an extension field. */
     function get(obj: Extensible, tt: number): unknown;
     /** Assign value of an extension field. */
@@ -2497,7 +2496,7 @@ export namespace Extension {
     function clear(obj: Extensible, tt: number): void;
 }
 /** Registry of known extension fields of a parent TLV element. */
-export class ExtensionRegistry<T extends Extensible> {
+declare class ExtensionRegistry<T extends Extensible> {
     private readonly table;
     /** Add an extension. */
     readonly registerExtension: <R>(ext: Extension<T, R>) => void;
@@ -2509,42 +2508,42 @@ export class ExtensionRegistry<T extends Extensible> {
     encode(source: T): Encodable[];
 }
 
-export class Nni1 {
+declare class Nni1 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-export class Nni2 {
+declare class Nni2 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-export class Nni4 {
+declare class Nni4 {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-export class Nni8Number {
+declare class Nni8Number {
     private readonly n;
     constructor(n: number);
     encodeTo(encoder: Encoder): void;
 }
-export type Len = 1 | 2 | 4 | 8;
+declare type Len = 1 | 2 | 4 | 8;
 interface Options$1<LenT = Len> {
     /** If set, use/enforce specific TLV-LENGTH. */
     len?: LenT;
     /** If true, allow approximate integers. */
     unsafe?: boolean;
 }
-export const EncodeNniClass: {
+declare const EncodeNniClass: {
     1: typeof Nni1;
     2: typeof Nni2;
     4: typeof Nni4;
     8: typeof Nni8Number;
 };
 /** Create Encodable from non-negative integer. */
-export function NNI(n: number | bigint, { len, unsafe, }?: Options$1<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
-export namespace NNI {
+declare function NNI(n: number | bigint, { len, unsafe, }?: Options$1<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
+declare namespace NNI {
     /** Determine if len is a valid length of encoded NNI. */
     function isValidLength(len: number): boolean;
     /** Decode non-negative integer as number. */
@@ -2564,36 +2563,36 @@ export namespace NNI {
 }
 
 /** Pretty-print TLV-TYPE number. */
-export function printTT(tlvType: number): string;
+declare function printTT(tlvType: number): string;
 /** Convert byte array to upper-case hexadecimal string. */
-export function toHex(buf: Uint8Array): string;
+declare function toHex(buf: Uint8Array): string;
 /**
  * Convert hexadecimal string to byte array.
  *
  * This function lacks error handling. Use on trusted input only.
  */
-export function fromHex(s: string): Uint8Array;
-export function toUtf8(s: string): Uint8Array;
-export function fromUtf8(buf: Uint8Array): string;
+declare function fromHex(s: string): Uint8Array;
+declare function toUtf8(s: string): Uint8Array;
+declare function fromUtf8(buf: Uint8Array): string;
 
 type tlv_Decodable<_0> = Decodable<_0>;
-export const tlv_Decoder: typeof Decoder;
+declare const tlv_Decoder: typeof Decoder;
 type tlv_EncodableObj = EncodableObj;
 type tlv_EncodableTlv = EncodableTlv;
 type tlv_Encodable = Encodable;
-export const tlv_Encoder: typeof Encoder;
-export const tlv_EvDecoder: typeof EvDecoder;
-export const tlv_Extensible: typeof Extensible;
-export const tlv_Extension: typeof Extension;
+declare const tlv_Encoder: typeof Encoder;
+declare const tlv_EvDecoder: typeof EvDecoder;
+declare const tlv_Extensible: typeof Extensible;
+declare const tlv_Extension: typeof Extension;
 type tlv_ExtensionRegistry<_0> = ExtensionRegistry<_0>;
-export const tlv_ExtensionRegistry: typeof ExtensionRegistry;
-export const tlv_NNI: typeof NNI;
-export const tlv_printTT: typeof printTT;
-export const tlv_toHex: typeof toHex;
-export const tlv_fromHex: typeof fromHex;
-export const tlv_toUtf8: typeof toUtf8;
-export const tlv_fromUtf8: typeof fromUtf8;
-export namespace tlv {
+declare const tlv_ExtensionRegistry: typeof ExtensionRegistry;
+declare const tlv_NNI: typeof NNI;
+declare const tlv_printTT: typeof printTT;
+declare const tlv_toHex: typeof toHex;
+declare const tlv_fromHex: typeof fromHex;
+declare const tlv_toUtf8: typeof toUtf8;
+declare const tlv_fromUtf8: typeof fromUtf8;
+declare namespace tlv {
   export {
     tlv_Decodable as Decodable,
     tlv_Decoder as Decoder,
@@ -2627,7 +2626,7 @@ interface NamingConvention<A, R = A> {
     /** Parse value of a matched component. */
     parse: (comp: Component) => R;
 }
-export namespace NamingConvention {
+declare namespace NamingConvention {
     /** A naming convention that supports alternate/pretty URI. */
     interface WithAltUri {
         /** Convert to alternate URI. */
@@ -2641,12 +2640,12 @@ export namespace NamingConvention {
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
-export type ComponentLike = Component | string;
+declare type ComponentLike = Component | string;
 /**
  * Name component.
  * This type is immutable.
  */
-export class Component {
+declare class Component {
     get length(): number;
     /** TLV-VALUE interpreted as UTF-8 string. */
     get text(): string;
@@ -2677,7 +2676,7 @@ export class Component {
     /** Determine if this component equals other. */
     equals(other: ComponentLike): boolean;
 }
-export namespace Component {
+declare namespace Component {
     /** Component compare result. */
     enum CompareResult {
         /** lhs is less than rhs */
@@ -2691,12 +2690,12 @@ export namespace Component {
     function compare(lhs: ComponentLike, rhs: ComponentLike): CompareResult;
 }
 
-export type NameLike = Name | string;
+declare type NameLike = Name | string;
 /**
  * Name.
  * This type is immutable.
  */
-export class Name {
+declare class Name {
     static decodeFrom(decoder: Decoder): Name;
     /** TLV-VALUE of the Name. */
     readonly value: Uint8Array;
@@ -2738,7 +2737,7 @@ export class Name {
     isPrefixOf(other: NameLike): boolean;
     encodeTo(encoder: Encoder): void;
 }
-export namespace Name {
+declare namespace Name {
     function isNameLike(obj: any): obj is NameLike;
     /** Name compare result. */
     enum CompareResult {
@@ -2760,7 +2759,7 @@ export namespace Name {
  * @param name target name.
  * @param get callback function to retrieve entry by hexadecimal name prefix.
  */
-export function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Iterable<Entry>;
+declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Iterable<Entry>;
 
 /**
  * Functions to print and parse names in alternate/pretty URI syntax.
@@ -2774,7 +2773,7 @@ export function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undef
  * component that happens to match a convention that your application did not adopt is not
  * mistakenly interpreted with that convention.
  */
-export class AltUriConverter {
+declare class AltUriConverter {
     readonly conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>;
     constructor(conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>);
     /** Print component in alternate URI syntax */
@@ -2787,9 +2786,9 @@ export class AltUriConverter {
     parseName: (input: string) => Name;
 }
 /** Print Generic, ImplicitDigest, ParamsDigest in alternate URI syntax. */
-export const AltUri: AltUriConverter;
+declare const AltUri: AltUriConverter;
 
-export class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
+declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
     private readonly tt;
     private readonly altUriPrefix;
     private readonly altUriRegex;
@@ -2800,14 +2799,14 @@ export class DigestComp implements NamingConvention<Uint8Array>, NamingConventio
     toAltUri(comp: Component): string;
     fromAltUri(input: string): Component | undefined;
 }
-export class ImplicitDigestComp extends DigestComp {
+declare class ImplicitDigestComp extends DigestComp {
     constructor();
     /** Remove ImplicitDigest if present at last component. */
     strip(name: Name): Name;
 }
 /** ImplicitSha256DigestComponent */
-export const ImplicitDigest: ImplicitDigestComp;
-export class ParamsDigestComp extends DigestComp {
+declare const ImplicitDigest: ImplicitDigestComp;
+declare class ParamsDigestComp extends DigestComp {
     /** ParamsDigest placeholder during Interest encoding. */
     readonly PLACEHOLDER: Component;
     constructor();
@@ -2817,10 +2816,10 @@ export class ParamsDigestComp extends DigestComp {
     findIn(name: Name, matchPlaceholder?: boolean): number;
 }
 /** ParametersSha256DigestComponent */
-export const ParamsDigest: ParamsDigestComp;
+declare const ParamsDigest: ParamsDigestComp;
 
 /** ForwardingHint in Interest. */
-export class FwHint {
+declare class FwHint {
     static decodeValue(value: Uint8Array): FwHint;
     constructor(copy?: FwHint);
     constructor(name: NameLike);
@@ -2830,7 +2829,7 @@ export class FwHint {
     private readonly m;
     encodeTo(encoder: Encoder): void;
 }
-export namespace FwHint {
+declare namespace FwHint {
     /** Delegation in ForwardingHint. */
     class Delegation {
         preference: number;
@@ -2842,26 +2841,26 @@ export namespace FwHint {
 }
 
 /** KeyLocator in SigInfo. */
-export class KeyLocator {
+declare class KeyLocator {
     static decodeFrom(decoder: Decoder): KeyLocator;
     name?: Name;
     digest?: Uint8Array;
     constructor(...args: KeyLocator.CtorArg[]);
     encodeTo(encoder: Encoder): void;
 }
-export namespace KeyLocator {
+declare namespace KeyLocator {
     type CtorArg = KeyLocator | NameLike | Uint8Array;
     function isCtorArg(arg: unknown): arg is CtorArg;
     /** Throw if KeyLocator is missing or does not have Name. */
     function mustGetName(kl?: KeyLocator): Name;
 }
 
-export const ctorAssign$2: unique symbol;
+declare const ctorAssign$2: unique symbol;
 interface CtorTag$2 {
     [ctorAssign$2]: (si: SigInfo) => void;
 }
 /** SignatureInfo on Interest or Data. */
-export class SigInfo {
+declare class SigInfo {
     static decodeFrom(decoder: Decoder): SigInfo;
     type: number;
     keyLocator?: KeyLocator;
@@ -2888,7 +2887,7 @@ export class SigInfo {
     encodeAs(tt: number): EncodableObj;
     private encodeTo;
 }
-export namespace SigInfo {
+declare namespace SigInfo {
     function Nonce(v?: Uint8Array | number): CtorTag$2;
     /** Generate a random nonce. */
     function generateNonce(size?: number): Uint8Array;
@@ -2901,14 +2900,14 @@ export namespace SigInfo {
     const unregisterExtension: (tt: number) => void;
 }
 
-export function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
+declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
 
 /**
  * Low level signing function.
  * It takes a buffer of signed portion, and returns a Promise of signature value.
  */
-export type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
-export namespace LLSign {
+declare type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
+declare namespace LLSign {
     const OP: unique symbol;
     interface Signable {
         [OP]: (signer: LLSign) => Promise<void>;
@@ -2919,8 +2918,8 @@ export namespace LLSign {
  * It takes a buffer of signed portion and the signature value, and returns a Promise
  * that is resolved upon good signature or rejected upon bad signature.
  */
-export type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
-export namespace LLVerify {
+declare type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
+declare namespace LLVerify {
     const OP: unique symbol;
     interface Verifiable {
         [OP]: (verifier: LLVerify) => Promise<void>;
@@ -2937,7 +2936,7 @@ interface Signer {
     /** Sign a packet. */
     sign: (pkt: Signer.Signable) => Promise<void>;
 }
-export namespace Signer {
+declare namespace Signer {
     interface Signable extends PacketWithSignature, LLSign.Signable {
     }
     /**
@@ -2956,7 +2955,7 @@ interface Verifier {
      */
     verify: (pkt: Verifier.Verifiable) => Promise<void>;
 }
-export namespace Verifier {
+declare namespace Verifier {
     interface Verifiable extends Readonly<PacketWithSignature>, LLVerify.Verifiable {
     }
     /** Throw if packet does not have expected SigType. */
@@ -2965,17 +2964,17 @@ export namespace Verifier {
     function throwOnBadSig(ok: boolean): asserts ok;
 }
 /** Signer and Verifier that do nothing. */
-export const noopSigning: Signer & Verifier;
+declare const noopSigning: Signer & Verifier;
 /** Signer and Verifier for SigType.Sha256 digest. */
-export const digestSigning: Signer & Verifier;
+declare const digestSigning: Signer & Verifier;
 /**
  * Signer for SigType.Null, a packet that is not signed.
  * @see https://redmine.named-data.net/projects/ndn-tlv/wiki/NullSignature
  */
-export const nullSigner: Signer;
+declare const nullSigner: Signer;
 
-export const FIELDS$1: unique symbol;
-export class Fields$1 {
+declare const FIELDS$1: unique symbol;
+declare class Fields$1 {
     constructor(...args: Array<Interest | Interest.CtorArg>);
     name: Name;
     canBePrefix: boolean;
@@ -2996,12 +2995,12 @@ export class Fields$1 {
     signedPortion?: Uint8Array;
     paramsPortion?: Uint8Array;
 }
-export const ctorAssign$1: unique symbol;
+declare const ctorAssign$1: unique symbol;
 interface CtorTag$1 {
     [ctorAssign$1]: (f: Fields$1) => void;
 }
 /** Interest packet. */
-export class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
      * Construct from flexible arguments.
      *
@@ -3028,7 +3027,7 @@ export class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Si
 }
 interface Interest extends Fields$1 {
 }
-export namespace Interest {
+declare namespace Interest {
     /** Signer that calculates ParamsDigest. */
     const Parameterize: LLSign;
     /** Generate a random nonce. */
@@ -3063,8 +3062,8 @@ export namespace Interest {
     function makeModifyFunc(input?: Modify): ModifyFunc;
 }
 
-export const FIELDS: unique symbol;
-export class Fields {
+declare const FIELDS: unique symbol;
+declare class Fields {
     constructor(...args: Array<Data | Data.CtorArg>);
     get isFinalBlock(): boolean;
     set isFinalBlock(v: boolean);
@@ -3083,12 +3082,12 @@ export class Fields {
     topTlv?: Uint8Array;
     topTlvDigest?: Uint8Array;
 }
-export const ctorAssign: unique symbol;
+declare const ctorAssign: unique symbol;
 interface CtorTag {
     [ctorAssign]: (f: Fields) => void;
 }
 /** Data packet. */
-export class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
+declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
      * Construct from flexible arguments.
      *
@@ -3119,7 +3118,7 @@ export class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signab
 }
 interface Data extends Fields {
 }
-export namespace Data {
+declare namespace Data {
     /** Constructor argument to set ContentType field. */
     function ContentType(v: number): CtorTag;
     /** Constructor argument to set FreshnessPeriod field. */
@@ -3131,8 +3130,8 @@ export namespace Data {
 }
 
 /** Low level encryption function. */
-export type LLEncrypt = (params: LLEncrypt.Params) => Promise<LLEncrypt.Result>;
-export namespace LLEncrypt {
+declare type LLEncrypt = (params: LLEncrypt.Params) => Promise<LLEncrypt.Result>;
+declare namespace LLEncrypt {
     /** Input of LLEncrypt function. */
     interface Params {
         plaintext: Uint8Array;
@@ -3151,8 +3150,8 @@ export namespace LLEncrypt {
     }
 }
 /** Low level decryption function. */
-export type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
-export namespace LLDecrypt {
+declare type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
+declare namespace LLDecrypt {
     /** Input of LLDecrypt function. */
     interface Params {
         ciphertext: Uint8Array;
@@ -3188,7 +3187,7 @@ interface Decrypter<T = Data> {
     decrypt: (pkt: T) => Promise<void>;
 }
 /** Encrypter and decrypter that do nothing. */
-export const noopEncryption: Encrypter<any> & Decrypter<any>;
+declare const noopEncryption: Encrypter<any> & Decrypter<any>;
 
 interface KeyState {
     nonces?: Set<string>;
@@ -3200,7 +3199,7 @@ interface Rule {
     check: (si: SigInfo, state: KeyState) => () => void;
 }
 /** Validation policy for SigInfo fields in signed Interest. */
-export class SignedInterestPolicy {
+declare class SignedInterestPolicy {
     private readonly owned;
     private readonly trackedKeys;
     private readonly records;
@@ -3236,7 +3235,7 @@ export class SignedInterestPolicy {
     /** Wrap a Verifier to check the policy when verifying an Interest. */
     makeVerifier(inner: Verifier, { passData, passUnsignedInterest, }?: SignedInterestPolicy.WrapOptions): Verifier;
 }
-export namespace SignedInterestPolicy {
+declare namespace SignedInterestPolicy {
     interface Options {
         /**
          * How many distinct public keys to keep track.
@@ -3344,7 +3343,7 @@ export namespace SignedInterestPolicy {
     function SeqNum(opts?: SeqNumOptions): Rule;
 }
 
-export const TT: {
+declare const TT: {
     Name: number;
     GenericNameComponent: number;
     ImplicitSha256DigestComponent: number;
@@ -3378,21 +3377,21 @@ export const TT: {
     Nack: number;
     NackReason: number;
 };
-export const SigType: {
+declare const SigType: {
     Sha256: number;
     Sha256WithRsa: number;
     Sha256WithEcdsa: number;
     HmacWithSha256: number;
     Null: number;
 };
-export const NackReason: {
+declare const NackReason: {
     Congestion: number;
     Duplicate: number;
     NoRoute: number;
 };
 
 /** Nack header. */
-export class NackHeader {
+declare class NackHeader {
     get reason(): number;
     set reason(v: number);
     private reason_;
@@ -3401,7 +3400,7 @@ export class NackHeader {
     encodeTo(encoder: Encoder): void;
 }
 /** Nack packet. */
-export class Nack {
+declare class Nack {
     get reason(): number;
     set reason(v: number);
     header: NackHeader;
@@ -3409,43 +3408,43 @@ export class Nack {
     constructor(interest: Interest, header?: NackHeader | number);
 }
 
-export const packet_lpm: typeof lpm;
+declare const packet_lpm: typeof lpm;
 type packet_AltUriConverter = AltUriConverter;
-export const packet_AltUriConverter: typeof AltUriConverter;
-export const packet_AltUri: typeof AltUri;
+declare const packet_AltUriConverter: typeof AltUriConverter;
+declare const packet_AltUri: typeof AltUri;
 type packet_ComponentLike = ComponentLike;
-export const packet_Component: typeof Component;
-export const packet_NamingConvention: typeof NamingConvention;
-export const packet_ImplicitDigest: typeof ImplicitDigest;
-export const packet_ParamsDigest: typeof ParamsDigest;
+declare const packet_Component: typeof Component;
+declare const packet_NamingConvention: typeof NamingConvention;
+declare const packet_ImplicitDigest: typeof ImplicitDigest;
+declare const packet_ParamsDigest: typeof ParamsDigest;
 type packet_NameLike = NameLike;
-export const packet_Name: typeof Name;
-export const packet_LLEncrypt: typeof LLEncrypt;
-export const packet_LLDecrypt: typeof LLDecrypt;
+declare const packet_Name: typeof Name;
+declare const packet_LLEncrypt: typeof LLEncrypt;
+declare const packet_LLDecrypt: typeof LLDecrypt;
 type packet_Encrypter<_0> = Encrypter<_0>;
 type packet_Decrypter<_0> = Decrypter<_0>;
-export const packet_noopEncryption: typeof noopEncryption;
-export const packet_SignedInterestPolicy: typeof SignedInterestPolicy;
-export const packet_LLSign: typeof LLSign;
-export const packet_LLVerify: typeof LLVerify;
-export const packet_Signer: typeof Signer;
-export const packet_Verifier: typeof Verifier;
-export const packet_noopSigning: typeof noopSigning;
-export const packet_digestSigning: typeof digestSigning;
-export const packet_nullSigner: typeof nullSigner;
-export const packet_TT: typeof TT;
-export const packet_SigType: typeof SigType;
-export const packet_NackReason: typeof NackReason;
-export const packet_Data: typeof Data;
-export const packet_FwHint: typeof FwHint;
-export const packet_Interest: typeof Interest;
-export const packet_KeyLocator: typeof KeyLocator;
+declare const packet_noopEncryption: typeof noopEncryption;
+declare const packet_SignedInterestPolicy: typeof SignedInterestPolicy;
+declare const packet_LLSign: typeof LLSign;
+declare const packet_LLVerify: typeof LLVerify;
+declare const packet_Signer: typeof Signer;
+declare const packet_Verifier: typeof Verifier;
+declare const packet_noopSigning: typeof noopSigning;
+declare const packet_digestSigning: typeof digestSigning;
+declare const packet_nullSigner: typeof nullSigner;
+declare const packet_TT: typeof TT;
+declare const packet_SigType: typeof SigType;
+declare const packet_NackReason: typeof NackReason;
+declare const packet_Data: typeof Data;
+declare const packet_FwHint: typeof FwHint;
+declare const packet_Interest: typeof Interest;
+declare const packet_KeyLocator: typeof KeyLocator;
 type packet_NackHeader = NackHeader;
-export const packet_NackHeader: typeof NackHeader;
+declare const packet_NackHeader: typeof NackHeader;
 type packet_Nack = Nack;
-export const packet_Nack: typeof Nack;
-export const packet_SigInfo: typeof SigInfo;
-export namespace packet {
+declare const packet_Nack: typeof Nack;
+declare const packet_SigInfo: typeof SigInfo;
+declare namespace packet {
   export {
     packet_lpm as lpm,
     packet_AltUriConverter as AltUriConverter,
@@ -3483,7 +3482,7 @@ export namespace packet {
   };
 }
 
-export type L3Pkt = Interest | Data | Nack;
+declare type L3Pkt = Interest | Data | Nack;
 /** A logical packet in the forwarder. */
 interface FwPacket<T extends L3Pkt = L3Pkt> {
     l3: T;
@@ -3491,19 +3490,19 @@ interface FwPacket<T extends L3Pkt = L3Pkt> {
     reject?: RejectInterest.Reason;
     cancel?: boolean;
 }
-export namespace FwPacket {
+declare namespace FwPacket {
     function create<T extends L3Pkt>(l3: T, token?: unknown): FwPacket<T>;
     /** Whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
 }
 /** Indicate an Interest has been rejected. */
-export class RejectInterest implements FwPacket<Interest> {
+declare class RejectInterest implements FwPacket<Interest> {
     reject: RejectInterest.Reason;
     l3: Interest;
     token?: unknown;
     constructor(reject: RejectInterest.Reason, l3: Interest, token?: unknown);
 }
-export namespace RejectInterest {
+declare namespace RejectInterest {
     type Reason = "cancel" | "expire";
 }
 
@@ -3582,7 +3581,7 @@ interface Forwarder extends TypedEventEmitter<Events$7> {
      */
     close(): void;
 }
-export namespace Forwarder {
+declare namespace Forwarder {
     interface Options {
         /** Per-face RX buffer length. */
         faceRxBuffer?: number;
@@ -3630,7 +3629,7 @@ interface FwFace extends TypedEventEmitter<Events$6> {
     /** Remove a prefix announcement associated with the face. */
     removeAnnouncement(name: NameLike): void;
 }
-export namespace FwFace {
+declare namespace FwFace {
     interface Attributes extends Record<string, any> {
         /** Short string to identify the face. */
         describe?: string;
@@ -3845,7 +3844,7 @@ type EventTarget<
     ): boolean
 }
 
-export const EventTarget: EventTargetConstructor & {
+declare const EventTarget: EventTargetConstructor & {
     /**
      * Create an `EventTarget` instance with detailed event definition.
      *
@@ -3912,7 +3911,7 @@ export const EventTarget: EventTargetConstructor & {
     >
 }
 
-export namespace EventTarget {
+declare namespace EventTarget {
     /**
      * Options of `removeEventListener()` method.
      */
@@ -4057,7 +4056,7 @@ type EventAttributes = {
  * The signal class.
  * @see https://dom.spec.whatwg.org/#abortsignal
  */
-export class AbortSignal extends EventTarget<Events$5, EventAttributes> {
+declare class AbortSignal extends EventTarget<Events$5, EventAttributes> {
     /**
      * AbortSignal cannot be constructed directly.
      */
@@ -4100,7 +4099,7 @@ interface ConsumerContext extends Promise<Data> {
     readonly nRetx: number;
 }
 /** Consumer functionality of Endpoint. */
-export class EndpointConsumer {
+declare class EndpointConsumer {
     fw: Forwarder;
     opts: ConsumerOptions;
     /** Consume a single piece of Data. */
@@ -4123,7 +4122,7 @@ interface DataBuffer {
  * unless Options.autoBuffer is set to false. If the handler returns `undefined`, the Interest is used
  * to query the DataBuffer, and any matching Data may be sent.
  */
-export type ProducerHandler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
+declare type ProducerHandler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
 interface ProducerOptions {
     /** Description for debugging purpose. */
     describe?: string;
@@ -4180,7 +4179,7 @@ interface Producer {
     close: () => void;
 }
 /** Producer functionality of Endpoint. */
-export class EndpointProducer {
+declare class EndpointProducer {
     fw: Forwarder;
     opts: ProducerOptions;
     /**
@@ -4190,7 +4189,7 @@ export class EndpointProducer {
      */
     produce(prefixInput: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
 }
-export namespace EndpointProducer {
+declare namespace EndpointProducer {
     type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
@@ -4201,14 +4200,14 @@ interface Options extends ConsumerOptions, ProducerOptions {
  * Endpoint is the main entry point for an application to interact with the forwarding plane.
  * It provides basic consumer and producer functionality.
  */
-export class Endpoint {
+declare class Endpoint {
     readonly opts: Options;
     readonly fw: Forwarder;
     constructor(opts?: Options);
 }
 interface Endpoint extends EndpointConsumer, EndpointProducer {
 }
-export namespace Endpoint {
+declare namespace Endpoint {
     /** Delete default Forwarder instance (mainly for unit testing). */
     const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
@@ -4227,34 +4226,34 @@ interface Element$1<V extends string|Uint8Array> {
 
 type ElementBuffer = Element$1<Uint8Array>;
 
-export type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
+declare type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
 /** Identify kind of key. */
-export type KeyKind = "private" | "public" | "secret";
-export namespace KeyKind {
+declare type KeyKind = "private" | "public" | "secret";
+declare namespace KeyKind {
     /** Pick "private" or "secret" based on whether the algorithm is asymmetric. */
     type PrivateSecret<Asym extends boolean> = If<Asym, "private", "secret">;
     /** Pick "public" or "secret" based on whether the algorithm is asymmetric. */
     type PublicSecret<Asym extends boolean> = If<Asym, "public", "secret">;
 }
-export const KeyKind: unique symbol;
+declare const KeyKind: unique symbol;
 interface Key<K extends KeyKind> {
     readonly name: Name;
     readonly [KeyKind]: K;
     readonly spki?: "public" extends K ? Uint8Array : never;
 }
 /** Named private key. */
-export type PrivateKey = Key<"private">;
+declare type PrivateKey = Key<"private">;
 /** Named public key. */
-export type PublicKey = Key<"public">;
+declare type PublicKey = Key<"public">;
 /** Named secret key. */
-export type SecretKey = Key<"secret">;
+declare type SecretKey = Key<"secret">;
 /** Named private key or secret key signer. */
 interface NamedSigner<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, Signer {
     readonly sigType: number;
     /** Create a Signer that signs with this private key but a different KeyLocator. */
     withKeyLocator: (keyLocator: KeyLocator.CtorArg) => Signer;
 }
-export namespace NamedSigner {
+declare namespace NamedSigner {
     /** Named private key signer. */
     type PrivateKey = NamedSigner<true>;
     /** Named secret key signer. */
@@ -4264,7 +4263,7 @@ export namespace NamedSigner {
 interface NamedVerifier<Asym extends boolean = any> extends Key<KeyKind.PublicSecret<Asym>>, Verifier {
     readonly sigType: number;
 }
-export namespace NamedVerifier {
+declare namespace NamedVerifier {
     /** Named public key verifier. */
     type PublicKey = NamedVerifier<true>;
     /** Named secret key verifier. */
@@ -4273,7 +4272,7 @@ export namespace NamedVerifier {
 /** Named public key or secret key encrypter. */
 interface NamedEncrypter<Asym extends boolean = any> extends Key<KeyKind.PublicSecret<Asym>>, LLEncrypt.Key {
 }
-export namespace NamedEncrypter {
+declare namespace NamedEncrypter {
     /** Named public key encrypter. */
     type PublicKey = NamedEncrypter<true>;
     /** Named secret key encrypter. */
@@ -4282,7 +4281,7 @@ export namespace NamedEncrypter {
 /** Named private key or secret key decrypter. */
 interface NamedDecrypter<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, LLDecrypt.Key {
 }
-export namespace NamedDecrypter {
+declare namespace NamedDecrypter {
     /** Named private key decrypter. */
     type PrivateKey = NamedDecrypter<true>;
     /** Named secret key decrypter. */
@@ -4305,7 +4304,7 @@ interface CryptoAlgorithm<I = any, Asym extends boolean = any, G = any> {
      */
     importSpki?: (spki: Uint8Array, der: ElementBuffer) => Promise<CryptoAlgorithm.PublicKey<I>>;
 }
-export namespace CryptoAlgorithm {
+declare namespace CryptoAlgorithm {
     function isAsym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, true, G>;
     function isSym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, false, G>;
     function isSigning<I, Asym extends boolean = any, G = any>(algo: CryptoAlgorithm<I, Asym, G>): algo is SigningAlgorithm<I, Asym, G>;
@@ -4357,7 +4356,7 @@ interface StoreProvider<T> {
     erase: (key: string) => Promise<void>;
 }
 
-export abstract class StoreBase<T> {
+declare abstract class StoreBase<T> {
     private readonly provider;
     private throttle;
     constructor(provider: StoreProvider<T>);
@@ -4370,11 +4369,11 @@ export abstract class StoreBase<T> {
     protected insertValue(name: Name, value: T): Promise<void>;
     protected bufferToStorable(input: Uint8Array | string): Uint8Array | string;
 }
-export namespace StoreBase {
+declare namespace StoreBase {
     function bufferFromStorable(input: Uint8Array | string): Uint8Array;
 }
 
-export class KeyLoader {
+declare class KeyLoader {
     private readonly extractable;
     constructor(extractable?: boolean);
     loadKey(name: Name, stored: KeyStore.StoredKey): Promise<KeyStore.KeyPair>;
@@ -4382,12 +4381,12 @@ export class KeyLoader {
     private loadSymmetric;
 }
 /** Storage of key pairs. */
-export class KeyStore extends StoreBase<KeyStore.StoredKey> {
+declare class KeyStore extends StoreBase<KeyStore.StoredKey> {
     private loader;
     get(name: Name): Promise<KeyStore.KeyPair>;
     insert(name: Name, stored: KeyStore.StoredKey): Promise<void>;
 }
-export namespace KeyStore {
+declare namespace KeyStore {
     const Loader: typeof KeyLoader;
     class KeyPair<Asym extends boolean = any, I = any> {
         readonly name: Name;
@@ -4413,7 +4412,7 @@ export namespace KeyStore {
 }
 
 /** Certificate validity period. */
-export class ValidityPeriod {
+declare class ValidityPeriod {
     static decodeFrom(decoder: Decoder): ValidityPeriod;
     constructor();
     constructor(notBefore: ValidityPeriod.TimestampInput, notAfter: ValidityPeriod.TimestampInput);
@@ -4428,7 +4427,7 @@ export class ValidityPeriod {
     intersect(...validityPeriods: ValidityPeriod[]): ValidityPeriod;
     toString(): string;
 }
-export namespace ValidityPeriod {
+declare namespace ValidityPeriod {
     type TimestampInput = number | Date;
     const MAX: ValidityPeriod;
     function daysFromNow(n: number): ValidityPeriod;
@@ -4440,7 +4439,7 @@ export namespace ValidityPeriod {
  * NDN Certificate v2.
  * This type is immutable.
  */
-export class Certificate {
+declare class Certificate {
     readonly data: Data;
     readonly validity: ValidityPeriod;
     static fromData(data: Data): Certificate;
@@ -4459,7 +4458,7 @@ export class Certificate {
     private verifier?;
     private encrypter?;
 }
-export namespace Certificate {
+declare namespace Certificate {
     interface BuildOptions {
         name: Name;
         freshness?: number;
@@ -4489,13 +4488,13 @@ interface StoredCert {
     certBuffer: Uint8Array | string;
 }
 /** Storage of certificates. */
-export class CertStore extends StoreBase<StoredCert> {
+declare class CertStore extends StoreBase<StoredCert> {
     get(name: Name): Promise<Certificate>;
     insert(cert: Certificate): Promise<void>;
 }
 
 /** Storage of own private keys and certificates. */
-export abstract class KeyChain {
+declare abstract class KeyChain {
     /** Return whether insertKey function expects JsonWebKey instead of CryptoKey. */
     abstract readonly needJwk: boolean;
     /** List keys, filtered by name prefix. */
@@ -4536,7 +4535,7 @@ export abstract class KeyChain {
     getSigner(name: Name, { prefixMatch, fallback, useKeyNameKeyLocator }?: KeyChain.GetSignerOptions): Promise<Signer>;
     private findSignerCertName;
 }
-export namespace KeyChain {
+declare namespace KeyChain {
     type KeyPair<Asym extends boolean = any> = KeyStore.KeyPair<Asym>;
     /**
      * Create a signer from keys and certificates in the KeyChain.
@@ -4586,21 +4585,21 @@ export namespace KeyChain {
 }
 
 /** Create a plain encrypter from crypto key. */
-export function createEncrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): LLEncrypt.Key;
+declare function createEncrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): LLEncrypt.Key;
 /** Create a named encrypter from crypto key. */
-export function createEncrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedEncrypter<Asym>;
+declare function createEncrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedEncrypter<Asym>;
 /** Create a plain decrypter from crypto key. */
-export function createDecrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): LLDecrypt.Key;
+declare function createDecrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): LLDecrypt.Key;
 /** Create a named decrypter from crypto key. */
-export function createDecrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedDecrypter<Asym>;
-export type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [EncryptionAlgorithm<I, Asym, G>, G?] : [EncryptionAlgorithm<I, Asym, G>, G];
+declare function createDecrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedDecrypter<Asym>;
+declare type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [EncryptionAlgorithm<I, Asym, G>, G?] : [EncryptionAlgorithm<I, Asym, G>, G];
 /** Generate a pair of encrypter and decrypter. */
-export function generateEncryptionKey<I, Asym extends boolean, G>(name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
+declare function generateEncryptionKey<I, Asym extends boolean, G>(name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
 /** Generate a pair of encrypter and decrypter, and save to KeyChain. */
-export function generateEncryptionKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
+declare function generateEncryptionKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
 
 /** Initialization Vector generator. */
-export abstract class IvGen {
+declare abstract class IvGen {
     readonly ivLength: number;
     constructor(ivLength: number);
     wrap<T extends LLEncrypt.Key>(key: T): T;
@@ -4611,7 +4610,7 @@ export abstract class IvGen {
     protected update(plaintextLength: number, ciphertextLength: number): void;
 }
 /** Initialization Vector checker. */
-export abstract class IvChecker {
+declare abstract class IvChecker {
     readonly ivLength: number;
     constructor(ivLength: number);
     wrap<T extends LLDecrypt.Key>(key: T): T;
@@ -4621,7 +4620,7 @@ export abstract class IvChecker {
     protected abstract check(iv: Uint8Array, plaintextLength: number, ciphertextLength: number): void;
 }
 /** IV generator using all random bits. */
-export class RandomIvGen extends IvGen {
+declare class RandomIvGen extends IvGen {
     protected generate(): Uint8Array;
 }
 /**
@@ -4657,19 +4656,19 @@ interface CounterIvOptions {
     blockSize: number;
 }
 /** IV generator using fixed+random+counter structure. */
-export class CounterIvGen extends IvGen {
+declare class CounterIvGen extends IvGen {
     constructor(opts: CounterIvGen.Options);
     private readonly ivPrefix;
     private readonly ci;
     protected generate(): Uint8Array;
     protected update(plaintextLength: number, ciphertextLength: number): void;
 }
-export namespace CounterIvGen {
+declare namespace CounterIvGen {
     interface Options extends CounterIvOptions {
     }
 }
 /** Check IVs of fixed+random+counter structure to detect duplication. */
-export class CounterIvChecker extends IvChecker {
+declare class CounterIvChecker extends IvChecker {
     constructor(opts: CounterIvChecker.Options);
     private readonly fixedMask;
     private readonly randomMask;
@@ -4685,7 +4684,7 @@ export class CounterIvChecker extends IvChecker {
     };
     protected check(iv: Uint8Array, plaintextLength: number, ciphertextLength: number): void;
 }
-export namespace CounterIvChecker {
+declare namespace CounterIvChecker {
     interface Options extends CounterIvOptions {
         /**
          * If true, all IVs must have the same bits in the random portion.
@@ -4696,29 +4695,29 @@ export namespace CounterIvChecker {
 }
 
 /** Create a plain signer from crypto key. */
-export function createSigner<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): Signer;
+declare function createSigner<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): Signer;
 /** Create a named signer from crypto key. */
-export function createSigner<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedSigner<Asym>;
+declare function createSigner<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedSigner<Asym>;
 /** Create a plain verifier from crypto key. */
-export function createVerifier<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): Verifier;
+declare function createVerifier<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): Verifier;
 /** Create a named verifier from crypto key. */
-export function createVerifier<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedVerifier<Asym>;
-export type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [SigningAlgorithm<I, Asym, G>, G?] : [SigningAlgorithm<I, Asym, G>, G];
+declare function createVerifier<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedVerifier<Asym>;
+declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [SigningAlgorithm<I, Asym, G>, G?] : [SigningAlgorithm<I, Asym, G>, G];
 /** Generate a pair of signer and verifier with the default ECDSA signing algorithm. */
-export function generateSigningKey(name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
+declare function generateSigningKey(name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
 /** Generate a pair of signer and verifier with the default ECDSA signing algorithm, and save to KeyChain. */
-export function generateSigningKey(keyChain: KeyChain, name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
+declare function generateSigningKey(keyChain: KeyChain, name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
 /** Generate a pair of signer and verifier. */
-export function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
+declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 /** Generate a pair of signer and verifier, and save to KeyChain. */
-export function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
+declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 
 interface Encryption<I, G extends GenParams> extends EncryptionAlgorithm<I, false, G> {
     readonly ivLength: number;
     makeAesKeyGenParams: (genParams: G) => AesKeyGenParams;
 }
-export type KeyLength = 128 | 192 | 256;
-export namespace KeyLength {
+declare type KeyLength = 128 | 192 | 256;
+declare namespace KeyLength {
     const Default: KeyLength;
     const Choices: readonly KeyLength[];
 }
@@ -4728,9 +4727,9 @@ interface GenParams {
     /** Import raw key bits instead of generating. */
     importRaw?: Uint8Array;
 }
-export type GenParams_ = GenParams;
+declare type GenParams_ = GenParams;
 /** AES block size in octets. */
-export const blockSize = 16;
+declare const blockSize = 16;
 /**
  * AES-CBC encryption algorithm.
  *
@@ -4738,7 +4737,7 @@ export const blockSize = 16;
  * During encryption, if IV is unspecified, it is randomly generated.
  * During decryption, quality of IV is not checked.
  */
-export const CBC: Encryption<{}, GenParams>;
+declare const CBC: Encryption<{}, GenParams>;
 /**
  * AES-CTR encryption algorithm.
  *
@@ -4751,8 +4750,8 @@ export const CBC: Encryption<{}, GenParams>;
  * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
  * check IVs using CounterIvChecker type.
  */
-export const CTR: Encryption<CTR.Info, CTR.GenParams>;
-export namespace CTR {
+declare const CTR: Encryption<CTR.Info, CTR.GenParams>;
+declare namespace CTR {
     interface Info {
         /**
          * Specify number of bits in IV to use as counter.
@@ -4774,16 +4773,16 @@ export namespace CTR {
  * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
  * check IVs using CounterIvChecker type.
  */
-export const GCM: Encryption<{}, GenParams>;
+declare const GCM: Encryption<{}, GenParams>;
 
 type aes_d_Encryption<_0, _1> = Encryption<_0, _1>;
-export const aes_d_KeyLength: typeof KeyLength;
+declare const aes_d_KeyLength: typeof KeyLength;
 type aes_d_GenParams = GenParams;
-export const aes_d_blockSize: typeof blockSize;
-export const aes_d_CBC: typeof CBC;
-export const aes_d_CTR: typeof CTR;
-export const aes_d_GCM: typeof GCM;
-export namespace aes_d {
+declare const aes_d_blockSize: typeof blockSize;
+declare const aes_d_CBC: typeof CBC;
+declare const aes_d_CTR: typeof CTR;
+declare const aes_d_GCM: typeof GCM;
+declare namespace aes_d {
   export {
     aes_d_Encryption as Encryption,
     aes_d_KeyLength as KeyLength,
@@ -4795,19 +4794,19 @@ export namespace aes_d {
   };
 }
 
-export const PointSizes: {
+declare const PointSizes: {
     "P-256": number;
     "P-384": number;
     "P-521": number;
 };
-export type EcCurve = keyof typeof PointSizes;
-export namespace EcCurve {
+declare type EcCurve = keyof typeof PointSizes;
+declare namespace EcCurve {
     const Default: EcCurve;
     const Choices: readonly ("P-256" | "P-384" | "P-521")[];
 }
 /** Sha256WithEcdsa signing algorithm. */
-export const ECDSA: SigningAlgorithm<ECDSA.Info, true, ECDSA.GenParams>;
-export namespace ECDSA {
+declare const ECDSA: SigningAlgorithm<ECDSA.Info, true, ECDSA.GenParams>;
+declare namespace ECDSA {
     /** Key generation parameters. */
     interface GenParams {
         curve?: EcCurve;
@@ -4823,8 +4822,8 @@ export namespace ECDSA {
 }
 
 /** HmacWithSha256 signing algorithm. */
-export const HMAC: SigningAlgorithm<{}, false, HMAC.GenParams>;
-export namespace HMAC {
+declare const HMAC: SigningAlgorithm<{}, false, HMAC.GenParams>;
+declare namespace HMAC {
     /** Key generation parameters. */
     interface GenParams {
         /** Import raw key bits instead of generating. */
@@ -4832,18 +4831,18 @@ export namespace HMAC {
     }
 }
 
-export const SigningAlgorithmList: SigningAlgorithm[];
-export const EncryptionAlgorithmList: EncryptionAlgorithm[];
-export const CryptoAlgorithmList: CryptoAlgorithm[];
+declare const SigningAlgorithmList: SigningAlgorithm[];
+declare const EncryptionAlgorithmList: EncryptionAlgorithm[];
+declare const CryptoAlgorithmList: CryptoAlgorithm[];
 
-export type RsaModulusLength = 2048 | 4096;
-export namespace RsaModulusLength {
+declare type RsaModulusLength = 2048 | 4096;
+declare namespace RsaModulusLength {
     const Default: RsaModulusLength;
     const Choices: readonly RsaModulusLength[];
 }
 /** Sha256WithRsa signing algorithm. */
-export const RSA: SigningAlgorithm<{}, true, RSA.GenParams>;
-export namespace RSA {
+declare const RSA: SigningAlgorithm<{}, true, RSA.GenParams>;
+declare namespace RSA {
     interface GenParams {
         modulusLength?: RsaModulusLength;
         /** Import PKCS#8 private key and SPKI public key instead of generating. */
@@ -4851,16 +4850,16 @@ export namespace RSA {
     }
 }
 /** RSA-OAEP encryption algorithm. */
-export const RSAOAEP: EncryptionAlgorithm<{}, true, RSA.GenParams>;
+declare const RSAOAEP: EncryptionAlgorithm<{}, true, RSA.GenParams>;
 
-export const crypto: Crypto;
+declare const crypto: Crypto;
 
 /** 'KEY' component. */
-export const KEY: Component;
+declare const KEY: Component;
 /** Default issuerId. */
-export const ISSUER_DEFAULT: Component;
+declare const ISSUER_DEFAULT: Component;
 /** Self-signed issuerId. */
-export const ISSUER_SELF: Component;
+declare const ISSUER_SELF: Component;
 interface KeyNameFields {
     subjectName: Name;
     keyId: Component;
@@ -4871,26 +4870,26 @@ interface CertNameFields extends KeyNameFields {
     keyName: Name;
 }
 /** Get subject name from subject name, key name, or certificate name. */
-export function toSubjectName(name: Name): Name;
+declare function toSubjectName(name: Name): Name;
 /** Determine whether the name is a key name. */
-export function isKeyName(name: Name): boolean;
+declare function isKeyName(name: Name): boolean;
 /** Parse a key name into fields. */
-export function parseKeyName(name: Name): KeyNameFields;
+declare function parseKeyName(name: Name): KeyNameFields;
 /**
  * Get key name from key name or certificate name.
  * @throws input name is neither key name nor certificate name.
  */
-export function toKeyName(name: Name): Name;
+declare function toKeyName(name: Name): Name;
 /**
  * Create key name from subject name, key name, or certificate name.
  * @param name subject name, key name, or certificate name.
  * @param opts.keyId keyId component, used only if input name is subject name.
  */
-export function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
+declare function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
 /** Determine whether the name is a certificate name. */
-export function isCertName(name: Name): boolean;
+declare function isCertName(name: Name): boolean;
 /** Parse a certificate name into fields. */
-export function parseCertName(name: Name): CertNameFields;
+declare function parseCertName(name: Name): CertNameFields;
 /**
  * Create certificate name from subject name, key name, or certificate name.
  * @param name subject name, key name, or certificate name.
@@ -4898,22 +4897,22 @@ export function parseCertName(name: Name): CertNameFields;
  * @param opts.issuerId keyId, used only if input name is subject name.
  * @param opts.version keyId, used only if input name is subject name.
  */
-export function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
+declare function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
 
-export const naming_d_KEY: typeof KEY;
-export const naming_d_ISSUER_DEFAULT: typeof ISSUER_DEFAULT;
-export const naming_d_ISSUER_SELF: typeof ISSUER_SELF;
+declare const naming_d_KEY: typeof KEY;
+declare const naming_d_ISSUER_DEFAULT: typeof ISSUER_DEFAULT;
+declare const naming_d_ISSUER_SELF: typeof ISSUER_SELF;
 type naming_d_KeyNameFields = KeyNameFields;
 type naming_d_CertNameFields = CertNameFields;
-export const naming_d_toSubjectName: typeof toSubjectName;
-export const naming_d_isKeyName: typeof isKeyName;
-export const naming_d_parseKeyName: typeof parseKeyName;
-export const naming_d_toKeyName: typeof toKeyName;
-export const naming_d_makeKeyName: typeof makeKeyName;
-export const naming_d_isCertName: typeof isCertName;
-export const naming_d_parseCertName: typeof parseCertName;
-export const naming_d_makeCertName: typeof makeCertName;
-export namespace naming_d {
+declare const naming_d_toSubjectName: typeof toSubjectName;
+declare const naming_d_isKeyName: typeof isKeyName;
+declare const naming_d_parseKeyName: typeof parseKeyName;
+declare const naming_d_toKeyName: typeof toKeyName;
+declare const naming_d_makeKeyName: typeof makeKeyName;
+declare const naming_d_isCertName: typeof isCertName;
+declare const naming_d_parseCertName: typeof parseCertName;
+declare const naming_d_makeCertName: typeof makeCertName;
+declare namespace naming_d {
   export {
     naming_d_KEY as KEY,
     naming_d_ISSUER_DEFAULT as ISSUER_DEFAULT,
@@ -4931,48 +4930,48 @@ export namespace naming_d {
   };
 }
 
-export const keychain_EcCurve: typeof EcCurve;
-export const keychain_ECDSA: typeof ECDSA;
-export const keychain_HMAC: typeof HMAC;
-export const keychain_SigningAlgorithmList: typeof SigningAlgorithmList;
-export const keychain_EncryptionAlgorithmList: typeof EncryptionAlgorithmList;
-export const keychain_CryptoAlgorithmList: typeof CryptoAlgorithmList;
-export const keychain_RsaModulusLength: typeof RsaModulusLength;
-export const keychain_RSA: typeof RSA;
-export const keychain_RSAOAEP: typeof RSAOAEP;
-export const keychain_ValidityPeriod: typeof ValidityPeriod;
-export const keychain_Certificate: typeof Certificate;
-export const keychain_KeyKind: typeof KeyKind;
+declare const keychain_EcCurve: typeof EcCurve;
+declare const keychain_ECDSA: typeof ECDSA;
+declare const keychain_HMAC: typeof HMAC;
+declare const keychain_SigningAlgorithmList: typeof SigningAlgorithmList;
+declare const keychain_EncryptionAlgorithmList: typeof EncryptionAlgorithmList;
+declare const keychain_CryptoAlgorithmList: typeof CryptoAlgorithmList;
+declare const keychain_RsaModulusLength: typeof RsaModulusLength;
+declare const keychain_RSA: typeof RSA;
+declare const keychain_RSAOAEP: typeof RSAOAEP;
+declare const keychain_ValidityPeriod: typeof ValidityPeriod;
+declare const keychain_Certificate: typeof Certificate;
+declare const keychain_KeyKind: typeof KeyKind;
 type keychain_PrivateKey = PrivateKey;
 type keychain_PublicKey = PublicKey;
 type keychain_SecretKey = SecretKey;
-export const keychain_NamedSigner: typeof NamedSigner;
-export const keychain_NamedVerifier: typeof NamedVerifier;
-export const keychain_NamedEncrypter: typeof NamedEncrypter;
-export const keychain_NamedDecrypter: typeof NamedDecrypter;
-export const keychain_CryptoAlgorithm: typeof CryptoAlgorithm;
+declare const keychain_NamedSigner: typeof NamedSigner;
+declare const keychain_NamedVerifier: typeof NamedVerifier;
+declare const keychain_NamedEncrypter: typeof NamedEncrypter;
+declare const keychain_NamedDecrypter: typeof NamedDecrypter;
+declare const keychain_CryptoAlgorithm: typeof CryptoAlgorithm;
 type keychain_SigningAlgorithm<_0, _1, _2> = SigningAlgorithm<_0, _1, _2>;
 type keychain_EncryptionAlgorithm<_0, _1, _2> = EncryptionAlgorithm<_0, _1, _2>;
-export const keychain_createEncrypter: typeof createEncrypter;
-export const keychain_createDecrypter: typeof createDecrypter;
-export const keychain_generateEncryptionKey: typeof generateEncryptionKey;
+declare const keychain_createEncrypter: typeof createEncrypter;
+declare const keychain_createDecrypter: typeof createDecrypter;
+declare const keychain_generateEncryptionKey: typeof generateEncryptionKey;
 type keychain_IvGen = IvGen;
-export const keychain_IvGen: typeof IvGen;
+declare const keychain_IvGen: typeof IvGen;
 type keychain_IvChecker = IvChecker;
-export const keychain_IvChecker: typeof IvChecker;
+declare const keychain_IvChecker: typeof IvChecker;
 type keychain_RandomIvGen = RandomIvGen;
-export const keychain_RandomIvGen: typeof RandomIvGen;
+declare const keychain_RandomIvGen: typeof RandomIvGen;
 type keychain_CounterIvOptions = CounterIvOptions;
-export const keychain_CounterIvGen: typeof CounterIvGen;
-export const keychain_CounterIvChecker: typeof CounterIvChecker;
-export const keychain_createSigner: typeof createSigner;
-export const keychain_createVerifier: typeof createVerifier;
-export const keychain_generateSigningKey: typeof generateSigningKey;
-export const keychain_KeyStore: typeof KeyStore;
+declare const keychain_CounterIvGen: typeof CounterIvGen;
+declare const keychain_CounterIvChecker: typeof CounterIvChecker;
+declare const keychain_createSigner: typeof createSigner;
+declare const keychain_createVerifier: typeof createVerifier;
+declare const keychain_generateSigningKey: typeof generateSigningKey;
+declare const keychain_KeyStore: typeof KeyStore;
 type keychain_CertStore = CertStore;
-export const keychain_CertStore: typeof CertStore;
-export const keychain_KeyChain: typeof KeyChain;
-export namespace keychain {
+declare const keychain_CertStore: typeof CertStore;
+declare const keychain_KeyChain: typeof KeyChain;
+declare namespace keychain {
   export {
     crypto as KeyChainImplWebCrypto,
     naming_d as CertNaming,
@@ -5043,7 +5042,7 @@ interface ForwardingProvider {
     runCode: (code: string, node: INode) => void;
 }
 
-export class Topology {
+declare class Topology {
     provider: ForwardingProvider;
     readonly DEFAULT_LINK_COLOR = "#3583ea";
     readonly DEFAULT_NODE_COLOR = "#a4b7fc";
@@ -5073,7 +5072,7 @@ export class Topology {
     updateEdgeColor(edge: IEdge): void;
 }
 
-export class SecurityController {
+declare class SecurityController {
     private topo;
     private rootKeychain;
     private rootKeys;
@@ -5093,7 +5092,7 @@ export class SecurityController {
     fitLazy(): void;
 }
 
-export class ProviderBrowser implements ForwardingProvider {
+declare class ProviderBrowser implements ForwardingProvider {
     readonly LOG_INTERESTS = false;
     readonly BROWSER = 1;
     topo: Topology;
@@ -5129,13 +5128,27 @@ export class ProviderBrowser implements ForwardingProvider {
     loadExperimentDumpFromStr(val: string): void;
 }
 
-export class NFW {
+declare class DefaultServers {
+    private nfw;
+    /** Server for ping */
+    private pingServer?;
+    /** Server for certificates */
+    private certServer?;
+    constructor(nfw: NFW);
+    restart(): void;
+    private setupPingServer;
+    private setupCertServer;
+}
+
+declare class NFW {
     private readonly topo;
     readonly nodeId: IdType;
     /** NDNts forwarder */
     fw: Forwarder;
-    private face;
-    private faceRx;
+    /** Local face for content store etc */
+    localFace: FwFace;
+    /** Push channel to local face */
+    private localFaceTx;
     /** Browser Forwarding Provider */
     provider: ProviderBrowser;
     /** Security options */
@@ -5160,10 +5173,8 @@ export class NFW {
         prefix: Name;
         strategy: string;
     }[];
-    /** Server for ping */
-    private pingServer?;
-    /** Server for certificates */
-    private certServer?;
+    /** Default servers */
+    defualtServers: DefaultServers;
     /** Connections to other NFWs */
     private connections;
     /** Aggregate of sent interests */
@@ -5172,12 +5183,11 @@ export class NFW {
     private announcements;
     /** Extra parameters of node */
     private nodeExtra;
+    /** Packet capture */
+    private shark;
     constructor(topo: Topology, nodeId: IdType);
     node(): INode;
     nodeUpdated(): void;
-    private setupPingServer;
-    private setupCertServer;
-    capturePacket(pkt: FwPacket): void;
     /** Update color of current node */
     updateColors(): void;
     /** Add traffic to link */
@@ -5186,6 +5196,7 @@ export class NFW {
     private longestMatch;
     private allMatches;
     private expressInterest;
+    private getConnection;
     strsFIB(): string[];
     getEndpoint(opts?: {
         secure?: boolean;
@@ -5249,7 +5260,7 @@ interface IEdge extends Edge {
 }
 
 /** Invertible Bloom Lookup Table. */
-export class IBLT {
+declare class IBLT {
     constructor(p: IBLT.Parameters | IBLT.PreparedParameters);
     private readonly p;
     private readonly ht;
@@ -5285,7 +5296,7 @@ export class IBLT {
      */
     clone(): IBLT;
 }
-export namespace IBLT {
+declare namespace IBLT {
     type HashFunction = (seed: number, input: Uint8Array) => number;
     /** IBLT parameters. */
     interface Parameters {
@@ -5328,7 +5339,7 @@ export namespace IBLT {
     }
 }
 
-export type IntervalRange = [min: number, max: number];
+declare type IntervalRange = [min: number, max: number];
 
 /** A sync protocol participant. */
 interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<ID>> {
@@ -5339,7 +5350,7 @@ interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<I
     /** Retrieve or create a node. */
     add(id: ID): SyncNode<ID>;
 }
-export namespace SyncProtocol {
+declare namespace SyncProtocol {
     interface Events<ID> {
         /** Emitted when a node is updated, i.e. has new sequence numbers. */
         update: (update: SyncUpdate<ID>) => void;
@@ -5368,7 +5379,7 @@ interface SyncNode<ID = any> {
     remove(): void;
 }
 /** A received update regarding a node. */
-export class SyncUpdate<ID = any> {
+declare class SyncUpdate<ID = any> {
     readonly node: SyncNode<ID>;
     readonly loSeqNum: number;
     readonly hiSeqNum: number;
@@ -5399,7 +5410,7 @@ interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends TypedEv
     /** Unsubscribe. */
     remove(): void;
 }
-export namespace Subscription {
+declare namespace Subscription {
     interface Events<Update> {
         /** Emitted when a subscription update is received. */
         update: (update: Update) => void;
@@ -5407,7 +5418,7 @@ export namespace Subscription {
 }
 
 /** 32-bit hash function. */
-export type HashFunction = (seed: number, input: Uint8Array) => number;
+declare type HashFunction = (seed: number, input: Uint8Array) => number;
 /**
  * Bloom filter algorithm parameters.
  *
@@ -5419,7 +5430,7 @@ interface Parameters {
     falsePositiveProbability: number;
 }
 /** A Bloom filter. */
-export class BloomFilter {
+declare class BloomFilter {
     private readonly m;
     /**
      * Construct a Bloom filter.
@@ -5451,14 +5462,14 @@ interface Compression {
     compress: (input: Uint8Array) => Uint8Array;
     decompress: (compressed: Uint8Array) => Uint8Array;
 }
-export class IbltCodec {
+declare class IbltCodec {
     readonly ibltCompression: Compression;
     protected readonly ibltParams: IBLT.PreparedParameters;
     iblt2comp(iblt: IBLT): Component;
     comp2iblt(comp: Component): IBLT;
 }
 
-export class PSyncCore {
+declare class PSyncCore {
     constructor(p: PSyncCore.Parameters);
     readonly ibltParams: IBLT.PreparedParameters;
     readonly threshold: number;
@@ -5471,7 +5482,7 @@ export class PSyncCore {
     list(filter: (node: PSyncNode) => boolean): PSyncCore.State;
     onIncreaseSeqNum?: (node: PSyncNode, prevSeqNum: number, prevKey: number) => void;
 }
-export namespace PSyncCore {
+declare namespace PSyncCore {
     interface PrefixSeqNum {
         prefix: Name;
         seqNum: number;
@@ -5489,7 +5500,7 @@ export namespace PSyncCore {
         joinPrefixSeqNum: (ps: PrefixSeqNum) => PrefixSeqNumEncoded;
     }
 }
-export class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
+declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
     readonly id: Name;
     private readonly prefixHex;
@@ -5512,7 +5523,7 @@ export class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private detachKey;
 }
 
-export class PSyncCodec {
+declare class PSyncCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: PSyncCodec.Parameters, ibltParams: IBLT.PreparedParameters);
     readonly uselessCompsAfterIblt: Component[];
@@ -5521,7 +5532,7 @@ export class PSyncCodec {
 }
 interface PSyncCodec extends Readonly<PSyncCodec.Parameters>, IbltCodec {
 }
-export namespace PSyncCodec {
+declare namespace PSyncCodec {
     type Compression = Compression;
     interface Parameters {
         /** Version convention for SyncData. */
@@ -5561,9 +5572,9 @@ interface DebugEntry$4 {
 interface Events$4 extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry$4) => void;
 }
-export const PSyncFull_base: new () => TypedEventEmitter<Events$4>;
+declare const PSyncFull_base: new () => TypedEventEmitter<Events$4>;
 /** PSync - FullSync participant. */
-export class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
+declare class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -5591,7 +5602,7 @@ export class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
     private scheduleSyncInterest;
     private sendSyncInterest;
 }
-export namespace PSyncFull {
+declare namespace PSyncFull {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
     }
     interface Options {
@@ -5647,9 +5658,9 @@ interface DebugEntry$3 {
 interface Events$3 extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry$3) => void;
 }
-export const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$3>;
+declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events$3>;
 /** PSync - PartialSync publisher. */
-export class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
+declare class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PSyncPartialPublisher.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -5673,7 +5684,7 @@ export class PSyncPartialPublisher extends PSyncPartialPublisher_base implements
     private handleIncreaseSeqNum;
     private sendStateData;
 }
-export namespace PSyncPartialPublisher {
+declare namespace PSyncPartialPublisher {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
     }
     interface Options {
@@ -5712,8 +5723,8 @@ export namespace PSyncPartialPublisher {
     }
 }
 
-export type Sub = Subscription<Name, SyncUpdate<Name>>;
-export type Update = SyncUpdate<Name>;
+declare type Sub = Subscription<Name, SyncUpdate<Name>>;
+declare type Update = SyncUpdate<Name>;
 interface DebugEntry$2 {
     action: string;
 }
@@ -5721,9 +5732,9 @@ interface Events$2 {
     debug: (entry: DebugEntry$2) => void;
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 }
-export const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$2>;
+declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events$2>;
 /** PSync - PartialSync subscriber. */
-export class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
+declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncPartialSubscriber.Options);
     readonly describe: string;
     private readonly helloPrefix;
@@ -5751,7 +5762,7 @@ export class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implemen
     private sendSyncInterest;
     private handleState;
 }
-export namespace PSyncPartialSubscriber {
+declare namespace PSyncPartialSubscriber {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
         bloom: Parameters;
     }
@@ -5788,8 +5799,8 @@ export namespace PSyncPartialSubscriber {
 }
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
-export function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
-export namespace makePSyncCompatParam {
+declare function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
+declare namespace makePSyncCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting uint32 key to Uint8Array.
@@ -5832,7 +5843,7 @@ export namespace makePSyncCompatParam {
 }
 
 /** Use zlib compression with PSync. */
-export const PSyncZlib: PSyncCodec.Compression;
+declare const PSyncZlib: PSyncCodec.Compression;
 
 interface DebugEntry$1 {
     action: string;
@@ -5846,9 +5857,9 @@ interface DebugEntry$1 {
 interface Events$1 extends SyncProtocol.Events<SvSync.ID> {
     debug: (entry: DebugEntry$1) => void;
 }
-export const SvSync_base: new () => TypedEventEmitter<Events$1>;
+declare const SvSync_base: new () => TypedEventEmitter<Events$1>;
 /** StateVectorSync participant. */
-export class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
+declare class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
     constructor({ endpoint, describe, syncPrefix, syncInterestLifetime, steadyTimer, suppressionTimer, signer, verifier, }: SvSync.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -5879,7 +5890,7 @@ export class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
     private readonly handleTimer;
     private sendSyncInterest;
 }
-export namespace SvSync {
+declare namespace SvSync {
     /**
      * Timer settings.
      * ms: median interval in milliseconds.
@@ -5930,13 +5941,13 @@ export namespace SvSync {
     }
 }
 
-export class SyncpsCodec {
+declare class SyncpsCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: SyncpsCodec.Parameters, ibltParams: IBLT.PreparedParameters);
 }
 interface SyncpsCodec extends Readonly<SyncpsCodec.Parameters>, IbltCodec {
 }
-export namespace SyncpsCodec {
+declare namespace SyncpsCodec {
     type Compression = Compression;
     interface Parameters {
         /** Compression method for IBLT in name component. */
@@ -5961,9 +5972,9 @@ interface DebugEntry {
 interface Events {
     debug: (entry: DebugEntry) => void;
 }
-export const SyncpsPubsub_base: new () => TypedEventEmitter<Events>;
+declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events>;
 /** syncps - pubsub service. */
-export class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data> {
+declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly endpoint;
     readonly describe: string;
@@ -6018,7 +6029,7 @@ export class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, 
     private addToActive;
     private invokePublishCb;
 }
-export namespace SyncpsPubsub {
+declare namespace SyncpsPubsub {
     interface Parameters extends SyncpsCodec.Parameters {
         iblt: IBLT.Parameters;
     }
@@ -6119,8 +6130,8 @@ export namespace SyncpsPubsub {
 }
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
-export function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
-export namespace makeSyncpsCompatParam {
+declare function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
+declare namespace makeSyncpsCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting a uint32 key to a byte array.
@@ -6138,22 +6149,22 @@ export namespace makeSyncpsCompatParam {
     }
 }
 
-export const sync_IBLT: typeof IBLT;
-export const sync_makePSyncCompatParam: typeof makePSyncCompatParam;
-export const sync_PSyncFull: typeof PSyncFull;
-export const sync_PSyncZlib: typeof PSyncZlib;
-export const sync_PSyncPartialPublisher: typeof PSyncPartialPublisher;
-export const sync_PSyncPartialSubscriber: typeof PSyncPartialSubscriber;
-export const sync_SvSync: typeof SvSync;
-export const sync_makeSyncpsCompatParam: typeof makeSyncpsCompatParam;
-export const sync_SyncpsPubsub: typeof SyncpsPubsub;
-export const sync_SyncProtocol: typeof SyncProtocol;
+declare const sync_IBLT: typeof IBLT;
+declare const sync_makePSyncCompatParam: typeof makePSyncCompatParam;
+declare const sync_PSyncFull: typeof PSyncFull;
+declare const sync_PSyncZlib: typeof PSyncZlib;
+declare const sync_PSyncPartialPublisher: typeof PSyncPartialPublisher;
+declare const sync_PSyncPartialSubscriber: typeof PSyncPartialSubscriber;
+declare const sync_SvSync: typeof SvSync;
+declare const sync_makeSyncpsCompatParam: typeof makeSyncpsCompatParam;
+declare const sync_SyncpsPubsub: typeof SyncpsPubsub;
+declare const sync_SyncProtocol: typeof SyncProtocol;
 type sync_SyncNode<_0> = SyncNode<_0>;
 type sync_SyncUpdate<_0> = SyncUpdate<_0>;
-export const sync_SyncUpdate: typeof SyncUpdate;
+declare const sync_SyncUpdate: typeof SyncUpdate;
 type sync_Subscriber<_0, _1, _2> = Subscriber<_0, _1, _2>;
-export const sync_Subscription: typeof Subscription;
-export namespace sync {
+declare const sync_Subscription: typeof Subscription;
+declare namespace sync {
   export {
     sync_IBLT as IBLT,
     sync_makePSyncCompatParam as makePSyncCompatParam,
@@ -6172,26 +6183,14 @@ export namespace sync {
   };
 }
 
-export const node: INode;
-export const ndn: {
+declare const node: INode;
+declare const ndn: {
     packet: typeof packet;
     tlv: typeof tlv;
     sync: typeof sync;
     keychain: typeof keychain;
 };
+declare const visualize: (packet: any) => void;
+declare const setGlobalCaptureFilter: (filter: (packet: ICapturedPacket) => boolean) => void;
 
-}
-
-
-const node = t.node;
-
-
-const ndn = t.ndn;
-
-
-declare function visualize(packet: any): void;
-
-
-declare function setGlobalCaptureFilter(filter: (packet: t.ICapturedPacket) => boolean): void;
-
-
+export { ndn, node, setGlobalCaptureFilter, visualize };

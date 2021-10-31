@@ -22,7 +22,10 @@ export const monacoConfig = {
     // compiler options
     monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: false,
-      noSyntaxValidation: false
+      noSyntaxValidation: false,
+      diagnosticCodesToIgnore: [
+        1375, 1378, // allow top level await
+      ]
     });
 
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions({

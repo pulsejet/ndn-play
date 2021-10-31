@@ -5,8 +5,10 @@ const PROJECT_LIST = 'https://raw.githubusercontent.com/pulsejet/ndn-play/master
 interface Project {
   title: string;
   subtitle: string;
-  img: string;
+  img?: string;
   dump: string;
+  text?: string;
+  link?: string;
 }
 
 @Component({
@@ -23,9 +25,10 @@ export class HomeComponent implements OnInit {
   constructor() {
     this.projects.push({
       title: 'Default Template',
-      subtitle: 'A simple topology to get started with',
+      subtitle: 'A sample topology to get started with',
       img: '/assets/default-project.png',
       dump: 'default',
+      text: "The sample topology has multiple nodes producing data on the same prefix. Fetching the same data served by more than one node demonstrates NDN's anycast Interest capability.",
     });
   }
 

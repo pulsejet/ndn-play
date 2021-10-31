@@ -3,8 +3,8 @@
 }
 
 .templ {
-    height: 120px;
-    width: 210px;
+    height: 100%;
+    width: 100%;
     display: inline-block;
     object-fit: contain;
 }

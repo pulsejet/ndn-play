@@ -13,11 +13,27 @@
     <br>
     <div class="container is-clickable is-fullwidth" *ngFor="let p of projects"
         (click)="open(p)">
-        <img class="vert-middle templ mr-3" [src]="p.img"/>
-        <div class="container is-fullwidth is-inline-block vert-middle ml-3">
-            <h1 class="title is-4">{{ p.title }}</h1>
-            <h2 class="subtitle is-5">{{ p.subtitle }}</h2>
+
+        <div class="columns">
+
+          <div class="column is-one-quarter mr-2">
+            <img *ngIf="p.img" class="vert-middle templ" [src]="p.img"/>
+          </div>
+
+          <div class="column">
+            <div class="container is-fullwidth is-inline-block vert-middle ml-3">
+              <h1 class="title is-4">{{ p.title }}</h1>
+              <h2 class="subtitle is-5">{{ p.subtitle }}</h2>
+              <div *ngIf="p.text" style="white-space: pre-wrap;" class="mb-1"
+                  [innerHTML]="p.text">
+              </div>
+              <a *ngIf="p.link" target=_blank [href]="p.link"
+                 (click)="$event.stopPropagation()">Read More</a>
+            </div>
+          </div>
+
         </div>
+
         <hr>
     </div>
 </div>

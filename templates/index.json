@@ -2,31 +2,38 @@
     {
       "title": "Blank Template",
       "subtitle": "Create a topology from scratch",
-      "img": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/blank.json"
     },
     {
       "title": "Producer-Consumer",
       "subtitle": "The simplest NDN example",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/producer-consumer.png",
-      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/producer-consumer.json"
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/producer-consumer.json",
+      "text": "Communication in NDN is driven by the receiving end, i.e., the data consumer. To receive data, a <span class=\"is-family-monospace\">Consumer</span> sends out an Interest packet, which carries a name that identifies the desired data. A router (<span class=\"is-family-monospace\">Forwarder</span>) remembers the interface from which the request comes in, and then forwards the Interest packet by looking up the name in its Forwarding Information Base (FIB). Once the Interest reaches a node that has the requested data (the <span class=\"is-family-monospace\">Producer</span>), a Data packet is sent back, which carries both the name and the content of the data.",
+      "link": "https://named-data.net/project/archoverview/"
     },
     {
       "title": "Aggregation & Content Store",
       "subtitle": "Demonstration of Interest Aggregation and Content Store",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.png",
-      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.json"
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/aggregation.json",
+      "text": "NDN naturally supports multicast delivery. In this experiment, nodes <span class=\"is-family-monospace\">A</span>, <span class=\"is-family-monospace\">B</span> and <span class=\"is-family-monospace\">C</span> request the same Data from producer <span class=\"is-family-monospace\">P</span>, so these Interests are aggregated at <span class=\"is-family-monospace\">R1</span> and only one Interest is forwarded to the next hop <span class=\"is-family-monospace\">R2</span>. The received response Data is multicast to these nodes. <br><br>Automatic in-network caching is also enabled by naming data. Since each NDN Data packet is meaningful independent of where it comes from or where it may be forwarded to, a router can cache it in its content store to satisfy future requests. In the experiment, <span class=\"is-family-monospace\">C</span> later sends an Interest for the same data that the other nodes fetched earlier, and this Interest is satisfied by the cache at <span class=\"is-family-monospace\">R2</span>.",
+      "link": "https://named-data.net/project/archoverview/"
     },
     {
       "title": "Data Signing",
       "subtitle": "Simple security with data signing in NDN",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/signing.png",
-      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/signing.json"
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/signing.json",
+      "text": "In NDN, security is built into data itself, rather than being a function of where, or how, it is obtained. Each piece of data is signed together with its name, securely binding them. Data signatures are mandatory — applications cannot “opt out” of security. The signature, coupled with data publisher information, enables determination of data provenance, allowing the consumer’s trust in data to be decoupled from how (and from where) data is obtained. In this experiment, Alice sends two Interests for Bob's data, one of which is answered by Bob and the other by a malicious actor, Chuck. Alice can then verify the signature on Bob's reply, and discards Chuck's malicious data packet since it's signature cannot be verified.",
+      "link": "https://named-data.net/project/archoverview/"
     },
     {
       "title": "PSync",
       "subtitle": "Demonstration of Distributed Dataset Synchronization",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.png",
-      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.json"
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.json",
+      "text": "Distributed Dataset Synchronization, or Sync, plays the role of a transport service in the NDN architecture. Sync provides namespace synchronization, by informing consumers about new data that is available at producers. This experiment demonstrates PSync, which synchronizes namespaces named sequentially. Each of the nodes <span class=\"is-family-monospace\">A</span>, <span class=\"is-family-monospace\">B</span> and <span class=\"is-family-monospace\">C</span> run PSync, and periodically publish new data, indicating this to the Sync protocol by incrementing the sequence number. PSync then synchronizes this sequence number to the other participants in the Sync group, thereby informing them about the availability of new data at the producer.",
+      "link": "https://named-data.net/wp-content/uploads/2019/01/li2018sync-intro.pdf"
     }
 ]

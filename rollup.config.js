@@ -7,7 +7,7 @@ const files = [
 ];
 
 files.forEach((f) => {
-  const out = 'src/assets/' + (f.substr(0, f.length - 3) + '.d.ts.out').split('/').pop();
+  const out = 'src/assets/' + (f.substr(0, f.length - 3) + '.d.ts').split('/').pop();
 
   config.push({
     input: f,

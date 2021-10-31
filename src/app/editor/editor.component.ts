@@ -1,14 +1,22 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
+import * as userTypes from '../user-types';
 
 export const monacoConfig = {
   onMonacoLoad: async () => {
     const monaco = (<any>window).monaco;
 
     /** Inject library from HTTP */
-    const injectLib = async (url: string) => {
+    const injectLib = async (url: string, namespace: string, constExports: string[]) => {
       const res = await fetch(url);
       let libSource = await res.text();
-      monaco.languages.typescript.javascriptDefaults.addExtraLib(libSource, url.replace('.out', ''));
+      monaco.languages.typescript.javascriptDefaults.addExtraLib(
+        `declare namespace ${namespace} {
+          ${libSource}
+        }
+
+        const { ${constExports.join(',') } } = ${namespace};
+      `,
+      url);
     }
 
     // compiler options
@@ -17,7 +25,7 @@ export const monacoConfig = {
       allowNonTsExtensions: true
     });
 
-    await injectLib('/assets/types.d.ts.out')
+    await injectLib('/assets/user-types.d.ts', 't', Object.keys(userTypes));
   }
 };
 

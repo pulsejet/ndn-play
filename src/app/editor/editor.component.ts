@@ -14,7 +14,7 @@ export const monacoConfig = {
           ${libSource}
         }
 
-        const { ${constExports.join(',') } } = ${namespace};
+        const { ${constExports.join(',') } } = ${namespace}.ext;
       `,
       url);
     }
@@ -33,7 +33,7 @@ export const monacoConfig = {
       allowNonTsExtensions: true
     });
 
-    await injectLib('/assets/user-types.d.ts', 't', Object.keys(userTypes));
+    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(userTypes.ext));
   }
 };
 

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
 import { ProviderBrowser } from '../provider-browser/provider-browser';
-import { ndn as ndnUserTypes } from '../user-types';
+import { ext as ndnUserTypes } from '../user-types';
 
 @Component({
   selector: 'app-play',
@@ -23,7 +23,7 @@ export class PlayComponent implements OnInit, AfterViewInit {
   constructor(public gs: GlobalService) {}
 
   ngOnInit() {
-    (<any>window).ndn = ndnUserTypes;
+    (<any>window).ndn = ndnUserTypes.ndnTypes;
     (<any>window).visualize = (p: any) => this.visualizedTlv = p;
     (<any>window).setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
   }

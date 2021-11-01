@@ -8,6 +8,8 @@
 # Only exists if Bazel was run
 /bazel-out
 
+/temp
+
 # dependencies
 /node_modules
 

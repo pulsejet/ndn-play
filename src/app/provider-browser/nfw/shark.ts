@@ -8,7 +8,6 @@ import * as vis from 'vis-network/standalone';
 
 export class Shark {
     private nodeId!: vis.IdType;
-    private nodeLabel!: string;
     private nodeExtra!: INodeExtra;
 
     constructor(private nfw: NFW, private topo: Topology)
@@ -18,7 +17,6 @@ export class Shark {
 
     public nodeUpdated() {
         this.nodeId = this.nfw.nodeId;
-        this.nodeLabel = this.nfw.node().label!;
         this.nodeExtra = this.nfw.node().extra!;
     }
 
@@ -47,9 +45,9 @@ export class Shark {
 
         // Get hops
         // If hops field doesn't exist then it is a local face (SCK)
-        const thisHop: string = this.nodeLabel!;
+        const thisHop = <string>this.nodeId!;
         let otherHop: string = (<any>face).hops?.[this.nodeId] || (<any>pkt).hop;
-        otherHop = otherHop ? this.topo.nodes.get(otherHop)?.label! : 'SCK';
+        otherHop = otherHop ? otherHop! : 'SCK';
         const fromHop = event == 'rx' ? otherHop : thisHop;
         const toHop = event == 'rx' ? thisHop : otherHop;
 

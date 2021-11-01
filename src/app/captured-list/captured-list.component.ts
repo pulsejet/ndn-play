@@ -58,6 +58,10 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.redraw();
   }
 
+  public getNodeLabel(id: string) {
+    return this.provider.topo.nodes.get(id)?.label || id;
+  }
+
   public refresh() {
     this.provider.fetchCapturedPackets?.(this.node);
   }

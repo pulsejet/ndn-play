@@ -70,7 +70,10 @@
     "@ndn/fw",
     "vis-network",
     "vis-data",
-    "vis-util"
+    "vis-util",
+    "typed-emitter",
+    "abort-controller",
+    "event-target-shim"
   ],
 
   /**

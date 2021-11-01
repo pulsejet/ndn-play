@@ -2,10 +2,23 @@
 /// <reference types="node" />
 /// <reference types="web" />
 
-import type { AbortSignal as AbortSignal_2 } from 'abort-controller';
 import type * as asn1 from '@yoursunny/asn1';
 import * as keycharm from 'keycharm';
-import type TypedEmitter from 'typed-emitter';
+
+/**
+ * The signal class.
+ * @see https://dom.spec.whatwg.org/#abortsignal
+ */
+declare class AbortSignal_2 extends EventTarget_2<Events_2, EventAttributes> {
+    /**
+     * AbortSignal cannot be constructed directly.
+     */
+    constructor()
+    /**
+     * Returns `true` if this `AbortSignal`"s `AbortController` has signaled to abort, and `false` otherwise.
+     */
+    readonly aborted: boolean
+}
 
 declare const Activator: any;
 
@@ -119,6 +132,10 @@ declare interface AnimationOptions {
      */
     easingFunction: EasingFunction;
 }
+
+declare type Arguments<T> = [T] extends [(...args: infer U) => any]
+? U
+: [T] extends [void] ? [] : [T]
 
 declare interface ArrowHead {
     enabled?: boolean,
@@ -2727,6 +2744,130 @@ declare namespace EvDecoder {
 }
 
 /**
+ * `Event` interface.
+ * @see https://dom.spec.whatwg.org/#event
+ */
+declare interface Event_2 {
+    /**
+     * The type of this event.
+     */
+    readonly type: string
+
+    /**
+     * The target of this event.
+     */
+    readonly target: EventTarget_2<{}, {}, "standard"> | null
+
+    /**
+     * The current target of this event.
+     */
+    readonly currentTarget: EventTarget_2<{}, {}, "standard"> | null
+
+    /**
+     * The target of this event.
+     * @deprecated
+     */
+    readonly srcElement: any | null
+
+    /**
+     * The composed path of this event.
+     */
+    composedPath(): EventTarget_2<{}, {}, "standard">[]
+
+    /**
+     * Constant of NONE.
+     */
+    readonly NONE: number
+
+    /**
+     * Constant of CAPTURING_PHASE.
+     */
+    readonly CAPTURING_PHASE: number
+
+    /**
+     * Constant of BUBBLING_PHASE.
+     */
+    readonly BUBBLING_PHASE: number
+
+    /**
+     * Constant of AT_TARGET.
+     */
+    readonly AT_TARGET: number
+
+    /**
+     * Indicates which phase of the event flow is currently being evaluated.
+     */
+    readonly eventPhase: number
+
+    /**
+     * Stop event bubbling.
+     */
+    stopPropagation(): void
+
+    /**
+     * Stop event bubbling.
+     */
+    stopImmediatePropagation(): void
+
+    /**
+     * Initialize event.
+     * @deprecated
+     */
+    initEvent(type: string, bubbles?: boolean, cancelable?: boolean): void
+
+    /**
+     * The flag indicating bubbling.
+     */
+    readonly bubbles: boolean
+
+    /**
+     * Stop event bubbling.
+     * @deprecated
+     */
+    cancelBubble: boolean
+
+    /**
+     * Set or get cancellation flag.
+     * @deprecated
+     */
+    returnValue: boolean
+
+    /**
+     * The flag indicating whether the event can be canceled.
+     */
+    readonly cancelable: boolean
+
+    /**
+     * Cancel this event.
+     */
+    preventDefault(): void
+
+    /**
+     * The flag to indicating whether the event was canceled.
+     */
+    readonly defaultPrevented: boolean
+
+    /**
+     * The flag to indicating if event is composed.
+     */
+    readonly composed: boolean
+
+    /**
+     * Indicates whether the event was dispatched by the user agent.
+     */
+    readonly isTrusted: boolean
+
+    /**
+     * The unix time of this event.
+     */
+    readonly timeStamp: number
+}
+
+declare type EventAttributes = {
+    onabort: any
+}
+
+/**
  * Map of event callback types (event name → callback).
  *
  * @typeParam Item - Item type that may or may not have an id.
@@ -2800,7 +2941,11 @@ declare interface Events extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry) => void;
 }
 
-declare interface Events_2 {
+declare type Events_2 = {
+    abort: any
+}
+
+declare interface Events_3 {
     /** Emitted before adding face. */
     faceadd: (face: FwFace) => void;
     /** Emitted after removing face. */
@@ -2819,7 +2964,7 @@ declare interface Events_2 {
     pkttx: (face: FwFace, pkt: FwPacket) => void;
 }
 
-declare interface Events_3 {
+declare interface Events_4 {
     /** Emitted upon face is up as reported by lower layer. */
     up: () => void;
     /** Emitted upon face is down as reported by lower layer. */
@@ -2828,21 +2973,282 @@ declare interface Events_3 {
     close: () => void;
 }
 
-declare interface Events_4 extends SyncProtocol.Events<Name> {
+declare interface Events_5 extends SyncProtocol.Events<Name> {
     debug: (entry: DebugEntry_2) => void;
 }
 
-declare interface Events_5 {
+declare interface Events_6 {
     debug: (entry: DebugEntry_3) => void;
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 }
 
-declare interface Events_6 extends SyncProtocol.Events<SvSync.ID> {
+declare interface Events_7 extends SyncProtocol.Events<SvSync.ID> {
     debug: (entry: DebugEntry_4) => void;
 }
 
-declare interface Events_7 {
+declare interface Events_8 {
     debug: (entry: DebugEntry_5) => void;
+}
+
+/**
+ * `EventTarget` interface.
+ * @see https://dom.spec.whatwg.org/#interface-eventtarget
+ */
+declare type EventTarget_2<
+TEvents extends EventTarget_2.EventDefinition = {},
+TEventAttributes extends EventTarget_2.EventDefinition = {},
+TMode extends EventTarget_2.Mode = "loose"
+> = EventTarget_2.EventAttributes<TEventAttributes> & {
+    /**
+     * Add a given listener to this event target.
+     * @param eventName The event name to add.
+     * @param listener The listener to add.
+     * @param options The options for this listener.
+     */
+    addEventListener<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
+    type: TEventType,
+    listener:
+    | EventTarget_2.Listener<EventTarget_2.PickEvent<TEvents, TEventType>>
+    | null,
+    options?: boolean | EventTarget_2.AddOptions
+    ): void
+
+    /**
+     * Remove a given listener from this event target.
+     * @param eventName The event name to remove.
+     * @param listener The listener to remove.
+     * @param options The options for this listener.
+     */
+    removeEventListener<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
+    type: TEventType,
+    listener:
+    | EventTarget_2.Listener<EventTarget_2.PickEvent<TEvents, TEventType>>
+    | null,
+    options?: boolean | EventTarget_2.RemoveOptions
+    ): void
+
+    /**
+     * Dispatch a given event.
+     * @param event The event to dispatch.
+     * @returns `false` if canceled.
+     */
+    dispatchEvent<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
+    event: EventTarget_2.EventData<TEvents, TEventType, TMode>
+    ): boolean
+}
+
+declare const EventTarget_2: EventTargetConstructor & {
+    /**
+     * Create an `EventTarget` instance with detailed event definition.
+     *
+     * The detailed event definition requires to use `defineEventAttribute()`
+     * function later.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * const signal = new EventTarget<{ abort: Event }, { onabort: Event }>()
+     * defineEventAttribute(signal, "abort")
+     */
+    new <
+    TEvents extends EventTarget_2.EventDefinition,
+    TEventAttributes extends EventTarget_2.EventDefinition,
+    TMode extends EventTarget_2.Mode = "loose"
+    >(): EventTarget_2<TEvents, TEventAttributes, TMode>
+
+    /**
+     * Define an `EventTarget` constructor with attribute events and detailed event definition.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
+     *      abort(): void {}
+     * }
+     *
+     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
+     */
+    <
+    TEvents extends EventTarget_2.EventDefinition = {},
+    TEventAttributes extends EventTarget_2.EventDefinition = {},
+    TMode extends EventTarget_2.Mode = "loose"
+    >(events: string[]): EventTargetConstructor<
+    TEvents,
+    TEventAttributes,
+    TMode
+    >
+
+    /**
+     * Define an `EventTarget` constructor with attribute events and detailed event definition.
+     *
+     * Unfortunately, the second type parameter `TEventAttributes` was needed
+     * because we cannot compute string literal types.
+     *
+     * @example
+     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
+     *      abort(): void {}
+     * }
+     *
+     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
+     */
+    <
+    TEvents extends EventTarget_2.EventDefinition = {},
+    TEventAttributes extends EventTarget_2.EventDefinition = {},
+    TMode extends EventTarget_2.Mode = "loose"
+    >(event0: string, ...events: string[]): EventTargetConstructor<
+    TEvents,
+    TEventAttributes,
+    TMode
+    >
+};
+
+declare namespace EventTarget_2 {
+    /**
+     * Options of `removeEventListener()` method.
+     */
+    interface RemoveOptions {
+        /**
+         * The flag to indicate that the listener is for the capturing phase.
+         */
+        capture?: boolean
+    }
+
+    /**
+     * Options of `addEventListener()` method.
+     */
+    interface AddOptions extends RemoveOptions {
+        /**
+         * The flag to indicate that the listener doesn't support
+         * `event.preventDefault()` operation.
+         */
+        passive?: boolean
+        /**
+         * The flag to indicate that the listener will be removed on the first
+         * event.
+         */
+        once?: boolean
+    }
+
+    /**
+     * The type of regular listeners.
+     */
+    interface FunctionListener<TEvent> {
+        (event: TEvent): void
+    }
+
+    /**
+     * The type of object listeners.
+     */
+    interface ObjectListener<TEvent> {
+        handleEvent(event: TEvent): void
+    }
+
+    /**
+     * The type of listeners.
+     */
+    type Listener<TEvent> =
+    | FunctionListener<TEvent>
+    | ObjectListener<TEvent>
+
+    /**
+     * Event definition.
+     */
+    type EventDefinition = {
+        readonly [key: string]: Event_2
+    }
+
+    /**
+     * Mapped type for event attributes.
+     */
+    type EventAttributes<TEventAttributes extends EventDefinition> = {
+        [P in keyof TEventAttributes]:
+        | FunctionListener<TEventAttributes[P]>
+        | null
+    }
+
+    /**
+     * The type of event data for `dispatchEvent()` method.
+     */
+    type EventData<
+    TEvents extends EventDefinition,
+    TEventType extends keyof TEvents | string,
+    TMode extends Mode
+    > =
+    TEventType extends keyof TEvents
+    ? (
+    // Require properties which are not generated automatically.
+    & Pick<
+    TEvents[TEventType],
+    Exclude<keyof TEvents[TEventType], OmittableEventKeys>
+    >
+    // Properties which are generated automatically are optional.
+    & Partial<Pick<Event_2, OmittableEventKeys>>
+    )
+    : (
+    TMode extends "standard"
+    ? Event_2
+    : Event_2 | NonStandardEvent
+    )
+
+    /**
+     * The string literal types of the properties which are generated
+     * automatically in `dispatchEvent()` method.
+     */
+    type OmittableEventKeys = Exclude<keyof Event_2, "type">
+
+    /**
+     * The type of event data.
+     */
+    type NonStandardEvent = {
+        [key: string]: any
+        type: string
+    }
+
+    /**
+     * The type of listeners.
+     */
+    type PickEvent<
+    TEvents extends EventDefinition,
+    TEventType extends keyof TEvents | string,
+    > =
+    TEventType extends keyof TEvents
+    ? TEvents[TEventType]
+    : Event_2
+
+    /**
+     * Event type candidates.
+     */
+    type EventType<
+    TEvents extends EventDefinition,
+    TMode extends Mode
+    > =
+    TMode extends "strict"
+    ? keyof TEvents
+    : keyof TEvents | string
+
+    /**
+     * - `"strict"` ..... Methods don't accept unknown events.
+     *                    `dispatchEvent()` accepts partial objects.
+     * - `"loose"` ...... Methods accept unknown events.
+     *                    `dispatchEvent()` accepts partial objects.
+     * - `"standard"` ... Methods accept unknown events.
+     *                    `dispatchEvent()` doesn't accept partial objects.
+     */
+    type Mode = "strict" | "standard" | "loose"
+}
+
+/**
+ * The constructor of `EventTarget` interface.
+ */
+declare type EventTargetConstructor<
+TEvents extends EventTarget_2.EventDefinition = {},
+TEventAttributes extends EventTarget_2.EventDefinition = {},
+TMode extends EventTarget_2.Mode = "loose"
+> = {
+    prototype: EventTarget_2<TEvents, TEventAttributes, TMode>
+    new(): EventTarget_2<TEvents, TEventAttributes, TMode>
 }
 
 export declare namespace ext {
@@ -3063,7 +3469,7 @@ declare function forEach<V>(array: undefined | null | V[], callback: (value: V, 
 declare function forEach<O extends object>(object: undefined | null | O, callback: <Key extends keyof O>(value: O[Key], key: Key, object: O) => void): void;
 
 /** Forwarding plane. */
-declare interface Forwarder extends TypedEmitter<Events_2> {
+declare interface Forwarder extends TypedEventEmitter<Events_3> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
@@ -3154,7 +3560,7 @@ declare interface FullColorObject {
 declare type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id_2>;
 
 /** A socket or network interface associated with forwarding plane. */
-declare interface FwFace extends TypedEmitter<Events_3> {
+declare interface FwFace extends TypedEventEmitter<Events_4> {
     readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
     readonly running: boolean;
@@ -3194,7 +3600,7 @@ declare namespace FwFace {
         up: () => void;
         down: () => void;
     }
-    interface RxTxBase extends Partial<TypedEmitter<RxTxEvents>> {
+    interface RxTxBase extends Partial<TypedEventEmitter<RxTxEvents>> {
         readonly attributes?: Attributes;
     }
     interface RxTx extends RxTxBase {
@@ -5844,7 +6250,7 @@ declare namespace PSyncFull {
     }
 }
 
-declare const PSyncFull_base: new () => TypedEmitter<Events>;
+declare const PSyncFull_base: new () => TypedEventEmitter<Events>;
 
 declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
@@ -5934,7 +6340,7 @@ declare namespace PSyncPartialPublisher {
     }
 }
 
-declare const PSyncPartialPublisher_base: new () => TypedEmitter<Events_4>;
+declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_5>;
 
 /** PSync - PartialSync subscriber. */
 declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
@@ -6002,7 +6408,7 @@ declare namespace PSyncPartialSubscriber {
     }
 }
 
-declare const PSyncPartialSubscriber_base: new () => TypedEmitter<Events_5>;
+declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_6>;
 
 /** Use zlib compression with PSync. */
 declare const PSyncZlib: PSyncCodec.Compression;
@@ -6708,7 +7114,7 @@ declare interface Subscriber<Topic = Name, Update = any, SubscribeInfo = Topic> 
  * A subscription on a topic.
  * Listen to the 'update' event to receive updates on incoming publications matching the topic.
  */
-declare interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends TypedEmitter<Subscription.Events<Update>> {
+declare interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends TypedEventEmitter<Subscription.Events<Update>> {
     /** The topic. */
     readonly topic: Topic;
     /** Unsubscribe. */
@@ -6806,7 +7212,7 @@ declare namespace SvSync {
     }
 }
 
-declare const SvSync_base: new () => TypedEmitter<Events_6>;
+declare const SvSync_base: new () => TypedEventEmitter<Events_7>;
 
 declare namespace sync {
     export {
@@ -6852,7 +7258,7 @@ declare interface SyncNode<ID = any> {
 }
 
 /** A sync protocol participant. */
-declare interface SyncProtocol<ID = any> extends TypedEmitter<SyncProtocol.Events<ID>> {
+declare interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<ID>> {
     /** Stop the protocol operation. */
     close(): void;
     /** Retrieve a node. */
@@ -7047,7 +7453,7 @@ declare namespace SyncpsPubsub {
     type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
-declare const SyncpsPubsub_base: new () => TypedEmitter<Events_7>;
+declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_8>;
 
 /** A received update regarding a node. */
 declare class SyncUpdate<ID = any> {
@@ -7218,6 +7624,45 @@ declare const TT: {
     Nack: number;
     NackReason: number;
 };
+
+/**
+ * Type-safe event emitter.
+ *
+ * Use it like this:
+ *
+ * interface MyEvents {
+ *   error: (error: Error) => void
+ *   message: (from: string, content: string) => void
+ * }
+ *
+ * const myEmitter = new EventEmitter() as TypedEmitter<MyEvents>
+ *
+ * myEmitter.on("message", (from, content) => {
+ *   // ...
+ * })
+ *
+ * myEmitter.emit("error", "x")  // <- Will catch this type error
+ */
+declare interface TypedEventEmitter<Events> {
+    addListener<E extends keyof Events> (event: E, listener: Events[E]): this
+    on<E extends keyof Events> (event: E, listener: Events[E]): this
+    once<E extends keyof Events> (event: E, listener: Events[E]): this
+    prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
+    prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+
+    off<E extends keyof Events>(event: E, listener: Events[E]): this
+    removeAllListeners<E extends keyof Events> (event?: E): this
+    removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
+
+    emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
+    eventNames (): (keyof Events | string | symbol)[]
+    rawListeners<E extends keyof Events> (event: E): Function[]
+    listeners<E extends keyof Events> (event: E): Function[]
+    listenerCount<E extends keyof Events> (event: E): number
+
+    getMaxListeners (): number
+    setMaxListeners (maxListeners: number): this
+}
 
 declare type Update = SyncUpdate<Name>;
 

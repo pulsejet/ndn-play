@@ -14,7 +14,7 @@ const WS_FUNCTIONS = {
   GET_FIB: 'get_fib',
   GET_PCAP: 'get_pcap',
   GET_PCAP_WIRE: 'get_pcap_wire',
-}
+};
 
 export class ProviderMiniNDN implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -25,8 +25,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public initialized = false;
 
   // Animation updates
-  public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
-  public pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
+  public pendingUpdatesNodes: { [id: string]: Partial<INode>; } = {};
+  public pendingUpdatesEdges: { [id: string]: Partial<IEdge>; } = {};
 
   // Global defaults
   public defaultLatency = 10;
@@ -40,9 +40,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
     exporter: 'MININDN',
     nodes: INode[]; edges: IEdge[];
     positions?: any;
-  }
+  };
 
-  constructor(private wsUrl: string) {}
+  constructor(private wsUrl: string) { }
 
   public initialize = async () => {
     // Initialize new nodes
@@ -51,16 +51,17 @@ export class ProviderMiniNDN implements ForwardingProvider {
     // Start connection
     this.ws = webSocket(this.wsUrl);
 
-    this.ws.subscribe(
-      this.wsMessageCallback,
-      err => console.log(err),
-      () => alert('WebSocket Closed. Refresh this page'),
-    );
-  }
+    // Listen for messages
+    this.ws.subscribe({
+      next: this.wsMessageCallback,
+      error: console.error,
+      complete: () => alert('WebSocket Closed. Refresh this page'),
+    });
+  };
 
   private wsFun = (fun: string, ...args: any[]) => {
     this.ws.next({ fun, args });
-  }
+  };
 
   private wsMessageCallback = async (msg: any) => {
     console.log(msg);
@@ -104,7 +105,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
               from: p[5],
               to: p[6],
               p: p[7] || undefined,
-            } as ICapturedPacket });
+            } as ICapturedPacket;
+          });
 
         // Creating dump
         if (this.dump) {
@@ -124,11 +126,11 @@ export class ProviderMiniNDN implements ForwardingProvider {
         (<any>window).visualize(msg?.res);
         break;
     }
-  }
+  };
 
   public initializePostNetwork = async () => {
     this.wsFun(WS_FUNCTIONS.GET_TOPO);
-  }
+  };
 
   private getEdgeEnds(edge: IEdge) {
     return {
@@ -184,17 +186,21 @@ export class ProviderMiniNDN implements ForwardingProvider {
       latency: edge?.latency,
       loss: edge?.loss,
     });
-  }
+  };
 
   public nodeUpdated = async (node?: INode) => {
 
-  }
+  };
 
   public onNetworkClick = async () => {
+    this.refreshFib();
+  };
+
+  public refreshFib = async () => {
     if (this.topo.selectedNode) {
-      this.wsFun(WS_FUNCTIONS.GET_FIB, this.topo.selectedNode?.label);
+      this.wsFun(WS_FUNCTIONS.GET_FIB, this.topo.selectedNode.label);
     }
-  }
+  };
 
   public sendPingInterest(from: INode, to: INode) {
 
@@ -230,5 +236,5 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   /** Ensure all nodes and edges are initialized */
   private ensureInitialized = () => {
-  }
+  };
 }

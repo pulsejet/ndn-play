@@ -53,13 +53,21 @@ import { Topology } from './topo';
             </label>
         </div>
 
-        <div class="field">
+        <div class="field" *ngIf="node.nfw">
             <label class="label is-small">Registered Prefixes:</label>
             <pre>{{ node.extra.producedPrefixes.join('\n') }}</pre>
         </div>
 
         <div>
-            <label class="label is-small">Forwarder Status:</label>
+            <label class="label is-small">
+                Forwarder Status:
+                <button class="button is-link is-light"
+                        style="font-size: 0.5rem "
+                        *ngIf="topo.provider.refreshFib"
+                        (click)="topo.provider.refreshFib()">
+                    Refresh
+                </button>
+            </label>
             <pre>{{ node.extra.fibStr }}</pre>
         </div>
     </div>
@@ -90,5 +98,5 @@ export class TopoNodeComponent implements OnInit {
     if (!id) return;
 
     this.topo.provider.sendPingInterest(<INode>this.topo.nodes.get(id), this.topo.selectedNode!);
-  }
+  };
 }

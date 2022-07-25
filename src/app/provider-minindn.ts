@@ -14,6 +14,8 @@ const WS_FUNCTIONS = {
   GET_FIB: 'get_fib',
   GET_PCAP: 'get_pcap',
   GET_PCAP_WIRE: 'get_pcap_wire',
+  EXEC_CLI: 'exec_cli',
+  LOG: 'log',
 };
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -64,7 +66,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   };
 
   private wsMessageCallback = async (msg: any) => {
-    console.log(msg);
+    // console.log(msg);
 
     // Refresh topology
     switch (msg?.fun) {
@@ -124,6 +126,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
         (<any>window).visualize(msg?.res);
+        break;
+
+      case WS_FUNCTIONS.LOG:
+        (<any>console).raw(msg?.res);
         break;
     }
   };
@@ -212,6 +218,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   public runCode(code: string, node: INode) {
 
+  }
+
+  public runCLI(cmd: string) {
+    this.wsFun(WS_FUNCTIONS.EXEC_CLI, cmd);
   }
 
   public fetchCapturedPackets(node: INode) {

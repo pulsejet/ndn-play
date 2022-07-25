@@ -43,4 +43,5 @@ export interface ForwardingProvider {
 
   // Code execution
   runCode: (code: string, node: INode) => void;
+  runCLI?: (cmd: string) => void;
 }

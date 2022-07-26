@@ -57,10 +57,19 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   constructor(private wsUrl: string) { }
 
+  /** Initializer called by topo object */
   public initialize = async () => {
     // Initialize new nodes
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
+  };
 
+  /** Initializer called after topo network initialization */
+  public initializePostNetwork = async () => {
+    this.connect();
+  };
+
+  /** Connect to websocket */
+  public connect = async () => {
     // Start connection
     this.ws = webSocket({
       url: this.wsUrl,
@@ -74,13 +83,22 @@ export class ProviderMiniNDN implements ForwardingProvider {
         }
         return {};
       },
+      openObserver: {
+        next: () => {
+          console.warn('Connected to MiniNDN');
+          this.wsFun(WS_FUNCTIONS.GET_TOPO);
+          this.wsFun(WS_FUNCTIONS.OPEN_ALL_PTYS);
+        }
+      },
+      closeObserver: {
+        next: () => alert('WebSocket Closed. Refresh this page')
+      }
     });
 
     // Listen for messages
     this.ws.subscribe({
       next: this.wsMessageCallback,
       error: console.error,
-      complete: () => alert('WebSocket Closed. Refresh this page'),
     });
   };
 
@@ -106,9 +124,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
         if (!this.initialized) this.setTopoManipulationCallbacks();
         this.initialized = true;
-
-        this.openTerminalInternal('cli', 'MiniNDN CLI');
-        this.wsFun(WS_FUNCTIONS.OPEN_ALL_PTYS);
+        console.warn(`Refreshed current topology`);
         break;
 
       case WS_FUNCTIONS.ADD_LINK:
@@ -150,7 +166,6 @@ export class ProviderMiniNDN implements ForwardingProvider {
             this.dump = undefined;
           }
         }
-
         break;
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
@@ -174,10 +189,6 @@ export class ProviderMiniNDN implements ForwardingProvider {
         }
         break;
     }
-  };
-
-  public initializePostNetwork = async () => {
-    this.wsFun(WS_FUNCTIONS.GET_TOPO);
   };
 
   private getEdgeEnds(edge: IEdge) {
@@ -250,20 +261,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
     }
   };
 
-  public sendPingInterest(from: INode, to: INode) {
-
-  };
-
-  public sendInterest(name: string, node: INode) {
-
-  }
-
-  public runCode(code: string, node: INode) {
-
-  }
-
   public openTerminal(node: INode) {
     this.wsFun(WS_FUNCTIONS.OPEN_TERMINAL, node.label);
+    console.log(`Requested remote shell for ${node.label}`);
   }
 
   private openTerminalInternal(id: string, name: string) {
@@ -293,13 +293,16 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
     resized.subscribe((msg: any) => {
       this.wsFun(WS_FUNCTIONS.PTY_RESIZE, id, msg.rows, msg.cols);
-    })
+    });
+
+    console.log(`Connected to remote PTY ${name} [${id}]`);
   }
 
   private closeTerminalInternal(id: string) {
     // check if same id exists
     for (let t of this.topo.activePtys) {
       if (t.id == id) {
+        console.warn(`Disconnected from remote PTY ${t.name} [${t.id}]`);
         this.topo.activePtys.splice(this.topo.activePtys.indexOf(t), 1);
       }
     }

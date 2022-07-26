@@ -56,6 +56,7 @@ import { Topology } from './topo';
         <div class="field">
             <label class="label is-small">Experiment:</label>
             <button class="button is-success is-light is-small full-width"
+                    *ngIf="topo.provider.runCode"
                     (click)="runExperiment();">
                 Run
             </button>
@@ -103,7 +104,7 @@ export class TopoGlobalComponent implements OnInit {
 
   runExperiment() {
     for (const node of this.topo.nodes.get()) {
-        this.topo.provider.runCode(node.extra.codeEdit, node);
+        this.topo.provider.runCode?.(node.extra.codeEdit, node);
     }
   }
 }

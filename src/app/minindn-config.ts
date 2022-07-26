@@ -2,6 +2,10 @@ import { IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
 export function load(topo: Topology, confStr: string) {
+    if (!confirm("Are you sure you want to load the configuration?")) {
+        return;
+    }
+
     topo.selectedEdge = undefined;
     topo.selectedNode = undefined;
 

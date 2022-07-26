@@ -30,8 +30,8 @@ export interface ForwardingProvider {
   refreshFib?: () => Promise<void>;
 
   // Send test interests
-  sendPingInterest: (from: INode, to: INode) => void;
-  sendInterest: (name: string, node: INode) => void;
+  sendPingInterest?: (from: INode, to: INode) => void;
+  sendInterest?: (name: string, node: INode) => void;
 
   // Packet capture
   fetchCapturedPackets?: (node: INode) => void;
@@ -42,6 +42,6 @@ export interface ForwardingProvider {
   loadExperimentDump?: () => void;
 
   // Code execution
-  runCode: (code: string, node: INode) => void;
+  runCode?: (code: string, node: INode) => void;
   openTerminal?: (node: INode) => void;
 }

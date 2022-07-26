@@ -20,6 +20,7 @@ export class PtyComponent implements OnInit, AfterViewInit {
   @ViewChild('pty') pty!: ElementRef;
   @Input() public data?: EventEmitter<any>;
   @Input() public writer?: EventEmitter<any>;
+  @Input() public resized?: EventEmitter<any>;
 
   /** Call on console resize */
   public resize!: () => void;
@@ -35,12 +36,8 @@ export class PtyComponent implements OnInit, AfterViewInit {
     }
   }
 
-  public write(msg: number | string | Uint8Array) {
-    if (typeof msg == 'number') {
-      this.term.write(new Uint8Array([msg as any]));
-    } else {
-      this.term.write(msg);
-    }
+  public write(msg: string | Uint8Array) {
+    this.term.write(msg);
   }
 
   ngAfterViewInit(): void {
@@ -60,7 +57,7 @@ export class PtyComponent implements OnInit, AfterViewInit {
 
     term.open(this.pty.nativeElement);
     term.onData((data) => {
-      this.data?.emit(btoa(data));
+      this.data?.emit(data);
     });
 
     // Fit to size
@@ -74,6 +71,11 @@ export class PtyComponent implements OnInit, AfterViewInit {
       this.resizeTimer = window.setTimeout(() => {
         fitAddon.fit();
         this.resizeTimer = 0;
+
+        this.resized?.emit({
+          rows: this.term.rows,
+          cols: this.term.cols,
+        })
       }, 200);
     };
     this.resize();

@@ -40,7 +40,7 @@
                 <div class="console">
                     <app-tabs class="tab-container main-lower">
                         <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.resize()">
-                            <pty [data]="t.data" [writer]="t.write" #pty></pty>
+                            <pty [data]="t.data" [writer]="t.write" [resized]="t.resized" #pty></pty>
                         </app-tab>
                     </app-tabs>
                 </div>

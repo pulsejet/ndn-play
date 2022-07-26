@@ -12,7 +12,7 @@ import { Topology } from "../../topo/topo";
 import { ProviderBrowser } from "../provider-browser";
 
 import { ForwarderImpl } from "@ndn/fw/lib/forwarder";
-import pushable from "it-pushable";
+import { pushable, Pushable } from "it-pushable";
 import { Shark } from "./shark";
 import { DefaultServers } from "./servers";
 
@@ -22,7 +22,7 @@ export class NFW {
     /** Local face for content store etc */
     public localFace: FwFace;
     /** Push channel to local face */
-    private localFaceTx = pushable<FwPacket>();
+    private localFaceTx = pushable<FwPacket>({objectMode: true});
 
     /** Browser Forwarding Provider */
     public provider: ProviderBrowser;
@@ -61,7 +61,7 @@ export class NFW {
     /** Connections to other NFWs */
     private connections: { [nodeId: string]: {
         face: FwFace,
-        tx: pushable.Pushable<FwPacket>,
+        tx: Pushable<FwPacket>,
     }} = {};
 
     /** Aggregate of sent interests */
@@ -343,7 +343,9 @@ export class NFW {
         const nextHop = nextNFW.nodeId;
 
         if (!this.connections[nextHop]?.face.running) {
-            const tx = pushable<FwPacket>();
+            const tx = pushable<FwPacket>({
+                objectMode: true,
+            });
             const face = nextNFW.fw.addFace({
                 rx: tx,
                 tx: async (iterable) => {

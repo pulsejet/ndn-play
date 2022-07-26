@@ -1,7 +1,7 @@
 import { Endpoint, Producer } from "@ndn/endpoint";
 import { Data } from "@ndn/packet";
 import { NFW } from "./nfw";
-import { toUtf8 } from '@ndn/tlv';
+import { toUtf8 } from '@ndn/util';
 
 export class DefaultServers {
     /** Server for ping */

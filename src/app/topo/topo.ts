@@ -46,6 +46,7 @@ export class Topology {
     name: string,
     write: EventEmitter<any>,
     data: EventEmitter<any>,
+    resized: EventEmitter<any>,
   }[] = [];
 
   constructor(public provider: ForwardingProvider) {

@@ -4,6 +4,7 @@ import { Topology } from "./topo/topo";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { downloadString } from "./helper";
 import { EventEmitter } from "@angular/core";
+import * as msgpack from "msgpack-lite"
 
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
@@ -17,8 +18,14 @@ const WS_FUNCTIONS = {
   GET_PCAP_WIRE: 'get_pcap_wire',
   PTY_IN: 'pty_in',
   PTY_OUT: 'pty_out',
+  PTY_RESIZE: 'pty_resize',
   OPEN_TERMINAL: 'open_term',
 };
+
+const MSG_KEY_FUN = 'F'
+const MSG_KEY_ID = 'I'
+const MSG_KEY_RESULT = 'R'
+const MSG_KEY_ARGS = 'A'
 
 export class ProviderMiniNDN implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -53,7 +60,12 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
 
     // Start connection
-    this.ws = webSocket(this.wsUrl);
+    this.ws = webSocket({
+      url: this.wsUrl,
+      binaryType: "arraybuffer",
+      serializer: msgpack.encode,
+      deserializer: (e) => msgpack.decode(new Uint8Array(e.data)),
+    });
 
     // Listen for messages
     this.ws.subscribe({
@@ -64,19 +76,22 @@ export class ProviderMiniNDN implements ForwardingProvider {
   };
 
   private wsFun = (fun: string, ...args: any[]) => {
-    this.ws.next({ fun, args });
+    const pack = {} as any;
+    pack[MSG_KEY_FUN] = fun;
+    pack[MSG_KEY_ARGS] = args;
+    this.ws.next(pack);
   };
 
   private wsMessageCallback = async (msg: any) => {
     // console.log(msg);
 
     // Refresh topology
-    switch (msg?.fun) {
+    switch (msg[MSG_KEY_FUN]) {
       case WS_FUNCTIONS.GET_TOPO:
         this.topo.nodes.clear();
         this.topo.edges.clear();
-        this.topo.nodes.add(msg?.res?.nodes);
-        this.topo.edges.add(msg?.res?.links);
+        this.topo.nodes.add(msg?.[MSG_KEY_RESULT]?.nodes);
+        this.topo.edges.add(msg?.[MSG_KEY_RESULT]?.links);
         this.topo.network.stabilize();
         setTimeout(() => this.topo.network.fit(), 200);
 
@@ -87,22 +102,22 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.ADD_LINK:
-        this.topo.edges.updateOnly(msg?.res);
+        this.topo.edges.updateOnly(msg?.[MSG_KEY_RESULT]);
         break;
 
       case WS_FUNCTIONS.ADD_NODE:
-        this.topo.nodes.updateOnly(msg?.res);
+        this.topo.nodes.updateOnly(msg?.[MSG_KEY_RESULT]);
         break;
 
       case WS_FUNCTIONS.GET_FIB:
-        this.topo.nodes.get(<string>msg?.res.id)!.extra.fibStr = msg?.res.fib;
+        this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!.extra.fibStr = msg?.[MSG_KEY_RESULT].fib;
         break;
 
       case WS_FUNCTIONS.GET_PCAP:
-        this.topo.nodes.get(<string>msg?.res.id)!.extra.capturedPackets =
-          msg?.res.packets.map((p: any) => {
+        this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!.extra.capturedPackets =
+          msg?.[MSG_KEY_RESULT].packets.map((p: any) => {
             return {
-              node: msg?.res.id,
+              node: msg?.[MSG_KEY_RESULT].id,
               fn: Number(p[0]),
               t: Number(p[1]),
               l: Number(p[2]),
@@ -116,7 +131,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
         // Creating dump
         if (this.dump) {
-          this.dump.nodes.push(this.topo.nodes.get(<string>msg?.res.id)!);
+          this.dump.nodes.push(this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!);
           this.dump.positions = this.topo.network.getPositions();
 
           // Did we get everything?
@@ -129,17 +144,17 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
-        (<any>window).visualize(msg?.res);
+        (<any>window).visualize(msg?.[MSG_KEY_RESULT]);
         break;
 
       case WS_FUNCTIONS.OPEN_TERMINAL:
-        this.openTerminalInternal(msg?.res.id, msg?.res.name);
+        this.openTerminalInternal(msg?.[MSG_KEY_RESULT].id, msg?.[MSG_KEY_RESULT].name);
         break;
 
       case WS_FUNCTIONS.PTY_OUT:
         for (let t of this.topo.activePtys) {
-          if (t.id == msg?.id) {
-            t.write.emit(msg?.res);
+          if (t.id == msg?.[MSG_KEY_ID]) {
+            t.write.emit(new Uint8Array(msg?.[MSG_KEY_RESULT]));
             break;
           }
         }
@@ -240,16 +255,23 @@ export class ProviderMiniNDN implements ForwardingProvider {
   private openTerminalInternal(id: string, name: string) {
     const write = new EventEmitter<any>();
     const data = new EventEmitter<any>();
+    const resized = new EventEmitter<any>();
     this.topo.activePtys.push({
       id: id,
       name: name,
       write: write,
       data: data,
+      resized: resized,
     });
 
     data.subscribe((msg: any) => {
-      this.wsFun(WS_FUNCTIONS.PTY_IN, id, msg);
+      const pack = new TextEncoder().encode(msg);
+      this.wsFun(WS_FUNCTIONS.PTY_IN, id, pack);
     });
+
+    resized.subscribe((msg: any) => {
+      this.wsFun(WS_FUNCTIONS.PTY_RESIZE, id, msg.rows, msg.cols);
+    })
   }
 
   public fetchCapturedPackets(node: INode) {

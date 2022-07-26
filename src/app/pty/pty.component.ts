@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { Subscription } from 'rxjs';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
+import { IPty } from '../interfaces';
 
 @Component({
   selector: 'pty',
@@ -18,10 +19,8 @@ import { FitAddon } from 'xterm-addon-fit';
   ]
 })
 export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('pty') pty!: ElementRef;
-  @Input() public data?: EventEmitter<any>;
-  @Input() public writer?: EventEmitter<any>;
-  @Input() public resized?: EventEmitter<any>;
+  @ViewChild('pty') pty_e!: ElementRef;
+  @Input() public pty?: IPty;
   @Input() public resize?: EventEmitter<any>;
   @Output() public afterInit: EventEmitter<any> = new EventEmitter();
 
@@ -37,7 +36,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor() { }
 
   ngOnInit(): void {
-    this.writer?.subscribe(this.write.bind(this));
+    this.pty?.write?.subscribe(this.write.bind(this));
   }
 
   ngOnDestroy(): void {
@@ -64,10 +63,16 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     this.term = term;
 
-    term.open(this.pty.nativeElement);
+    term.open(this.pty_e.nativeElement);
     term.onData((data) => {
-      this.data?.emit(data);
+      this.pty?.data?.emit(data);
     });
+
+    // Init with data
+    if ((this.pty?.initBuf?.length || 0) > 0) {
+      term.write(this.pty!.initBuf!);
+    }
+    this.pty!.initBuf = undefined;
 
     // Fit to size
     const fitAddon = new FitAddon();
@@ -81,7 +86,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
         fitAddon.fit();
         this.resizeTimer = 0;
 
-        this.resized?.emit({
+        this.pty?.resized?.emit({
           rows: this.term.rows,
           cols: this.term.cols,
         })

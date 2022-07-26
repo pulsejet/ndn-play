@@ -173,7 +173,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.OPEN_TERMINAL:
-        this.openTerminalInternal(msg?.[MSG_KEY_RESULT].id, msg?.[MSG_KEY_RESULT].name);
+        const res = msg?.[MSG_KEY_RESULT];
+        this.openTerminalInternal(res.id, res.name, res.buf);
         break;
 
       case WS_FUNCTIONS.CLOSE_TERMINAL:
@@ -181,12 +182,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.PTY_OUT:
-        for (let t of this.topo.activePtys) {
-          if (t.id == msg?.[MSG_KEY_ID]) {
-            t.write.emit(new Uint8Array(msg?.[MSG_KEY_RESULT]));
-            break;
-          }
-        }
+        this.writeTerminal(msg?.[MSG_KEY_ID], msg?.[MSG_KEY_RESULT])
         break;
     }
   };
@@ -266,7 +262,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
     console.log(`Requested remote shell for ${node.label}`);
   }
 
-  private openTerminalInternal(id: string, name: string) {
+  private openTerminalInternal(id: string, name: string, init: Uint8Array) {
     // check if same id exists
     for (let t of this.topo.activePtys) {
       if (t.id == id) {
@@ -284,6 +280,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
       write: write,
       data: data,
       resized: resized,
+      initBuf: init,
     });
 
     data.subscribe((msg: any) => {
@@ -296,6 +293,28 @@ export class ProviderMiniNDN implements ForwardingProvider {
     });
 
     console.log(`Connected to remote PTY ${name} [${id}]`);
+  }
+
+  private writeTerminal(id: string, buf: any) {
+    const ubuf = new Uint8Array(buf);
+
+    for (let t of this.topo.activePtys) {
+      if (t.id == id) {
+        if (t.initBuf !== undefined) {
+          console.log('skipping write', t.initBuf)
+          // not yet initialized
+          // join init buffer with new data
+          const merged = new Uint8Array(t.initBuf.length + ubuf.length);
+          merged.set(t.initBuf);
+          merged.set(ubuf, t.initBuf.length);
+          t.initBuf = merged;
+          return;
+        }
+
+        t.write.emit(ubuf);
+        return;
+      }
+    }
   }
 
   private closeTerminalInternal(id: string) {

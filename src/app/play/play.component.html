@@ -30,8 +30,7 @@
 
                         <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name"
                                  (select)="setActivePtyTab(pty)" #ptyTab>
-                            <pty [data]="t.data" [writer]="t.write" #pty
-                                 [resized]="t.resized" [resize]="paneChange"
+                            <pty [pty]="t" [resize]="paneChange" #pty
                                  (afterInit)="lowerTabs.set(consoleTab); consoleSubTabs.set(ptyTab)">
                             </pty>
                         </app-tab>

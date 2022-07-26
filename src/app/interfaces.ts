@@ -1,3 +1,4 @@
+import { EventEmitter } from '@angular/core';
 import { Node, Edge } from 'vis-network/standalone';
 import { NFW } from './provider-browser/nfw/nfw';
 
@@ -78,3 +79,13 @@ export interface visTlv {
     /** Total length of the TLV block */
     tl: number;
 };
+
+/** Connected Pty */
+export interface IPty {
+    id: string,
+    name: string,
+    write: EventEmitter<any>,
+    data: EventEmitter<any>,
+    resized: EventEmitter<any>,
+    initBuf?: Uint8Array,
+  }

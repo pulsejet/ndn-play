@@ -8,6 +8,7 @@ import * as msgpack from "msgpack-lite"
 
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
+  OPEN_ALL_PTYS: 'open_all_ptys',
   DEL_LINK: 'del_link',
   ADD_LINK: 'add_link',
   UPD_LINK: 'upd_link',
@@ -20,6 +21,7 @@ const WS_FUNCTIONS = {
   PTY_OUT: 'pty_out',
   PTY_RESIZE: 'pty_resize',
   OPEN_TERMINAL: 'open_term',
+  CLOSE_TERMINAL: 'close_term',
 };
 
 const MSG_KEY_FUN = 'F'
@@ -99,6 +101,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         this.initialized = true;
 
         this.openTerminalInternal('cli', 'MiniNDN CLI');
+        this.wsFun(WS_FUNCTIONS.OPEN_ALL_PTYS);
         break;
 
       case WS_FUNCTIONS.ADD_LINK:
@@ -149,6 +152,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.OPEN_TERMINAL:
         this.openTerminalInternal(msg?.[MSG_KEY_RESULT].id, msg?.[MSG_KEY_RESULT].name);
+        break;
+
+      case WS_FUNCTIONS.CLOSE_TERMINAL:
+        this.closeTerminalInternal(msg?.[MSG_KEY_ID]);
         break;
 
       case WS_FUNCTIONS.PTY_OUT:
@@ -253,6 +260,14 @@ export class ProviderMiniNDN implements ForwardingProvider {
   }
 
   private openTerminalInternal(id: string, name: string) {
+    // check if same id exists
+    for (let t of this.topo.activePtys) {
+      if (t.id == id) {
+        return;
+      }
+    }
+
+    // create new terminal
     const write = new EventEmitter<any>();
     const data = new EventEmitter<any>();
     const resized = new EventEmitter<any>();
@@ -272,6 +287,15 @@ export class ProviderMiniNDN implements ForwardingProvider {
     resized.subscribe((msg: any) => {
       this.wsFun(WS_FUNCTIONS.PTY_RESIZE, id, msg.rows, msg.cols);
     })
+  }
+
+  private closeTerminalInternal(id: string) {
+    // check if same id exists
+    for (let t of this.topo.activePtys) {
+      if (t.id == id) {
+        this.topo.activePtys.splice(this.topo.activePtys.indexOf(t), 1);
+      }
+    }
   }
 
   public fetchCapturedPackets(node: INode) {

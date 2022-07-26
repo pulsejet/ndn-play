@@ -10,7 +10,7 @@
     "noFallthroughCasesInSwitch": true,
     "sourceMap": true,
     "declaration": false,
-    "downlevelIteration": true,
+    "downlevelIteration": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,

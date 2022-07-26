@@ -11,8 +11,6 @@ import { Topology } from './topo';
         <div class="field" *ngIf="$any(topo.provider).BROWSER">
             <button class="button is-link full-width is-light is-small full-width"
                     (click)="$any(topo.provider).scheduleRouteRefresh()">Compute Routes</button>
-            <button class="button is-link full-width is-light is-small full-width mt-1"
-                    (click)="$any(topo.provider).security.computeSecurity()">Compute Trust</button>
         </div>
 
         <div class="field">

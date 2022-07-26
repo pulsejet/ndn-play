@@ -1,4 +1,4 @@
-import * as vis from 'vis-network';
+import { Node, Edge } from 'vis-network/standalone';
 import { NFW } from './provider-browser/nfw/nfw';
 
 export interface ICapturedPacket {
@@ -41,7 +41,7 @@ export interface INodeExtra {
     replayWindowF?: number;
 }
 
-export interface INode extends vis.Node {
+export interface INode extends Node {
     /* Not a forwarder -- definitely */
     nfw?: NFW;
     /** Extra data object */
@@ -53,7 +53,7 @@ export interface ILinkExtra {
     pendingTraffic: number;
 }
 
-export interface IEdge extends vis.Edge {
+export interface IEdge extends Edge {
     /** Latency in milliseconds */
     latency: number;
     /** Loss in percentage */

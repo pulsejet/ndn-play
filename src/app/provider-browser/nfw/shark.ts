@@ -4,10 +4,10 @@ import { Topology } from "src/app/topo/topo";
 import { NFW } from "./nfw";
 import { ICapturedPacket, INodeExtra } from "../../interfaces";
 import { Encoder } from '@ndn/tlv';
-import * as vis from 'vis-network/standalone';
+import { IdType } from 'vis-network/standalone';
 
 export class Shark {
-    private nodeId!: vis.IdType;
+    private nodeId!: IdType;
     private nodeExtra!: INodeExtra;
 
     constructor(private nfw: NFW, private topo: Topology)

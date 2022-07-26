@@ -16,17 +16,6 @@
                     <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit" language="javascript"></app-editor>
                 </div>
             </app-tab>
-
-            <ng-container *ngIf="$any(gs.topo.provider).security">
-                <app-tab name="Trust Schema">
-                    <div class="main-tab">
-                        <app-editor [(code)]="$any(gs.topo.provider).security.schemaText" language="trust-schema"></app-editor>
-                    </div>
-                </app-tab>
-                <app-tab name="Trust Visualizer" (select)="$any(gs.topo.provider).security.fitLazy()">
-                    <div #secContainer class="main-tab"></div>
-                </app-tab>
-            </ng-container>
         </app-tabs>
     </ng-template>
 
@@ -36,7 +25,7 @@
                 <div class="console"> <console #console></console> </div>
             </app-tab>
 
-            <app-tab name="Terminal">
+            <app-tab name="Terminal" *ngIf="gs.topo.provider.openTerminal">
                 <div class="console">
                     <app-tabs class="tab-container main-lower">
                         <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.resize()">

@@ -35,7 +35,7 @@ A simple ping program is described below.
 const { Data, Interest } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint({ secure: false });
+const endpoint = node.nfw.getEndpoint();
 var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
     const data = new Data(interest.name, Data.FreshnessPeriod(500));
     data.content = toUtf8("Hello from NDNts Producer");
@@ -46,7 +46,7 @@ var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
 const { Data, Interest } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint({ secure: false });
+const endpoint = node.nfw.getEndpoint();
 const interest = new Interest('/ndn/producer/test');
 const data = await endpoint.consume(interest);
 alert(fromUtf8(data.content));
@@ -60,7 +60,7 @@ A sample application running PSync (run this code on multiple nodes)
 const { Data, Interest, Name } = ndn.packet;
 const { fromUtf8, toUtf8 } = ndn.tlv;
 
-const endpoint = node.nfw.getEndpoint({ secure: false });
+const endpoint = node.nfw.getEndpoint();
 
 const opts = {
     p: ndn.sync.makePSyncCompatParam({ expectedEntries: 40 }),
@@ -87,26 +87,3 @@ window.sync[node.label] = sync;
 // To stop all nodes, run
 // Object.values(window.sync).forEach((e) => e.close())
 ```
-
-## Trust Visualization
-
-A keypair and certificate is generated for each node from the schema, when the prefix of the certificate is `/ndn/<_node>`. All root certificates (starting with `root`) are configured as trust anchors.
-
-* One certificate directly signed by the trust anchor for each node
-    ```
-    site = ndn
-    root = <site>/<_KEY>
-    node = <site>/<_node>/cert/node/<_KEY>
-    ping = <site>/<_node>/ping/<_time>
-    ping <= node <= root
-    ```
-
-* One certificate for node A, signed by the trust anchor. All other certificates are signed by A. A's certificate is distributed by A only.
-    ```
-    site = ndn
-    root = <site>/<_KEY>
-    a = <site>/A/cert/my-tree/<_KEY>
-    a-node = <site>/<_node>/cert/my-tree/<_KEY>
-    ping = <site>/<_node>/ping/<_time>
-    ping <= a-node <= a <= root
-    ```

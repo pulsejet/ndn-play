@@ -1,5 +1,5 @@
 import { INode, INodeExtra } from "../../interfaces";
-import * as vis from 'vis-network/standalone';
+import { IdType } from 'vis-network/standalone';
 
 import { Endpoint } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
@@ -81,7 +81,7 @@ export class NFW {
 
     constructor(
         private readonly topo: Topology,
-        public readonly nodeId: vis.IdType,
+        public readonly nodeId: IdType,
     ) {
         this.provider = <ProviderBrowser>topo.provider;
         this.cs = new ContentStore(this.provider);
@@ -138,7 +138,7 @@ export class NFW {
     }
 
     public node() {
-        return <INode>this.topo.nodes.get(this.nodeId);
+        return this.topo.nodes.get(this.nodeId) as any as INode;
     }
 
     public nodeUpdated() {
@@ -152,7 +152,7 @@ export class NFW {
     }
 
     /** Add traffic to link */
-    private addLinkTraffic(nextHop: vis.IdType, callback: (success: boolean) => void) {
+    private addLinkTraffic(nextHop: IdType, callback: (success: boolean) => void) {
         // Get link to next hop
         const myEdges = this.topo.network.getConnectedEdges(this.nodeId);
         let link = this.topo.edges.get(myEdges).find(l => l.to == nextHop || l.from == nextHop);
@@ -261,7 +261,7 @@ export class NFW {
         }
 
         // Where to forward the interest
-        let nextHops: vis.IdType[] = [];
+        let nextHops: IdType[] = [];
 
         // Strategies
         if (strategy == 'best-route') {
@@ -279,7 +279,7 @@ export class NFW {
         this.nodeExtra.pendingTraffic--;
 
         // Which hops sent to (prevent dupulicate sending)
-        const sentHops: vis.IdType[] = [];
+        const sentHops: IdType[] = [];
 
         // Token when sending to others
         const upstreamToken = Math.round(Math.random()*1000000000);
@@ -304,7 +304,7 @@ export class NFW {
             this.nodeExtra.pendingTraffic++;
 
             // Forward to next NFW
-            const nextNFW = this.topo.nodes.get(<vis.IdType>nextHop)?.nfw;
+            const nextNFW = this.topo.nodes.get(<IdType>nextHop)?.nfw;
             if (!nextNFW) continue;
 
             // Sent one
@@ -414,7 +414,7 @@ export class NFW {
         for (const entry of this.fib) {
             const nexthops = [];
             for (const route of entry.routes) {
-                nexthops.push(`face=${this.topo.nodes.get(<vis.IdType>route.hop)?.label} (cost=${route.cost})`);
+                nexthops.push(`face=${this.topo.nodes.get(<IdType>route.hop)?.label} (cost=${route.cost})`);
             }
 
             text.push(`${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`);
@@ -423,11 +423,9 @@ export class NFW {
         return text;
     }
 
-    public getEndpoint(opts?: { secure?: boolean }) {
+    public getEndpoint(opts?: { }) {
         return new Endpoint({
             fw: this.fw,
-            dataSigner: opts?.secure ? this.securityOptions?.signer : undefined,
-            verifier: opts?.secure ? this.securityOptions?.verifier : undefined,
         });
     }
 }

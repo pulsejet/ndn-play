@@ -1,17 +1,17 @@
-import * as vis from 'vis-network/standalone';
+import { Network, IdType } from 'vis-network/standalone';
 import { ForwardingProvider } from '../forwarding-provider';
 import { Topology } from '../topo/topo';
 
 declare var dijkstra: any;
 
 class _CalculateRoutes {
-    private network: vis.Network;
+    private network: Network;
 
     constructor(
         private topo: Topology,
         private provider: ForwardingProvider,
     ) {
-        this.network = <vis.Network>this.topo.network;
+        this.network = <Network>this.topo.network;
     }
 
     dijkstra(graph: any) {
@@ -61,7 +61,7 @@ class _CalculateRoutes {
         return routes;
     }
 
-    getLatency(n1: vis.IdType, n2: vis.IdType) {
+    getLatency(n1: IdType, n2: IdType) {
         const edge = this.topo.edges.get(this.network.getConnectedEdges(n1)).find(e => e.from === n2 || e.to === n2);
         if (!edge) return 0;
 
@@ -82,7 +82,7 @@ class _CalculateRoutes {
         for (const node of this.topo.nodes.getIds()) {
             graph[node] = {};
             for (const cn of this.network.getConnectedNodes(node)) {
-                const nid = <vis.IdType>cn;
+                const nid = <IdType>cn;
                 graph[node][nid] = this.getLatency(node, nid);
             }
         }
@@ -106,7 +106,7 @@ export class RoutingHelper {
         this.routeObject = new _CalculateRoutes(topo, provider);
     }
 
-    addOrigin(nodes: vis.IdType[], prefix: string) {
+    addOrigin(nodes: IdType[], prefix: string) {
         for (const node of nodes) {
             if (!Object.keys(this.namePrefixes).includes(node.toString()))
                 this.namePrefixes[node] = [];

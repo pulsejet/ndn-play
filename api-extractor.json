@@ -68,6 +68,7 @@
     "@yoursunny/psync-bloom",
     "@ndn/endpoint",
     "@ndn/fw",
+    "@ndn/util",
     "vis-network",
     "vis-data",
     "vis-util",

@@ -2,7 +2,6 @@ import { Interest, Name } from "@ndn/packet";
 import { ForwardingProvider } from "../forwarding-provider";
 import { IEdge, INode } from "../interfaces";
 import { NFW } from "./nfw/nfw";
-import { SecurityController } from "./security-controller";
 import { Topology } from "../topo/topo";
 import { RoutingHelper } from "./routing-helper";
 import { downloadString, loadFileString } from "../helper";
@@ -26,9 +25,6 @@ export class ProviderBrowser implements ForwardingProvider {
 
   // Event of route refresh
   private scheduledRouteRefresh: number = 0;
-
-  // Security
-  public security!: SecurityController;
 
   constructor() {}
 
@@ -96,8 +92,6 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public nodeUpdated = async (node?: INode) => {
-    this.security.computeSecurity();
-
     if (node) {
       node.nfw!.nodeUpdated();
     }
@@ -113,7 +107,7 @@ export class ProviderBrowser implements ForwardingProvider {
     const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();
-    from.nfw!.getEndpoint({ secure: true }).consume(interest).then(() => {
+    from.nfw!.getEndpoint().consume(interest).then(() => {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     }).catch(console.error);
 
@@ -123,7 +117,7 @@ export class ProviderBrowser implements ForwardingProvider {
   public sendInterest(name: string, node: INode) {
     name = name.replace('$time', (new Date).getTime().toString());
     const interest = new Interest(name, Interest.Lifetime(3000))
-    node.nfw!.getEndpoint({ secure: false }).consume(interest).then(() => {
+    node.nfw!.getEndpoint().consume(interest).then(() => {
       console.log('Received data reply');
     }).catch(console.error);
   }

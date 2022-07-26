@@ -1,10 +1,8 @@
 import { ICapturedPacket, IEdge, INode, INodeExtra } from "../interfaces";
-import { SecurityController } from "../provider-browser/security-controller";
 import { ForwardingProvider } from "../forwarding-provider";
-import { ProviderBrowser } from "../provider-browser/provider-browser";
 import { EventEmitter } from "@angular/core";
 import chroma from "chroma-js";
-import * as vis from 'vis-network/standalone';
+import { DataSet, Network, IdType } from 'vis-network/standalone';
 
 export class Topology {
   // Constants
@@ -14,11 +12,11 @@ export class Topology {
   public readonly ACTIVE_NODE_COLOR = '#ffcccb';
 
   // Global Dataset
-  public readonly nodes: vis.DataSet<INode, "id">;
-  public readonly edges: vis.DataSet<IEdge, "id">;
+  public readonly nodes: DataSet<INode, "id">;
+  public readonly edges: DataSet<IEdge, "id">;
 
   // Global network
-  public network!: vis.Network;
+  public network!: Network;
 
   // If imported from an experiment
   public imported?: 'MININDN' | 'BROWSER';
@@ -54,8 +52,8 @@ export class Topology {
     this.provider.topo = this;
 
     // Initialize empty graph
-    this.nodes = new vis.DataSet<INode, "id">();
-    this.edges = new vis.DataSet<IEdge, "id">();
+    this.nodes = new DataSet<INode, "id">();
+    this.edges = new DataSet<IEdge, "id">();
 
     // Initialize the graph
     this.ensureInitialized();
@@ -63,11 +61,6 @@ export class Topology {
     // Initialize always
     this.nodes.on('add', this.ensureInitialized.bind(this));
     this.edges.on('add', this.ensureInitialized.bind(this));
-
-    // Initialize security for browser provider
-    if (this.provider instanceof ProviderBrowser) {
-      this.provider.security = new SecurityController(this);
-    }
 
     // Initialize provider
     this.provider.initialize();
@@ -90,7 +83,7 @@ export class Topology {
       }
     };
 
-    this.network = new vis.Network(container, data, options);
+    this.network = new Network(container, data, options);
 
     // Bind functions
     this.network?.on("click", this.onNetworkClick.bind(this));
@@ -169,7 +162,7 @@ export class Topology {
     }
   }
 
-  public updateNodeColor(nodeId: vis.IdType, nodeExtra?: INodeExtra) {
+  public updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra) {
     // Get object if not passed
     if (!nodeExtra) {
       nodeExtra = this.nodes.get(nodeId)!.extra;
@@ -193,7 +186,7 @@ export class Topology {
   public updateEdgeColor(edge: IEdge) {
     // No traffic
     if (edge.extra.pendingTraffic === 0) {
-      this.provider.pendingUpdatesEdges[<vis.IdType>edge.id] = { id: edge.id, color: this.DEFAULT_LINK_COLOR };
+      this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: this.DEFAULT_LINK_COLOR };
       return;
     }
 
@@ -203,6 +196,6 @@ export class Topology {
     }
     const color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
                               (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
-    this.provider.pendingUpdatesEdges[<vis.IdType>edge.id] = { id: edge.id, color: color };
+    this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: color };
   }
 }

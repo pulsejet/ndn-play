@@ -17,7 +17,6 @@ export class PlayComponent implements OnInit, AfterViewInit {
 
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
-  @ViewChild('secContainer') secContainer!: ElementRef;
   @ViewChild('console') console!: ElementRef;
 
   constructor(public gs: GlobalService) {}
@@ -30,9 +29,6 @@ export class PlayComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {
-      if (this.gs.topo.provider instanceof ProviderBrowser) {
-        this.gs.topo.provider.security.createNetwork(this.secContainer?.nativeElement);
-      }
     });
   }
 

@@ -1,90 +1,99 @@
-/// <reference types="hammerjs" />
 /// <reference types="node" />
-/// <reference types="web" />
 
 import type * as asn1 from '@yoursunny/asn1';
-import * as keycharm from 'keycharm';
-
-/**
- * The signal class.
- * @see https://dom.spec.whatwg.org/#abortsignal
- */
-declare class AbortSignal_2 extends EventTarget_2<Events_2, EventAttributes> {
-    /**
-     * AbortSignal cannot be constructed directly.
-     */
-    constructor()
-    /**
-     * Returns `true` if this `AbortSignal`"s `AbortController` has signaled to abort, and `false` otherwise.
-     */
-    readonly aborted: boolean
-}
-
-declare const Activator: any;
-
-/**
- * Add a className to the given elements style.
- *
- * @param elem - The element to which the classes will be added.
- * @param classNames - Space separated list of classes.
- */
-declare function addClassName(elem: Element, classNames: string): void;
-
-/**
- * Append a string with css styles to an element.
- *
- * @param element - The element that will receive new styles.
- * @param cssText - The styles to be appended.
- */
-declare function addCssText(element: HTMLElement, cssText: string): void;
-
-/**
- * Add and event listener. Works for all browsers.
- *
- * @param element - The element to bind the event listener to.
- * @param action - Same as Element.addEventListener(action, —, —).
- * @param listener - Same as Element.addEventListener(—, listener, —).
- * @param useCapture - Same as Element.addEventListener(—, —, useCapture).
- */
-declare function addEventListener_2<E extends Element>(element: E, action: Parameters<E["addEventListener"]>[0], listener: Parameters<E["addEventListener"]>[1], useCapture?: Parameters<E["addEventListener"]>[2]): void;
+import assert from 'minimalistic-assert';
+import { Assignable } from './esm';
+import { Edge } from './esm';
+import { EventEmitter } from '@angular/core';
+import { IdType } from './esm';
+import { Network } from './esm';
+import { Node as Node_2 } from './esm';
 
 /** Add event payload. */
 declare interface AddEventPayload {
     /** Ids of added items. */
-    items: Id_2[];
+    items: Id[];
 }
 
-declare namespace AES {
-    export {
-        Encryption,
-        KeyLength,
-        GenParams,
-        blockSize,
-        CBC,
-        CTR,
-        GCM
+/** AES block size in octets. */
+declare const AesBlockSize = 16;
+
+/**
+ * AES-CBC encryption algorithm.
+ *
+ * Initialization Vectors must be 16 octets.
+ * During encryption, if IV is unspecified, it is randomly generated.
+ * During decryption, quality of IV is not checked.
+ */
+declare const AESCBC: AesEncryption<{}, AESCBC.GenParams>;
+
+declare namespace AESCBC {
+    interface GenParams extends AesGenParams {
     }
 }
 
 /**
- * Create a seeded pseudo random generator based on Alea by Johannes Baagøe.
+ * AES-CTR encryption algorithm.
  *
- * @param seed - All supplied arguments will be used as a seed. In case nothing
- * is supplied the current time will be used to seed the generator.
+ * Initialization Vectors must be 16 octets.
+ * During encryption, if IV is unspecified, it is constructed with two parts:
+ * @li a 64-bit random number, generated each time a private key instance is constructed;
+ * @li a 64-bit counter starting from zero.
  *
- * @returns A ready to use seeded generator.
+ * During decryption, quality of IV is not automatically checked.
+ * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
+ * check IVs using CounterIvChecker type.
  */
-declare function Alea(...seed: Mashable[]): RNG;
+declare const AESCTR: AesEncryption<AESCTR.Info, AESCTR.GenParams>;
 
-declare namespace allOptions {
-    export {
-        configuratorHideOption,
-        allOptions_2 as allOptions,
-        configureOptions
+declare namespace AESCTR {
+    interface Info {
+        /**
+         * Specify number of bits in IV to use as counter.
+         * This must be between 1 and 128. Default is 64.
+         */
+        counterLength: number;
+    }
+    type GenParams = AesGenParams & Partial<Info>;
+}
+
+declare interface AesEncryption<I, G extends AesGenParams> extends EncryptionAlgorithm<I, false, G> {
+    readonly ivLength: number;
+    makeAesKeyGenParams: (genParams: G) => AesKeyGenParams;
+}
+
+/**
+ * AES-GCM encryption algorithm.
+ *
+ * Initialization Vectors must be 12 octets.
+ * During encryption, if IV is unspecified, it is constructed with two parts:
+ * @li a 64-bit random number, generated each time a private key instance is constructed;
+ * @li a 32-bit counter starting from zero.
+ *
+ * During decryption, quality of IV is not automatically checked.
+ * Since the security of AES-GCM depends on having unique IVs, the application is recommended to
+ * check IVs using CounterIvChecker type.
+ */
+declare const AESGCM: AesEncryption<{}, AESGCM.GenParams>;
+
+declare namespace AESGCM {
+    interface GenParams extends AesGenParams {
     }
 }
 
-declare const allOptions_2: OptionsConfig;
+/** Key generation parameters. */
+declare interface AesGenParams {
+    length?: AesKeyLength;
+    /** Import raw key bits instead of generating. */
+    importRaw?: Uint8Array;
+}
+
+declare type AesKeyLength = 128 | 192 | 256;
+
+declare namespace AesKeyLength {
+    const Default: AesKeyLength;
+    const Choices: readonly AesKeyLength[];
+}
 
 /** Print Generic, ImplicitDigest, ParamsDigest in alternate URI syntax. */
 declare const AltUri: AltUriConverter;
@@ -105,81 +114,20 @@ declare class AltUriConverter {
     readonly conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>;
     constructor(conventions: ReadonlyArray<NamingConvention<any> & NamingConvention.WithAltUri>);
     /** Print component in alternate URI syntax */
-    ofComponent: (comp: Component) => string;
+    readonly ofComponent: (comp: Component) => string;
     /** Print name in alternate URI syntax. */
-    ofName: (name: Name) => string;
+    readonly ofName: (name: Name) => string;
     /** Parse component from alternate URI syntax */
-    parseComponent: (input: string) => Component;
+    readonly parseComponent: (input: string) => Component;
     /** Parse name from alternate URI syntax. */
-    parseName: (input: string) => Name;
+    readonly parseName: (input: string) => Name;
 }
 
-/**
- * Animation options interface.
- */
-declare interface AnimationOptions {
-    /**
-     * The duration (in milliseconds).
-     */
-    duration: number;
-    /**
-     * The easing function.
-     *
-     * Available are:
-     * linear, easeInQuad, easeOutQuad, easeInOutQuad, easeInCubic,
-     * easeOutCubic, easeInOutCubic, easeInQuart, easeOutQuart, easeInOutQuart,
-     * easeInQuint, easeOutQuint, easeInOutQuint.
-     */
-    easingFunction: EasingFunction;
-}
+/** Convert ArrayBuffer or ArrayBufferView to DataView. */
+declare function asDataView(a: BufferSource): DataView;
 
-declare type Arguments<T> = [T] extends [(...args: infer U) => any]
-? U
-: [T] extends [void] ? [] : [T]
-
-declare interface ArrowHead {
-    enabled?: boolean,
-    imageHeight?: number,
-    imageWidth?: number,
-    scaleFactor?: number,
-    src?: string,
-    type?: string;
-}
-
-/**
- * Turns `undefined` into `undefined | typeof DELETE` and makes everything
- * partial. Intended to be used with `deepObjectAssign`.
- */
-declare type Assignable<T> = T extends undefined ? (T extends Function ? T : T extends object ? {
-    [Key in keyof T]?: Assignable<T[Key]> | undefined;
-} : T) | typeof DELETE : T extends Function ? T | undefined : T extends object ? {
-    [Key in keyof T]?: Assignable<T[Key]> | undefined;
-} : T | undefined;
-
-declare function binarySearchCustom<O extends object, K1 extends keyof O, K2 extends keyof O[K1]>(orderedItems: O[], comparator: (v: O[K1][K2]) => -1 | 0 | 1, field: K1, field2: K2): number;
-
-declare function binarySearchCustom<O extends object, K1 extends keyof O>(orderedItems: O[], comparator: (v: O[K1]) => -1 | 0 | 1, field: K1): number;
-
-/**
- * This function does a binary search for a specific value in a sorted array.
- * If it does not exist but is in between of two values, we return either the
- * one before or the one after, depending on user input If it is found, we
- * return the index, else -1.
- *
- * @param orderedItems - Sorted array.
- * @param target - The searched value.
- * @param field - Name of the property in items to be searched.
- * @param sidePreference - If the target is between two values, should the index of the before or the after be returned?
- * @param comparator - An optional comparator, returning -1, 0, 1 for \<, ===, \>.
- *
- * @returns The index of found value or -1 if nothing was found.
- */
-declare function binarySearchValue<T extends string>(orderedItems: {
-    [K in T]: number;
-}[], target: number, field: T, sidePreference: "before" | "after", comparator?: (a: number, b: number) => -1 | 0 | 1): number;
-
-/** AES block size in octets. */
-declare const blockSize = 16;
+/** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
+declare function asUint8Array(a: BufferSource): Uint8Array;
 
 /** A Bloom filter. */
 declare class BloomFilter {
@@ -212,29 +160,6 @@ declare interface BloomFilter extends Readonly<Parameters_2> {
 }
 
 /**
- * These values are in canvas space.
- */
-declare interface BoundingBox {
-    top: number;
-    left: number;
-    right: number;
-    bottom: number;
-}
-
-declare function bridgeObject<T extends object>(referenceObject: T): T;
-
-declare function bridgeObject<T>(referenceObject: T): null;
-
-/**
- * AES-CBC encryption algorithm.
- *
- * Initialization Vectors must be 16 octets.
- * During encryption, if IV is unspecified, it is randomly generated.
- * During decryption, quality of IV is not checked.
- */
-declare const CBC: Encryption<{}, GenParams>;
-
-/**
  * NDN Certificate v2.
  * This type is immutable.
  */
@@ -246,42 +171,55 @@ declare class Certificate {
     get name(): Name;
     get issuer(): Name | undefined;
     get isSelfSigned(): boolean;
+    /** Ensure certificate is within validity period. */
+    checkValidity(now?: ValidityPeriod.TimestampInput): void;
     /** Public key in SubjectPublicKeyInfo (SPKI) binary format. */
     get publicKeySpki(): Uint8Array;
     /** Import SPKI as public key. */
     importPublicKey<I, A extends CryptoAlgorithm<I>>(algoList: readonly A[]): Promise<[A, CryptoAlgorithm.PublicKey<I>]>;
-    /** Create verifier from SPKI. */
-    createVerifier(): Promise<NamedVerifier.PublicKey>;
-    /** Create encrypter from SPKI. */
-    createEncrypter(): Promise<NamedEncrypter.PublicKey>;
-    private verifier?;
-    private encrypter?;
 }
 
 declare namespace Certificate {
     interface BuildOptions {
+        /** Certificate name. */
         name: Name;
+        /** Certificate packet FreshnessPeriod, default is 1 hour. */
         freshness?: number;
+        /** ValidityPeriod. */
         validity: ValidityPeriod;
+        /** Public key in SubjectPublicKeyInfo (SPKI) binary format. */
         publicKeySpki: Uint8Array;
+        /** Issuer signing key. */
         signer: Signer;
     }
+    /** Build a certificate from fields. */
     function build({ name, freshness, validity, publicKeySpki, signer, }: BuildOptions): Promise<Certificate>;
     interface IssueOptions {
+        /** Certificate packet FreshnessPeriod, default is 1 hour. */
         freshness?: number;
+        /** ValidityPeriod. */
         validity: ValidityPeriod;
+        /** IssuerId in certificate name. */
         issuerId: Component;
+        /** Issuer signing key. */
         issuerPrivateKey: Signer;
+        /** Public key to appear in certificate. */
         publicKey: PublicKey;
     }
-    function issue(options: IssueOptions): Promise<Certificate>;
+    /** Create a certificated signed by issuer. */
+    function issue(opts: IssueOptions): Promise<Certificate>;
     interface SelfSignOptions {
+        /** Certificate packet FreshnessPeriod, default is 1 hour. */
         freshness?: number;
+        /** ValidityPeriod, default is maximum validity. */
         validity?: ValidityPeriod;
+        /** Private key corresponding to public key. */
         privateKey: NamedSigner;
+        /** Public key to appear in certificate. */
         publicKey: PublicKey;
     }
-    function selfSign(options: SelfSignOptions): Promise<Certificate>;
+    /** Create a self-signed certificate. */
+    function selfSign(opts: SelfSignOptions): Promise<Certificate>;
 }
 
 declare interface CertNameFields extends KeyNameFields {
@@ -308,157 +246,42 @@ declare namespace CertNaming {
     }
 }
 
-/** Storage of certificates. */
+/** KV store of certificates. */
 declare class CertStore extends StoreBase<StoredCert> {
     get(name: Name): Promise<Certificate>;
     insert(cert: Certificate): Promise<void>;
 }
 
-/**
- * The value supplied will be used as the initial value.
- */
-declare type CheckboxInput = boolean;
-
-declare interface ChosenLabelValues {
-    color: string;
-    face: string;
-    mod: string;
-    size: number;
-    strokeColor: string;
-    strokeWidth: number;
-    vadjust: number;
+declare interface Closer {
+    close: () => void;
 }
 
-declare interface ChosenNodeValues {
-    borderColor: string;
-    borderDashes: boolean | number[];
-    borderRadius: number;
-    borderWidth: number;
-    color: string;
-    shadow: boolean;
-    shadowColor: string;
-    shadowSize: number;
-    shadowX: number;
-    shadowY: number;
-    size: number;
+/** A list of objects that can be closed or destroyed. */
+declare class Closers extends Array {
+    /** Close all objects in reverse order and clear the list. */
+    close: () => void;
+    /** Schedule a timeout or interval to be canceled via .close(). */
+    addTimeout<T extends NodeJS.Timeout | number>(t: T): T;
 }
-
-/**
- * this cleans up all the unused SVG elements. By asking for the parentNode, we only need to supply the JSON container from
- * which to remove the redundant elements.
- *
- * @param {Object} JSONcontainer
- * @private
- */
-declare function cleanupElements(JSONcontainer: any): void
-
-/**
- * Cluster methods options interface.
- */
-declare interface ClusterOptions {
-    /**
-     * Optional for all but the cluster method.
-     * The cluster module loops over all nodes that are selected to be in the cluster
-     * and calls this function with their data as argument. If this function returns true,
-     * this node will be added to the cluster. You have access to all options (including the default)
-     * as well as any custom fields you may have added to the node to determine whether or not to include it in the cluster.
-     */
-    joinCondition?(nodeOptions: any): boolean;
-
-    /**
-     * Optional.
-     * Before creating the new cluster node, this (optional) function will be called with the properties
-     * supplied by you (clusterNodeProperties), all contained nodes and all contained edges.
-     * You can use this to update the properties of the cluster based on which items it contains.
-     * The function should return the properties to create the cluster node.
-     */
-    processProperties?(clusterOptions: any, childNodesOptions: any[], childEdgesOptions: any[]): any;
-
-    /**
-     * Optional.
-     * This is an object containing the options for the cluster node.
-     * All options described in the nodes module are allowed.
-     * This allows you to style your cluster node any way you want.
-     * This is also the style object that is provided in the processProperties function for fine tuning.
-     * If undefined, default node options will be used.
-     */
-    clusterNodeProperties?: NodeOptions;
-
-    /**
-     * Optional.
-     * This is an object containing the options for the edges connected to the cluster.
-     * All options described in the edges module are allowed.
-     * Using this, you can style the edges connecting to the cluster any way you want.
-     * If none are provided, the options from the edges that are replaced are used.
-     * If undefined, default edge options will be used.
-     */
-    clusterEdgeProperties?: EdgeOptions;
-}
-
-declare interface Color {
-    border?: string;
-
-    background?: string;
-
-    highlight?: string | {
-        border?: string;
-        background?: string;
-    };
-
-    hover?: string | {
-        border?: string;
-        background?: string;
-    };
-}
-
-/**
- * The first value says this will be a color picker not a dropdown menu. The
- * next value is the initial color.
- */
-declare type ColorInput = readonly ["coor", string];
-
-declare interface ColorObject {
-    background: string;
-    border: string;
-    highlight: {
-        background: string;
-        border: string;
-    };
-    hover: {
-        background: string;
-        border: string;
-    };
-}
-
-declare interface ColorObject_2 {
-    background?: string;
-    border?: string;
-    hover?: string | {
-        border?: string;
-        background?: string;
-    };
-    highlight?: string | {
-        border?: string;
-        background?: string;
-    };
-}
-
-declare const ColorPicker: any;
 
 /**
  * Name component.
  * This type is immutable.
  */
 declare class Component {
-    get length(): number;
-    /** TLV-VALUE interpreted as UTF-8 string. */
-    get text(): string;
     static decodeFrom(decoder: Decoder): Component;
     /** Parse from URI representation, or return existing Component. */
     static from(input: ComponentLike): Component;
+    /** Whole TLV. */
     readonly tlv: Uint8Array;
+    /** TLV-TYPE. */
     readonly type: number;
+    /** TLV-VALUE. */
     readonly value: Uint8Array;
+    /** TLV-LENGTH. */
+    get length(): number;
+    /** TLV-VALUE interpreted as UTF-8 string. */
+    get text(): string;
     /**
      * Construct from TLV-TYPE and TLV-VALUE.
      * @param type TLV-TYPE, default is GenericNameComponent.
@@ -491,10 +314,9 @@ declare namespace Component {
         /** lhs is greater than rhs */
         GT = 2
     }
-    /** Compare two components. */
-    function compare(lhs: ComponentLike, rhs: ComponentLike): CompareResult;
 }
 
+/** Name component or component URI. */
 declare type ComponentLike = Component | string;
 
 declare interface Compression {
@@ -502,43 +324,8 @@ declare interface Compression {
     decompress: (compressed: Uint8Array) => Uint8Array;
 }
 
-declare const Configurator: any;
-
-declare type ConfiguratorConfig = {
-    readonly [Key in string]: ConfiguratorConfig | ConfiguratorInput;
-};
-
-declare type ConfiguratorHideOption = (parentPath: readonly string[], optionName: string, options: any) => boolean;
-
-declare const configuratorHideOption: ConfiguratorHideOption;
-
-declare type ConfiguratorInput = CheckboxInput | ColorInput | DropdownInput | NumberInput | TextInput;
-
-/**
- * This provides ranges, initial values, steps and dropdown menu choices for the
- * configuration.
- *
- * @remarks
- * Checkbox: `boolean`
- *   The value supllied will be used as the initial value.
- *
- * Text field: `string`
- *   The passed text will be used as the initial value. Any text will be
- *   accepted afterwards.
- *
- * Number range: `[number, number, number, number]`
- *   The meanings are `[initial value, min, max, step]`.
- *
- * Dropdown: `[Exclude<string, "color">, ...(string | number | boolean)[]]`
- *   Translations for people with poor understanding of TypeScript: the first
- *   value always has to be a string but never `"color"`, the rest can be any
- *   combination of strings, numbers and booleans.
- *
- * Color picker: `["color", string]`
- *   The first value says this will be a color picker not a dropdown menu. The
- *   next value is the initial color.
- */
-declare const configureOptions: ConfiguratorConfig;
+/** Console on stderr. */
+declare const console_2: Console;
 
 /**
  * Progress of Data retrieval.
@@ -555,7 +342,7 @@ declare interface ConsumerOptions {
     /** Description for debugging purpose. */
     describe?: string;
     /** AbortSignal that allows canceling the Interest via AbortController. */
-    signal?: AbortSignal_2 | globalThis.AbortSignal;
+    signal?: AbortSignal;
     /**
      * Modify Interest according to specified options.
      * Default is no modification.
@@ -572,19 +359,6 @@ declare interface ConsumerOptions {
      */
     verifier?: Verifier;
 }
-
-declare function copyAndExtendArray<T>(arr: ReadonlyArray<T>, newValue: T): T[];
-
-declare function copyAndExtendArray<A, V>(arr: ReadonlyArray<A>, newValue: V): (A | V)[];
-
-/**
- * Used to extend an array and copy it. This is used to propagate paths recursively.
- *
- * @param arr - The array to be copied.
- *
- * @returns Shallow copy of arr.
- */
-declare function copyArray<T>(arr: ReadonlyArray<T>): T[];
 
 /** Check IVs of fixed+random+counter structure to detect duplication. */
 declare class CounterIvChecker extends IvChecker {
@@ -673,41 +447,30 @@ declare function createEncrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlg
 /** Create a named encrypter from crypto key. */
 declare function createEncrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedEncrypter<Asym>;
 
-/**
- * Create new data pipe.
- *
- * @param from - The source data set or data view.
- *
- * @remarks
- * Example usage:
- * ```typescript
- * interface AppItem {
- *   whoami: string;
- *   appData: unknown;
- *   visData: VisItem;
- * }
- * interface VisItem {
- *   id: number;
- *   label: string;
- *   color: string;
- *   x: number;
- *   y: number;
- * }
- *
- * const ds1 = new DataSet<AppItem, "whoami">([], { fieldId: "whoami" });
- * const ds2 = new DataSet<VisItem, "id">();
- *
- * const pipe = createNewDataPipeFrom(ds1)
- *   .filter((item): boolean => item.enabled === true)
- *   .map<VisItem, "id">((item): VisItem => item.visData)
- *   .to(ds2);
- *
- * pipe.start();
- * ```
- *
- * @returns A factory whose methods can be used to configure the pipe.
- */
-declare function createNewDataPipeFrom<SI extends PartItem<SP>, SP extends string = "id">(from: DataInterface<SI, SP>): DataPipeUnderConstruction<SI, SP>;
+/** Create a named encrypter from certificate public key. */
+declare function createEncrypter(cert: Certificate, opts?: createEncrypter.ImportCertOptions): Promise<NamedEncrypter.PublicKey>;
+
+declare namespace createEncrypter {
+    /** createEncrypter options when importing public key from a certificate. */
+    interface ImportCertOptions {
+        /**
+         * List of recognized algorithms.
+         * Default is EncryptionAlgorithmListSlim.
+         * Use EncryptionAlgorithmListFull for all algorithms, at the cost of larger bundle size.
+         */
+        algoList?: readonly EncryptionAlgorithm[];
+        /**
+         * Whether to check certificate ValidityPeriod.
+         * Default is true, which throws an error if current timestamp is not within ValidityPeriod.
+         */
+        checkValidity?: boolean;
+        /**
+         * Current timestamp for checking ValidityPeriod.
+         * Default is Date.now().
+         */
+        now?: ValidityPeriod.TimestampInput;
+    }
+}
 
 /** Create a plain signer from crypto key. */
 declare function createSigner<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): Signer;
@@ -721,6 +484,32 @@ declare function createVerifier<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorit
 /** Create a named verifier from crypto key. */
 declare function createVerifier<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedVerifier<Asym>;
 
+/** Create a named verifier from certificate public key. */
+declare function createVerifier(cert: Certificate, opts?: createVerifier.ImportCertOptions): Promise<NamedVerifier.PublicKey>;
+
+declare namespace createVerifier {
+    /** createVerifier options when importing public key from a certificate. */
+    interface ImportCertOptions {
+        /**
+         * List of recognized algorithms.
+         * Default is SigningAlgorithmListSlim.
+         * Use SigningAlgorithmListFull for all algorithms, at the cost of larger bundle size.
+         */
+        algoList?: readonly SigningAlgorithm[];
+        /**
+         * Whether to check certificate ValidityPeriod.
+         * Default is true, which throws an error if current timestamp is not within ValidityPeriod.
+         */
+        checkValidity?: boolean;
+        /**
+         * Current timestamp for checking ValidityPeriod.
+         * Default is Date.now().
+         */
+        now?: ValidityPeriod.TimestampInput;
+    }
+}
+
+/** Web Crypto API. */
 declare const crypto_2: Crypto;
 
 /** WebCrypto based algorithm implementation. */
@@ -730,9 +519,9 @@ declare interface CryptoAlgorithm<I = any, Asym extends boolean = any, G = any> 
      * This should be changed when the serialization format changes.
      */
     readonly uuid: string;
-    readonly keyUsages: If<Asym, Record<"private" | "public", KeyUsage[]>, Record<"secret", KeyUsage[]>, {}>;
+    readonly keyUsages: If<Asym, Record<"private" | "public", readonly KeyUsage[]>, Record<"secret", readonly KeyUsage[]>, {}>;
     /** Generate key pair or secret key. */
-    cryptoGenerate: (params: G, extractable: boolean) => Promise<Asym extends true ? CryptoAlgorithm.GeneratedKeyPair<I> : Asym extends false ? CryptoAlgorithm.GeneratedSecretKey<I> : never>;
+    cryptoGenerate: (params: G, extractable: boolean) => Promise<If<Asym, CryptoAlgorithm.GeneratedKeyPair<I>, CryptoAlgorithm.GeneratedSecretKey<I>, never>>;
     /**
      * Import public key from SPKI.
      *
@@ -769,7 +558,14 @@ declare namespace CryptoAlgorithm {
     }
 }
 
-declare const CryptoAlgorithmList: CryptoAlgorithm[];
+/** A full list of crypto algorithms. */
+declare const CryptoAlgorithmListFull: readonly CryptoAlgorithm[];
+
+/**
+ * A slim list of crypto algorithms.
+ * If you need more algorithms, explicitly import them or use CryptoAlgorithmListFull.
+ */
+declare const CryptoAlgorithmListSlim: readonly CryptoAlgorithm[];
 
 declare const ctorAssign: unique symbol;
 
@@ -789,37 +585,12 @@ declare interface CtorTag_3 {
     [ctorAssign_3]: (f: Fields) => void;
 }
 
-/**
- * AES-CTR encryption algorithm.
- *
- * Initialization Vectors must be 16 octets.
- * During encryption, if IV is unspecified, it is constructed with two parts:
- * @li a 64-bit random number, generated each time a private key instance is constructed;
- * @li a 64-bit counter starting from zero.
- *
- * During decryption, quality of IV is not automatically checked.
- * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
- * check IVs using CounterIvChecker type.
- */
-declare const CTR: Encryption<CTR.Info, CTR.GenParams>;
-
-declare namespace CTR {
-    interface Info {
-        /**
-         * Specify number of bits in IV to use as counter.
-         * This must be between 1 and 128. Default is 64.
-         */
-        counterLength: number;
-    }
-    type GenParams = GenParams_ & Partial<Info>;
-}
-
 /** Data packet. */
 declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
      * Construct from flexible arguments.
      *
-     * Arguments can include:
+     * Arguments can include, in any order unless otherwise specified:
      * - Data to copy from
      * - Name or name URI
      * - Data.ContentType(v)
@@ -845,7 +616,7 @@ declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signa
     [LLVerify.OP](verify: LLVerify): Promise<void>;
 }
 
-declare interface Data extends Fields {
+declare interface Data extends PublicFields_2 {
 }
 
 declare namespace Data {
@@ -857,39 +628,6 @@ declare namespace Data {
     const FinalBlock: unique symbol;
     /** Constructor argument. */
     type CtorArg = NameLike | CtorTag_3 | typeof FinalBlock | Uint8Array;
-}
-
-declare namespace data {
-    export {
-        DataInterface,
-        DataInterfaceGetIdsOptions,
-        DataInterfaceGetOptions,
-        DataInterfaceGetOptionsArray,
-        DataInterfaceGetOptionsObject,
-        DataInterfaceMapOptions,
-        DataInterfaceOrder,
-        EventCallbacks,
-        EventCallbacksWithAny,
-        EventName,
-        EventNameWithAny,
-        DELETE,
-        DataSet,
-        DataSetOptions,
-        DataStream,
-        DataView_2 as DataView,
-        DataViewOptions,
-        Queue,
-        isDataSetLike,
-        isDataViewLike,
-        createNewDataPipeFrom,
-        DataPipe,
-        DataPipeFactory
-    }
-}
-
-declare interface Data_2 {
-    nodes?: Node_2[] | DataInterfaceNodes;
-    edges?: Edge[] | DataInterfaceEdges;
 }
 
 /** Outgoing Data buffer for producer. */
@@ -913,7 +651,6 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Add a universal event listener.
      *
      * @remarks The `*` event is triggered when any of the events `add`, `update`, and `remove` occurs.
-     *
      * @param event - Event name.
      * @param callback - Callback function.
      */
@@ -922,7 +659,6 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Add an `add` event listener.
      *
      * @remarks The `add` event is triggered when an item or a set of items is added, or when an item is updated while not yet existing.
-     *
      * @param event - Event name.
      * @param callback - Callback function.
      */
@@ -931,7 +667,6 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Add a `remove` event listener.
      *
      * @remarks The `remove` event is triggered when an item or a set of items is removed.
-     *
      * @param event - Event name.
      * @param callback - Callback function.
      */
@@ -940,7 +675,6 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Add an `update` event listener.
      *
      * @remarks The `update` event is triggered when an existing item or a set of existing items is updated.
-     *
      * @param event - Event name.
      * @param callback - Callback function.
      */
@@ -983,7 +717,6 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Get all the items.
      *
      * @param options - Additional options.
-     *
      * @returns An array containing requested items.
      */
     get(options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
@@ -991,98 +724,87 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      * Get all the items.
      *
      * @param options - Additional options.
-     *
      * @returns An object map of items (may be an empty object if there are no items).
      */
-    get(options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get all the items.
      *
      * @param options - Additional options.
-     *
      * @returns An array containing requested items or if requested an object map of items (may be an empty object if there are no items).
      */
-    get(options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get one item.
      *
      * @param id - The id of the item.
-     *
      * @returns The item or null if the id doesn't correspond to any item.
      */
-    get(id: Id_2): null | FullItem<Item, IdProp>;
+    get(id: Id): null | FullItem<Item, IdProp>;
     /**
      * Get one item.
      *
      * @param id - The id of the item.
      * @param options - Additional options.
-     *
      * @returns The item or null if the id doesn't correspond to any item.
      */
-    get(id: Id_2, options: DataInterfaceGetOptionsArray<Item>): null | FullItem<Item, IdProp>;
+    get(id: Id, options: DataInterfaceGetOptionsArray<Item>): null | FullItem<Item, IdProp>;
     /**
      * Get one item.
      *
      * @param id - The id of the item.
      * @param options - Additional options.
-     *
      * @returns An object map of items (may be an empty object if no item was found).
      */
-    get(id: Id_2, options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(id: Id, options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get one item.
      *
      * @param id - The id of the item.
      * @param options - Additional options.
-     *
      * @returns The item if found or null otherwise. If requested an object map with 0 to 1 items.
      */
-    get(id: Id_2, options: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | Record<Id_2, FullItem<Item, IdProp>>;
+    get(id: Id, options: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get multiple items.
      *
      * @param ids - An array of requested ids.
-     *
      * @returns An array of found items (ids that do not correspond to any item are omitted).
      */
-    get(ids: Id_2[]): FullItem<Item, IdProp>[];
+    get(ids: Id[]): FullItem<Item, IdProp>[];
     /**
      * Get multiple items.
      *
      * @param ids - An array of requested ids.
      * @param options - Additional options.
-     *
      * @returns An array of found items (ids that do not correspond to any item are omitted).
      */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
+    get(ids: Id[], options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
     /**
      * Get multiple items.
      *
      * @param ids - An array of requested ids.
      * @param options - Additional options.
-     *
      * @returns An object map of items (may be an empty object if no item was found).
      */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id[], options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get multiple items.
      *
      * @param ids - An array of requested ids.
      * @param options - Additional options.
-     *
      * @returns An array of found items (ids that do not correspond to any item are omitted).
      * If requested an object map of items (may be an empty object if no item was found).
      */
-    get(ids: Id_2[], options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id[], options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get items.
      *
      * @param ids - Id or ids to be returned.
      * @param options - Options to specify iteration details.
-     *
      * @returns The items (format is determined by ids (single or array) and the options.
      */
-    get(ids: Id_2 | Id_2[], options?: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id | Id[], options?: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /**
      * Get the DataSet to which the instance implementing this interface is connected.
      * In case there is a chain of multiple DataViews, the root DataSet of this chain is returned.
@@ -1095,45 +817,37 @@ declare interface DataInterface<Item extends PartItem<IdProp>, IdProp extends st
      *
      * @remarks
      * No guarantee is given about the order of returned ids unless an ordering function is supplied.
-     *
      * @param options - Additional configuration.
-     *
      * @returns An array of requested ids.
      */
-    getIds(options?: DataInterfaceGetIdsOptions<Item>): Id_2[];
+    getIds(options?: DataInterfaceGetIdsOptions<Item>): Id[];
     /**
      * Execute a callback function for each item.
      *
      * @remarks
      * No guarantee is given about the order of iteration unless an ordering function is supplied.
-     *
      * @param callback - Executed in similar fashion to Array.forEach callback, but instead of item, index, array receives item, id.
      * @param options - Options to specify iteration details.
      */
-    forEach(callback: (item: Item, id: Id_2) => void, options?: DataInterfaceForEachOptions<Item>): void;
+    forEach(callback: (item: Item, id: Id) => void, options?: DataInterfaceForEachOptions<Item>): void;
     /**
      * Map each item into different item and return them as an array.
      *
      * @remarks
      * No guarantee is given about the order of iteration even if ordering function is supplied (the items are sorted after the mapping).
-     *
      * @param callback - Array.map-like callback, but only with the first two params.
      * @param options - Options to specify iteration details.
-     *
      * @returns The mapped items.
      */
-    map<T>(callback: (item: Item, id: Id_2) => T, options?: DataInterfaceMapOptions<Item, T>): T[];
+    map<T>(callback: (item: Item, id: Id) => T, options?: DataInterfaceMapOptions<Item, T>): T[];
     /**
      * Stream.
      *
      * @param ids - Ids of the items to be included in this stream (missing are ignored), all if omitted.
-     *
      * @returns The data stream for this data set.
      */
-    stream(ids?: Iterable<Id_2>): DataStream<Item>;
+    stream(ids?: Iterable<Id>): DataStream<Item>;
 }
-
-declare type DataInterfaceEdges = DataInterface<Edge, 'id'>
 
 /**
  * Data interface for each options.
@@ -1175,7 +889,6 @@ declare type DataInterfaceGetOptions<Item> = DataInterfaceGetOptionsArray<Item> 
  * Whether an item or and array of items is returned is determined by the type of the id(s) argument.
  * If an array of ids is requested an array of items will be returned.
  * If a single id is requested a single item (or null if the id doesn't correspond to any item) will be returned.
- *
  * @typeParam Item - Item type that may or may not have an id.
  */
 declare interface DataInterfaceGetOptionsArray<Item> extends DataInterfaceGetOptionsBase<Item> {
@@ -1193,7 +906,7 @@ declare interface DataInterfaceGetOptionsBase<Item> {
      * An array with field names, or an object with current field name and new field name that the field is returned as. By default, all properties of the items are emitted. When fields is defined, only the properties whose name is specified in fields will be included in the returned items.
      *
      * @remarks
-     * **Warning**: There is no TypeScript support for this.
+     * Warning**: There is no TypeScript support for this.
      */
     fields?: string[] | Record<string, string>;
     /** Items can be filtered on specific properties by providing a filter function. A filter function is executed for each of the items in the DataSet, and is called with the item as parameter. The function must return a boolean. All items for which the filter function returns true will be emitted. */
@@ -1207,7 +920,6 @@ declare interface DataInterfaceGetOptionsBase<Item> {
  *
  * @remarks
  * The returned object has ids as keys and items as values of corresponding ids.
- *
  * @typeParam Item - Item type that may or may not have an id.
  */
 declare interface DataInterfaceGetOptionsObject<Item> extends DataInterfaceGetOptionsBase<Item> {
@@ -1230,8 +942,6 @@ declare interface DataInterfaceMapOptions<Original, Mapped> {
     order?: DataInterfaceOrder<Mapped>;
 }
 
-declare type DataInterfaceNodes = DataInterface<Node_2, 'id'>
-
 /**
  * Data interface order parameter.
  * - A string value determines which property will be used for sorting (using < and > operators for numeric comparison).
@@ -1240,102 +950,6 @@ declare type DataInterfaceNodes = DataInterface<Node_2, 'id'>
  * @typeParam Item - Item type that may or may not have an id.
  */
 declare type DataInterfaceOrder<Item> = keyof Item | ((a: Item, b: Item) => number);
-
-/**
- * This interface is used to control the pipe.
- */
-declare interface DataPipe {
-    /**
-     * Take all items from the source data set or data view, transform them as
-     * configured and update the target data set.
-     */
-    all(): this;
-    /**
-     * Start observing the source data set or data view, transforming the items
-     * and updating the target data set.
-     *
-     * @remarks
-     * The current content of the source data set will be ignored. If you for
-     * example want to process all the items that are already there use:
-     * `pipe.all().start()`.
-     */
-    start(): this;
-    /**
-     * Stop observing the source data set or data view, transforming the items
-     * and updating the target data set.
-     */
-    stop(): this;
-}
-
-/**
- * This interface is used to construct the pipe.
- */
-declare type DataPipeFactory = InstanceType<typeof DataPipeUnderConstruction>;
-
-/**
- * Internal implementation of the pipe factory. This should be accessible
- * only through `createNewDataPipeFrom` from the outside.
- *
- * @typeParam TI - Target item type.
- * @typeParam TP - Target item type's id property name.
- */
-declare class DataPipeUnderConstruction<SI extends PartItem<SP>, SP extends string = "id"> {
-    private readonly _source;
-    /**
-     * Array transformers used to transform items within the pipe. This is typed
-     * as any for the sake of simplicity.
-     */
-    private readonly _transformers;
-    /**
-     * Create a new data pipe factory. This is an internal constructor that
-     * should never be called from outside of this file.
-     *
-     * @param _source - The source data set or data view for this pipe.
-     */
-    constructor(_source: DataInterface<SI, SP>);
-    /**
-     * Filter the items.
-     *
-     * @param callback - A filtering function that returns true if given item
-     * should be piped and false if not.
-     *
-     * @returns This factory for further configuration.
-     */
-    filter(callback: (item: SI) => boolean): DataPipeUnderConstruction<SI, SP>;
-    /**
-     * Map each source item to a new type.
-     *
-     * @param callback - A mapping function that takes a source item and returns
-     * corresponding mapped item.
-     *
-     * @typeParam TI - Target item type.
-     * @typeParam TP - Target item type's id property name.
-     *
-     * @returns This factory for further configuration.
-     */
-    map<TI extends PartItem<TP>, TP extends string = "id">(callback: (item: SI) => TI): DataPipeUnderConstruction<TI, TP>;
-    /**
-     * Map each source item to zero or more items of a new type.
-     *
-     * @param callback - A mapping function that takes a source item and returns
-     * an array of corresponding mapped items.
-     *
-     * @typeParam TI - Target item type.
-     * @typeParam TP - Target item type's id property name.
-     *
-     * @returns This factory for further configuration.
-     */
-    flatMap<TI extends PartItem<TP>, TP extends string = "id">(callback: (item: SI) => TI[]): DataPipeUnderConstruction<TI, TP>;
-    /**
-     * Connect this pipe to given data set.
-     *
-     * @param target - The data set that will receive the items from this pipe.
-     *
-     * @returns The pipe connected between given data sets and performing
-     * configured transformation on the processed items.
-     */
-    to(target: DataSet<SI, SP>): DataPipe;
-}
 
 /**
  * # DataSet
@@ -1445,12 +1059,10 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      *
      * @param data - Items to be added (ids will be generated if missing).
      * @param senderId - Sender id.
-     *
      * @returns addedIds - Array with the ids (generated if not present) of the added items.
-     *
      * @throws When an item with the same id as any of the added items already exists.
      */
-    add(data: Item | Item[], senderId?: Id_2 | null): (string | number)[];
+    add(data: Item | Item[], senderId?: Id | null): (string | number)[];
     /**
      * Update existing items. When an item does not exist, it will be created.
      *
@@ -1480,15 +1092,12 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      *
      * ## Warning for TypeScript users
      * This method may introduce partial items into the data set. Use add or updateOnly instead for better type safety.
-     *
      * @param data - Items to be updated (if the id is already present) or added (if the id is missing).
      * @param senderId - Sender id.
-     *
      * @returns updatedIds - The ids of the added (these may be newly generated if there was no id in the item from the data) or updated items.
-     *
      * @throws When the supplied data is neither an item nor an array of items.
      */
-    update(data: DeepPartial<Item> | DeepPartial<Item>[], senderId?: Id_2 | null): Id_2[];
+    update(data: DeepPartial<Item> | DeepPartial<Item>[], senderId?: Id | null): Id[];
     /**
      * Update existing items. When an item does not exist, an error will be thrown.
      *
@@ -1518,56 +1127,52 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      *
      * console.log(ids) // [2]
      * ```
-     *
      * @param data - Updates (the id and optionally other props) to the items in this data set.
      * @param senderId - Sender id.
-     *
      * @returns updatedIds - The ids of the updated items.
-     *
      * @throws When the supplied data is neither an item nor an array of items, when the ids are missing.
      */
-    updateOnly(data: UpdateItem<Item, IdProp> | UpdateItem<Item, IdProp>[], senderId?: Id_2 | null): Id_2[];
+    updateOnly(data: UpdateItem<Item, IdProp> | UpdateItem<Item, IdProp>[], senderId?: Id | null): Id[];
     /** @inheritDoc */
     get(): FullItem<Item, IdProp>[];
     /** @inheritDoc */
     get(options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
     /** @inheritDoc */
-    get(options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(id: Id_2): null | FullItem<Item, IdProp>;
+    get(id: Id): null | FullItem<Item, IdProp>;
     /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptionsArray<Item>): null | FullItem<Item, IdProp>;
+    get(id: Id, options: DataInterfaceGetOptionsArray<Item>): null | FullItem<Item, IdProp>;
     /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(id: Id, options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | Record<Id_2, FullItem<Item, IdProp>>;
+    get(id: Id, options: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(ids: Id_2[]): FullItem<Item, IdProp>[];
+    get(ids: Id[]): FullItem<Item, IdProp>[];
     /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
+    get(ids: Id[], options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
     /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id[], options: DataInterfaceGetOptionsObject<Item>): Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id[], options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    get(ids: Id_2 | Id_2[], options?: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
+    get(ids: Id | Id[], options?: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | FullItem<Item, IdProp>[] | Record<Id, FullItem<Item, IdProp>>;
     /** @inheritDoc */
-    getIds(options?: DataInterfaceGetIdsOptions<Item>): Id_2[];
+    getIds(options?: DataInterfaceGetIdsOptions<Item>): Id[];
     /** @inheritDoc */
     getDataSet(): DataSet<Item, IdProp>;
     /** @inheritDoc */
-    forEach(callback: (item: Item, id: Id_2) => void, options?: DataInterfaceForEachOptions<Item>): void;
+    forEach(callback: (item: Item, id: Id) => void, options?: DataInterfaceForEachOptions<Item>): void;
     /** @inheritDoc */
-    map<T>(callback: (item: Item, id: Id_2) => T, options?: DataInterfaceMapOptions<Item, T>): T[];
+    map<T>(callback: (item: Item, id: Id) => T, options?: DataInterfaceMapOptions<Item, T>): T[];
     private _filterFields;
     /**
      * Sort the provided array with items.
      *
      * @param items - Items to be sorted in place.
      * @param order - A field name or custom sort function.
-     *
      * @typeParam T - The type of the items in the items array.
      */
     private _sort;
@@ -1595,15 +1200,13 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      *
      * @param id - One or more items or ids of items to be removed.
      * @param senderId - Sender id.
-     *
      * @returns The ids of the removed items.
      */
-    remove(id: Id_2 | Item | (Id_2 | Item)[], senderId?: Id_2 | null): Id_2[];
+    remove(id: Id | Item | (Id | Item)[], senderId?: Id | null): Id[];
     /**
      * Remove an item by its id or reference.
      *
      * @param id - Id of an item or the item itself.
-     *
      * @returns The removed item if removed, null otherwise.
      */
     private _remove;
@@ -1613,15 +1216,13 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      * After the items are removed, the [[DataSet]] will trigger an event `remove` for all removed items. When a `senderId` is provided, this id will be passed with the triggered event to all subscribers.
      *
      * @param senderId - Sender id.
-     *
      * @returns removedIds - The ids of all removed items.
      */
-    clear(senderId?: Id_2 | null): Id_2[];
+    clear(senderId?: Id | null): Id[];
     /**
      * Find the item with maximum value of a specified field.
      *
      * @param field - Name of the property that should be searched for max value.
-     *
      * @returns Item containing max value, or null if no items.
      */
     max(field: keyof Item): Item | null;
@@ -1629,7 +1230,6 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      * Find the item with minimum value of a specified field.
      *
      * @param field - Name of the property that should be searched for min value.
-     *
      * @returns Item containing min value, or null if no items.
      */
     min(field: keyof Item): Item | null;
@@ -1639,7 +1239,6 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      * Add a single item. Will fail when an item with the same id already exists.
      *
      * @param item - A new item to be added.
-     *
      * @returns Added item's id. An id is generated when it is not present in the item.
      */
     private _addItem;
@@ -1648,20 +1247,17 @@ declare class DataSet<Item extends PartItem<IdProp>, IdProp extends string = "id
      * Will fail when the item has no id, or when there does not exist an item with the same id.
      *
      * @param update - The new item
-     *
      * @returns The id of the updated item.
      */
     private _updateItem;
     /** @inheritDoc */
-    stream(ids?: Iterable<Id_2>): DataStream<Item>;
-    get testLeakData(): Map<Id_2, FullItem<Item, IdProp>>;
+    stream(ids?: Iterable<Id>): DataStream<Item>;
+    get testLeakData(): Map<Id, FullItem<Item, IdProp>>;
     get testLeakIdProp(): IdProp;
     get testLeakOptions(): DataSetInitialOptions<IdProp>;
     get testLeakQueue(): Queue<this> | null;
     set testLeakQueue(v: Queue<this> | null);
 }
-
-declare type DataSetEdges = DataSet<Edge, 'id'>
 
 /**
  * Initial DataSet configuration object.
@@ -1680,8 +1276,6 @@ declare interface DataSetInitialOptions<IdProp extends string> {
      */
     queue?: QueueOptions | false;
 }
-
-declare type DataSetNodes = DataSet<Node_2, 'id'>
 
 /** DataSet configuration object. */
 declare interface DataSetOptions {
@@ -1702,9 +1296,9 @@ declare interface DataSetOptions {
  */
 declare abstract class DataSetPart<Item, IdProp extends string> implements Pick<DataInterface<Item, IdProp>, "on" | "off"> {
     private readonly _subscribers;
-    protected _trigger(event: "add", payload: EventPayloads<Item, IdProp>["add"], senderId?: Id_2 | null): void;
-    protected _trigger(event: "update", payload: EventPayloads<Item, IdProp>["update"], senderId?: Id_2 | null): void;
-    protected _trigger(event: "remove", payload: EventPayloads<Item, IdProp>["remove"], senderId?: Id_2 | null): void;
+    protected _trigger(event: "add", payload: EventPayloads<Item, IdProp>["add"], senderId?: Id | null): void;
+    protected _trigger(event: "update", payload: EventPayloads<Item, IdProp>["update"], senderId?: Id | null): void;
+    protected _trigger(event: "remove", payload: EventPayloads<Item, IdProp>["remove"], senderId?: Id | null): void;
     /** @inheritDoc */
     on(event: "*", callback: EventCallbacksWithAny<Item, IdProp>["*"]): void;
     /** @inheritDoc */
@@ -1739,29 +1333,28 @@ declare abstract class DataSetPart<Item, IdProp extends string> implements Pick<
  * [[DataStream]] offers an always up to date stream of items from a [[DataSet]] or [[DataView]].
  * That means that the stream is evaluated at the time of iteration, conversion to another data type or when [[cache]] is called, not when the [[DataStream]] was created.
  * Multiple invocations of for example [[toItemArray]] may yield different results (if the data source like for example [[DataSet]] gets modified).
- *
  * @typeParam Item - The item type this stream is going to work with.
  */
-declare class DataStream<Item> implements Iterable<[Id_2, Item]> {
+declare class DataStream<Item> implements Iterable<[Id, Item]> {
     private readonly _pairs;
     /**
      * Create a new data stream.
      *
      * @param pairs - The id, item pairs.
      */
-    constructor(pairs: Iterable<[Id_2, Item]>);
+    constructor(pairs: Iterable<[Id, Item]>);
     /**
      * Return an iterable of key, value pairs for every entry in the stream.
      */
-    [Symbol.iterator](): IterableIterator<[Id_2, Item]>;
+    [Symbol.iterator](): IterableIterator<[Id, Item]>;
     /**
      * Return an iterable of key, value pairs for every entry in the stream.
      */
-    entries(): IterableIterator<[Id_2, Item]>;
+    entries(): IterableIterator<[Id, Item]>;
     /**
      * Return an iterable of keys in the stream.
      */
-    keys(): IterableIterator<Id_2>;
+    keys(): IterableIterator<Id>;
     /**
      * Return an iterable of values in the stream.
      */
@@ -1771,16 +1364,14 @@ declare class DataStream<Item> implements Iterable<[Id_2, Item]> {
      *
      * @remarks
      * The array may contain duplicities.
-     *
      * @returns The array with all ids from this stream.
      */
-    toIdArray(): Id_2[];
+    toIdArray(): Id[];
     /**
      * Return an array containing all the items in this stream.
      *
      * @remarks
      * The array may contain duplicities.
-     *
      * @returns The array with all items from this stream.
      */
     toItemArray(): Item[];
@@ -1789,31 +1380,29 @@ declare class DataStream<Item> implements Iterable<[Id_2, Item]> {
      *
      * @remarks
      * The array may contain duplicities.
-     *
      * @returns The array with all entries from this stream.
      */
-    toEntryArray(): [Id_2, Item][];
+    toEntryArray(): [Id, Item][];
     /**
      * Return an object map containing all the items in this stream accessible by ids.
      *
      * @remarks
      * In case of duplicate ids (coerced to string so `7 == '7'`) the last encoutered appears in the returned object.
-     *
      * @returns The object map of all id → item pairs from this stream.
      */
-    toObjectMap(): Record<Id_2, Item>;
+    toObjectMap(): Record<Id, Item>;
     /**
      * Return a map containing all the items in this stream accessible by ids.
      *
      * @returns The map of all id → item pairs from this stream.
      */
-    toMap(): Map<Id_2, Item>;
+    toMap(): Map<Id, Item>;
     /**
      * Return a set containing all the (unique) ids in this stream.
      *
      * @returns The set of all ids from this stream.
      */
-    toIdSet(): Set<Id_2>;
+    toIdSet(): Set<Id>;
     /**
      * Return a set containing all the (unique) items in this stream.
      *
@@ -1840,7 +1429,6 @@ declare class DataStream<Item> implements Iterable<[Id_2, Item]> {
      * ds.clear()
      * chachedStream // Still has all the items.
      * ```
-     *
      * @returns A new [[DataStream]] with cached items (detached from the original [[DataSet]]).
      */
     cache(): DataStream<Item>;
@@ -1848,223 +1436,61 @@ declare class DataStream<Item> implements Iterable<[Id_2, Item]> {
      * Get the distinct values of given property.
      *
      * @param callback - The function that picks and possibly converts the property.
-     *
      * @typeParam T - The type of the distinct value.
-     *
      * @returns A set of all distinct properties.
      */
-    distinct<T>(callback: (item: Item, id: Id_2) => T): Set<T>;
+    distinct<T>(callback: (item: Item, id: Id) => T): Set<T>;
     /**
      * Filter the items of the stream.
      *
      * @param callback - The function that decides whether an item will be included.
-     *
      * @returns A new data stream with the filtered items.
      */
-    filter(callback: (item: Item, id: Id_2) => boolean): DataStream<Item>;
+    filter(callback: (item: Item, id: Id) => boolean): DataStream<Item>;
     /**
      * Execute a callback for each item of the stream.
      *
      * @param callback - The function that will be invoked for each item.
      */
-    forEach(callback: (item: Item, id: Id_2) => boolean): void;
+    forEach(callback: (item: Item, id: Id) => boolean): void;
     /**
      * Map the items into a different type.
      *
      * @param callback - The function that does the conversion.
-     *
      * @typeParam Mapped - The type of the item after mapping.
-     *
      * @returns A new data stream with the mapped items.
      */
-    map<Mapped>(callback: (item: Item, id: Id_2) => Mapped): DataStream<Mapped>;
+    map<Mapped>(callback: (item: Item, id: Id) => Mapped): DataStream<Mapped>;
     /**
      * Get the item with the maximum value of given property.
      *
      * @param callback - The function that picks and possibly converts the property.
-     *
      * @returns The item with the maximum if found otherwise null.
      */
-    max(callback: (item: Item, id: Id_2) => number): Item | null;
+    max(callback: (item: Item, id: Id) => number): Item | null;
     /**
      * Get the item with the minimum value of given property.
      *
      * @param callback - The function that picks and possibly converts the property.
-     *
      * @returns The item with the minimum if found otherwise null.
      */
-    min(callback: (item: Item, id: Id_2) => number): Item | null;
+    min(callback: (item: Item, id: Id) => number): Item | null;
     /**
      * Reduce the items into a single value.
      *
      * @param callback - The function that does the reduction.
      * @param accumulator - The initial value of the accumulator.
-     *
      * @typeParam T - The type of the accumulated value.
-     *
      * @returns The reduced value.
      */
-    reduce<T>(callback: (accumulator: T, item: Item, id: Id_2) => T, accumulator: T): T;
+    reduce<T>(callback: (accumulator: T, item: Item, id: Id) => T, accumulator: T): T;
     /**
      * Sort the items.
      *
      * @param callback - Item comparator.
-     *
      * @returns A new stream with sorted items.
      */
-    sort(callback: (itemA: Item, itemB: Item, idA: Id_2, idB: Id_2) => number): DataStream<Item>;
-}
-
-/**
- * DataView
- *
- * A DataView offers a filtered and/or formatted view on a DataSet. One can subscribe to changes in a DataView, and easily get filtered or formatted data without having to specify filters and field types all the time.
- *
- * ## Example
- * ```javascript
- * // create a DataSet
- * var data = new vis.DataSet();
- * data.add([
- *   {id: 1, text: 'item 1', date: new Date(2013, 6, 20), group: 1, first: true},
- *   {id: 2, text: 'item 2', date: '2013-06-23', group: 2},
- *   {id: 3, text: 'item 3', date: '2013-06-25', group: 2},
- *   {id: 4, text: 'item 4'}
- * ]);
- *
- * // create a DataView
- * // the view will only contain items having a property group with value 1,
- * // and will only output fields id, text, and date.
- * var view = new vis.DataView(data, {
- *   filter: function (item) {
- *     return (item.group == 1);
- *   },
- *   fields: ['id', 'text', 'date']
- * });
- *
- * // subscribe to any change in the DataView
- * view.on('*', function (event, properties, senderId) {
- *   console.log('event', event, properties);
- * });
- *
- * // update an item in the data set
- * data.update({id: 2, group: 1});
- *
- * // get all ids in the view
- * var ids = view.getIds();
- * console.log('ids', ids); // will output [1, 2]
- *
- * // get all items in the view
- * var items = view.get();
- * ```
- *
- * @typeParam Item - Item type that may or may not have an id.
- * @typeParam IdProp - Name of the property that contains the id.
- */
-declare class DataView_2<Item extends PartItem<IdProp>, IdProp extends string = "id"> extends DataSetPart<Item, IdProp> implements DataInterface<Item, IdProp> {
-    /** @inheritDoc */
-    length: number;
-    /** @inheritDoc */
-    get idProp(): IdProp;
-    private readonly _listener;
-    private _data;
-    private readonly _ids;
-    private readonly _options;
-    /**
-     * Create a DataView.
-     *
-     * @param data - The instance containing data (directly or indirectly).
-     * @param options - Options to configure this data view.
-     */
-    constructor(data: DataInterface<Item, IdProp>, options?: DataViewOptions<Item, IdProp>);
-    /**
-     * Set a data source for the view.
-     *
-     * @param data - The instance containing data (directly or indirectly).
-     *
-     * @remarks
-     * Note that when the data view is bound to a data set it won't be garbage
-     * collected unless the data set is too. Use `dataView.setData(null)` or
-     * `dataView.dispose()` to enable garbage collection before you lose the last
-     * reference.
-     */
-    setData(data: DataInterface<Item, IdProp>): void;
-    /**
-     * Refresh the DataView.
-     * Useful when the DataView has a filter function containing a variable parameter.
-     */
-    refresh(): void;
-    /** @inheritDoc */
-    get(): FullItem<Item, IdProp>[];
-    /** @inheritDoc */
-    get(options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
-    /** @inheritDoc */
-    get(options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(id: Id_2): null | FullItem<Item, IdProp>;
-    /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptionsArray<Item>): null | FullItem<Item, IdProp>;
-    /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(id: Id_2, options: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(ids: Id_2[]): FullItem<Item, IdProp>[];
-    /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsArray<Item>): FullItem<Item, IdProp>[];
-    /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptionsObject<Item>): Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(ids: Id_2[], options: DataInterfaceGetOptions<Item>): FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    get(ids: Id_2 | Id_2[], options?: DataInterfaceGetOptions<Item>): null | FullItem<Item, IdProp> | FullItem<Item, IdProp>[] | Record<Id_2, FullItem<Item, IdProp>>;
-    /** @inheritDoc */
-    getIds(options?: DataInterfaceGetIdsOptions<Item>): Id_2[];
-    /** @inheritDoc */
-    forEach(callback: (item: Item, id: Id_2) => void, options?: DataInterfaceForEachOptions<Item>): void;
-    /** @inheritDoc */
-    map<T>(callback: (item: Item, id: Id_2) => T, options?: DataInterfaceMapOptions<Item, T>): T[];
-    /** @inheritDoc */
-    getDataSet(): DataSet<Item, IdProp>;
-    /** @inheritDoc */
-    stream(ids?: Iterable<Id_2>): DataStream<Item>;
-    /**
-     * Render the instance unusable prior to garbage collection.
-     *
-     * @remarks
-     * The intention of this method is to help discover scenarios where the data
-     * view is being used when the programmer thinks it has been garbage collected
-     * already. It's stricter version of `dataView.setData(null)`.
-     */
-    dispose(): void;
-    /**
-     * Event listener. Will propagate all events from the connected data set to the subscribers of the DataView, but will filter the items and only trigger when there are changes in the filtered data set.
-     *
-     * @param event - The name of the event.
-     * @param params - Parameters of the event.
-     * @param senderId - Id supplied by the sender.
-     */
-    private _onEvent;
-}
-
-declare type DataViewEdges = DataView_2<Edge, 'id'>
-
-declare type DataViewNodes = DataView_2<Node_2, 'id'>
-
-/**
- * Data view options.
- *
- * @typeParam Item - Item type that may or may not have an id.
- * @typeParam IdProp - Name of the property that contains the id.
- */
-declare interface DataViewOptions<Item, IdProp extends string> {
-    /**
-     * The name of the field containing the id of the items. When data is fetched from a server which uses some specific field to identify items, this field name can be specified in the DataSet using the option `fieldId`. For example [CouchDB](http://couchdb.apache.org/) uses the field `'_id'` to identify documents.
-     */
-    fieldId?: IdProp;
-    /** Items can be filtered on specific properties by providing a filter function. A filter function is executed for each of the items in the DataSet, and is called with the item as parameter. The function must return a boolean. All items for which the filter function returns true will be emitted. */
-    filter?: (item: Item) => boolean;
+    sort(callback: (itemA: Item, itemB: Item, idA: Id, idB: Id) => number): DataStream<Item>;
 }
 
 declare interface DebugEntry {
@@ -2119,9 +1545,6 @@ declare class Decoder {
     /** Read a Decodable object. */
     decode<R>(d: Decodable<R>): R;
     private readVarNum;
-    private readType;
-    private readLength;
-    private skipValue;
 }
 
 declare namespace Decoder {
@@ -2165,30 +1588,6 @@ declare interface Decrypter<T = Data> {
 }
 
 /**
- * Deep extend an object a with the properties of object b.
- *
- * @param a - Target object.
- * @param b - Source object.
- * @param protoExtend - If true, the prototype values will also be extended.
- * (That is the options objects that inherit from others will also get the
- * inherited options).
- * @param allowDeletion - If true, the values of fields that are null will be deleted.
- *
- * @returns Argument a.
- */
-declare function deepExtend(a: any, b: any, protoExtend?: boolean, allowDeletion?: boolean): any;
-
-/**
- * Deep version of object assign with additional deleting by the DELETE symbol.
- *
- * @param target - The object that will be augmented using the sources.
- * @param sources - Objects to be deeply merged into the target.
- *
- * @returns The target (same instance).
- */
-declare function deepObjectAssign<T>(target: T, ...sources: Assignable<T>[]): T;
-
-/**
  * Make an object deeply partial.
  */
 declare type DeepPartial<T> = T extends any[] | Function | Node ? T : T extends object ? {
@@ -2207,10 +1606,7 @@ declare class DefaultServers {
     private setupCertServer;
 }
 
-/**
- * Use this symbol to delete properies in deepObjectAssign.
- */
-declare const DELETE: unique symbol;
+declare const delay: <T = void>(after: number, value?: T) => Promise<T>;
 
 declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
     private readonly tt;
@@ -2227,202 +1623,6 @@ declare class DigestComp implements NamingConvention<Uint8Array>, NamingConventi
 /** Signer and Verifier for SigType.Sha256 digest. */
 declare const digestSigning: Signer & Verifier;
 
-declare type DirectionType = 'from' | 'to';
-
-declare namespace DOMutil {
-    export {
-        prepareElements,
-        cleanupElements,
-        resetElements,
-        getSVGElement,
-        getDOMElement,
-        drawPoint,
-        drawBar
-    }
-}
-
-declare namespace dotparser {
-    export {
-        whoKnowsWhat_2 as default
-    }
-}
-
-/**
- * draw a bar SVG element centered on the X coordinate
- *
- * @param {number} x
- * @param {number} y
- * @param {number} width
- * @param {number} height
- * @param {string} className
- * @param {Object} JSONcontainer
- * @param {Object} svgContainer
- * @param {string} style
- */
-declare function drawBar(
-x: any,
-y: any,
-width: any,
-height: any,
-className: any,
-JSONcontainer: any,
-svgContainer: any,
-style: any
-): void
-
-/**
- * Draw a point object. This is a separate function because it can also be called by the legend.
- * The reason the JSONcontainer and the target SVG svgContainer have to be supplied is so the legend can use these functions
- * as well.
- *
- * @param {number} x
- * @param {number} y
- * @param {Object} groupTemplate: A template containing the necessary information to draw the datapoint e.g., {style: 'circle', size: 5, className: 'className' }
- * @param {Object} JSONcontainer
- * @param {Object} svgContainer
- * @param {Object} labelObj
- * @returns {vis.PointItem}
- */
-declare function drawPoint(
-x: any,
-y: any,
-groupTemplate: any,
-JSONcontainer: any,
-svgContainer: any,
-labelObj: any
-): any
-
-/** Translations for people with poor understanding of TypeScript: the first
- * value always has to be a string but never `"color"`, the rest can be any
- * combination of strings, numbers and booleans.
- */
-declare type DropdownInput = readonly [
-Exclude<string, "color">,
-...(string | number | boolean)[]
-];
-
-declare type EasingFunction =
-'linear' |
-'easeInQuad' |
-'easeOutQuad' |
-'easeInOutQuad' |
-'easeInCubic' |
-'easeOutCubic' |
-'easeInOutCubic' |
-'easeInQuart' |
-'easeOutQuart' |
-'easeInOutQuart' |
-'easeInQuint' |
-'easeOutQuint' |
-'easeInOutQuint';
-
-declare const easingFunctions: {
-    /**
-     * Provides no easing and no acceleration.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    linear(t: number): number;
-    /**
-     * Accelerate from zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInQuad(t: number): number;
-    /**
-     * Decelerate to zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeOutQuad(t: number): number;
-    /**
-     * Accelerate until halfway, then decelerate.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInOutQuad(t: number): number;
-    /**
-     * Accelerate from zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInCubic(t: number): number;
-    /**
-     * Decelerate to zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeOutCubic(t: number): number;
-    /**
-     * Accelerate until halfway, then decelerate.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInOutCubic(t: number): number;
-    /**
-     * Accelerate from zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInQuart(t: number): number;
-    /**
-     * Decelerate to zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeOutQuart(t: number): number;
-    /**
-     * Accelerate until halfway, then decelerate.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInOutQuart(t: number): number;
-    /**
-     * Accelerate from zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInQuint(t: number): number;
-    /**
-     * Decelerate to zero velocity.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeOutQuint(t: number): number;
-    /**
-     * Accelerate until halfway, then decelerate.
-     *
-     * @param t - Time.
-     *
-     * @returns Value at time t.
-     */
-    easeInOutQuint(t: number): number;
-};
-
 declare type EcCurve = keyof typeof PointSizes;
 
 declare namespace EcCurve {
@@ -2436,96 +1636,31 @@ declare const ECDSA: SigningAlgorithm<ECDSA.Info, true, ECDSA.GenParams>;
 declare namespace ECDSA {
     /** Key generation parameters. */
     interface GenParams {
+        /** Pick EC curve. Default is P-256. */
         curve?: EcCurve;
-        /**
-         * Import PKCS#8 private key and SPKI public key instead of generating.
-         * This cannot handle specificCurve in SPKI.
-         */
-        importPkcs8?: [Uint8Array, Uint8Array];
+        /** Import PKCS#8 private key and SPKI public key instead of generating. */
+        importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
     }
     interface Info {
         curve: EcCurve;
     }
 }
 
-declare interface Edge extends EdgeOptions {
-    from?: IdType;
-    to?: IdType;
-    id?: IdType;
+/** Ed25519 signing algorithm. */
+declare const Ed25519: SigningAlgorithm<{}, true, {}>;
+
+declare namespace Ed25519 {
+    type GenParams = EdGenParams;
 }
 
-declare interface EdgeOptions {
-    arrows?: string | {
-        to?: boolean | ArrowHead
-        middle?: boolean | ArrowHead
-        from?: boolean | ArrowHead
-    };
-
-    arrowStrikethrough?: boolean;
-
-    chosen?: boolean | {
-        edge?: boolean, // please note, chosen.edge could be also a function. This case is not represented here
-        label?: boolean, // please note, chosen.label could be also a function. This case is not represented here
-    };
-
-    color?: string | {
-        color?: string,
-        highlight?: string,
-        hover?: string,
-        inherit?: boolean | string,
-        opacity?: number,
-    };
-
-    dashes?: boolean | number[];
-
-    font?: string | Font;
-
-    hidden?: boolean;
-
-    hoverWidth?: number; // please note, hoverWidth could be also a function. This case is not represented here
-
-    label?: string;
-
-    labelHighlightBold?: boolean;
-
-    length?: number;
-
-    physics?: boolean;
-
-    scaling?: OptionsScaling;
-
-    selectionWidth?: number; // please note, selectionWidth could be also a function. This case is not represented here
-
-    selfReferenceSize?: number;
-
-    selfReference?: {
-        size?: number,
-        angle?: number,
-        renderBehindTheNode?: boolean
-    };
-
-    shadow?: boolean | OptionsShadow;
-
-    smooth?: boolean | {
-        enabled: boolean,
-        type: string,
-        forceDirection?: string | boolean,
-        roundness: number,
-    };
-
-    title?: string | HTMLElement;
-
-    value?: number;
-
-    width?: number;
-
-    widthConstraint?: number | boolean | {
-        maximum?: number;
-    };
+/** Key generation parameters. */
+declare interface EdGenParams {
+    /** Import PKCS#8 private key and SPKI public key instead of generating. */
+    importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
 }
 
 /** An object acceptable to Encoder.encode(). */
-declare type Encodable = Uint8Array | undefined | EncodableObj | EncodableTlv;
+declare type Encodable = Uint8Array | undefined | false | EncodableObj | EncodableTlv;
 
 /** An object that knows how to prepend itself to an Encoder. */
 declare interface EncodableObj {
@@ -2539,14 +1674,7 @@ declare interface EncodableObj {
  * Optional second item could be OmitEmpty to omit the TLV if TLV-VALUE is empty.
  * Subsequent items are Encodables for TLV-VALUE.
  */
-declare type EncodableTlv = [number, ...any[]];
-
-declare const EncodeNniClass: {
-    1: typeof Nni1;
-    2: typeof Nni2;
-    4: typeof Nni4;
-    8: typeof Nni8Number;
-};
+declare type EncodableTlv = [number, ...Encodable[]] | [number, typeof Encoder.OmitEmpty, ...Encodable[]];
 
 /** TLV encoder that accepts objects in reverse order. */
 declare class Encoder {
@@ -2569,29 +1697,16 @@ declare class Encoder {
     prependTypeLength(tlvType: number, tlvLength: number): void;
     /** Prepend TLV-VALUE. */
     prependValue(...tlvValue: Encodable[]): void;
-    /**
-     * Prepend TLV structure.
-     * @param tlvType TLV-TYPE number.
-     * @param omitEmpty omit TLV altogether if set to Encoder.OmitEmpty
-     * @param tlvValue TLV-VALUE objects.
-     */
-    prependTlv(tlvType: number, omitEmpty?: typeof Encoder.OmitEmpty | Encodable, ...tlvValue: Encodable[]): void;
+    /** Prepend TLV structure. */
+    prependTlv(tlvType: number, ...tlvValue: Encodable[]): void;
+    /** Prepend TLV structure, but skip if TLV-VALUE is empty. */
+    prependTlv(tlvType: number, omitEmpty: typeof Encoder.OmitEmpty, ...tlvValue: Encodable[]): void;
     /** Prepend an Encodable object. */
     encode(obj: Encodable | readonly Encodable[]): void;
     private grow;
 }
 
 declare namespace Encoder {
-    /** Create a DataView over a Uint8Array. */
-    function asDataView(a: Uint8Array): DataView;
-    namespace DataViewPolyfill {
-        function getBigUint64(dv: DataView, byteOffset: number, littleEndian?: boolean): bigint;
-        function setBigUint64(dv: DataView, byteOffset: number, value: bigint, littleEndian?: boolean): void;
-    }
-    /** DataView.prototype.getBigUint64 with polyfill for iOS 14. */
-    const getBigUint64: (dv: DataView, byteOffset: number, littleEndian?: boolean) => bigint;
-    /** DataView.prototype.setBigUint64 with polyfill for iOS 14. */
-    const setBigUint64: (dv: DataView, byteOffset: number, value: bigint, littleEndian?: boolean) => void;
     const OmitEmpty: unique symbol;
     /** Encode a single object into Uint8Array. */
     function encode(obj: Encodable | readonly Encodable[], initBufSize?: number): Uint8Array;
@@ -2609,18 +1724,24 @@ declare interface Encrypter<T = Data> {
     encrypt: (pkt: T) => Promise<void>;
 }
 
-declare interface Encryption<I, G extends GenParams> extends EncryptionAlgorithm<I, false, G> {
-    readonly ivLength: number;
-    makeAesKeyGenParams: (genParams: G) => AesKeyGenParams;
-}
-
 /** WebCrypto based encryption algorithm implementation. */
 declare interface EncryptionAlgorithm<I = any, Asym extends boolean = any, G = any> extends CryptoAlgorithm<I, Asym, G> {
     makeLLEncrypt: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLEncrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLEncrypt, unknown>;
     makeLLDecrypt: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLDecrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLDecrypt, unknown>;
 }
 
-declare const EncryptionAlgorithmList: EncryptionAlgorithm[];
+/**
+ * A full list of encryption algorithms.
+ * This list currently contains AES-CBC, AES-CTR, AES-GCM, and RSA-OAEP.
+ */
+declare const EncryptionAlgorithmListFull: readonly EncryptionAlgorithm[];
+
+/**
+ * A slim list of encryption algorithms.
+ * This list is currently empty.
+ * If you need more algorithms, explicitly import them or use EncryptionAlgorithmListFull.
+ */
+declare const EncryptionAlgorithmListSlim: readonly EncryptionAlgorithm[];
 
 declare type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [EncryptionAlgorithm<I, Asym, G>, G?] : [EncryptionAlgorithm<I, Asym, G>, G];
 
@@ -2667,33 +1788,19 @@ declare namespace EndpointProducer {
     type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
-/**
- * Test whether all elements in two arrays are equal.
- *
- * @param a - First array.
- * @param b - Second array.
- *
- * @returns True if both arrays have the same length and same elements (1 = '1').
- */
-declare function equalArray(a: unknown[], b: unknown[]): boolean;
-
 /** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
 declare class EvDecoder<T> {
     private readonly typeName;
     private readonly topTT;
     private readonly rules;
-    private readonly requiredTlvTypes;
+    private readonly requiredTT;
     private nextOrder;
-    private isCriticalCb;
-    private unknownCb;
-    /** Callbacks to receive top-level TLV before decoding TLV-VALUE. */
-    readonly beforeTopCallbacks: Array<EvDecoder.TopElementCallback<T>>;
+    private isCritical;
+    private unknownHandler?;
     /** Callbacks before decoding TLV-VALUE. */
-    readonly beforeValueCallbacks: Array<EvDecoder.TargetCallback<T>>;
+    readonly beforeObservers: Array<EvDecoder.TlvObserver<T>>;
     /** Callbacks after decoding TLV-VALUE. */
-    readonly afterValueCallbacks: Array<EvDecoder.TargetCallback<T>>;
-    /** Callbacks to receive top-level TLV after decoding TLV-VALUE. */
-    readonly afterTopCallbacks: Array<EvDecoder.TopElementCallback<T>>;
+    readonly afterObservers: Array<EvDecoder.TlvObserver<T>>;
     /**
      * Constructor.
      * @param typeName type name, used in error messages.
@@ -2703,33 +1810,41 @@ declare class EvDecoder<T> {
     /**
      * Add a decoding rule.
      * @param tt TLV-TYPE to match this rule.
-     * @param cb callback to handle element TLV.
+     * @param cb callback or nested EvDecoder to handle element TLV.
      * @param options additional rule options.
      */
-    add(tt: number, cb: EvDecoder.ElementCallback<T> | EvDecoder<T>, options?: Partial<EvDecoder.RuleOptions>): this;
+    add(tt: number, cb: EvDecoder.ElementDecoder<T> | EvDecoder<T>, { order, required, repeat, }?: Partial<EvDecoder.RuleOptions>): this;
     /** Set callback to determine whether TLV-TYPE is critical. */
-    setIsCritical(cb: EvDecoder.IsCriticalCallback): this;
+    setIsCritical(cb: EvDecoder.IsCritical): this;
     /** Set callback to handle unknown elements. */
-    setUnknown(cb: EvDecoder.UnknownElementCallback<T>): this;
+    setUnknown(cb: EvDecoder.UnknownElementHandler<T>): this;
     /** Decode TLV to target object. */
     decode<R extends T = T>(target: R, decoder: Decoder): R;
     /** Decode TLV-VALUE to target object. */
     decodeValue<R extends T = T>(target: R, vd: Decoder): R;
+    private decodeV;
     private handleUnrecognized;
 }
 
 declare namespace EvDecoder {
     /** Invoked when a matching TLV element is found. */
-    type ElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
+    type ElementDecoder<T> = (target: T, tlv: Decoder.Tlv) => void;
     interface RuleOptions {
         /**
          * Expected order of appearance.
+         * When using this option, it should be specified for all rules in a EvDecoder.
          * Default to the order in which rules were added to EvDecoder.
          */
         order: number;
-        /** Whether TLV element must appear at least once. */
+        /**
+         * Whether TLV element must appear at least once.
+         * Default is false.
+         */
         required: boolean;
-        /** Whether TLV element may appear more than once. */
+        /**
+         * Whether TLV element may appear more than once.
+         * Default is false.
+         */
         repeat: boolean;
     }
     /**
@@ -2737,134 +1852,18 @@ declare namespace EvDecoder {
      * 'order' denotes the order number of last recognized TLV element.
      * Return true if this TLV element is accepted, or false to follow evolvability guidelines.
      */
-    type UnknownElementCallback<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
-    type IsCriticalCallback = (tt: number) => boolean;
-    type TopElementCallback<T> = (target: T, tlv: Decoder.Tlv) => void;
-    type TargetCallback<T> = (target: T) => void;
-}
-
-/**
- * `Event` interface.
- * @see https://dom.spec.whatwg.org/#event
- */
-declare interface Event_2 {
+    type UnknownElementHandler<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
     /**
-     * The type of this event.
+     * Function to determine whether a TLV-TYPE number is "critical".
+     * Unrecognized or out-of-order TLV element with a critical TLV-TYPE number causes decoding error.
      */
-    readonly type: string
-
+    type IsCritical = (tt: number) => boolean;
     /**
-     * The target of this event.
+     * Callback before or after decoding TLV-VALUE.
+     * @param target target object.
+     * @param topTlv top-level TLV element, available in EVD.decode but unavailable in EVD.decodeValue.
      */
-    readonly target: EventTarget_2<{}, {}, "standard"> | null
-
-    /**
-     * The current target of this event.
-     */
-    readonly currentTarget: EventTarget_2<{}, {}, "standard"> | null
-
-    /**
-     * The target of this event.
-     * @deprecated
-     */
-    readonly srcElement: any | null
-
-    /**
-     * The composed path of this event.
-     */
-    composedPath(): EventTarget_2<{}, {}, "standard">[]
-
-    /**
-     * Constant of NONE.
-     */
-    readonly NONE: number
-
-    /**
-     * Constant of CAPTURING_PHASE.
-     */
-    readonly CAPTURING_PHASE: number
-
-    /**
-     * Constant of BUBBLING_PHASE.
-     */
-    readonly BUBBLING_PHASE: number
-
-    /**
-     * Constant of AT_TARGET.
-     */
-    readonly AT_TARGET: number
-
-    /**
-     * Indicates which phase of the event flow is currently being evaluated.
-     */
-    readonly eventPhase: number
-
-    /**
-     * Stop event bubbling.
-     */
-    stopPropagation(): void
-
-    /**
-     * Stop event bubbling.
-     */
-    stopImmediatePropagation(): void
-
-    /**
-     * Initialize event.
-     * @deprecated
-     */
-    initEvent(type: string, bubbles?: boolean, cancelable?: boolean): void
-
-    /**
-     * The flag indicating bubbling.
-     */
-    readonly bubbles: boolean
-
-    /**
-     * Stop event bubbling.
-     * @deprecated
-     */
-    cancelBubble: boolean
-
-    /**
-     * Set or get cancellation flag.
-     * @deprecated
-     */
-    returnValue: boolean
-
-    /**
-     * The flag indicating whether the event can be canceled.
-     */
-    readonly cancelable: boolean
-
-    /**
-     * Cancel this event.
-     */
-    preventDefault(): void
-
-    /**
-     * The flag to indicating whether the event was canceled.
-     */
-    readonly defaultPrevented: boolean
-
-    /**
-     * The flag to indicating if event is composed.
-     */
-    readonly composed: boolean
-
-    /**
-     * Indicates whether the event was dispatched by the user agent.
-     */
-    readonly isTrusted: boolean
-
-    /**
-     * The unix time of this event.
-     */
-    readonly timeStamp: number
-}
-
-declare type EventAttributes = {
-    onabort: any
+    type TlvObserver<T> = (target: T, topTlv?: Decoder.Tlv) => void;
 }
 
 /**
@@ -2879,19 +1878,19 @@ declare interface EventCallbacks<Item, IdProp extends string> {
      * @param payload - Data about the items affected by this event.
      * @param senderId - A senderId, optionally provided by the application code which triggered the event. If senderId is not provided, the argument will be `null`.
      */
-    add(name: "add", payload: AddEventPayload | null, senderId?: Id_2 | null): void;
+    add(name: "add", payload: AddEventPayload | null, senderId?: Id | null): void;
     /**
      * @param name - The name of the event ([[EventName]]).
      * @param payload - Data about the items affected by this event.
      * @param senderId - A senderId, optionally provided by the application code which triggered the event. If senderId is not provided, the argument will be `null`.
      */
-    update(name: "update", payload: UpdateEventPayload<Item, IdProp> | null, senderId?: Id_2 | null): void;
+    update(name: "update", payload: UpdateEventPayload<Item, IdProp> | null, senderId?: Id | null): void;
     /**
      * @param name - The name of the event ([[EventName]]).
      * @param payload - Data about the items affected by this event.
      * @param senderId - A senderId, optionally provided by the application code which triggered the event. If senderId is not provided, the argument will be `null`.
      */
-    remove(name: "remove", payload: RemoveEventPayload<Item, IdProp> | null, senderId?: Id_2 | null): void;
+    remove(name: "remove", payload: RemoveEventPayload<Item, IdProp> | null, senderId?: Id | null): void;
 }
 
 /**
@@ -2906,14 +1905,12 @@ declare interface EventCallbacksWithAny<Item, IdProp extends string> extends Eve
      * @param payload - Data about the items affected by this event.
      * @param senderId - A senderId, optionally provided by the application code which triggered the event. If senderId is not provided, the argument will be `null`.
      */
-    "*"<N extends keyof EventCallbacks<Item, IdProp>>(name: N, payload: EventPayloads<Item, IdProp>[N], senderId?: Id_2 | null): void;
+    "*"<N extends keyof EventCallbacks<Item, IdProp>>(name: N, payload: EventPayloads<Item, IdProp>[N], senderId?: Id | null): void;
 }
 
-/** Available event names. */
-declare type EventName = keyof EventPayloads<never, "">;
-
-/** Available event names and '*' to listen for all. */
-declare type EventNameWithAny = keyof EventPayloadsWithAny<never, "">;
+declare type EventMap = {
+    [key: string]: (...args: any[]) => void
+}
 
 /**
  * Map of event payload types (event name → payload).
@@ -2927,25 +1924,11 @@ declare interface EventPayloads<Item, IdProp extends string> {
     remove: RemoveEventPayload<Item, IdProp>;
 }
 
-/**
- * Map of event payload types including any event (event name → payload).
- *
- * @typeParam Item - Item type that may or may not have an id.
- * @typeParam IdProp - Name of the property that contains the id.
- */
-declare interface EventPayloadsWithAny<Item, IdProp extends string> extends EventPayloads<Item, IdProp> {
-    "*": ValueOf<EventPayloads<Item, IdProp>>;
-}
-
-declare interface Events extends SyncProtocol.Events<Name> {
+declare type Events = SyncProtocol.Events<Name> & {
     debug: (entry: DebugEntry) => void;
-}
+};
 
 declare type Events_2 = {
-    abort: any
-}
-
-declare interface Events_3 {
     /** Emitted before adding face. */
     faceadd: (face: FwFace) => void;
     /** Emitted after removing face. */
@@ -2962,294 +1945,33 @@ declare interface Events_3 {
     pktrx: (face: FwFace, pkt: FwPacket) => void;
     /** Emitted before packet transmission. */
     pkttx: (face: FwFace, pkt: FwPacket) => void;
-}
+};
 
-declare interface Events_4 {
+declare type Events_3 = {
     /** Emitted upon face is up as reported by lower layer. */
     up: () => void;
     /** Emitted upon face is down as reported by lower layer. */
     down: () => void;
     /** Emitted upon face is closed. */
     close: () => void;
-}
-
-declare interface Events_5 extends SyncProtocol.Events<Name> {
-    debug: (entry: DebugEntry_2) => void;
-}
-
-declare interface Events_6 {
-    debug: (entry: DebugEntry_3) => void;
-    state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
-}
-
-declare interface Events_7 extends SyncProtocol.Events<SvSync.ID> {
-    debug: (entry: DebugEntry_4) => void;
-}
-
-declare interface Events_8 {
-    debug: (entry: DebugEntry_5) => void;
-}
-
-/**
- * `EventTarget` interface.
- * @see https://dom.spec.whatwg.org/#interface-eventtarget
- */
-declare type EventTarget_2<
-TEvents extends EventTarget_2.EventDefinition = {},
-TEventAttributes extends EventTarget_2.EventDefinition = {},
-TMode extends EventTarget_2.Mode = "loose"
-> = EventTarget_2.EventAttributes<TEventAttributes> & {
-    /**
-     * Add a given listener to this event target.
-     * @param eventName The event name to add.
-     * @param listener The listener to add.
-     * @param options The options for this listener.
-     */
-    addEventListener<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
-    type: TEventType,
-    listener:
-    | EventTarget_2.Listener<EventTarget_2.PickEvent<TEvents, TEventType>>
-    | null,
-    options?: boolean | EventTarget_2.AddOptions
-    ): void
-
-    /**
-     * Remove a given listener from this event target.
-     * @param eventName The event name to remove.
-     * @param listener The listener to remove.
-     * @param options The options for this listener.
-     */
-    removeEventListener<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
-    type: TEventType,
-    listener:
-    | EventTarget_2.Listener<EventTarget_2.PickEvent<TEvents, TEventType>>
-    | null,
-    options?: boolean | EventTarget_2.RemoveOptions
-    ): void
-
-    /**
-     * Dispatch a given event.
-     * @param event The event to dispatch.
-     * @returns `false` if canceled.
-     */
-    dispatchEvent<TEventType extends EventTarget_2.EventType<TEvents, TMode>>(
-    event: EventTarget_2.EventData<TEvents, TEventType, TMode>
-    ): boolean
-}
-
-declare const EventTarget_2: EventTargetConstructor & {
-    /**
-     * Create an `EventTarget` instance with detailed event definition.
-     *
-     * The detailed event definition requires to use `defineEventAttribute()`
-     * function later.
-     *
-     * Unfortunately, the second type parameter `TEventAttributes` was needed
-     * because we cannot compute string literal types.
-     *
-     * @example
-     * const signal = new EventTarget<{ abort: Event }, { onabort: Event }>()
-     * defineEventAttribute(signal, "abort")
-     */
-    new <
-    TEvents extends EventTarget_2.EventDefinition,
-    TEventAttributes extends EventTarget_2.EventDefinition,
-    TMode extends EventTarget_2.Mode = "loose"
-    >(): EventTarget_2<TEvents, TEventAttributes, TMode>
-
-    /**
-     * Define an `EventTarget` constructor with attribute events and detailed event definition.
-     *
-     * Unfortunately, the second type parameter `TEventAttributes` was needed
-     * because we cannot compute string literal types.
-     *
-     * @example
-     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
-     *      abort(): void {}
-     * }
-     *
-     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
-     */
-    <
-    TEvents extends EventTarget_2.EventDefinition = {},
-    TEventAttributes extends EventTarget_2.EventDefinition = {},
-    TMode extends EventTarget_2.Mode = "loose"
-    >(events: string[]): EventTargetConstructor<
-    TEvents,
-    TEventAttributes,
-    TMode
-    >
-
-    /**
-     * Define an `EventTarget` constructor with attribute events and detailed event definition.
-     *
-     * Unfortunately, the second type parameter `TEventAttributes` was needed
-     * because we cannot compute string literal types.
-     *
-     * @example
-     * class AbortSignal extends EventTarget<{ abort: Event }, { onabort: Event }>("abort") {
-     *      abort(): void {}
-     * }
-     *
-     * @param events Optional event attributes (e.g. passing in `"click"` adds `onclick` to prototype).
-     */
-    <
-    TEvents extends EventTarget_2.EventDefinition = {},
-    TEventAttributes extends EventTarget_2.EventDefinition = {},
-    TMode extends EventTarget_2.Mode = "loose"
-    >(event0: string, ...events: string[]): EventTargetConstructor<
-    TEvents,
-    TEventAttributes,
-    TMode
-    >
 };
 
-declare namespace EventTarget_2 {
-    /**
-     * Options of `removeEventListener()` method.
-     */
-    interface RemoveOptions {
-        /**
-         * The flag to indicate that the listener is for the capturing phase.
-         */
-        capture?: boolean
-    }
+declare type Events_4 = SyncProtocol.Events<Name> & {
+    debug: (entry: DebugEntry_2) => void;
+};
 
-    /**
-     * Options of `addEventListener()` method.
-     */
-    interface AddOptions extends RemoveOptions {
-        /**
-         * The flag to indicate that the listener doesn't support
-         * `event.preventDefault()` operation.
-         */
-        passive?: boolean
-        /**
-         * The flag to indicate that the listener will be removed on the first
-         * event.
-         */
-        once?: boolean
-    }
+declare type Events_5 = {
+    debug: (entry: DebugEntry_3) => void;
+    state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
+};
 
-    /**
-     * The type of regular listeners.
-     */
-    interface FunctionListener<TEvent> {
-        (event: TEvent): void
-    }
+declare type Events_6 = SyncProtocol.Events<SvSync.ID> & {
+    debug: (entry: DebugEntry_4) => void;
+};
 
-    /**
-     * The type of object listeners.
-     */
-    interface ObjectListener<TEvent> {
-        handleEvent(event: TEvent): void
-    }
-
-    /**
-     * The type of listeners.
-     */
-    type Listener<TEvent> =
-    | FunctionListener<TEvent>
-    | ObjectListener<TEvent>
-
-    /**
-     * Event definition.
-     */
-    type EventDefinition = {
-        readonly [key: string]: Event_2
-    }
-
-    /**
-     * Mapped type for event attributes.
-     */
-    type EventAttributes<TEventAttributes extends EventDefinition> = {
-        [P in keyof TEventAttributes]:
-        | FunctionListener<TEventAttributes[P]>
-        | null
-    }
-
-    /**
-     * The type of event data for `dispatchEvent()` method.
-     */
-    type EventData<
-    TEvents extends EventDefinition,
-    TEventType extends keyof TEvents | string,
-    TMode extends Mode
-    > =
-    TEventType extends keyof TEvents
-    ? (
-    // Require properties which are not generated automatically.
-    & Pick<
-    TEvents[TEventType],
-    Exclude<keyof TEvents[TEventType], OmittableEventKeys>
-    >
-    // Properties which are generated automatically are optional.
-    & Partial<Pick<Event_2, OmittableEventKeys>>
-    )
-    : (
-    TMode extends "standard"
-    ? Event_2
-    : Event_2 | NonStandardEvent
-    )
-
-    /**
-     * The string literal types of the properties which are generated
-     * automatically in `dispatchEvent()` method.
-     */
-    type OmittableEventKeys = Exclude<keyof Event_2, "type">
-
-    /**
-     * The type of event data.
-     */
-    type NonStandardEvent = {
-        [key: string]: any
-        type: string
-    }
-
-    /**
-     * The type of listeners.
-     */
-    type PickEvent<
-    TEvents extends EventDefinition,
-    TEventType extends keyof TEvents | string,
-    > =
-    TEventType extends keyof TEvents
-    ? TEvents[TEventType]
-    : Event_2
-
-    /**
-     * Event type candidates.
-     */
-    type EventType<
-    TEvents extends EventDefinition,
-    TMode extends Mode
-    > =
-    TMode extends "strict"
-    ? keyof TEvents
-    : keyof TEvents | string
-
-    /**
-     * - `"strict"` ..... Methods don't accept unknown events.
-     *                    `dispatchEvent()` accepts partial objects.
-     * - `"loose"` ...... Methods accept unknown events.
-     *                    `dispatchEvent()` accepts partial objects.
-     * - `"standard"` ... Methods accept unknown events.
-     *                    `dispatchEvent()` doesn't accept partial objects.
-     */
-    type Mode = "strict" | "standard" | "loose"
-}
-
-/**
- * The constructor of `EventTarget` interface.
- */
-declare type EventTargetConstructor<
-TEvents extends EventTarget_2.EventDefinition = {},
-TEventAttributes extends EventTarget_2.EventDefinition = {},
-TMode extends EventTarget_2.Mode = "loose"
-> = {
-    prototype: EventTarget_2<TEvents, TEventAttributes, TMode>
-    new(): EventTarget_2<TEvents, TEventAttributes, TMode>
-}
+declare type Events_7 = {
+    debug: (entry: DebugEntry_5) => void;
+};
 
 export declare namespace ext {
     const ndnTypes: {
@@ -3257,27 +1979,12 @@ export declare namespace ext {
         tlv: typeof tlv;
         sync: typeof sync;
         keychain: typeof keychain;
+        util: typeof util;
     };
     const node: INode;
     export function visualize(packet: any): void;
     export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void;
 }
-
-/**
- * Copy the values of all of the enumerable own properties from one or more source objects to a
- * target object. Returns the target object.
- *
- * @param target - The target object to copy to.
- * @param source - The source object from which to copy properties.
- *
- * @returns The target object.
- */
-declare const extend: {
-    <T, U>(target: T, source: U): T & U;
-    <T_1, U_1, V>(target: T_1, source1: U_1, source2: V): T_1 & U_1 & V;
-    <T_2, U_2, V_1, W>(target: T_2, source1: U_2, source2: V_1, source3: W): T_2 & U_2 & V_1 & W;
-    (target: object, ...sources: any[]): any;
-};
 
 /** An TLV element that allows extension sub element. */
 declare interface Extensible {
@@ -3342,25 +2049,30 @@ declare const FIELDS: unique symbol;
 
 declare class Fields {
     constructor(...args: Array<Data | Data.CtorArg>);
-    get isFinalBlock(): boolean;
-    set isFinalBlock(v: boolean);
     name: Name;
     get contentType(): number;
     set contentType(v: number);
+    private contentType_;
     get freshnessPeriod(): number;
     set freshnessPeriod(v: number);
+    private freshnessPeriod_;
     finalBlockId?: Component;
+    /** Determine whether FinalBlockId equals the last name component. */
+    get isFinalBlock(): boolean;
+    /**
+     * Setting to false deletes FinalBlockId.
+     *
+     * Setting to true assigns FinalBlockId to be the last name component.
+     * It is not allowed if the name is empty.
+     */
+    set isFinalBlock(v: boolean);
     content: Uint8Array;
     sigInfo: SigInfo;
     sigValue: Uint8Array;
-    private contentType_;
-    private freshnessPeriod_;
     signedPortion?: Uint8Array;
     topTlv?: Uint8Array;
     topTlvDigest?: Uint8Array;
 }
-
-declare const FIELDS_2: unique symbol;
 
 declare class Fields_2 {
     constructor(...args: Array<Interest | Interest.CtorArg>);
@@ -3370,110 +2082,32 @@ declare class Fields_2 {
     fwHint?: FwHint;
     get nonce(): number | undefined;
     set nonce(v: number | undefined);
+    private nonce_;
     get lifetime(): number;
     set lifetime(v: number);
+    private lifetime_;
     get hopLimit(): number;
     set hopLimit(v: number);
+    private hopLimit_;
     appParameters?: Uint8Array;
     sigInfo?: SigInfo;
     sigValue: Uint8Array;
-    private nonce_;
-    private lifetime_;
-    private hopLimit_;
-    signedPortion?: Uint8Array;
     paramsPortion?: Uint8Array;
+    signedPortion?: Uint8Array;
 }
 
 /**
- * Fill an object with a possibly partially defined other object.
- *
- * Only copies values for the properties already present in a.
- * That means an object is not created on a property if only the b object has it.
- *
- * @param a - The object that will have it's properties updated.
- * @param b - The object with property updates.
- * @param allowDeletion - If true, delete properties in a that are explicitly set to null in b.
+ * Map and flatten once.
+ * This differs from flatMap in streaming-iterables, which recursively flattens the result.
  */
-declare function fillIfDefined<T extends object>(a: T, b: Partial<T>, allowDeletion?: boolean): void;
-
-/**
- * Optional options for the fit method.
- */
-declare interface FitOptions {
-    /**
-     * The nodes can be used to zoom to fit only specific nodes in the view.
-     */
-    nodes?: IdType[];
-
-    /**
-     * How far away can be zoomed out, the default is just above 0.
-     *
-     * @remarks
-     * Values less than 1 mean zooming out, more than 1 means zooming in.
-     */
-    minZoomLevel?: number;
-
-    /**
-     * How close can be zoomed in, the default is 1.
-     *
-     * @remarks
-     * Values less than 1 mean zooming out, more than 1 means zooming in.
-     */
-    maxZoomLevel?: number;
-
-    /**
-     * For animation you can either use a Boolean to use it with the default options or
-     * disable it or you can define the duration (in milliseconds) and easing function manually.
-     */
-    animation?: TimelineAnimationType;
-}
-
-/**
- * Options interface for focus function.
- */
-declare interface FocusOptions_2 extends ViewPortOptions {
-    /**
-     * Locked denotes whether or not the view remains locked to
-     * the node once the zoom-in animation is finished.
-     * Default value is true.
-     */
-    locked?: boolean;
-}
-
-declare interface Font {
-    color?: string,
-    size?: number, // px
-    face?: string,
-    background?: string,
-    strokeWidth?: number, // px
-    strokeColor?: string,
-    align?: string,
-    vadjust?: number,
-    multi?: boolean | string,
-    bold?: string | FontStyles,
-    ital?: string | FontStyles,
-    boldital?: string | FontStyles,
-    mono?: string | FontStyles,
-}
-
-declare interface FontStyles {
-    color?: string;
-    size?: number;
-    face?: string;
-    mod?: string;
-    vadjust?: number;
-}
-
-declare function forEach<V>(array: undefined | null | V[], callback: (value: V, index: number, object: V[]) => void): void;
-
-declare function forEach<O extends object>(object: undefined | null | O, callback: <Key extends keyof O>(value: O[Key], key: Key, object: O) => void): void;
+declare function flatMapOnce<T, R>(f: (item: T) => Iterable<R> | AsyncIterable<R>, iterable: AsyncIterable<T>): AsyncIterable<R>;
 
 /** Forwarding plane. */
-declare interface Forwarder extends TypedEventEmitter<Events_3> {
+declare interface Forwarder extends TypedEventEmitter<Events_2> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
-    readonly faces: Set<FwFace>;
+    readonly faces: ReadonlySet<FwFace>;
     /** Add a logical face to the forwarding plane. */
     addFace(face: FwFace.RxTx | FwFace.RxTxDuplex, attributes?: FwFace.Attributes): FwFace;
     /**
@@ -3485,10 +2119,6 @@ declare interface Forwarder extends TypedEventEmitter<Events_3> {
 
 declare namespace Forwarder {
     interface Options {
-        /** Per-face RX buffer length. */
-        faceRxBuffer?: number;
-        /** Per-face TX buffer length. */
-        faceTxBuffer?: number;
         /** Whether to try matching Data without PIT token. */
         dataNoTokenMatch?: boolean;
     }
@@ -3520,6 +2150,7 @@ declare interface ForwardingProvider {
     edgeUpdated: (edge?: IEdge) => Promise<void>;
     nodeUpdated: (node?: INode) => Promise<void>;
     onNetworkClick: () => Promise<void>;
+    refreshFib?: () => Promise<void>;
     sendPingInterest: (from: INode, to: INode) => void;
     sendInterest: (name: string, node: INode) => void;
     fetchCapturedPackets?: (node: INode) => void;
@@ -3527,29 +2158,23 @@ declare interface ForwardingProvider {
     downloadExperimentDump?: () => void;
     loadExperimentDump?: () => void;
     runCode: (code: string, node: INode) => void;
+    openTerminal?: (node: INode) => void;
 }
 
 /**
  * Convert hexadecimal string to byte array.
  *
- * This function lacks error handling. Use on trusted input only.
+ * If the input is not a valid hexadecimal string, result will be incorrect.
  */
 declare function fromHex(s: string): Uint8Array;
 
-declare function fromUtf8(buf: Uint8Array): string;
-
-declare interface FullColorObject {
-    background: string;
-    border: string;
-    hover: {
-        border: string;
-        background: string;
-    };
-    highlight: {
-        border: string;
-        background: string;
-    };
+declare namespace fromHex {
+    /** Conversion table from hexadecimal digit (case insensitive) to nibble. */
+    const TABLE: Readonly<Record<string, number>>;
 }
+
+/** Convert UTF-8 byte array to string. */
+declare function fromUtf8(buf: Uint8Array): string;
 
 /**
  * An item that has a property containing an id and all other required properties of given item type.
@@ -3557,14 +2182,13 @@ declare interface FullColorObject {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id_2>;
+declare type FullItem<Item extends PartItem<IdProp>, IdProp extends string> = Item & Record<IdProp, Id>;
 
 /** A socket or network interface associated with forwarding plane. */
-declare interface FwFace extends TypedEventEmitter<Events_4> {
+declare interface FwFace extends TypedEventEmitter<Events_3> {
     readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
     readonly running: boolean;
-    readonly txQueueLength: number;
     /** Shutdown the face. */
     close(): void;
     toString(): string;
@@ -3596,12 +2220,14 @@ declare namespace FwFace {
         routeCapture?: boolean;
     }
     type RouteAnnouncement = boolean | number | NameLike;
-    interface RxTxEvents {
+    type RxTxEvents = {
         up: () => void;
         down: () => void;
-    }
-    interface RxTxBase extends Partial<TypedEventEmitter<RxTxEvents>> {
+    };
+    interface RxTxBase {
         readonly attributes?: Attributes;
+        on?: (...args: Parameters<TypedEventEmitter<RxTxEvents>["on"]>) => void;
+        off?: (...args: Parameters<TypedEventEmitter<RxTxEvents>["off"]>) => void;
     }
     interface RxTx extends RxTxBase {
         rx: AsyncIterable<FwPacket>;
@@ -3618,25 +2244,12 @@ declare namespace FwFace {
 
 /** ForwardingHint in Interest. */
 declare class FwHint {
-    static decodeValue(value: Uint8Array): FwHint;
+    static decodeValue(vd: Decoder): FwHint;
     constructor(copy?: FwHint);
     constructor(name: NameLike);
-    constructor(delegations: readonly FwHint.Delegation[]);
-    private add;
-    get delegations(): readonly FwHint.Delegation[];
-    private readonly m;
+    constructor(delegations: readonly NameLike[]);
+    delegations: Name[];
     encodeTo(encoder: Encoder): void;
-}
-
-declare namespace FwHint {
-    /** Delegation in ForwardingHint. */
-    class Delegation {
-        preference: number;
-        static decodeFrom(decoder: Decoder): Delegation;
-        constructor(name?: NameLike, preference?: number);
-        name: Name;
-        encodeTo(encoder: Encoder): void;
-    }
 }
 
 /** A logical packet in the forwarder. */
@@ -3652,20 +2265,6 @@ declare namespace FwPacket {
     /** Whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
 }
-
-/**
- * AES-GCM encryption algorithm.
- *
- * Initialization Vectors must be 12 octets.
- * During encryption, if IV is unspecified, it is constructed with two parts:
- * @li a 64-bit random number, generated each time a private key instance is constructed;
- * @li a 32-bit counter starting from zero.
- *
- * During decryption, quality of IV is not automatically checked.
- * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
- * check IVs using CounterIvChecker type.
- */
-declare const GCM: Encryption<{}, GenParams>;
 
 /** Generate a pair of encrypter and decrypter. */
 declare function generateEncryptionKey<I, Asym extends boolean, G>(name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
@@ -3685,186 +2284,8 @@ declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, 
 /** Generate a pair of signer and verifier, and save to KeyChain. */
 declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 
-/** Key generation parameters. */
-declare interface GenParams {
-    length?: KeyLength;
-    /** Import raw key bits instead of generating. */
-    importRaw?: Uint8Array;
-}
-
-declare type GenParams_ = GenParams;
-
-declare interface GephiData {
-    nodes: GephiNode[];
-    edges: GephiEdge[];
-}
-
-declare interface GephiEdge {
-    id: Id;
-    source: Id;
-    target: Id;
-    attributes?: {
-        title?: string;
-    };
-    color?: string;
-    label?: string;
-    type?: string;
-}
-
-declare interface GephiNode {
-    id: Id;
-    attributes?: {
-        title?: string;
-    };
-    color?: string;
-    label?: string;
-    size?: number;
-    title?: string;
-    x?: number;
-    y?: number;
-}
-
-declare interface GephiParseOptions {
-    fixed?: boolean;
-    inheritColor?: boolean;
-    parseColor?: boolean;
-}
-
-declare namespace gephiParser {
-    export {
-        parseGephi,
-        Id,
-        ColorObject,
-        GephiData,
-        GephiParseOptions,
-        GephiNode,
-        GephiEdge,
-        VisData,
-        VisNode,
-        VisEdge
-    }
-}
-
-/**
- * Retrieve the absolute left value of a DOM element.
- *
- * @param elem - A dom element, for example a div.
- *
- * @returns The absolute left position of this element in the browser page.
- */
-declare function getAbsoluteLeft(elem: Element): number;
-
-/**
- * Retrieve the absolute right value of a DOM element.
- *
- * @param elem - A dom element, for example a div.
- *
- * @returns The absolute right position of this element in the browser page.
- */
-declare function getAbsoluteRight(elem: Element): number;
-
-/**
- * Retrieve the absolute top value of a DOM element.
- *
- * @param elem - A dom element, for example a div.
- *
- * @returns The absolute top position of this element in the browser page.
- */
-declare function getAbsoluteTop(elem: Element): number;
-
-/**
- * Allocate or generate an SVG element if needed. Store a reference to it in the JSON container and draw it in the svgContainer
- * the JSON container and the SVG container have to be supplied so other svg containers (like the legend) can use this.
- *
- * @param {string} elementType
- * @param {Object} JSONcontainer
- * @param {Element} DOMContainer
- * @param {Element} insertBefore
- * @returns {*}
- */
-declare function getDOMElement(
-elementType: any,
-JSONcontainer: any,
-DOMContainer: any,
-insertBefore: any
-): any
-
-/**
- * Experimentaly compute the width of the scrollbar for this browser.
- *
- * @returns The width in pixels.
- */
-declare function getScrollBarWidth(): number;
-
-/**
- * Allocate or generate an SVG element if needed. Store a reference to it in the JSON container and draw it in the svgContainer
- * the JSON container and the SVG container have to be supplied so other svg containers (like the legend) can use this.
- *
- * @param {string} elementType
- * @param {Object} JSONcontainer
- * @param {Object} svgContainer
- * @returns {Element}
- * @private
- */
-declare function getSVGElement(
-elementType: any,
-JSONcontainer: any,
-svgContainer: any
-): any
-
-/**
- * Get HTML element which is the target of the event.
- *
- * @param event - The event.
- *
- * @returns The element or null if not obtainable.
- */
-declare function getTarget(event?: Event | undefined): Element | null;
-
-/**
- * Get the type of an object, for example exports.getType([]) returns 'Array'.
- *
- * @param object - Input value of unknown type.
- *
- * @returns Detected type.
- */
-declare function getType(object: unknown): string;
-
-declare const Hammer_2: HammerStatic;
-
 /** 32-bit hash function. */
 declare type HashFunction = (seed: number, input: Uint8Array) => number;
-
-/**
- * Check if given element contains given parent somewhere in the DOM tree.
- *
- * @param element - The element to be tested.
- * @param parent - The ancestor (not necessarily parent) of the element.
- *
- * @returns True if parent is an ancestor of the element, false otherwise.
- */
-declare function hasParent(element: Element, parent: Element): boolean;
-
-/**
- * Convert hex color string into HSV \<0, 1\>.
- *
- * @param hex - Hex color string.
- *
- * @returns HSV color object.
- */
-declare function hexToHSV(hex: string): HSV;
-
-/**
- * Convert hex color string into RGB color object.
- *
- * @remarks
- * {@link http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb}
- *
- * @param hex - Hex color string (3 or 6 digits, with or without #).
- *
- * @returns RGB color object.
- */
-declare function hexToRGB(hex: string): RGB | null;
 
 /** HmacWithSha256 signing algorithm. */
 declare const HMAC: SigningAlgorithm<{}, false, HMAC.GenParams>;
@@ -3876,49 +2297,6 @@ declare namespace HMAC {
         importRaw?: Uint8Array;
     }
 }
-
-/**
- * Hue, Saturation, Value.
- */
-declare interface HSV {
-    /**
-     * Hue \<0, 1\>.
-     */
-    h: number;
-    /**
-     * Saturation \<0, 1\>.
-     */
-    s: number;
-    /**
-     * Value \<0, 1\>.
-     */
-    v: number;
-}
-
-/**
- * Convert HSV \<0, 1\> into hex color string.
- *
- * @param h - Hue.
- * @param s - Saturation.
- * @param v - Value.
- *
- * @returns Hex color string.
- */
-declare function HSVToHex(h: number, s: number, v: number): string;
-
-/**
- * Convert HSV \<0, 1\> into RGB color object.
- *
- * @remarks
- * {@link https://gist.github.com/mjijackson/5311256}
- *
- * @param h - Hue.
- * @param s - Saturation.
- * @param v - Value.
- *
- * @returns RGB color object.
- */
-declare function HSVToRGB(h: number, s: number, v: number): RGB;
 
 /** Invertible Bloom Lookup Table. */
 declare class IBLT {
@@ -3942,7 +2320,7 @@ declare class IBLT {
      * - count: int32
      * - keySum: uint32
      * - keyCheck: uint32
-     * These numbers are big endian.
+     * IBLT.Parameters.serializeLittleEndian determines endianness.
      *
      * Return value shares the underlying memory. It must be copied when not using compression.
      */
@@ -3952,9 +2330,7 @@ declare class IBLT {
      * @throws input does not match parameters.
      */
     deserialize(v: Uint8Array): void;
-    /**
-     * Clone to another IBLT.
-     */
+    /** Clone to another IBLT. */
     clone(): IBLT;
 }
 
@@ -4031,14 +2407,10 @@ declare interface ICapturedPacket {
     a?: boolean;
 }
 
+/** Valid id type. */
 declare type Id = number | string;
 
-/** Valid id type. */
-declare type Id_2 = number | string;
-
-declare type IdType = string | number;
-
-declare interface IEdge extends vis.Edge {
+declare interface IEdge extends Edge {
     /** Latency in milliseconds */
     latency: number;
     /** Loss in percentage */
@@ -4054,18 +2426,6 @@ declare interface ILinkExtra {
     pendingTraffic: number;
 }
 
-declare interface Image_2 {
-    unselected?: string;
-    selected?: string;
-}
-
-declare interface ImagePadding {
-    top?: number;
-    right?: number;
-    bottom?: number;
-    left?: number;
-}
-
 /** ImplicitSha256DigestComponent */
 declare const ImplicitDigest: ImplicitDigestComp;
 
@@ -4075,7 +2435,7 @@ declare class ImplicitDigestComp extends DigestComp {
     strip(name: Name): Name;
 }
 
-declare interface INode extends vis.Node {
+declare interface INode extends Node_2 {
     nfw?: NFW;
     /** Extra data object */
     extra: INodeExtra;
@@ -4098,16 +2458,6 @@ declare interface INodeExtra {
     replayWindowF?: number;
 }
 
-/**
- * This method provides a stable sort implementation, very fast for presorted data.
- *
- * @param a - The array to be sorted (in-place).
- * @param compare - An order comparator.
- *
- * @returns The argument a.
- */
-declare function insertSort<T>(a: T[], compare: (a: T, b: T) => number): T[];
-
 /** Interest packet. */
 declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
@@ -4118,37 +2468,36 @@ declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.S
      * - Name or name URI
      * - Interest.CanBePrefix
      * - Interest.MustBeFresh
+     * - FwHint
      * - Interest.Nonce(v)
      * - Interest.Lifetime(v)
      * - Interest.HopLimit(v)
      * - Uint8Array as AppParameters
      */
     constructor(...args: Array<Interest | Interest.CtorArg>);
-    readonly [FIELDS_2]: Fields_2;
+    readonly [FIELDS]: Fields_2;
     static decodeFrom(decoder: Decoder): Interest;
     encodeTo(encoder: Encoder): void;
     private encodeParamsPortion;
     private appendParamsDigestPlaceholder;
     updateParamsDigest(): Promise<void>;
-    validateParamsDigest(): Promise<void>;
+    validateParamsDigest(requireAppParameters?: boolean): Promise<void>;
     [LLSign.OP](sign: LLSign): Promise<void>;
     [LLVerify.OP](verify: LLVerify): Promise<void>;
 }
 
-declare interface Interest extends Fields_2 {
+declare interface Interest extends PublicFields {
 }
 
 declare namespace Interest {
-    /** Signer that calculates ParamsDigest. */
-    const Parameterize: LLSign;
     /** Generate a random nonce. */
     function generateNonce(): number;
     /** Default InterestLifetime. */
     const DefaultLifetime = 4000;
     /** Constructor argument to set CanBePrefix flag. */
-    const CanBePrefix: unique symbol;
+    const CanBePrefix: CtorTag_2;
     /** Constructor argument to set MustBeFresh flag. */
-    const MustBeFresh: unique symbol;
+    const MustBeFresh: CtorTag_2;
     /** Constructor argument to set Nonce field. */
     function Nonce(v?: number): CtorTag_2;
     /** Constructor argument to set InterestLifetime field. */
@@ -4156,17 +2505,11 @@ declare namespace Interest {
     /** Constructor argument to set HopLimit field. */
     function HopLimit(v: number): CtorTag_2;
     /** Constructor argument. */
-    type CtorArg = NameLike | typeof CanBePrefix | typeof MustBeFresh | FwHint | CtorTag_2 | Uint8Array;
+    type CtorArg = NameLike | FwHint | CtorTag_2 | Uint8Array;
     /** A function to modify an existing Interest. */
     type ModifyFunc = (interest: Interest) => void;
     /** Common fields to assign onto an existing Interest. */
-    interface ModifyFields {
-        canBePrefix?: boolean;
-        mustBeFresh?: boolean;
-        fwHint?: FwHint;
-        lifetime?: number;
-        hopLimit?: number;
-    }
+    type ModifyFields = Partial<Pick<Fields_2, "canBePrefix" | "mustBeFresh" | "fwHint" | "lifetime" | "hopLimit">>;
     /** A structure to modify an existing Interest. */
     type Modify = ModifyFunc | ModifyFields;
     /** Turn ModifyFields to ModifyFunc; return ModifyFunc as-is. */
@@ -4178,64 +2521,8 @@ declare type IntervalRange = [min: number, max: number];
 /** Determine whether the name is a certificate name. */
 declare function isCertName(name: Name): boolean;
 
-/**
- * Check that given value is compatible with Vis Data Set interface.
- *
- * @param idProp - The expected property to contain item id.
- * @param v - The value to be tested.
- *
- * @returns True if all expected values and methods match, false otherwise.
- */
-declare function isDataSetLike<Item extends PartItem<IdProp>, IdProp extends string = "id">(idProp: IdProp, v: any): v is DataSet<Item, IdProp>;
-
-/**
- * Check that given value is compatible with Vis Data View interface.
- *
- * @param idProp - The expected property to contain item id.
- * @param v - The value to be tested.
- *
- * @returns True if all expected values and methods match, false otherwise.
- */
-declare function isDataViewLike<Item extends PartItem<IdProp>, IdProp extends string = "id">(idProp: IdProp, v: any): v is DataView_2<Item, IdProp>;
-
-/**
- * Test whether given object is a Date, or a String containing a Date.
- *
- * @param value - Input value of unknown type.
- *
- * @returns True if Date instance or string date representation, false otherwise.
- */
-declare function isDate(value: unknown): value is Date | string;
-
 /** Determine whether the name is a key name. */
 declare function isKeyName(name: Name): boolean;
-
-/**
- * Test whether given object is a number.
- *
- * @param value - Input value of unknown type.
- *
- * @returns True if number, false otherwise.
- */
-declare function isNumber(value: unknown): value is number;
-
-/**
- * Test whether given object is a object (not primitive or null).
- *
- * @param value - Input value of unknown type.
- *
- * @returns True if not null object, false otherwise.
- */
-declare function isObject(value: unknown): value is object;
-
-/**
- * Test whether given object is a string.
- *
- * @param value - Input value of unknown type.
- *
- * @returns True if string, false otherwise.
- */
-declare function isString(value: unknown): value is string;
 
 /** Default issuerId. */
 declare const ISSUER_DEFAULT: Component;
@@ -4244,33 +2531,12 @@ declare const ISSUER_DEFAULT: Component;
 declare const ISSUER_SELF: Component;
 
 /**
- * Validate hex color string.
+ * Initialization Vector checker.
  *
- * @param hex - Unknown string that may contain a color.
- *
- * @returns True if the string is valid, false otherwise.
+ * The .wrap() method creates an LLDecrypt.Key or LLDecrypt that checks the IV in each message
+ * before and after decryption, and updates the internal state of this class. Typically, a
+ * separate IvChecker instances should be used for each key.
  */
-declare function isValidHex(hex: string): boolean;
-
-/**
- * Validate RGB color string.
- *
- * @param rgb - Unknown string that may contain a color.
- *
- * @returns True if the string is valid, false otherwise.
- */
-declare function isValidRGB(rgb: string): boolean;
-
-/**
- * Validate RGBA color string.
- *
- * @param rgba - Unknown string that may contain a color.
- *
- * @returns True if the string is valid, false otherwise.
- */
-declare function isValidRGBA(rgba: string): boolean;
-
-/** Initialization Vector checker. */
 declare abstract class IvChecker {
     readonly ivLength: number;
     constructor(ivLength: number);
@@ -4278,10 +2544,20 @@ declare abstract class IvChecker {
     wrap(f: LLDecrypt): LLDecrypt;
     private wrapKey;
     private wrapLLDecrypt;
+    /** Check IV for incoming message and update internal state. */
     protected abstract check(iv: Uint8Array, plaintextLength: number, ciphertextLength: number): void;
 }
 
-/** Initialization Vector generator. */
+/**
+ * Initialization Vector generator.
+ *
+ * The .wrap() method creates an LLEncrypt.Key or LLEncrypt that generates an IV for each message
+ * before encryption, and updates the internal state of this class after encryption. Typically, a
+ * separate IVGen instance should be used for each key.
+ *
+ * If a message passed for encryption already has an IV associated, it would bypass this class: in
+ * that case, the IV is not checked and the internal state is not updated.
+ */
 declare abstract class IvGen {
     readonly ivLength: number;
     constructor(ivLength: number);
@@ -4289,7 +2565,9 @@ declare abstract class IvGen {
     wrap(f: LLEncrypt): LLEncrypt;
     private wrapKey;
     private wrapLLEncrypt;
+    /** Generate IV for next message. */
     protected abstract generate(): Uint8Array;
+    /** Update internal state after a message is encrypted.. */
     protected update(plaintextLength: number, ciphertextLength: number): void;
 }
 
@@ -4312,7 +2590,7 @@ declare abstract class KeyChain {
     abstract getKeyPair(name: Name): Promise<KeyChain.KeyPair>;
     /**
      * Retrieve key by key name.
-     * @param typ "signer", "verifier", etc
+     * @param typ "signer", "verifier", etc.
      */
     getKey<K extends keyof KeyChain.KeyPair>(name: Name, typ: K): Promise<KeyChain.KeyPair[K]>;
     /** Insert key pair. */
@@ -4348,20 +2626,7 @@ declare abstract class KeyChain {
 declare namespace KeyChain {
     type KeyPair<Asym extends boolean = any> = KeyStore.KeyPair<Asym>;
     /**
-     * Create a signer from keys and certificates in the KeyChain.
-     * @param name subject name, key name, or certificate name.
-     * @param fallback invoked when no matching key or certificate is found.
-     * @param useKeyNameKeyLocator force KeyLocator to be key name instead of certificate name.
-     *
-     * @li If name is a certificate name, sign with the corresponding private key,
-     *     and use the specified certificate name as KeyLocator.
-     * @li If name is a key name, sign with the specified private key.
-     *     If a non-self-signed certificate exists for this key, use the certificate name as KeyLocator.
-     *     Otherwise, use the key name as KeyLocator.
-     * @li If name is neither certificate name nor key name, it is interpreted as a subject name.
-     *     A non-self-signed certificate of this subject name is preferred.
-     *     If such a certificate does not exist, use any key of this subject name.
-     * @li If prefixMatch is true, name can also be interpreted as a prefix of the subject name.
+     * keyChain.getSigner() options.
      */
     interface GetSignerOptions {
         /**
@@ -4384,32 +2649,58 @@ declare namespace KeyChain {
         useKeyNameKeyLocator?: boolean;
     }
     /**
-     * Open a persistent keychain.
+     * Open a persistent KeyChain.
      * @param locator in Node.js, a filesystem directory; in browser, a database name.
+     * @param algoList list of recognized algorithms. Default is CryptoAlgorithmListSlim.
+     *                 Use CryptoAlgorithmListFull for all algorithms, at the cost of larger bundle size.
      */
-    function open(locator: string): KeyChain;
-    /** Open a keychain from given KeyStore and CertStore. */
+    function open(locator: string, algoList?: readonly CryptoAlgorithm[]): KeyChain;
+    /** Open a KeyChain from given KeyStore and CertStore. */
     function open(keys: KeyStore, certs: CertStore): KeyChain;
-    /** Create an in-memory ephemeral keychain. */
-    function createTemp(): KeyChain;
+    /**
+     * Create an in-memory ephemeral KeyChain.
+     * @param algoList list of recognized algorithms.
+     *                 Use CryptoAlgorithmListFull for all algorithms, at the cost of larger bundle size.
+     */
+    function createTemp(algoList?: readonly CryptoAlgorithm<any, any, any>[]): KeyChain;
 }
 
 declare namespace keychain {
     export {
-        crypto_2 as KeyChainImplWebCrypto,
         CertNaming,
-        AES,
+        AesEncryption,
+        AesKeyLength,
+        AesBlockSize,
+        RsaModulusLength,
+        AESCBC,
+        AESCTR,
+        AESGCM,
         EcCurve,
         ECDSA,
+        Ed25519,
         HMAC,
-        SigningAlgorithmList,
-        EncryptionAlgorithmList,
-        CryptoAlgorithmList,
-        RsaModulusLength,
         RSA,
         RSAOAEP,
+        CryptoAlgorithmListFull,
+        EncryptionAlgorithmListFull,
+        SigningAlgorithmListFull,
+        SigningAlgorithmListSlim,
+        EncryptionAlgorithmListSlim,
+        CryptoAlgorithmListSlim,
         ValidityPeriod,
         Certificate,
+        CounterIvOptions,
+        IvChecker,
+        CounterIvChecker,
+        CounterIvGen,
+        IvGen,
+        RandomIvGen,
+        createDecrypter,
+        createEncrypter,
+        generateEncryptionKey,
+        generateSigningKey,
+        createSigner,
+        createVerifier,
         KeyKind,
         PrivateKey,
         PublicKey,
@@ -4421,18 +2712,6 @@ declare namespace keychain {
         CryptoAlgorithm,
         SigningAlgorithm,
         EncryptionAlgorithm,
-        createEncrypter,
-        createDecrypter,
-        generateEncryptionKey,
-        IvGen,
-        IvChecker,
-        RandomIvGen,
-        CounterIvOptions,
-        CounterIvGen,
-        CounterIvChecker,
-        createSigner,
-        createVerifier,
-        generateSigningKey,
         KeyStore,
         CertStore,
         KeyChain
@@ -4452,21 +2731,6 @@ declare namespace KeyKind {
 
 declare const KeyKind: unique symbol;
 
-declare type KeyLength = 128 | 192 | 256;
-
-declare namespace KeyLength {
-    const Default: KeyLength;
-    const Choices: readonly KeyLength[];
-}
-
-declare class KeyLoader {
-    private readonly extractable;
-    constructor(extractable?: boolean);
-    loadKey(name: Name, stored: KeyStore.StoredKey): Promise<KeyStore.KeyPair>;
-    private loadAsymmetric;
-    private loadSymmetric;
-}
-
 /** KeyLocator in SigInfo. */
 declare class KeyLocator {
     static decodeFrom(decoder: Decoder): KeyLocator;
@@ -4479,8 +2743,111 @@ declare class KeyLocator {
 declare namespace KeyLocator {
     type CtorArg = KeyLocator | NameLike | Uint8Array;
     function isCtorArg(arg: unknown): arg is CtorArg;
-    /** Throw if KeyLocator is missing or does not have Name. */
+    /**
+     * Extract KeyLocator name.
+     * @throws KeyLocator is missing or does not have Name.
+     */
     function mustGetName(kl?: KeyLocator): Name;
+}
+
+/**
+ * Map that transforms keys.
+ *
+ * K: input key type.
+ * V: value type.
+ * I: indexable key type.
+ * L: lookup key type.
+ */
+declare class KeyMap<K, V, I, L = K> {
+    private readonly keyOf;
+    /**
+     * Constructor.
+     * @param keyOf function to transform input key to indexable key.
+     */
+    constructor(keyOf: (key: K | L) => I);
+    private readonly m;
+    get size(): number;
+    has(key: K | L): boolean;
+    get(key: K | L): V | undefined;
+    set(key: K, value: V): this;
+    delete(key: K | L): boolean;
+    [Symbol.iterator](): IterableIterator<[key: K, value: V]>;
+}
+
+/**
+ * MultiMap that transforms keys.
+ *
+ * K: input key type.
+ * V: value type.
+ * I: indexable key type.
+ * L: lookup key type.
+ */
+declare class KeyMultiMap<K, V, I, L = K> {
+    /**
+     * Constructor.
+     * @param keyOf function to transform input key to indexable key.
+     */
+    constructor(keyOf: (key: K | L) => I);
+    private readonly m;
+    private size_;
+    /** Number of distinct keys. */
+    get dimension(): number;
+    /** Number of values. */
+    get size(): number;
+    /** Count values associated with a key. */
+    count(key: K | L): number;
+    /** List values associated with a key. */
+    list(key: K | L): ReadonlySet<V>;
+    /**
+     * Add a key-value pair.
+     * Values are stored in a Set, so duplicates are skipped.
+     * @returns count(key) after the operation.
+     */
+    add(key: K, value: V): number;
+    /**
+     * Remove a key-value pair.
+     * No-op if key-value does not exist.
+     * @returns count(key) after the operation.
+     */
+    remove(key: K | L, value: V): number;
+    /** Iterate over key and associated values. */
+    associations(): IterableIterator<[key: K, values: ReadonlySet<V>]>;
+}
+
+/**
+ * MultiSet that transforms keys.
+ *
+ * K: input key type.
+ * I: indexable key type.
+ * L: lookup key type.
+ */
+declare class KeyMultiSet<K, I, L = K> {
+    /**
+     * Constructor.
+     * @param keyOf function to transform input key to indexable key.
+     */
+    constructor(keyOf: (key: K | L) => I);
+    private readonly m;
+    private size_;
+    /** Number of distinct keys. */
+    get dimension(): number;
+    /** Number of values. */
+    get size(): number;
+    /** Count occurrences of a key. */
+    count(key: K | L): number;
+    /**
+     * Add a key.
+     * @returns number of occurrences after the operation.
+     */
+    add(key: K): number;
+    /**
+     * Remove a key.
+     * No-op if key does not exist.
+     * @returns number of occurrences after the operation.
+     */
+    remove(key: K): number;
+    /** Iterate over key and number of occurrences. */
+    multiplicities(): IterableIterator<[key: K, count: number]>;
 }
 
 declare interface KeyNameFields {
@@ -4494,15 +2861,16 @@ declare interface KeyState {
     seqNum?: bigint;
 }
 
-/** Storage of key pairs. */
+/** KV store of named key pairs. */
 declare class KeyStore extends StoreBase<KeyStore.StoredKey> {
-    private loader;
+    constructor(provider: StoreProvider<KeyStore.StoredKey>, algoList: readonly CryptoAlgorithm[]);
+    private readonly loader;
     get(name: Name): Promise<KeyStore.KeyPair>;
     insert(name: Name, stored: KeyStore.StoredKey): Promise<void>;
 }
 
 declare namespace KeyStore {
-    const Loader: typeof KeyLoader;
+    /** Loaded key pair. */
     class KeyPair<Asym extends boolean = any, I = any> {
         readonly name: Name;
         readonly algo: CryptoAlgorithm<I, Asym>;
@@ -4515,6 +2883,7 @@ declare namespace KeyStore {
         get decrypter(): NamedDecrypter<Asym>;
         get publicKey(): PublicKey;
     }
+    /** Stored key pair in JSON or structure clone format. */
     interface StoredKey {
         algo: string;
         info: any;
@@ -4523,6 +2892,16 @@ declare namespace KeyStore {
         publicKey?: CryptoKey | JsonWebKey;
         publicKeySpki?: Uint8Array | string;
         secretKey?: CryptoKey | JsonWebKey;
+    }
+    /** Helper to load key pair from stored format. */
+    class Loader {
+        private readonly extractable;
+        private readonly algoList;
+        constructor(extractable: boolean, algoList: readonly CryptoAlgorithm[]);
+        findAlgo(uuid: string): CryptoAlgorithm<unknown> | undefined;
+        loadKey(name: Name, stored: StoredKey): Promise<KeyPair>;
+        private loadAsymmetric;
+        private loadSymmetric;
     }
 }
 
@@ -4598,35 +2977,6 @@ declare namespace LLVerify {
     interface Verifiable {
         [OP]: (verifier: LLVerify) => Promise<void>;
     }
-    const timingSafeEqual: typeof timingSafeEqual;
-}
-
-declare interface LocaleMessages {
-    edit: string;
-    del: string;
-    back: string;
-    addNode: string;
-    addEdge: string;
-    editNode: string;
-    editEdge: string;
-    addDescription: string;
-    edgeDescription: string;
-    editEdgeDescription: string;
-    createEdgeError: string;
-    deleteClusterError: string;
-    editClusterError: string;
-}
-
-declare interface Locales {
-    [language: string]: LocaleMessages | undefined;
-    en?: LocaleMessages;
-    cn?: LocaleMessages;
-    de?: LocaleMessages;
-    es?: LocaleMessages;
-    it?: LocaleMessages;
-    nl?: LocaleMessages;
-    'pt-br'?: LocaleMessages;
-    ru?: LocaleMessages;
 }
 
 /**
@@ -4640,17 +2990,17 @@ declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | unde
  * Create certificate name from subject name, key name, or certificate name.
  * @param name subject name, key name, or certificate name.
  * @param opts.keyId keyId component, used only if input name is subject name.
- * @param opts.issuerId keyId, used only if input name is subject name.
- * @param opts.version keyId, used only if input name is subject name.
+ * @param opts.issuerId keyId, used only if input name is subject name or key name.
+ * @param opts.version keyId, used only if input name is subject name or key name.
  */
-declare function makeCertName(name: Name, opts?: Partial<Omit<CertNameFields, "subjectName">>): Name;
+declare function makeCertName(name: Name, opts?: Partial<Pick<CertNameFields, "keyId" | "issuerId" | "version">>): Name;
 
 /**
  * Create key name from subject name, key name, or certificate name.
  * @param name subject name, key name, or certificate name.
  * @param opts.keyId keyId component, used only if input name is subject name.
  */
-declare function makeKeyName(name: Name, opts?: Partial<Omit<KeyNameFields, "subjectName">>): Name;
+declare function makeKeyName(name: Name, opts?: Partial<Pick<KeyNameFields, "keyId">>): Name;
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
 declare function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
@@ -4718,43 +3068,12 @@ declare namespace makeSyncpsCompatParam {
     }
 }
 
-/**
- * Values of these types can be used as a seed.
- */
-declare type Mashable = number | string | boolean | object | bigint;
-
-/**
- * This is used to set the options of subobjects in the options object.
- *
- * A requirement of these subobjects is that they have an 'enabled' element
- * which is optional for the user but mandatory for the program.
- *
- * The added value here of the merge is that option 'enabled' is set as required.
- *
- * @param mergeTarget - Either this.options or the options used for the groups.
- * @param options - Options.
- * @param option - Option key in the options argument.
- * @param globalOptions - Global options, passed in to determine value of option 'enabled'.
- */
-declare function mergeOptions(mergeTarget: any, options: any, option: string, globalOptions?: any): void;
-
-/**
- * You will have to define at least a scale, position or offset.
- * Otherwise, there is nothing to move to.
- */
-declare interface MoveToOptions extends ViewPortOptions {
-    /**
-     * The position (in canvas units!) is the position of the central focus point of the camera.
-     */
-    position?: Position;
-}
-
 /** Nack packet. */
 declare class Nack {
+    interest: Interest;
     get reason(): number;
     set reason(v: number);
     header: NackHeader;
-    interest: Interest;
     constructor(interest: Interest, header?: NackHeader | number);
 }
 
@@ -4780,8 +3099,6 @@ declare const NackReason: {
  */
 declare class Name {
     static decodeFrom(decoder: Decoder): Name;
-    /** TLV-VALUE of the Name. */
-    readonly value: Uint8Array;
     /** List of name components. */
     readonly comps: readonly Component[];
     /** Create empty name, or copy from other name, or parse from URI. */
@@ -4792,7 +3109,16 @@ declare class Name {
     constructor(value: Uint8Array);
     /** Construct from components. */
     constructor(comps: readonly ComponentLike[]);
+    private readonly valueEncoderBufSize?;
+    private value_?;
+    private uri_?;
+    private hex_?;
+    /** Number of name components. */
     get length(): number;
+    /** Name TLV-VALUE. */
+    get value(): Uint8Array;
+    /** Name TLV-VALUE hexadecimal representation, good for map keys. */
+    get valueHex(): string;
     /** Retrieve i-th component. */
     get(i: number): Component | undefined;
     /**
@@ -4818,11 +3144,13 @@ declare class Name {
     equals(other: NameLike): boolean;
     /** Determine if this name is a prefix of other. */
     isPrefixOf(other: NameLike): boolean;
+    private comparePrefix;
     encodeTo(encoder: Encoder): void;
 }
 
 declare namespace Name {
     function isNameLike(obj: any): obj is NameLike;
+    function from(input: NameLike): Name;
     /** Name compare result. */
     enum CompareResult {
         /** lhs is less than, but not a prefix of rhs */
@@ -4886,7 +3214,32 @@ declare namespace NamedVerifier {
     type SecretKey = NamedVerifier<false>;
 }
 
+/** Name or Name URI. */
 declare type NameLike = Name | string;
+
+/**
+ * Map keyed by name.
+ * Lookups may accept either name or name.valueHex.
+ */
+declare class NameMap<V> extends KeyMap<Name, V, string, string> {
+    constructor();
+}
+
+/**
+ * MultiMap keyed by name.
+ * Lookups may accept either name or name.valueHex.
+ */
+declare class NameMultiMap<V> extends KeyMultiMap<Name, V, string, string> {
+    constructor();
+}
+
+/**
+ * MultiSet keyed by name.
+ * Lookups may accept either name or name.valueHex.
+ */
+declare class NameMultiSet extends KeyMultiSet<Name, string, string> {
+    constructor();
+}
 
 /**
  * Naming convention, which interprets a name component in a specific way.
@@ -4916,539 +3269,9 @@ declare namespace NamingConvention {
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
-/**
- * Network is a visualization to display networks and networks consisting of nodes and edges.
- * The visualization is easy to use and supports custom shapes, styles, colors, sizes, images, and more.
- * The network visualization works smooth on any modern browser for up to a few thousand nodes and edges.
- * To handle a larger amount of nodes, Network has clustering support. Network uses HTML canvas for rendering.
- */
-declare class Network {
-    /**
-     * Creates an instance of Network.
-     *
-     * @param container the HTML element representing the network container
-     * @param data network data
-     * @param [options] optional network options
-     */
-    constructor(container: HTMLElement, data: Data_2, options?: Options_3);
-
-    /**
-     * 	Remove the network from the DOM and remove all Hammer bindings and references.
-     */
-    destroy(): void;
-
-    /**
-     * Override all the data in the network.
-     * If stabilization is enabled in the physics module,
-     * the network will stabilize again.
-     * This method is also performed when first initializing the network.
-     *
-     * @param data network data
-     */
-    setData(data: Data_2): void;
-
-    /**
-     * Set the options.
-     * All available options can be found in the modules above.
-     * Each module requires it's own container with the module name to contain its options.
-     *
-     * @param options network options
-     */
-    setOptions(options: Options_3): void;
-
-    /**
-     * Set an event listener.
-     * Depending on the type of event you get different parameters for the callback function.
-     *
-     * @param eventName the name of the event, f.e. 'click'
-     * @param callback the callback function that will be raised
-     */
-    on(eventName: NetworkEvents, callback: (params?: any) => void): void;
-
-    /**
-     * Remove an event listener.
-     * The function you supply has to be the exact same as the one you used in the on function.
-     * If no function is supplied, all listeners will be removed.
-     *
-     * @param eventName the name of the event, f.e. 'click'
-     * @param [callback] the exact same callback function that was used when calling 'on'
-     */
-    off(eventName: NetworkEvents, callback?: (params?: any) => void): void;
-
-    /**
-     * Set an event listener only once.
-     * After it has taken place, the event listener will be removed.
-     * Depending on the type of event you get different parameters for the callback function.
-     *
-     * @param eventName the name of the event, f.e. 'click'
-     * @param callback the callback function that will be raised once
-     */
-    once(eventName: NetworkEvents, callback: (params?: any) => void): void;
-
-    /**
-     * This function converts canvas coordinates to coordinates on the DOM.
-     * Input and output are in the form of {x:Number, y:Number} (IPosition interface).
-     * The DOM values are relative to the network container.
-     *
-     * @param position the canvas coordinates
-     * @returns the DOM coordinates
-     */
-    canvasToDOM(position: Position): Position;
-
-    /**
-     * This function converts DOM coordinates to coordinates on the canvas.
-     * Input and output are in the form of {x:Number,y:Number} (IPosition interface).
-     * The DOM values are relative to the network container.
-     *
-     * @param position the DOM coordinates
-     * @returns the canvas coordinates
-     */
-    DOMtoCanvas(position: Position): Position;
-
-    /**
-     * Redraw the network.
-     */
-    redraw(): void;
-
-    /**
-     * Set the size of the canvas.
-     * This is automatically done on a window resize.
-     *
-     * @param width width in a common format, f.e. '100px'
-     * @param height height in a common format, f.e. '100px'
-     */
-    setSize(width: string, height: string): void;
-
-    /**
-     * The joinCondition function is presented with all nodes.
-     */
-    cluster(options?: ClusterOptions): void;
-
-    /**
-     * 	This method looks at the provided node and makes a cluster of it and all it's connected nodes.
-     * The behaviour can be customized by proving the options object.
-     * All options of this object are explained below.
-     * The joinCondition is only presented with the connected nodes.
-     *
-     * @param nodeId the id of the node
-     * @param [options] the cluster options
-     */
-    clusterByConnection(nodeId: string, options?: ClusterOptions): void;
-
-    /**
-     * This method checks all nodes in the network and those with a equal or higher
-     * amount of edges than specified with the hubsize qualify.
-     * If a hubsize is not defined, the hubsize will be determined as the average
-     * value plus two standard deviations.
-     * For all qualifying nodes, clusterByConnection is performed on each of them.
-     * The options object is described for clusterByConnection and does the same here.
-     *
-     * @param [hubsize] optional hubsize
-     * @param [options] optional cluster options
-     */
-    clusterByHubsize(hubsize?: number, options?: ClusterOptions): void;
-
-    /**
-     * This method will cluster all nodes with 1 edge with their respective connected node.
-     *
-     * @param [options] optional cluster options
-     */
-    clusterOutliers(options?: ClusterOptions): void;
-
-    /**
-     * Nodes can be in clusters.
-     * Clusters can also be in clusters.
-     * This function returns an array of nodeIds showing where the node is.
-     *
-     * Example:
-     * cluster 'A' contains cluster 'B', cluster 'B' contains cluster 'C',
-     * cluster 'C' contains node 'fred'.
-     *
-     * network.clustering.findNode('fred') will return ['A','B','C','fred'].
-     *
-     * @param nodeId the node id.
-     * @returns an array of nodeIds showing where the node is
-     */
-    findNode(nodeId: IdType): IdType[];
-
-    /**
-     * Similar to findNode in that it returns all the edge ids that were
-     * created from the provided edge during clustering.
-     *
-     * @param baseEdgeId the base edge id
-     * @returns an array of edgeIds
-     */
-    getClusteredEdges(baseEdgeId: IdType): IdType[];
-
-    /**
-     * When a clusteredEdgeId is available, this method will return the original
-     * baseEdgeId provided in data.edges ie.
-     * After clustering the 'SelectEdge' event is fired but provides only the clustered edge.
-     * This method can then be used to return the baseEdgeId.
-     */
-    getBaseEdge(clusteredEdgeId: IdType): IdType;
-
-    /**
-     * For the given clusteredEdgeId, this method will return all the original
-     * base edge id's provided in data.edges.
-     * For a non-clustered (i.e. 'base') edge, clusteredEdgeId is returned.
-     * Only the base edge id's are returned.
-     * All clustered edges id's under clusteredEdgeId are skipped,
-     * but scanned recursively to return their base id's.
-     */
-    getBaseEdges(clusteredEdgeId: IdType): IdType[];
-
-    /**
-     * Visible edges between clustered nodes are not the same edge as the ones provided
-     * in data.edges passed on network creation. With each layer of clustering, copies of
-     * the edges between clusters are created and the previous edges are hidden,
-     * until the cluster is opened. This method takes an edgeId (ie. a base edgeId from data.edges)
-     * and applys the options to it and any edges that were created from it while clustering.
-     */
-    updateEdge(startEdgeId: IdType, options?: EdgeOptions): void;
-
-    /**
-     * Clustered Nodes when created are not contained in the original data.nodes
-     * passed on network creation. This method updates the cluster node.
-     */
-    updateClusteredNode(clusteredNodeId: IdType, options?: NodeOptions): void;
-
-    /**
-     * Returns true if the node whose ID has been supplied is a cluster.
-     *
-     * @param nodeId the node id.
-     */
-    isCluster(nodeId: IdType): boolean;
-
-    /**
-     * Returns an array of all nodeIds of the nodes that
-     * would be released if you open the cluster.
-     *
-     * @param clusterNodeId the id of the cluster node
-     */
-    getNodesInCluster(clusterNodeId: IdType): IdType[];
-
-    /**
-     * Opens the cluster, releases the contained nodes and edges,
-     * removing the cluster node and cluster edges.
-     * The options object is optional and currently supports one option,
-     * releaseFunction, which is a function that can be used to manually
-     * position the nodes after the cluster is opened.
-     *
-     * @param nodeId the node id
-     * @param [options] optional open cluster options
-     */
-    openCluster(nodeId: IdType, options?: OpenClusterOptions): void;
-
-    /**
-     * If you like the layout of your network
-     * and would like it to start in the same way next time,
-     * ask for the seed using this method and put it in the layout.randomSeed option.
-     *
-     * @returns the current seed of the network.
-     */
-    getSeed(): number | string;
-
-    /**
-     * 	Programatically enable the edit mode.
-     * Similar effect to pressing the edit button.
-     */
-    enableEditMode(): void;
-
-    /**
-     * Programatically disable the edit mode.
-     * Similar effect to pressing the close icon (small cross in the corner of the toolbar).
-     */
-    disableEditMode(): void;
-
-    /**
-     * 	Go into addNode mode. Having edit mode or manipulation enabled is not required.
-     * To get out of this mode, call disableEditMode().
-     * The callback functions defined in handlerFunctions still apply.
-     * To use these methods without having the manipulation GUI, make sure you set enabled to false.
-     */
-    addNodeMode(): void;
-
-    /**
-     * Edit the selected node.
-     * The explaination from addNodeMode applies here as well.
-     */
-    editNode(): void;
-
-    /**
-     * Go into addEdge mode.
-     * The explaination from addNodeMode applies here as well.
-     */
-    addEdgeMode(): void;
-
-    /**
-     * Go into editEdge mode.
-     * The explaination from addNodeMode applies here as well.
-     */
-    editEdgeMode(): void;
-
-    /**
-     * Delete selected.
-     * Having edit mode or manipulation enabled is not required.
-     */
-    deleteSelected(): void;
-
-    /**
-     * Returns the x y positions in canvas space of a requested node or array of nodes.
-     * 
-     * @remarks
-     * - If `nodeIds` is supplied as a single id that does not correspond
-     * to a node in the network, this function will return an empty object.
-     * - If `nodeIds` is supplied as an array of ids, but one or more do not correspond to a node in the network, the
-     * returned object will *not* include entries for the non-existent node positions.
-     *
-     * @param nodeIds - Either an array of node ids or a single node id. If not supplied, all node ids in the network will be used.
-     * @returns A an object containing the x y positions in canvas space of the nodes in the network, keyed by id.
-     */
-    getPositions(nodeIds?: IdType[] | IdType): { [nodeId: string]: Position };
-
-    /**
-     * Retrieves the x y position of a specific id.
-     * 
-     * @param id - a node id
-     * @returns the x y position in canvas space of the requested node.
-     * 
-     * @throws {@link TypeError} 
-     *  Thrown if an undefined or null id is provided as a parameter.
-     * @throws {@link ReferenceError} 
-     *  Thrown if the id provided as a parameter does not correspond to a node in the network.
-     */
-    getPosition(nodeId: IdType): Position;
-
-    /**
-     * 	When using the vis.DataSet to load your nodes into the network,
-     * this method will put the X and Y positions of all nodes into that dataset.
-     * If you're loading your nodes from a database and have this dynamically coupled with the DataSet,
-     * you can use this to stablize your network once, then save the positions in that database
-     * through the DataSet so the next time you load the nodes, stabilization will be near instantaneous.
-     *
-     * If the nodes are still moving and you're using dynamic smooth edges (which is on by default),
-     * you can use the option stabilization.onlyDynamicEdges in the physics module to improve initialization time.
-     *
-     * This method does not support clustering.
-     * At the moment it is not possible to cache positions when using clusters since
-     * they cannot be correctly initialized from just the positions.
-     */
-    storePositions(): void;
-
-    /**
-     * You can use this to programatically move a node.
-     * The supplied x and y positions have to be in canvas space!
-     *
-     * @param nodeId the node that will be moved
-     * @param x new canvas space x position
-     * @param y new canvas space y position
-     */
-    moveNode(nodeId: IdType, x: number, y: number): void;
-
-    /**
-     * Returns a bounding box for the node including label.
-     *
-     */
-    getBoundingBox(nodeId: IdType): BoundingBox;
-
-    /**
-     * Returns an array of nodeIds of the all the nodes that are directly connected to this node.
-     * If you supply an edgeId, vis will first match the id to nodes.
-     * If no match is found, it will search in the edgelist and return an array: [fromId, toId].
-     *
-     * @param nodeOrEdgeId a node or edge id
-     */
-    getConnectedNodes(nodeOrEdgeId: IdType, direction?: DirectionType): IdType[] | Array<{ fromId: IdType, toId: IdType }>;
-
-    /**
-     * Returns an array of edgeIds of the edges connected to this node.
-     *
-     * @param nodeId the node id
-     */
-    getConnectedEdges(nodeId: IdType): IdType[];
-
-    /**
-     * Start the physics simulation.
-     * This is normally done whenever needed and is only really useful
-     * if you stop the simulation yourself and wish to continue it afterwards.
-     */
-    startSimulation(): void;
-
-    /**
-     * This stops the physics simulation and triggers a stabilized event.
-     * Tt can be restarted by dragging a node,
-     * altering the dataset or calling startSimulation().
-     */
-    stopSimulation(): void;
-
-    /**
-     * You can manually call stabilize at any time.
-     * All the stabilization options above are used.
-     * You can optionally supply the number of iterations it should do.
-     *
-     * @param [iterations] the number of iterations it should do
-     */
-    stabilize(iterations?: number): void;
-
-    /**
-     * Returns an object with selected nodes and edges ids.
-     *
-     */
-    getSelection(): { nodes: IdType[], edges: IdType[] };
-
-    /**
-     * Returns an array of selected node ids like so:
-     * [nodeId1, nodeId2, ..].
-     *
-     */
-    getSelectedNodes(): IdType[];
-
-    /**
-     * Returns an array of selected edge ids like so:
-     * [edgeId1, edgeId2, ..].
-     *
-     */
-    getSelectedEdges(): IdType[];
-
-    /**
-     * Returns a nodeId or undefined.
-     * The DOM positions are expected to be in pixels from the top left corner of the canvas.
-     *
-     */
-    getNodeAt(position: Position): IdType;
-
-    /**
-     * Returns a edgeId or undefined.
-     * The DOM positions are expected to be in pixels from the top left corner of the canvas.
-     *
-     */
-    getEdgeAt(position: Position): IdType;
-
-    /**
-     * Selects the nodes corresponding to the id's in the input array.
-     * If highlightEdges is true or undefined, the neighbouring edges will also be selected.
-     * This method unselects all other objects before selecting its own objects. Does not fire events.
-     *
-     */
-    selectNodes(nodeIds: IdType[], highlightEdges?: boolean): void;
-
-    /**
-     * Selects the edges corresponding to the id's in the input array.
-     * This method unselects all other objects before selecting its own objects.
-     * Does not fire events.
-     *
-     */
-    selectEdges(edgeIds: IdType[]): void;
-
-    /**
-     * Sets the selection.
-     * You can also pass only nodes or edges in selection object.
-     *
-     */
-    setSelection(selection: { nodes?: IdType[], edges?: IdType[] }, options?: SelectionOptions): void;
-
-    /**
-     * Unselect all objects.
-     * Does not fire events.
-     */
-    unselectAll(): void;
-
-    /**
-     * Returns the current scale of the network.
-     * 1.0 is comparible to 100%, 0 is zoomed out infinitely.
-     *
-     * @returns the current scale of the network
-     */
-    getScale(): number;
-
-    /**
-     * Returns the current central focus point of the view in the form: { x: {Number}, y: {Number} }
-     *
-     * @returns the view position;
-     */
-    getViewPosition(): Position;
-
-    /**
-     * Zooms out so all nodes fit on the canvas.
-     *
-     * @param [options] All options are optional for the fit method
-     */
-    fit(options?: FitOptions): void;
-
-    /**
-     * You can focus on a node with this function.
-     * What that means is the view will lock onto that node, if it is moving, the view will also move accordingly.
-     * If the view is dragged by the user, the focus is broken. You can supply options to customize the effect.
-     *
-     */
-    focus(nodeId: IdType, options?: FocusOptions_2): void;
-
-    /**
-     * You can animate or move the camera using the moveTo method.
-     *
-     */
-    moveTo(options: MoveToOptions): void;
-
-    /**
-     * Programatically release the focussed node.
-     */
-    releaseNode(): void;
-
-    /**
-     * If you use the configurator, you can call this method to get an options object that contains
-     * all differences from the default options caused by users interacting with the configurator.
-     *
-     */
-    getOptionsFromConfigurator(): any;
-}
-
-declare const network: {
-    Images: any;
-    dotparser: any;
-    gephiParser: typeof gephiParser;
-    allOptions: typeof allOptions;
-    convertDot: any;
-    convertGephi: typeof gephiParser.parseGephi;
-};
-
-declare type NetworkEvents =
-'click' |
-'doubleClick' |
-'oncontext' |
-'hold' |
-'release' |
-'select' |
-'selectNode' |
-'selectEdge' |
-'deselectNode' |
-'deselectEdge' |
-'dragStart' |
-'dragging' |
-'dragEnd' |
-'controlNodeDragging' |
-'controlNodeDragEnd' |
-'hoverNode' |
-'blurNode' |
-'hoverEdge' |
-'blurEdge' |
-'zoom' |
-'showPopup' |
-'hidePopup' |
-'startStabilizing' |
-'stabilizationProgress' |
-'stabilizationIterationsDone' |
-'stabilized' |
-'resize' |
-'initRedraw' |
-'beforeDrawing' |
-'afterDrawing' |
-'animationFinished' |
-'configChange';
-
 declare class NFW {
     private readonly topo;
-    readonly nodeId: vis_2.IdType;
+    readonly nodeId: IdType;
     /** NDNts forwarder */
     fw: Forwarder;
     /** Local face for content store etc */
@@ -5491,7 +3314,7 @@ declare class NFW {
     private nodeExtra;
     /** Packet capture */
     private shark;
-    constructor(topo: Topology, nodeId: vis_2.IdType);
+    constructor(topo: Topology, nodeId: IdType);
     node(): INode;
     nodeUpdated(): void;
     /** Update color of current node */
@@ -5504,13 +3327,11 @@ declare class NFW {
     private expressInterest;
     private getConnection;
     strsFIB(): string[];
-    getEndpoint(opts?: {
-        secure?: boolean;
-    }): Endpoint;
+    getEndpoint(opts?: {}): Endpoint;
 }
 
 /** Create Encodable from non-negative integer. */
-declare function NNI(n: number | bigint, { len, unsafe, }?: Options<Extract<Len, keyof typeof EncodeNniClass>>): Encodable;
+declare function NNI(n: number | bigint, { len, unsafe, }?: Options): Encodable;
 
 declare namespace NNI {
     /** Determine if len is a valid length of encoded NNI. */
@@ -5528,140 +3349,7 @@ declare namespace NNI {
     /** Error if n exceeds [0,max] range. */
     function constrain(n: number, typeName: string, max: number): number;
     /** Error if n exceeds [min,max] range. */
-    function constrain(n: number, typeName: string, min: number, max?: number): number;
-}
-
-declare class Nni1 {
-    private readonly n;
-    constructor(n: number);
-    encodeTo(encoder: Encoder): void;
-}
-
-declare class Nni2 {
-    private readonly n;
-    constructor(n: number);
-    encodeTo(encoder: Encoder): void;
-}
-
-declare class Nni4 {
-    private readonly n;
-    constructor(n: number);
-    encodeTo(encoder: Encoder): void;
-}
-
-declare class Nni8Number {
-    private readonly n;
-    constructor(n: number);
-    encodeTo(encoder: Encoder): void;
-}
-
-declare interface Node_2 extends NodeOptions {
-    id?: IdType;
-}
-
-declare interface NodeChosen {
-    node: boolean | NodeChosenNodeFunction;
-    label: boolean | NodeChosenLabelFunction;
-}
-
-declare type NodeChosenLabelFunction = (
-values: ChosenLabelValues,
-id: IdType,
-selected: boolean,
-hovered: boolean
-) => void;
-
-declare type NodeChosenNodeFunction = (
-values: ChosenNodeValues,
-id: IdType,
-selected: boolean,
-hovered: boolean
-) => void;
-
-declare interface NodeOptions {
-    borderWidth?: number;
-
-    borderWidthSelected?: number;
-
-    brokenImage?: string;
-
-    color?: string | Color;
-
-    chosen?: boolean | NodeChosen;
-
-    opacity?: number;
-
-    fixed?: boolean | {
-        x?: boolean,
-        y?: boolean,
-    };
-
-    font?: string | Font;
-
-    group?: string;
-
-    hidden?: boolean;
-
-    icon?: {
-        face?: string,
-        code?: string,
-        size?: number,  // 50,
-        color?: string,
-        weight?: number | string,
-    };
-
-    image?: string | Image_2;
-
-    imagePadding?: number | ImagePadding;
-
-    label?: string;
-
-    labelHighlightBold?: boolean;
-
-    level?: number;
-
-    margin?: {
-        top?: number;
-        right?: number;
-        bottom?: number;
-        left?: number;
-    };
-
-    mass?: number;
-
-    physics?: boolean;
-
-    scaling?: OptionsScaling;
-
-    shadow?: boolean | OptionsShadow;
-
-    shape?: string;
-
-    shapeProperties?: {
-        borderDashes?: boolean | number[], // only for borders
-        borderRadius?: number,     // only for box shape
-        interpolation?: boolean,  // only for image and circularImage shapes
-        useImageSize?: boolean,  // only for image and circularImage shapes
-        useBorderWithImage?: boolean,  // only for image shape
-        coordinateOrigin?: string  // only for image and circularImage shapes
-    };
-
-    size?: number;
-
-    title?: string | HTMLElement;
-
-    value?: number;
-
-    /**
-     * If false, no widthConstraint is applied. If a number is specified, the minimum and maximum widths of the node are set to the value.
-     * The node's label's lines will be broken on spaces to stay below the maximum and the node's width
-     * will be set to the minimum if less than the value.
-     */
-    widthConstraint?: number | boolean | { minimum?: number, maximum?: number };
-
-    x?: number;
-
-    y?: number;
+    function constrain(n: number, typeName: string, min: number, max: number): number;
 }
 
 /** Encrypter and decrypter that do nothing. */
@@ -5676,97 +3364,12 @@ declare const noopSigning: Signer & Verifier;
  */
 declare const nullSigner: Signer;
 
-/**
- * The passed values will be used as the limits and the initial position of a
- * slider.
- *
- * @remarks
- * ```typescript
- * readonly [
- *   initialValue: number,
- *   min: number,
- *   max: number,
- *   step: number
- * ]
- * ```
- */
-declare type NumberInput = readonly [number, number, number, number];
-
-/**
- * Options for the openCluster function of Network.
- */
-declare interface OpenClusterOptions {
-    /**
-     * A function that can be used to manually position the nodes after the cluster is opened.
-     * The containedNodesPositions contain the positions of the nodes in the cluster at the
-     * moment they were clustered. This function is expected to return the newPositions,
-     * which can be the containedNodesPositions (altered) or a new object.
-     * This has to be an object with keys equal to the nodeIds that exist in the
-     * containedNodesPositions and an {x:x,y:y} position object.
-     *
-     * For all nodeIds not listed in this returned object,
-     * we will position them at the location of the cluster.
-     * This is also the default behaviour when no releaseFunction is defined.
-     */
-    releaseFunction(
-    clusterPosition: Position,
-    containedNodesPositions: { [nodeId: string]: Position }): { [nodeId: string]: Position };
-}
-
 /** Nullable id type. */
-declare type OptId = undefined | null | Id_2;
+declare type OptId = undefined | null | Id;
 
-declare const option: {
-    /**
-     * Convert a value into a boolean.
-     *
-     * @param value - Value to be converted intoboolean, a function will be executed as `(() => unknown)`.
-     * @param defaultValue - If the value or the return value of the function == null then this will be returned.
-     *
-     * @returns Corresponding boolean value, if none then the default value, if none then null.
-     */
-    asBoolean(value: unknown, defaultValue?: boolean | undefined): boolean | null;
-    /**
-     * Convert a value into a number.
-     *
-     * @param value - Value to be converted intonumber, a function will be executed as `(() => unknown)`.
-     * @param defaultValue - If the value or the return value of the function == null then this will be returned.
-     *
-     * @returns Corresponding **boxed** number value, if none then the default value, if none then null.
-     */
-    asNumber(value: unknown, defaultValue?: number | undefined): number | null;
-    /**
-     * Convert a value into a string.
-     *
-     * @param value - Value to be converted intostring, a function will be executed as `(() => unknown)`.
-     * @param defaultValue - If the value or the return value of the function == null then this will be returned.
-     *
-     * @returns Corresponding **boxed** string value, if none then the default value, if none then null.
-     */
-    asString(value: unknown, defaultValue?: string | undefined): string | null;
-    /**
-     * Convert a value into a size.
-     *
-     * @param value - Value to be converted intosize, a function will be executed as `(() => unknown)`.
-     * @param defaultValue - If the value or the return value of the function == null then this will be returned.
-     *
-     * @returns Corresponding string value (number + 'px'), if none then the default value, if none then null.
-     */
-    asSize(value: unknown, defaultValue?: string | undefined): string | null;
-    /**
-     * Convert a value into a DOM Element.
-     *
-     * @param value - Value to be converted into DOM Element, a function will be executed as `(() => unknown)`.
-     * @param defaultValue - If the value or the return value of the function == null then this will be returned.
-     *
-     * @returns The DOM Element, if none then the default value, if none then null.
-     */
-    asElement<T extends Node>(value: T | (() => T | undefined) | undefined, defaultValue: T): T | null;
-};
-
-declare interface Options<LenT = Len> {
+declare interface Options {
     /** If set, use/enforce specific TLV-LENGTH. */
-    len?: LenT;
+    len?: Len;
     /** If true, allow approximate integers. */
     unsafe?: boolean;
 }
@@ -5774,87 +3377,6 @@ declare interface Options<LenT = Len> {
 declare interface Options_2 extends ConsumerOptions, ProducerOptions {
     fw?: Forwarder;
 }
-
-declare interface Options_3 {
-    autoResize?: boolean;
-
-    width?: string;
-
-    height?: string;
-
-    locale?: string;
-
-    locales?: Locales;
-
-    clickToUse?: boolean;
-
-    configure?: any; // https://visjs.github.io/vis-network/docs/network/configure.html
-
-    edges?: EdgeOptions;
-
-    nodes?: NodeOptions;
-
-    groups?: any;
-
-    layout?: any; // https://visjs.github.io/vis-network/docs/network/layout.html
-
-    interaction?: any; // https://visjs.github.io/vis-network/docs/network/interaction.html?keywords=edges
-
-    manipulation?: any; // https://visjs.github.io/vis-network/docs/network/manipulation.html
-
-    physics?: any; // https://visjs.github.io/vis-network/docs/network/physics.html
-}
-
-declare type OptionsConfig = {
-    readonly __type__: {
-        readonly object: "object";
-    } & OptionsType;
-} & {
-    readonly [Key in string]: OptionsConfig | OptionsType;
-};
-
-declare interface OptionsScaling {
-    min?: number;
-    max?: number;
-    label?: boolean | {
-        enabled?: boolean,
-        min?: number,
-        max?: number,
-        maxVisible?: number,
-        drawThreshold?: number
-    };
-    customScalingFunction?(min?: number, max?: number, total?: number, value?: number): number;
-}
-
-declare interface OptionsShadow {
-    enabled?: boolean;
-    color?: string;
-    size?: number;
-    x?: number;
-    y?: number;
-}
-
-declare interface OptionsType {
-    readonly any?: "any";
-    readonly array?: "array";
-    readonly boolean?: "boolean";
-    readonly dom?: "dom";
-    readonly function?: "function";
-    readonly number?: "number";
-    readonly object?: "object";
-    readonly string?: "string" | readonly string[];
-    readonly undefined?: "undefined";
-}
-
-/**
- * This function takes string color in hex or RGB format and adds the opacity, RGBA is passed through unchanged.
- *
- * @param color - The color string (hex, RGB, RGBA).
- * @param opacity - The new opacity.
- *
- * @returns RGBA string, for example 'rgba(255, 0, 127, 0.3)'.
- */
-declare function overrideOpacity(color: string, opacity: number): string;
 
 declare namespace packet {
     export {
@@ -5868,6 +3390,9 @@ declare namespace packet {
         ParamsDigest,
         NameLike,
         Name,
+        NameMap,
+        NameMultiMap,
+        NameMultiSet,
         LLEncrypt,
         LLDecrypt,
         Encrypter,
@@ -5928,26 +3453,6 @@ declare class ParamsDigestComp extends DigestComp {
 /** Parse a certificate name into fields. */
 declare function parseCertName(name: Name): CertNameFields;
 
-declare function parseColor(inputColor: string): FullColorObject;
-
-declare function parseColor(inputColor: FullColorObject): FullColorObject;
-
-declare function parseColor(inputColor: ColorObject_2): ColorObject_2;
-
-declare function parseColor(inputColor: ColorObject_2, defaultColor: FullColorObject): FullColorObject;
-
-declare const parseDOTNetwork: any;
-
-/**
- * Convert Gephi to Vis.
- *
- * @param gephiJSON - The parsed JSON data in Gephi format.
- * @param optionsObj - Additional options.
- *
- * @returns The converted data ready to be used in Vis.
- */
-declare function parseGephi(gephiJSON: GephiData, optionsObj?: GephiParseOptions): VisData;
-
 /** Parse a key name into fields. */
 declare function parseKeyName(name: Name): KeyNameFields;
 
@@ -5963,27 +3468,6 @@ declare const PointSizes: {
     "P-384": number;
     "P-521": number;
 };
-
-declare const Popup: any;
-
-declare interface Position {
-    x: number;
-    y: number;
-}
-
-/**
- * this prepares the JSON container for allocating SVG elements
- * @param {Object} JSONcontainer
- * @private
- */
-declare function prepareElements(JSONcontainer: any): void
-
-/**
- * Cancels the event's default action if it is cancelable, without stopping further propagation of the event.
- *
- * @param event - The event whose default action should be prevented.
- */
-declare function preventDefault(event: Event | undefined): void;
 
 /** Pretty-print TLV-TYPE number. */
 declare function printTT(tlvType: number): string;
@@ -6025,7 +3509,7 @@ declare interface ProducerOptions {
     /** Description for debugging purpose. */
     describe?: string;
     /** AbortSignal that allows closing the producer via AbortController. */
-    signal?: AbortSignal_2 | globalThis.AbortSignal;
+    signal?: AbortSignal;
     /**
      * Whether routes registered by producer would cause @ndn/fw internal FIB to stop matching toward
      * shorter prefixes. Default is true.
@@ -6075,12 +3559,11 @@ declare class ProviderBrowser implements ForwardingProvider {
     contentStoreSize: number;
     latencySlowdown: number;
     private scheduledRouteRefresh;
-    security: SecurityController;
     constructor();
     initialize: () => Promise<void>;
     initializePostNetwork: () => Promise<void>;
-    edgeUpdated: (edge?: IEdge | undefined) => Promise<void>;
-    nodeUpdated: (node?: INode | undefined) => Promise<void>;
+    edgeUpdated: (edge?: IEdge) => Promise<void>;
+    nodeUpdated: (node?: INode) => Promise<void>;
     onNetworkClick: () => Promise<void>;
     sendPingInterest(from: INode, to: INode): void;
     sendInterest(name: string, node: INode): void;
@@ -6110,10 +3593,6 @@ declare interface PSyncCodec extends Readonly<PSyncCodec.Parameters>, IbltCodec 
 declare namespace PSyncCodec {
     type Compression = Compression;
     interface Parameters {
-        /** Version convention for SyncData. */
-        versionConvention: NamingConvention<number, number>;
-        /** Segment number convention for SyncData. */
-        segmentNumConvention: NamingConvention<number, number>;
         /** Compression method for IBLT in name component. */
         ibltCompression: Compression;
         /**
@@ -6143,7 +3622,7 @@ declare class PSyncCore {
     readonly ibltParams: IBLT.PreparedParameters;
     readonly threshold: number;
     readonly joinPrefixSeqNum: (ps: PSyncCore.PrefixSeqNum) => PSyncCore.PrefixSeqNumEncoded;
-    readonly nodes: Map<string, PSyncNode>;
+    readonly nodes: NameMap<PSyncNode>;
     readonly keys: Map<number, PSyncNode>;
     readonly iblt: IBLT;
     get(prefix: Name): PSyncNode | undefined;
@@ -6255,8 +3734,7 @@ declare const PSyncFull_base: new () => TypedEventEmitter<Events>;
 declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
     readonly id: Name;
-    private readonly prefixHex;
-    constructor(c: PSyncCore, id: Name, prefixHex: string);
+    constructor(c: PSyncCore, id: Name);
     get prefix(): Name;
     get key(): number;
     private seq;
@@ -6340,7 +3818,7 @@ declare namespace PSyncPartialPublisher {
     }
 }
 
-declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_5>;
+declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_4>;
 
 /** PSync - PartialSync subscriber. */
 declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
@@ -6363,7 +3841,6 @@ declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base impleme
     /** Stop the protocol operation. */
     close(): void;
     subscribe(topic: PSyncPartialSubscriber.TopicInfo): Sub;
-    private handleAddTopic;
     private handleRemoveTopic;
     private scheduleInterest;
     private sendInterest;
@@ -6408,23 +3885,19 @@ declare namespace PSyncPartialSubscriber {
     }
 }
 
-declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_6>;
+declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_5>;
 
 /** Use zlib compression with PSync. */
 declare const PSyncZlib: PSyncCodec.Compression;
 
+declare interface PublicFields extends Omit<Fields_2, "paramsPortion" | "signedPortion"> {
+}
+
+declare interface PublicFields_2 extends Omit<Fields, "signedPortion" | "topTlv" | "topTlvDigest"> {
+}
+
 /** Named public key. */
 declare type PublicKey = Key<"public">;
-
-/**
- * Pure version of deepObjectAssign, it doesn't modify any of it's arguments.
- *
- * @param base - The base object that fullfils the whole interface T.
- * @param updates - Updates that may change or delete props.
- *
- * @returns A brand new instance with all the supplied objects deeply merged.
- */
-declare function pureDeepObjectAssign<T>(base: T, ...updates: Assignable<T>[]): T;
 
 /**
  * A queue.
@@ -6457,7 +3930,6 @@ declare class Queue<T = never> {
      *
      * @param object - The object to be extended.
      * @param options - Additional options.
-     *
      * @returns The created queue.
      */
     static extend<O extends {
@@ -6531,13 +4003,6 @@ declare class RandomIvGen extends IvGen {
     protected generate(): Uint8Array;
 }
 
-/**
- * Remove everything in the DOM object.
- *
- * @param DOMobject - Node whose child nodes will be recursively deleted.
- */
-declare function recursiveDOMDelete(DOMobject: Node | null | undefined): void;
-
 /** Indicate an Interest has been rejected. */
 declare class RejectInterest implements FwPacket<Interest> {
     reject: RejectInterest.Reason;
@@ -6550,45 +4015,13 @@ declare namespace RejectInterest {
     type Reason = "cancel" | "expire";
 }
 
-/**
- * Remove a className from the given elements style.
- *
- * @param elem - The element from which the classes will be removed.
- * @param classNames - Space separated list of classes.
- */
-declare function removeClassName(elem: Element, classNames: string): void;
-
-/**
- * Remove a string with css styles from an element.
- *
- * @param element - The element from which styles should be removed.
- * @param cssText - The styles to be removed.
- */
-declare function removeCssText(element: HTMLElement, cssText: string): void;
-
-/**
- * Remove an event listener from an element.
- *
- * @param element - The element to bind the event listener to.
- * @param action - Same as Element.removeEventListener(action, —, —).
- * @param listener - Same as Element.removeEventListener(—, listener, —).
- * @param useCapture - Same as Element.removeEventListener(—, —, useCapture).
- */
-declare function removeEventListener_2<E extends Element>(element: E, action: Parameters<E["removeEventListener"]>[0], listener: Parameters<E["removeEventListener"]>[1], useCapture?: Parameters<E["removeEventListener"]>[2]): void;
-
 /** Remove event payload. */
 declare interface RemoveEventPayload<Item, IdProp extends string> {
     /** Ids of removed items. */
-    items: Id_2[];
+    items: Id[];
     /** Items as they were before their removal. */
     oldData: FullItem<Item, IdProp>[];
 }
-
-/**
- * Ensures that all elements are removed first up so they can be recreated cleanly
- * @param {Object} JSONcontainer
- */
-declare function resetElements(JSONcontainer: any): void
 
 /** A function to generate retx intervals. */
 declare type RetxGenerator = (interestLifetime: number) => Iterable<number>;
@@ -6637,97 +4070,6 @@ declare interface RetxOptions {
  */
 declare type RetxPolicy = RetxOptions | RetxGenerator | number;
 
-/**
- * Red, Green, Blue.
- */
-declare interface RGB {
-    /**
-     * Red \<0, 255\> integer.
-     */
-    r: number;
-    /**
-     * Green \<0, 255\> integer.
-     */
-    g: number;
-    /**
-     * Blue \<0, 255\> integer.
-     */
-    b: number;
-}
-
-/**
- * Red, Green, Blue, Alpha.
- */
-declare interface RGBA {
-    /**
-     * Red \<0, 255\> integer.
-     */
-    r: number;
-    /**
-     * Green \<0, 255\> integer.
-     */
-    g: number;
-    /**
-     * Blue \<0, 255\> integer.
-     */
-    b: number;
-    /**
-     * Alpha \<0, 1\>.
-     */
-    a: number;
-}
-
-/**
- * Convert RGB \<0, 255\> into hex color string.
- *
- * @param red - Red channel.
- * @param green - Green channel.
- * @param blue - Blue channel.
- *
- * @returns Hex color string (for example: '#0acdc0').
- */
-declare function RGBToHex(red: number, green: number, blue: number): string;
-
-/**
- * Convert RGB \<0, 255\> into HSV object.
- *
- * @remarks
- * {@link http://www.javascripter.net/faq/rgb2hsv.htm}
- *
- * @param red - Red channel.
- * @param green - Green channel.
- * @param blue - Blue channel.
- *
- * @returns HSV color object.
- */
-declare function RGBToHSV(red: number, green: number, blue: number): HSV;
-
-/**
- * Seedable, fast and reasonably good (not crypto but more than okay for our
- * needs) random number generator.
- *
- * @remarks
- * Adapted from {@link https://web.archive.org/web/20110429100736/http://baagoe.com:80/en/RandomMusings/javascript}.
- * Original algorithm created by Johannes Baagøe \<baagoe\@baagoe.com\> in 2010.
- */
-/**
- * Random number generator.
- */
-declare interface RNG {
-    /** Returns \<0, 1). Faster than [[fract53]]. */
-    (): number;
-    /** Returns \<0, 1). Provides more precise data. */
-    fract53(): number;
-    /** Returns \<0, 2^32). */
-    uint32(): number;
-    /** The algorithm gehind this instance. */
-    algorithm: string;
-    /** The seed used to seed this instance. */
-    seed: Mashable[];
-    /** The version of this instance. */
-    version: string;
-}
-
 /** Sha256WithRsa signing algorithm. */
 declare const RSA: SigningAlgorithm<{}, true, RSA.GenParams>;
 
@@ -6735,7 +4077,7 @@ declare namespace RSA {
     interface GenParams {
         modulusLength?: RsaModulusLength;
         /** Import PKCS#8 private key and SPKI public key instead of generating. */
-        importPkcs8?: [Uint8Array, Uint8Array];
+        importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
     }
 }
 
@@ -6754,95 +4096,14 @@ declare interface Rule {
     check: (si: SigInfo, state: KeyState) => () => void;
 }
 
+/** Yield all values from an iterable but catch any error. */
+declare function safeIter<T>(iterable: AsyncIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
+
 /** Named secret key. */
 declare type SecretKey = Key<"secret">;
 
-declare class SecurityController {
-    private topo;
-    private rootKeychain;
-    private rootKeys;
-    private issuerKeys;
-    private refreshTimer;
-    readonly nodes: vis_2.DataSet<vis_2.Node, "id">;
-    readonly edges: vis_2.DataSet<vis_2.Edge, "id">;
-    network: vis_2.Network;
-    schemaText: string;
-    constructor(topo: Topology);
-    private addCertNode;
-    private refresh;
-    /** Compute static routes */
-    computeSecurity: () => Promise<void>;
-    /** Initialize the network */
-    createNetwork(container: HTMLElement): void;
-    fitLazy(): void;
-}
-
-declare interface SelectionOptions {
-    unselectAll?: boolean;
-    highlightEdges?: boolean;
-}
-
-/**
- * This recursively redirects the prototype of JSON objects to the referenceObject.
- * This is used for default options.
- *
- * @param fields - Names of properties to be bridged.
- * @param referenceObject - The original object.
- *
- * @returns A new object inheriting from the referenceObject.
- */
-declare function selectiveBridgeObject<F extends string, V>(fields: F[], referenceObject: Record<F, V>): Record<F, V> | null;
-
-/**
- * Extend object a with selected properties of object b.
- * Only properties with defined values are copied.
- *
- * @remarks
- * Previous version of this routine implied that multiple source objects could
- * be used; however, the implementation was **wrong**. Since multiple (\>1)
- * sources weren't used anywhere in the `vis.js` code, this has been removed
- *
- * @param props - Names of first-level properties to copy over.
- * @param a - Target object.
- * @param b - Source object.
- * @param allowDeletion - If true, delete property in a if explicitly set to null in b.
- *
- * @returns Argument a.
- */
-declare function selectiveDeepExtend(props: string[], a: any, b: any, allowDeletion?: boolean): any;
-
-/**
- * Extend object a with selected properties of object b or a series of objects.
- *
- * @remarks
- * Only properties with defined values are copied.
- *
- * @param props - Properties to be copied to a.
- * @param a - The target.
- * @param others - The sources.
- *
- * @returns Argument a.
- */
-declare function selectiveExtend(props: string[], a: any, ...others: any[]): any;
-
-/**
- * Extend object `a` with properties of object `b`, ignoring properties which
- * are explicitly specified to be excluded.
- *
- * @remarks
- * The properties of `b` are considered for copying. Properties which are
- * themselves objects are are also extended. Only properties with defined
- * values are copied.
- *
- * @param propsToExclude - Names of properties which should *not* be copied.
- * @param a - Object to extend.
- * @param b - Object to take properties from for extension.
- * @param allowDeletion - If true, delete properties in a that are explicitly
- * set to null in b.
- *
- * @returns Argument a.
- */
-declare function selectiveNotDeepExtend(propsToExclude: string[], a: any, b: any, allowDeletion?: boolean): any;
+/** SHA256 digest. */
+declare function sha256(input: Uint8Array): Promise<Uint8Array>;
 
 /** SignatureInfo on Interest or Data. */
 declare class SigInfo {
@@ -7032,7 +4293,7 @@ declare namespace SignedInterestPolicy {
     function SeqNum(opts?: SeqNumOptions): Rule;
 }
 
-/** High level signer, such as a private key. */
+/** High level signer, such as a named private key. */
 declare interface Signer {
     /** Sign a packet. */
     sign: (pkt: Signer.Signable) => Promise<void>;
@@ -7045,7 +4306,7 @@ declare namespace Signer {
      * Put SigInfo on packet if it does not exist.
      * @param pkt target packet.
      * @param sigType optionally set sigType.
-     * @param keyLocator optionally set keyLocator; false to unset KeyLocator.
+     * @param keyLocator optionally set keyLocator; false to delete KeyLocator.
      */
     function putSigInfo(pkt: PacketWithSignature, sigType?: number, keyLocator?: KeyLocator.CtorArg | false): SigInfo;
 }
@@ -7057,7 +4318,18 @@ declare interface SigningAlgorithm<I = any, Asym extends boolean = any, G = any>
     makeLLVerify: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLVerify, (key: CryptoAlgorithm.SecretKey<I>) => LLVerify, unknown>;
 }
 
-declare const SigningAlgorithmList: SigningAlgorithm[];
+/**
+ * A full list of signing algorithms.
+ * This list currently contains ECDSA, RSA, HMAC, and Ed25519.
+ */
+declare const SigningAlgorithmListFull: readonly SigningAlgorithm[];
+
+/**
+ * A slim list of signing algorithms.
+ * This list currently contains ECDSA.
+ * If you need more algorithms, explicitly import them or use SigningAlgorithmListFull.
+ */
+declare const SigningAlgorithmListSlim: readonly SigningAlgorithm[];
 
 declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [SigningAlgorithm<I, Asym, G>, G?] : [SigningAlgorithm<I, Asym, G>, G];
 
@@ -7066,12 +4338,14 @@ declare const SigType: {
     Sha256WithRsa: number;
     Sha256WithEcdsa: number;
     HmacWithSha256: number;
+    Ed25519: number;
     Null: number;
 };
 
+/** KV store where each key is a Name. */
 declare abstract class StoreBase<T> {
     private readonly provider;
-    private throttle;
+    private readonly mutex;
     constructor(provider: StoreProvider<T>);
     get canSClone(): boolean;
     /** List item names. */
@@ -7091,10 +4365,13 @@ declare interface StoredCert {
     certBuffer: Uint8Array | string;
 }
 
-/** Underlying storage provider. */
+/**
+ * KV store provider where each key is a string.
+ * Methods are called one at a time.
+ */
 declare interface StoreProvider<T> {
     /**
-     * Indicate whether the storage provider supports the structured clone algorithm.
+     * Indicate whether the store provider supports the structured clone algorithm.
      * If false, values must be serialized as JSON.
      */
     readonly canSClone: boolean;
@@ -7122,10 +4399,10 @@ declare interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends
 }
 
 declare namespace Subscription {
-    interface Events<Update> {
+    type Events<Update> = {
         /** Emitted when a subscription update is received. */
         update: (update: Update) => void;
-    }
+    };
 }
 
 /** StateVectorSync participant. */
@@ -7140,11 +4417,11 @@ declare class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
     private readonly signer;
     private readonly verifier?;
     private readonly producer;
-    /** Own version vector. */
+    /** Own state vector. */
     private readonly own;
     /**
      * In steady state, undefined.
-     * In suppression state, aggregated version vector of incoming sync Interests.
+     * In suppression state, aggregated state vector of incoming sync Interests.
      */
     private aggregated?;
     /** Sync Interest timer. */
@@ -7201,18 +4478,17 @@ declare namespace SvSync {
          */
         verifier?: Verifier;
     }
-    type IDLike = string | Uint8Array | ID;
+    type IDLike = ID | NameLike;
     class ID {
-        constructor(input: IDLike, hex?: string);
-        readonly value: Uint8Array;
-        readonly hex: string;
+        constructor(input: IDLike);
+        readonly name: Name;
         get text(): string;
     }
     interface Node extends SyncNode<ID> {
     }
 }
 
-declare const SvSync_base: new () => TypedEventEmitter<Events_7>;
+declare const SvSync_base: new () => TypedEventEmitter<Events_6>;
 
 declare namespace sync {
     export {
@@ -7268,10 +4544,10 @@ declare interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.
 }
 
 declare namespace SyncProtocol {
-    interface Events<ID> {
+    type Events<ID> = {
         /** Emitted when a node is updated, i.e. has new sequence numbers. */
         update: (update: SyncUpdate<ID>) => void;
-    }
+    };
 }
 
 declare class SyncpsCodec {
@@ -7453,7 +4729,7 @@ declare namespace SyncpsPubsub {
     type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
-declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_8>;
+declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_7>;
 
 /** A received update regarding a node. */
 declare class SyncUpdate<ID = any> {
@@ -7475,28 +4751,10 @@ declare class SyncUpdate<ID = any> {
     seqNums(): Iterable<number>;
 }
 
-/**
- * The passed text will be used as the initial value. Any text will be accepted
- * afterwards.
- */
-declare type TextInput = string;
+/** AbortSignal.timeout ponyfill. */
+declare const timeoutAbortSignal: (time: number) => AbortSignal;
 
-/**
- * Throttle the given function to be only executed once per animation frame.
- *
- * @param fn - The original function.
- *
- * @returns The throttled function.
- */
-declare function throttle(fn: () => void): () => void;
-
-/**
- * If true (default) or an Object, the range is animated smoothly to the new window.
- * An object can be provided to specify duration and easing function.
- * Default duration is 500 ms, and default easing function is 'easeInOutQuad'.
- */
-declare type TimelineAnimationType = boolean | AnimationOptions;
-
+/** Timing-safe equality comparison. */
 declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
 
 declare namespace tlv {
@@ -7512,31 +4770,18 @@ declare namespace tlv {
         Extension,
         ExtensionRegistry,
         NNI,
-        printTT,
-        toHex,
-        fromHex,
-        toUtf8,
-        fromUtf8
+        printTT
     }
 }
 export { tlv }
 
-/**
- * Convert an object into an array: all objects properties are put into the array. The resulting array is unordered.
- *
- * @param o - Object that contains the properties and methods.
- *
- * @returns An array of unordered values.
- */
-declare const toArray: {
-    <T>(o: {
-        [s: string]: T;
-    } | ArrayLike<T>): T[];
-    (o: {}): any[];
-};
-
 /** Convert byte array to upper-case hexadecimal string. */
 declare function toHex(buf: Uint8Array): string;
+
+declare namespace toHex {
+    /** Conversion table from byte (0x00~0xFF) to upper-case hexadecimal. */
+    const TABLE: Readonly<Record<number, string>>;
+}
 
 /**
  * Get key name from key name or certificate name.
@@ -7544,26 +4789,15 @@ declare function toHex(buf: Uint8Array): string;
  */
 declare function toKeyName(name: Name): Name;
 
-/**
- * Get the top most property value from a pile of objects.
- *
- * @param pile - Array of objects, no required format.
- * @param accessors - Array of property names.
- * For example `object['foo']['bar']` → `['foo', 'bar']`.
- *
- * @returns Value of the property with given accessors path from the first pile item where it's not undefined.
- */
-declare function topMost(pile: any, accessors: any): any;
-
 declare class Topology {
     provider: ForwardingProvider;
     readonly DEFAULT_LINK_COLOR = "#3583ea";
     readonly DEFAULT_NODE_COLOR = "#a4b7fc";
     readonly SELECTED_NODE_COLOR = "#4ee44e";
     readonly ACTIVE_NODE_COLOR = "#ffcccb";
-    readonly nodes: vis_2.DataSet<INode, "id">;
-    readonly edges: vis_2.DataSet<IEdge, "id">;
-    network: vis_2.Network;
+    readonly nodes: DataSet<INode, "id">;
+    readonly edges: DataSet<IEdge, "id">;
+    network: Network;
     imported?: 'MININDN' | 'BROWSER';
     busiestNode?: INode;
     busiestLink?: IEdge;
@@ -7572,6 +4806,13 @@ declare class Topology {
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
     globalCaptureFilter: (packet: ICapturedPacket) => boolean;
+    activePtys: {
+        id: string;
+        name: string;
+        write: EventEmitter<any>;
+        data: EventEmitter<any>;
+        resized: EventEmitter<any>;
+    }[];
     constructor(provider: ForwardingProvider);
     /** Initialize the network */
     createNetwork: (container: HTMLElement) => Promise<void>;
@@ -7581,13 +4822,14 @@ declare class Topology {
     private onNetworkClick;
     /** Ensure all nodes and edges are initialized */
     private ensureInitialized;
-    updateNodeColor(nodeId: vis_2.IdType, nodeExtra?: INodeExtra): void;
+    updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra): void;
     updateEdgeColor(edge: IEdge): void;
 }
 
 /** Get subject name from subject name, key name, or certificate name. */
 declare function toSubjectName(name: Name): Name;
 
+/** Convert string to UTF-8 byte array. */
 declare function toUtf8(s: string): Uint8Array;
 
 declare const TT: {
@@ -7599,8 +4841,6 @@ declare const TT: {
     CanBePrefix: number;
     MustBeFresh: number;
     ForwardingHint: number;
-    Delegation: number;
-    Preference: number;
     Nonce: number;
     InterestLifetime: number;
     HopLimit: number;
@@ -7630,20 +4870,18 @@ declare const TT: {
  *
  * Use it like this:
  *
- * interface MyEvents {
- *   error: (error: Error) => void
- *   message: (from: string, content: string) => void
+ * ```typescript
+ * type MyEvents = {
+ *   error: (error: Error) => void;
+ *   message: (from: string, content: string) => void;
  * }
  *
- * const myEmitter = new EventEmitter() as TypedEmitter<MyEvents>
+ * const myEmitter = new EventEmitter() as TypedEmitter<MyEvents>;
  *
- * myEmitter.on("message", (from, content) => {
- *   // ...
- * })
- *
- * myEmitter.emit("error", "x")  // <- Will catch this type error
+ * myEmitter.emit("error", "x")  // <- Will catch this type error;
+ * ```
  */
-declare interface TypedEventEmitter<Events> {
+declare interface TypedEventEmitter<Events extends EventMap> {
     addListener<E extends keyof Events> (event: E, listener: Events[E]): this
     on<E extends keyof Events> (event: E, listener: Events[E]): this
     once<E extends keyof Events> (event: E, listener: Events[E]): this
@@ -7654,10 +4892,11 @@ declare interface TypedEventEmitter<Events> {
     removeAllListeners<E extends keyof Events> (event?: E): this
     removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
 
-    emit<E extends keyof Events> (event: E, ...args: Arguments<Events[E]>): boolean
+    emit<E extends keyof Events> (event: E, ...args: Parameters<Events[E]>): boolean
+    // The sloppy `eventNames()` return type is to mitigate type incompatibilities - see #5
     eventNames (): (keyof Events | string | symbol)[]
-    rawListeners<E extends keyof Events> (event: E): Function[]
-    listeners<E extends keyof Events> (event: E): Function[]
+    rawListeners<E extends keyof Events> (event: E): Events[E][]
+    listeners<E extends keyof Events> (event: E): Events[E][]
     listenerCount<E extends keyof Events> (event: E): number
 
     getMaxListeners (): number
@@ -7669,7 +4908,7 @@ declare type Update = SyncUpdate<Name>;
 /** Update event payload. */
 declare interface UpdateEventPayload<Item, IdProp extends string> {
     /** Ids of updated items. */
-    items: Id_2[];
+    items: Id[];
     /** Items as they were before this update. */
     oldData: FullItem<Item, IdProp>[];
     /**
@@ -7686,101 +4925,33 @@ declare interface UpdateEventPayload<Item, IdProp extends string> {
  * @typeParam Item - Item type that may or may not have an id.
  * @typeParam IdProp - Name of the property that contains the id.
  */
-declare type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id_2>;
-
-/**
- * Update a property in an object.
- *
- * @param object - The object whose property will be updated.
- * @param key - Name of the property to be updated.
- * @param value - The new value to be assigned.
- *
- * @returns Whether the value was updated (true) or already strictly the same in the original object (false).
- */
-declare function updateProperty<K extends string, V>(object: Record<K, V>, key: K, value: V): boolean;
+declare type UpdateItem<Item extends PartItem<IdProp>, IdProp extends string> = Assignable<FullItem<Item, IdProp>> & Record<IdProp, Id>;
 
 declare namespace util {
     export {
-        pureDeepObjectAssign,
-        deepObjectAssign,
-        DELETE,
-        Assignable,
-        Alea,
-        RNG,
-        Mashable,
-        Activator,
-        ColorPicker,
-        Configurator,
-        Hammer_2 as Hammer,
-        Popup,
-        VALIDATOR_PRINT_STYLE,
-        Validator,
-        OptionsConfig,
-        ConfiguratorConfig,
-        ConfiguratorHideOption,
-        isNumber,
-        recursiveDOMDelete,
-        isString,
-        isObject,
-        isDate,
-        fillIfDefined,
-        selectiveExtend,
-        selectiveDeepExtend,
-        selectiveNotDeepExtend,
-        deepExtend,
-        equalArray,
-        getType,
-        copyAndExtendArray,
-        copyArray,
-        getAbsoluteLeft,
-        getAbsoluteRight,
-        getAbsoluteTop,
-        addClassName,
-        removeClassName,
-        forEach,
-        updateProperty,
-        throttle,
-        addEventListener_2 as addEventListener,
-        removeEventListener_2 as removeEventListener,
-        preventDefault,
-        getTarget,
-        hasParent,
-        hexToRGB,
-        overrideOpacity,
-        RGBToHex,
-        parseColor,
-        RGBToHSV,
-        addCssText,
-        removeCssText,
-        HSVToRGB,
-        HSVToHex,
-        hexToHSV,
-        isValidHex,
-        isValidRGB,
-        isValidRGBA,
-        selectiveBridgeObject,
-        bridgeObject,
-        insertSort,
-        mergeOptions,
-        binarySearchCustom,
-        binarySearchValue,
-        getScrollBarWidth,
-        topMost,
-        HSV,
-        RGB,
-        RGBA,
-        extend,
-        toArray,
-        option,
-        ColorObject_2 as ColorObject,
-        FullColorObject,
-        easingFunctions
+        assert,
+        console_2 as console,
+        crypto_2 as crypto,
+        delay,
+        asUint8Array,
+        asDataView,
+        Closer,
+        Closers,
+        timingSafeEqual,
+        sha256,
+        safeIter,
+        flatMapOnce,
+        KeyMap,
+        KeyMultiMap,
+        KeyMultiSet,
+        toHex,
+        fromHex,
+        toUtf8,
+        fromUtf8,
+        timeoutAbortSignal
     }
 }
-
-declare const Validator: any;
-
-declare const VALIDATOR_PRINT_STYLE: string;
+export { util }
 
 /** Certificate validity period. */
 declare class ValidityPeriod {
@@ -7801,15 +4972,17 @@ declare class ValidityPeriod {
 
 declare namespace ValidityPeriod {
     type TimestampInput = number | Date;
+    /** A very long ValidityPeriod. */
     const MAX: ValidityPeriod;
+    /** Construct ValidityPeriod for n days from now. */
     function daysFromNow(n: number): ValidityPeriod;
+    /** Retrieve ValidityPeriod from SigInfo. */
     function get(si: SigInfo): ValidityPeriod | undefined;
+    /** Assign ValidityPeriod onto SigInfo. */
     function set(si: SigInfo, v?: ValidityPeriod): void;
 }
 
-declare type ValueOf<T> = T[keyof T];
-
-/** High level verifier, such as a public key. */
+/** High level verifier, such as a named public key. */
 declare interface Verifier {
     /**
      * Verify a packet.
@@ -7826,175 +4999,5 @@ declare namespace Verifier {
     /** Throw bad signature error if not OK. */
     function throwOnBadSig(ok: boolean): asserts ok;
 }
-
-/**
- * Base options interface for some viewport functions.
- */
-declare interface ViewPortOptions {
-    /**
-     * The scale is the target zoomlevel.
-     * Default value is 1.0.
-     */
-    scale?: number;
-
-    /**
-     * The offset (in DOM units) is how many pixels from the center the view is focussed.
-     * Default value is {x:0,y:0}
-     */
-    offset?: Position;
-
-    /**
-     * For animation you can either use a Boolean to use it with the default options or
-     * disable it or you can define the duration (in milliseconds) and easing function manually.
-     */
-    animation?: AnimationOptions | boolean;
-}
-
-declare namespace vis {
-    export {
-        network,
-        DOMutil,
-        util,
-        data,
-        DataSet,
-        DataView_2 as DataView,
-        Queue,
-        Hammer_2 as Hammer,
-        keycharm,
-        DataInterfaceEdges,
-        DataInterfaceNodes,
-        DataSetEdges,
-        DataSetNodes,
-        DataViewEdges,
-        DataViewNodes,
-        IdType,
-        DirectionType,
-        TimelineAnimationType,
-        NetworkEvents,
-        Network,
-        FocusOptions_2 as FocusOptions,
-        ViewPortOptions,
-        MoveToOptions,
-        AnimationOptions,
-        EasingFunction,
-        FitOptions,
-        SelectionOptions,
-        BoundingBox,
-        ClusterOptions,
-        OpenClusterOptions,
-        Position,
-        Data_2 as Data,
-        Node_2 as Node,
-        Edge,
-        Locales,
-        LocaleMessages,
-        Options_3 as Options,
-        Image_2 as Image,
-        ImagePadding,
-        Color,
-        ChosenLabelValues,
-        NodeChosenLabelFunction,
-        ChosenNodeValues,
-        NodeChosenNodeFunction,
-        NodeChosen,
-        NodeOptions,
-        EdgeOptions,
-        ArrowHead,
-        Font,
-        FontStyles,
-        OptionsScaling,
-        OptionsShadow
-    }
-}
-
-declare namespace vis_2 {
-    export {
-        data,
-        DataSet,
-        DataView_2 as DataView,
-        Queue,
-        whoKnowsWhat as NetworkImages,
-        dotparser as networkDOTParser,
-        parseDOTNetwork,
-        parseGephi as parseGephiNetwork,
-        gephiParser as networkGephiParser,
-        allOptions as networkOptions,
-        DataInterfaceEdges,
-        DataInterfaceNodes,
-        DataSetEdges,
-        DataSetNodes,
-        DataViewEdges,
-        DataViewNodes,
-        IdType,
-        DirectionType,
-        TimelineAnimationType,
-        NetworkEvents,
-        Network,
-        FocusOptions_2 as FocusOptions,
-        ViewPortOptions,
-        MoveToOptions,
-        AnimationOptions,
-        EasingFunction,
-        FitOptions,
-        SelectionOptions,
-        BoundingBox,
-        ClusterOptions,
-        OpenClusterOptions,
-        Position,
-        Data_2 as Data,
-        Node_2 as Node,
-        Edge,
-        Locales,
-        LocaleMessages,
-        Options_3 as Options,
-        Image_2 as Image,
-        ImagePadding,
-        Color,
-        ChosenLabelValues,
-        NodeChosenLabelFunction,
-        ChosenNodeValues,
-        NodeChosenNodeFunction,
-        NodeChosen,
-        NodeOptions,
-        EdgeOptions,
-        ArrowHead,
-        Font,
-        FontStyles,
-        OptionsScaling,
-        OptionsShadow
-    }
-}
-
-declare interface VisData {
-    nodes: VisNode[];
-    edges: VisEdge[];
-}
-
-declare interface VisEdge {
-    id: Id;
-    from: Id;
-    to: Id;
-    arrows?: "to";
-    color?: string;
-    label?: string;
-    title?: string;
-    attributes?: unknown;
-}
-
-declare interface VisNode {
-    id: Id;
-    fixed: boolean;
-    color?: string | ColorObject;
-    label?: string;
-    size?: number;
-    title?: string;
-    x?: number;
-    y?: number;
-    attributes?: unknown;
-}
-
-declare const whoKnowsWhat: any;
-
-declare const whoKnowsWhat_2: any;
 
 export { }

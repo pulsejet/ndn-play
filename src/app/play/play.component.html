@@ -39,7 +39,7 @@
 
             <ng-template #consoleOnly>
                 <app-tab name="Console" (select)="console.doResize?.()">
-                    <div class="console"> <console #console></console> </div>
+                    <div class="console"> <console #console [resize]="paneChange"></console> </div>
                 </app-tab>
             </ng-template>
 

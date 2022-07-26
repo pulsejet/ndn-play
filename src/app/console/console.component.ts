@@ -114,7 +114,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
     });
 
     this.doResize();
-    this.resize.subscribe(this.doResize);
+    this.resize?.subscribe(this.doResize);
     window.addEventListener('resize', this.doResize);
   }
 }

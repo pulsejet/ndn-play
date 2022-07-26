@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 
@@ -16,14 +17,18 @@ import { FitAddon } from 'xterm-addon-fit';
   `
   ]
 })
-export class PtyComponent implements OnInit, AfterViewInit {
+export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('pty') pty!: ElementRef;
   @Input() public data?: EventEmitter<any>;
   @Input() public writer?: EventEmitter<any>;
   @Input() public resized?: EventEmitter<any>;
+  @Input() public resize?: EventEmitter<any>;
+  @Input() public active: boolean = true;
 
   /** Call on console resize */
-  public resize!: () => void;
+  public doResize?: () => void;
+  private resizeSub?: Subscription;
+  private unsubWindowResize?: () => void;
   public resizeTimer = 0;
 
   public term!: Terminal;
@@ -34,6 +39,11 @@ export class PtyComponent implements OnInit, AfterViewInit {
     if (this.writer) {
       this.writer.subscribe(this.write.bind(this));
     }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeSub?.unsubscribe();
+    this.unsubWindowResize?.();
   }
 
   public write(msg: string | Uint8Array) {
@@ -65,7 +75,7 @@ export class PtyComponent implements OnInit, AfterViewInit {
     term.loadAddon(fitAddon);
 
     // Resize after wait
-    this.resize = () => {
+    this.doResize = () => {
       if (this.resizeTimer) return;
 
       this.resizeTimer = window.setTimeout(() => {
@@ -78,6 +88,19 @@ export class PtyComponent implements OnInit, AfterViewInit {
         })
       }, 200);
     };
-    this.resize();
+
+    // Prevent unnecessary resize
+    const resizeIfActive = () => {
+      if (this.active) {
+        this.doResize?.();
+      }
+    }
+
+    this.doResize();
+    this.resizeSub = this.resize?.subscribe(resizeIfActive);
+    window.addEventListener('resize', resizeIfActive);
+    this.unsubWindowResize = () => {
+      window.removeEventListener('resize', resizeIfActive);
+    }
   }
 }

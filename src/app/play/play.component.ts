@@ -1,6 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
-import { ProviderBrowser } from '../provider-browser/provider-browser';
 import { ext as ndnUserTypes } from '../user-types';
 
 @Component({
@@ -15,9 +14,11 @@ export class PlayComponent implements OnInit, AfterViewInit {
   /** Currently visualized tlv */
   public visualizedTlv: any;
 
+  /** Notification of pane size change */
+  public paneChange = new EventEmitter<any>;
+
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
-  @ViewChild('console') console!: ElementRef;
 
   constructor(public gs: GlobalService) {}
 
@@ -30,6 +31,10 @@ export class PlayComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {
     });
+  }
+
+  paneResize() {
+    this.paneChange.emit(null);
   }
 
   setGlobalCaptureFilter(f: any) {

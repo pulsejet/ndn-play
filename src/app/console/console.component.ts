@@ -1,8 +1,7 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AltUri, Data, Interest, Name } from '@ndn/packet';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { GlobalService } from '../global.service';
 
 @Component({
   selector: 'console',
@@ -23,7 +22,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
   public consoleLog = new EventEmitter<{ type: string, msg: string; }>();
 
   /** Call on console resize */
-  public resize!: () => void;
+  @Input() resize!: EventEmitter<any>;
+  public doResize?: () => void;
   public resizeTimer = 0;
 
   public term!: Terminal;
@@ -90,13 +90,13 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
     term.loadAddon(fitAddon);
 
     // Resize after wait
-    this.resize = () => {
+    this.doResize = () => {
       if (this.resizeTimer) return;
 
       this.resizeTimer = window.setTimeout(() => {
         fitAddon.fit();
         this.resizeTimer = 0;
-      }, 500);
+      }, 200);
     };
 
     // Start terminal
@@ -113,8 +113,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       term.writeln(msg);
     });
 
-    this.resize();
-
-    window.addEventListener('resize', this.resize);
+    this.doResize();
+    this.resize.subscribe(this.doResize);
+    window.addEventListener('resize', this.doResize);
   }
 }

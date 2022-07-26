@@ -21,19 +21,28 @@
 
     <ng-template #mainLowerPane>
         <app-tabs class="tab-container main-lower" #lowerTabs>
-            <app-tab name="Console" (select)="console.resize()">
-                <div class="console"> <console #console></console> </div>
-            </app-tab>
-
-            <app-tab name="Terminal" *ngIf="gs.topo.provider.openTerminal">
+            <app-tab name="Console" *ngIf="gs.topo.provider.openTerminal; else consoleOnly">
                 <div class="console">
-                    <app-tabs class="tab-container main-lower">
-                        <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.resize()">
-                            <pty [data]="t.data" [writer]="t.write" [resized]="t.resized" #pty></pty>
+                    <app-tabs class="tab-container main-lower" #consoleTabs>
+                        <app-tab name="JS" (select)="console.doResize?.()">
+                            <div class="console"> <console #console [resize]="paneChange"></console> </div>
+                        </app-tab>
+
+                        <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.doResize?.()" #ptyTab>
+                            <pty [data]="t.data" [writer]="t.write" #pty
+                                 [resized]="t.resized" [resize]="paneChange"
+                                 [active]="consoleTabs.selection == ptyTab"></pty>
                         </app-tab>
                     </app-tabs>
                 </div>
             </app-tab>
+
+            <ng-template #consoleOnly>
+                <app-tab name="Console" (select)="console.doResize?.()">
+                    <div class="console"> <console #console></console> </div>
+                </app-tab>
+            </ng-template>
+
 
             <app-tab name="TLV Visualizer" #lowerVisTab>
                 <div class="m-2">
@@ -62,9 +71,9 @@
     <div class="full-width">
         <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
                   [vertical]="true" basis="70%"
-                  (resize)="$any(console).resize()">
+                  (resize)="paneResize()">
         </app-pane>
     </div>
 </ng-template>
 
-<app-pane [pane1]="sidebarPane" [pane2]="mainPane" basis="300px"></app-pane>
+<app-pane [pane1]="sidebarPane" [pane2]="mainPane" basis="300px" (resize)="paneResize()"></app-pane>

@@ -7,18 +7,12 @@ import { GlobalService } from '../global.service';
 @Component({
   selector: 'console',
   template: `
-    <div class="console" [class.hasInput]="hasInput" #console></div>
-    <input *ngIf="hasInput" type="text"
-           class="is-family-monospace is-small" style="width: 100%;"
-           (keydown)="cliInput($event)" />
+    <div class="console" #console></div>
   `,
   styles: [`
   .console {
     height: 100%;
     width: 100%;
-  }
-  .console.hasInput {
-    height: calc(100% - 1.5em);
   }
   `]
 })
@@ -32,15 +26,11 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
   public resize!: () => void;
   public resizeTimer = 0;
 
-  /** Show input */
-  public hasInput = false;
+  public term!: Terminal;
 
-  constructor(private gs: GlobalService) { }
+  constructor() { }
 
   ngOnInit(): void {
-    // Get attributes
-    this.hasInput = Boolean(this.gs.topo.provider.runCLI);
-
     // Initialize console logging
     const initConsole = (type: string) => {
       const c = (<any>console);
@@ -72,39 +62,14 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
     initConsole('log');
     initConsole('warn');
     initConsole('error');
-    initConsole('raw');
 
+    // Uncaught exceptions
     window.addEventListener("unhandledrejection", event => {
       this.consoleLog.emit({
         type: 'error',
         msg: `Uncaught ${event.reason}`,
       });
     });
-  }
-
-  cliInput(event: Event | KeyboardEvent): void {
-    if (!(event instanceof KeyboardEvent)) {
-      return;
-    }
-
-    const input = (<HTMLInputElement>event.target);
-
-    if (event.key == 'Enter') {
-      const cmd = input.value;
-      if (cmd.trim().length == 0) return;
-      input.value = '';
-
-      this.consoleLog.emit({
-        type: 'bold',
-        msg: `cli> ${cmd}`,
-      });
-      this.gs.topo.provider.runCLI?.(cmd.trim());
-    }
-
-    if (event.ctrlKey && event.key == 'c') {
-      this.consoleLog.emit({ type: 'raw', msg: `^C` });
-      this.gs.topo.provider.runCLI?.('^C');
-    }
   }
 
   ngAfterViewInit(): void {
@@ -118,6 +83,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       fontSize: 13,
       convertEol: true,
     });
+    this.term = term;
 
     // Fit to size
     const fitAddon = new FitAddon();
@@ -143,11 +109,6 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
         msg = `\u001b[31m${msg}\u001b[0m`;
       } else if (e.type == 'warn') {
         msg = `\u001b[33m${msg}\u001b[0m`;
-      } else if (e.type == 'bold') {
-        msg = `\u001b[1m${msg}\u001b[0m`;
-      } else if (e.type == 'raw') {
-        term.write(msg);
-        return;
       }
       term.writeln(msg);
     });

@@ -3,6 +3,7 @@ import { ICapturedPacket, IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { downloadString } from "./helper";
+import { EventEmitter } from "@angular/core";
 
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
@@ -14,8 +15,9 @@ const WS_FUNCTIONS = {
   GET_FIB: 'get_fib',
   GET_PCAP: 'get_pcap',
   GET_PCAP_WIRE: 'get_pcap_wire',
-  EXEC_CLI: 'exec_cli',
-  LOG: 'log',
+  PTY_IN: 'pty_in',
+  PTY_OUT: 'pty_out',
+  OPEN_TERMINAL: 'open_term',
 };
 
 export class ProviderMiniNDN implements ForwardingProvider {
@@ -80,6 +82,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
         if (!this.initialized) this.setTopoManipulationCallbacks();
         this.initialized = true;
+
+        this.openTerminalInternal('cli', 'MiniNDN CLI');
         break;
 
       case WS_FUNCTIONS.ADD_LINK:
@@ -128,8 +132,17 @@ export class ProviderMiniNDN implements ForwardingProvider {
         (<any>window).visualize(msg?.res);
         break;
 
-      case WS_FUNCTIONS.LOG:
-        (<any>console).raw(msg?.res);
+      case WS_FUNCTIONS.OPEN_TERMINAL:
+        this.openTerminalInternal(msg?.res.id, msg?.res.name);
+        break;
+
+      case WS_FUNCTIONS.PTY_OUT:
+        for (let t of this.topo.activePtys) {
+          if (t.id == msg?.id) {
+            t.write.emit(msg?.res);
+            break;
+          }
+        }
         break;
     }
   };
@@ -220,8 +233,23 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   }
 
-  public runCLI(cmd: string) {
-    this.wsFun(WS_FUNCTIONS.EXEC_CLI, cmd);
+  public openTerminal(node: INode) {
+    this.wsFun(WS_FUNCTIONS.OPEN_TERMINAL, node.label);
+  }
+
+  private openTerminalInternal(id: string, name: string) {
+    const write = new EventEmitter<any>();
+    const data = new EventEmitter<any>();
+    this.topo.activePtys.push({
+      id: id,
+      name: name,
+      write: write,
+      data: data,
+    });
+
+    data.subscribe((msg: any) => {
+      this.wsFun(WS_FUNCTIONS.PTY_IN, id, msg);
+    });
   }
 
   public fetchCapturedPackets(node: INode) {

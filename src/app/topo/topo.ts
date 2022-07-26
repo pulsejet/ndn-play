@@ -2,6 +2,7 @@ import { ICapturedPacket, IEdge, INode, INodeExtra } from "../interfaces";
 import { SecurityController } from "../provider-browser/security-controller";
 import { ForwardingProvider } from "../forwarding-provider";
 import { ProviderBrowser } from "../provider-browser/provider-browser";
+import { EventEmitter } from "@angular/core";
 import chroma from "chroma-js";
 import * as vis from 'vis-network/standalone';
 
@@ -38,6 +39,14 @@ export class Topology {
 
   // Captured packet filter
   public globalCaptureFilter: (packet: ICapturedPacket) => boolean = () => true;
+
+  // Active terminals
+  public activePtys: {
+    id: string,
+    name: string,
+    write: EventEmitter<any>,
+    data: EventEmitter<any>,
+  }[] = [];
 
   constructor(public provider: ForwardingProvider) {
     // Pass back to provider

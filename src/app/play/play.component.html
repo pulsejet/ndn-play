@@ -36,6 +36,16 @@
                 <div class="console"> <console #console></console> </div>
             </app-tab>
 
+            <app-tab name="Terminal">
+                <div class="console">
+                    <app-tabs class="tab-container main-lower">
+                        <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.resize()">
+                            <pty [data]="t.data" [writer]="t.write" #pty></pty>
+                        </app-tab>
+                    </app-tabs>
+                </div>
+            </app-tab>
+
             <app-tab name="TLV Visualizer" #lowerVisTab>
                 <div class="m-2">
                     <app-visualizer [tlv]="visualizedTlv"></app-visualizer>

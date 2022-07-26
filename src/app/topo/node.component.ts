@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { GlobalService } from '../global.service';
 import { INode } from '../interfaces';
 import { Topology } from './topo';
 
@@ -44,6 +45,11 @@ import { Topology } from './topo';
                     (click)="runCode(node.extra.codeEdit);">
                 Run
             </button>
+            <button class="button is-danger is-light is-small full-width mb-1"
+                    *ngIf="gs.topo.provider.openTerminal"
+                    (click)="gs.topo.provider.openTerminal(node);">
+                Open Terminal
+            </button>
         </div>
 
         <div class="field is-size-7" *ngIf="node.nfw">
@@ -80,7 +86,7 @@ export class TopoNodeComponent implements OnInit {
   @Input() public node: INode = <any>undefined;
   @Input() public topo: Topology = <any>undefined;
 
-  constructor() { }
+  constructor(public gs: GlobalService) { }
 
   ngOnInit(): void {
   }

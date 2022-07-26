@@ -1,10 +1,10 @@
-import { AfterContentInit, Component, ContentChildren, Input, OnInit, QueryList } from '@angular/core';
+import { AfterContentInit, Component, ContentChildren, OnInit, QueryList } from '@angular/core';
 import { TabComponent } from './tab.component';
 
 @Component({
   selector: 'app-tabs',
   template: `
-    <div class="main-container" *ngIf="children && selection">
+    <div class="main-container" *ngIf="children && initialized">
       <div class="is-small tabs main-head">
         <ul>
           <li *ngFor="let tab of children"
@@ -46,6 +46,7 @@ export class TabsComponent implements OnInit, AfterContentInit   {
 
   @ContentChildren(TabComponent) children!: QueryList<TabComponent>;
   public selection!: TabComponent;
+  public initialized = false;
 
   constructor() { }
 
@@ -54,7 +55,10 @@ export class TabsComponent implements OnInit, AfterContentInit   {
   ngAfterContentInit(): void {
     setTimeout(() => {
       this.selection = this.children.first;
-      this.selection.select.emit();
+      if (this.selection) {
+        this.selection.select.emit();
+      }
+      this.initialized = true;
     }, 0);
   }
 }

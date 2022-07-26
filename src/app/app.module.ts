@@ -19,6 +19,7 @@ import { ConsoleComponent } from './console/console.component';
 import { CapturedReplayComponent } from './captured-replay/captured-replay.component';
 import { PlayComponent } from './play/play.component';
 import { HomeComponent } from './home/home.component';
+import { PtyComponent } from './pty/pty.component';
 
 @NgModule({
   declarations: [
@@ -37,6 +38,7 @@ import { HomeComponent } from './home/home.component';
     CapturedReplayComponent,
     PlayComponent,
     HomeComponent,
+    PtyComponent,
   ],
   imports: [
     BrowserModule,

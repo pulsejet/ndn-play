@@ -21,17 +21,19 @@
 
     <ng-template #mainLowerPane>
         <app-tabs class="tab-container main-lower" #lowerTabs>
-            <app-tab name="Console" *ngIf="gs.topo.provider.openTerminal; else consoleOnly">
+            <app-tab name="Console" *ngIf="gs.topo.provider.openTerminal; else consoleOnly" #consoleTab>
                 <div class="console">
-                    <app-tabs class="tab-container main-lower" #consoleTabs>
-                        <app-tab name="JS" (select)="console.doResize?.()">
+                    <app-tabs class="tab-container main-lower" #consoleSubTabs>
+                        <app-tab name="JS" (select)="console.doResize?.()" #jsConsoleTab>
                             <div class="console"> <console #console [resize]="paneChange"></console> </div>
                         </app-tab>
 
-                        <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name" (select)="pty.doResize?.()" #ptyTab>
+                        <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name"
+                                 (select)="setActivePtyTab(pty)" #ptyTab>
                             <pty [data]="t.data" [writer]="t.write" #pty
                                  [resized]="t.resized" [resize]="paneChange"
-                                 [active]="consoleTabs.selection == ptyTab"></pty>
+                                 (afterInit)="lowerTabs.set(consoleTab); consoleSubTabs.set(ptyTab)">
+                            </pty>
                         </app-tab>
                     </app-tabs>
                 </div>
@@ -55,7 +57,7 @@
                     <app-captured-list *ngIf="lowerTabs.selection == captureTab"
                         [node]="gs.topo.selectedNode"
                         [provider]="gs.topo.provider"
-                        (packetClick)="setVisualized($event); lowerTabs.selection = lowerVisTab"
+                        (packetClick)="setVisualized($event); lowerTabs.set(lowerVisTab)"
                     ></app-captured-list>
                 </div>
             </app-tab>

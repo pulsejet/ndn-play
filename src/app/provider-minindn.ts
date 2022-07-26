@@ -66,7 +66,14 @@ export class ProviderMiniNDN implements ForwardingProvider {
       url: this.wsUrl,
       binaryType: "arraybuffer",
       serializer: msgpack.encode,
-      deserializer: (e) => msgpack.decode(new Uint8Array(e.data)),
+      deserializer: (e) => {
+        try {
+          return msgpack.decode(new Uint8Array(e.data));
+        } catch {
+          console.error('Failed to decode msgpack. You may need to refresh the page.');
+        }
+        return {};
+      },
     });
 
     // Listen for messages

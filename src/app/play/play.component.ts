@@ -17,6 +17,9 @@ export class PlayComponent implements OnInit, AfterViewInit {
   /** Notification of pane size change */
   public paneChange = new EventEmitter<any>;
 
+  /** Active pty tab */
+  public activePtyTab?: any;
+
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
 
@@ -35,6 +38,15 @@ export class PlayComponent implements OnInit, AfterViewInit {
 
   paneResize() {
     this.paneChange.emit(null);
+  }
+
+  setActivePtyTab(pty: any) {
+    pty.doResize?.();
+    if (this.activePtyTab) {
+      this.activePtyTab.active = false;
+    }
+    this.activePtyTab = pty;
+    this.activePtyTab.active = true;
   }
 
   setGlobalCaptureFilter(f: any) {

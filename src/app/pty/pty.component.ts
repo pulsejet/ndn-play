@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -23,22 +23,21 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() public writer?: EventEmitter<any>;
   @Input() public resized?: EventEmitter<any>;
   @Input() public resize?: EventEmitter<any>;
-  @Input() public active: boolean = true;
+  @Output() public afterInit: EventEmitter<any> = new EventEmitter();
 
   /** Call on console resize */
   public doResize?: () => void;
   private resizeSub?: Subscription;
   private unsubWindowResize?: () => void;
   public resizeTimer = 0;
+  public active: boolean = true;
 
   public term!: Terminal;
 
   constructor() { }
 
   ngOnInit(): void {
-    if (this.writer) {
-      this.writer.subscribe(this.write.bind(this));
-    }
+    this.writer?.subscribe(this.write.bind(this));
   }
 
   ngOnDestroy(): void {
@@ -102,5 +101,9 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
     this.unsubWindowResize = () => {
       window.removeEventListener('resize', resizeIfActive);
     }
+
+    setTimeout(() => {
+      this.afterInit.emit();
+    }, 100);
   }
 }

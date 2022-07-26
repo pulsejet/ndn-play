@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, ContentChildren, OnInit, QueryList } from '@angular/core';
+import { AfterContentInit, Component, ContentChildren, Input, OnInit, QueryList } from '@angular/core';
 import { TabComponent } from './tab.component';
 
 @Component({
@@ -9,7 +9,7 @@ import { TabComponent } from './tab.component';
         <ul>
           <li *ngFor="let tab of children"
               [class.is-active]="selection === tab"
-              (click)="selection = tab; tab.select.emit()">
+              (click)="set(tab)">
               <a>{{ tab.name }}</a>
           </li>
         </ul>
@@ -45,6 +45,7 @@ import { TabComponent } from './tab.component';
 export class TabsComponent implements OnInit, AfterContentInit   {
 
   @ContentChildren(TabComponent) children!: QueryList<TabComponent>;
+  private prevChildren: TabComponent[] = [];
   public selection!: TabComponent;
   public initialized = false;
 
@@ -52,7 +53,30 @@ export class TabsComponent implements OnInit, AfterContentInit   {
 
   ngOnInit(): void {}
 
+  public set(tab: TabComponent): void {
+    this.selection = tab;
+    this.selection.select.emit();
+  }
+
   ngAfterContentInit(): void {
+    this.prevChildren = this.children.toArray();
+
+    this.children.changes.subscribe(() => {
+      const newChildren = this.children.toArray();
+
+      // Selection does not exist anymore
+      if (newChildren.indexOf(this.selection) === -1) {
+        // Select the same index or last
+        let i = this.prevChildren.indexOf(this.selection);
+        if (i >= newChildren.length) {
+          i = newChildren.length - 1;
+        }
+        this.set(newChildren[i]);
+      }
+
+      this.prevChildren = newChildren;
+    });
+
     setTimeout(() => {
       this.selection = this.children.first;
       if (this.selection) {

@@ -140,20 +140,31 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.GET_PCAP:
-        this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!.extra.capturedPackets =
-          msg?.[MSG_KEY_RESULT].packets.map((p: any) => {
-            return {
-              node: msg?.[MSG_KEY_RESULT].id,
-              fn: Number(p[0]),
-              t: Number(p[1]),
-              l: Number(p[2]),
-              type: p[3],
-              name: p[4],
-              from: p[5],
-              to: p[6],
-              p: p[7] || undefined,
-            } as ICapturedPacket;
-          });
+        const newPacks = msg?.[MSG_KEY_RESULT].packets;
+        if (newPacks.length === 0) {
+          return;
+        }
+
+        // Captured packets list
+        const node = this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!;
+        const cp = node.extra.capturedPackets;
+        const lastKnownFrame = this._lastKnownFrame(node);
+        for (const p of newPacks) {
+          if (p[0] <= lastKnownFrame) {
+            continue;
+          }
+          cp.push({
+            node: msg?.[MSG_KEY_RESULT].id,
+            fn: Number(p[0]),
+            t: Number(p[1]),
+            l: Number(p[2]),
+            type: p[3],
+            name: p[4],
+            from: p[5],
+            to: p[6],
+            p: p[7] || undefined,
+          } as ICapturedPacket);
+        }
 
         // Creating dump
         if (this.dump) {
@@ -327,8 +338,14 @@ export class ProviderMiniNDN implements ForwardingProvider {
     }
   }
 
+  private _lastKnownFrame(node: INode): number {
+    const cp = node.extra.capturedPackets;
+    const knownFrame = cp.length > 0 ? Number(cp[cp.length - 1]?.fn) : 0;
+    return knownFrame;
+  }
+
   public fetchCapturedPackets(node: INode) {
-    this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label);
+    this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, this._lastKnownFrame(node));
   }
 
   public visualizeCaptured(packet: any) {
@@ -343,7 +360,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
       edges: this.topo.edges.get(),
     };
     this.topo.nodes.forEach((node) => {
-      this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, true);
+      this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, 0, true);
     });
   }
 

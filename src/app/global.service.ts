@@ -20,11 +20,13 @@ export class GlobalService {
 
   constructor() {
     // Connect to miniNDN
-    const url = new URL(window.location.href);
-    const minindn = url.searchParams.get("minindn");
+    const curl = new URL(window.location.href);
+    const minindn = curl.searchParams.get("minindn");
     if (minindn) {
       console.log('Starting MiniNDN provider', minindn);
-      this.topo = new Topology(new ProviderMiniNDN(minindn))
+      const auth = curl.searchParams.get("auth");
+      const url = auth ? `${minindn}?auth=${auth}` : minindn;
+      this.topo = new Topology(new ProviderMiniNDN(url))
     } else {
       this.topo = new Topology(new ProviderBrowser());
     }

@@ -57,7 +57,8 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
         selection: '#ddd',
         cursor: '#555'
       },
-      fontSize: 13,
+      fontSize: 14,
+      fontFamily: 'Consolas, Ubuntu Mono, courier-new, courier, monospace',
       convertEol: true,
       cursorBlink: true,
     });

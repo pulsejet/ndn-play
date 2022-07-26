@@ -80,7 +80,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
         foreground: 'black',
         selection: '#ddd',
       },
-      fontSize: 13,
+      fontFamily: 'Consolas, Ubuntu Mono, courier-new, courier, monospace',
+      fontSize: 14,
       convertEol: true,
     });
     this.term = term;

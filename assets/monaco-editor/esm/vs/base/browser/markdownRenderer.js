@@ -16,11 +16,11 @@ import { parseHrefAndDimensions, removeMarkdownEscapes } from '../common/htmlCon
 import { markdownEscapeEscapedIcons } from '../common/iconLabels.js';
 import { defaultGenerator } from '../common/idGenerator.js';
 import { DisposableStore } from '../common/lifecycle.js';
-import * as marked from '../common/marked/marked.js';
+import { marked } from '../common/marked/marked.js';
 import { parse } from '../common/marshalling.js';
 import { FileAccess, Schemas } from '../common/network.js';
 import { cloneAndChange } from '../common/objects.js';
-import { resolvePath } from '../common/resources.js';
+import { dirname, resolvePath } from '../common/resources.js';
 import { escape } from '../common/strings.js';
 import { URI } from '../common/uri.js';
 /**
@@ -58,19 +58,22 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
     };
     const _href = function (href, isDomUri) {
         const data = markdown.uris && markdown.uris[href];
-        if (!data) {
-            return href; // no uri exists
-        }
         let uri = URI.revive(data);
         if (isDomUri) {
             if (href.startsWith(Schemas.data + ':')) {
                 return href;
+            }
+            if (!uri) {
+                uri = URI.parse(href);
             }
             // this URI will end up as "src"-attribute of a dom node
             // and because of that special rewriting needs to be done
             // so that the URI uses a protocol that's understood by
             // browsers (like http or https)
             return FileAccess.asBrowserUri(uri).toString(true);
+        }
+        if (!uri) {
+            return href;
         }
         if (URI.parse(href).toString() === uri.toString()) {
             return href; // no transformation performed
@@ -90,14 +93,6 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
         let attributes = [];
         if (href) {
             ({ href, dimensions } = parseHrefAndDimensions(href));
-            href = _href(href, true);
-            try {
-                const hrefAsUri = URI.parse(href);
-                if (options.baseUrl && hrefAsUri.scheme === Schemas.file) { // absolute or relative local path, or file: uri
-                    href = resolvePath(options.baseUrl, href).toString();
-                }
-            }
-            catch (err) { }
             attributes.push(`src="${href}"`);
         }
         if (text) {
@@ -112,23 +107,23 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
         return '<img ' + attributes.join(' ') + '>';
     };
     renderer.link = (href, title, text) => {
+        if (typeof href !== 'string') {
+            return '';
+        }
         // Remove markdown escapes. Workaround for https://github.com/chjj/marked/issues/829
         if (href === text) { // raw link case
             text = removeMarkdownEscapes(text);
         }
         href = _href(href, false);
-        if (options.baseUrl) {
-            const hasScheme = /^\w[\w\d+.-]*:/.test(href);
-            if (!hasScheme) {
-                href = resolvePath(options.baseUrl, href).toString();
-            }
+        if (markdown.baseUri) {
+            href = resolveWithBaseUri(URI.from(markdown.baseUri), href);
         }
-        title = removeMarkdownEscapes(title);
+        title = typeof title === 'string' ? removeMarkdownEscapes(title) : '';
         href = removeMarkdownEscapes(href);
         if (!href
-            || href.match(/^data:|javascript:/i)
-            || (href.match(/^command:/i) && !markdown.isTrusted)
-            || href.match(/^command:(\/\/\/)?_workbench\.downloadResource/i)) {
+            || /^data:|javascript:/i.test(href)
+            || (/^command:/i.test(href) && !markdown.isTrusted)
+            || /^command:(\/\/\/)?_workbench\.downloadResource/i.test(href)) {
             // drop the link
             return text;
         }
@@ -139,19 +134,15 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
-            return `<a href="#" data-href="${href}" title="${title || href}">${text}</a>`;
+            return `<a data-href="${href}" title="${title || href}">${text}</a>`;
         }
     };
     renderer.paragraph = (text) => {
-        if (markdown.supportThemeIcons) {
-            const elements = renderLabelWithIcons(text);
-            text = elements.map(e => typeof e === 'string' ? e : e.outerHTML).join('');
-        }
         return `<p>${text}</p>`;
     };
     if (options.codeBlockRenderer) {
         renderer.code = (code, lang) => {
-            const value = options.codeBlockRenderer(lang, code);
+            const value = options.codeBlockRenderer(lang !== null && lang !== void 0 ? lang : '', code);
             // when code-block rendering is async we return sync
             // but update the node with the real result later.
             const id = defaultGenerator.nextId();
@@ -186,8 +177,11 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
                 }
             }
             try {
-                const href = target.dataset['href'];
+                let href = target.dataset['href'];
                 if (href) {
+                    if (markdown.baseUri) {
+                        href = resolveWithBaseUri(URI.from(markdown.baseUri), href);
+                    }
                     options.actionHandler.callback(href, mouseEvent);
                 }
             }
@@ -223,8 +217,29 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
     if (markdown.supportThemeIcons) {
         value = markdownEscapeEscapedIcons(value);
     }
-    const renderedMarkdown = marked.parse(value, markedOptions);
-    element.innerHTML = sanitizeRenderedMarkdown(markdown, renderedMarkdown);
+    let renderedMarkdown = marked.parse(value, markedOptions);
+    // Rewrite theme icons
+    if (markdown.supportThemeIcons) {
+        const elements = renderLabelWithIcons(renderedMarkdown);
+        renderedMarkdown = elements.map(e => typeof e === 'string' ? e : e.outerHTML).join('');
+    }
+    const htmlParser = new DOMParser();
+    const markdownHtmlDoc = htmlParser.parseFromString(sanitizeRenderedMarkdown(markdown, renderedMarkdown), 'text/html');
+    markdownHtmlDoc.body.querySelectorAll('img')
+        .forEach(img => {
+        const src = img.getAttribute('src'); // Get the raw 'src' attribute value as text, not the resolved 'src'
+        if (src) {
+            let href = src;
+            try {
+                if (markdown.baseUri) { // absolute or relative local path, or file: uri
+                    href = resolveWithBaseUri(URI.from(markdown.baseUri), href);
+                }
+            }
+            catch (err) { }
+            img.src = _href(href, true);
+        }
+    });
+    element.innerHTML = sanitizeRenderedMarkdown(markdown, markdownHtmlDoc.body.innerHTML);
     // signal that async code blocks can be now be inserted
     signalInnerHTML();
     // signal size changes for image tags
@@ -244,6 +259,18 @@ export function renderMarkdown(markdown, options = {}, markedOptions = {}) {
             disposables.dispose();
         }
     };
+}
+function resolveWithBaseUri(baseUri, href) {
+    const hasScheme = /^\w[\w\d+.-]*:/.test(href);
+    if (hasScheme) {
+        return href;
+    }
+    if (baseUri.path.endsWith('/')) {
+        return resolvePath(baseUri, href).toString();
+    }
+    else {
+        return resolvePath(dirname(baseUri), href).toString();
+    }
 }
 function sanitizeRenderedMarkdown(options, renderedMarkdown) {
     const { config, allowedSchemes } = getSanitizerOptions(options);

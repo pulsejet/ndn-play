@@ -57,7 +57,6 @@ function _renderFormattedText(element, treeNode, actionHandler, renderCodeSegmen
     }
     else if (treeNode.type === 5 /* Action */ && actionHandler) {
         const a = document.createElement('a');
-        a.href = '#';
         actionHandler.disposables.add(DOM.addStandardDisposableListener(a, 'click', (event) => {
             actionHandler.callback(String(treeNode.index), event);
         }));

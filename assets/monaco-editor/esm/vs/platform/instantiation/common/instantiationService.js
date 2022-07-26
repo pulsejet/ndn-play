@@ -6,7 +6,7 @@ import { IdleValue } from '../../../base/common/async.js';
 import { illegalState } from '../../../base/common/errors.js';
 import { SyncDescriptor } from './descriptors.js';
 import { Graph } from './graph.js';
-import { IInstantiationService, optional, _util } from './instantiation.js';
+import { IInstantiationService, _util } from './instantiation.js';
 import { ServiceCollection } from './serviceCollection.js';
 // TRACING
 const _enableTracing = false;
@@ -33,12 +33,12 @@ export class InstantiationService {
         let _done = false;
         try {
             const accessor = {
-                get: (id, isOptional) => {
+                get: (id) => {
                     if (_done) {
                         throw illegalState('service accessor is only valid during the invocation of its target method');
                     }
                     const result = this._getOrCreateServiceInstance(id, _trace);
-                    if (!result && isOptional !== optional) {
+                    if (!result) {
                         throw new Error(`[invokeFunction] unknown service '${id}'`);
                     }
                     return result;
@@ -71,8 +71,8 @@ export class InstantiationService {
         let serviceArgs = [];
         for (const dependency of serviceDependencies) {
             let service = this._getOrCreateServiceInstance(dependency.id, _trace);
-            if (!service && this._strict && !dependency.optional) {
-                throw new Error(`[createInstance] ${ctor.name} depends on UNKNOWN service ${dependency.id}.`);
+            if (!service) {
+                this._throwIfStrict(`[createInstance] ${ctor.name} depends on UNKNOWN service ${dependency.id}.`, false);
             }
             serviceArgs.push(service);
         }
@@ -147,8 +147,8 @@ export class InstantiationService {
             // check all dependencies for existence and if they need to be created first
             for (let dependency of _util.getServiceDependencies(item.desc.ctor)) {
                 let instanceOrDesc = this._getServiceInstanceOrDescriptor(dependency.id);
-                if (!instanceOrDesc && !dependency.optional) {
-                    console.warn(`[createInstance] ${id} depends on ${dependency.id} which is NOT registered.`);
+                if (!instanceOrDesc) {
+                    this._throwIfStrict(`[createInstance] ${id} depends on ${dependency.id} which is NOT registered.`, true);
                 }
                 if (instanceOrDesc instanceof SyncDescriptor) {
                     const d = { id: dependency.id, desc: instanceOrDesc, _trace: item._trace.branch(dependency.id, true) };
@@ -224,8 +224,16 @@ export class InstantiationService {
             });
         }
     }
+    _throwIfStrict(msg, printWarning) {
+        if (printWarning) {
+            console.warn(printWarning);
+        }
+        if (this._strict) {
+            throw new Error(msg);
+        }
+    }
 }
-class Trace {
+export class Trace {
     constructor(type, name) {
         this.type = type;
         this.name = name;

@@ -6,7 +6,7 @@ import { $, addDisposableListener, EventType, isHTMLElement } from '../../../bas
 import { StandardMouseEvent } from '../../../base/browser/mouseEvent.js';
 import { Menu } from '../../../base/browser/ui/menu/menu.js';
 import { ActionRunner } from '../../../base/common/actions.js';
-import { isPromiseCanceledError } from '../../../base/common/errors.js';
+import { isCancellationError } from '../../../base/common/errors.js';
 import { combinedDisposable, DisposableStore } from '../../../base/common/lifecycle.js';
 import './contextMenuHandler.css';
 import { attachMenuStyler } from '../../theme/common/styler.js';
@@ -117,7 +117,7 @@ export class ContextMenuHandler {
         }
     }
     onDidActionRun(e) {
-        if (e.error && !isPromiseCanceledError(e.error)) {
+        if (e.error && !isCancellationError(e.error)) {
             this.notificationService.error(e.error);
         }
     }

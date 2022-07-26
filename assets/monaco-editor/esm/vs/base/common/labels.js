@@ -21,9 +21,10 @@ export function getBaseLabel(resource) {
     }
     return base;
 }
-export function normalizeDriveLetter(path) {
-    if (hasDriveLetter(path)) {
+export function normalizeDriveLetter(path, continueAsWindows) {
+    if (hasDriveLetter(path, continueAsWindows)) {
         return path.charAt(0).toUpperCase() + path.slice(1);
     }
     return path;
 }
+let normalizedUserHomeCached = Object.create(null);

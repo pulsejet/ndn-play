@@ -225,7 +225,7 @@ export class PickerQuickAccessProvider extends Disposable {
                         case TriggerAction.REFRESH_PICKER:
                             updatePickerItems();
                             break;
-                        case TriggerAction.REMOVE_ITEM:
+                        case TriggerAction.REMOVE_ITEM: {
                             const index = picker.items.indexOf(item);
                             if (index !== -1) {
                                 const items = picker.items.slice();
@@ -240,6 +240,7 @@ export class PickerQuickAccessProvider extends Disposable {
                                 picker.keepScrollPosition = keepScrollPositionBefore;
                             }
                             break;
+                        }
                     }
                 }
             }

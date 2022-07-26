@@ -62,12 +62,13 @@ export class PointerEventHandler extends MouseHandler {
                 shiftKey: false,
                 leftButton: false,
                 middleButton: false,
+                onInjectedText: target.type === 6 /* CONTENT_TEXT */ && target.detail.injectedText !== null
             });
         }
     }
     onChange(e) {
         if (this._lastPointerType === 'touch') {
-            this._context.model.deltaScrollNow(-e.translationX, -e.translationY);
+            this._context.viewModel.viewLayout.deltaScrollNow(-e.translationX, -e.translationY);
         }
     }
     _onMouseDown(e) {
@@ -98,7 +99,7 @@ class TouchHandler extends MouseHandler {
         }
     }
     onChange(e) {
-        this._context.model.deltaScrollNow(-e.translationX, -e.translationY);
+        this._context.viewModel.viewLayout.deltaScrollNow(-e.translationX, -e.translationY);
     }
 }
 export class PointerHandler extends Disposable {

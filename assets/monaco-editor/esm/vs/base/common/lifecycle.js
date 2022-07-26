@@ -144,6 +144,12 @@ export class DisposableStore {
         this.clear();
     }
     /**
+     * Returns `true` if this object has been disposed
+     */
+    get isDisposed() {
+        return this._isDisposed;
+    }
+    /**
      * Dispose of all registered disposables but do not mark this object as disposed.
      */
     clear() {
@@ -238,6 +244,31 @@ export class MutableDisposable {
             setParentOfDisposable(oldValue, null);
         }
         return oldValue;
+    }
+}
+/**
+ * A safe disposable can be `unset` so that a leaked reference (listener)
+ * can be cut-off.
+ */
+export class SafeDisposable {
+    constructor() {
+        this.dispose = () => { };
+        this.unset = () => { };
+        this.isset = () => false;
+        trackDisposable(this);
+    }
+    set(fn) {
+        let callback = fn;
+        this.unset = () => callback = undefined;
+        this.isset = () => callback !== undefined;
+        this.dispose = () => {
+            if (callback) {
+                callback();
+                callback = undefined;
+                markAsDisposed(this);
+            }
+        };
+        return this;
     }
 }
 export class ImmortalReference {

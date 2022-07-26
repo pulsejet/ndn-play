@@ -55,6 +55,22 @@ export class Range {
         return true;
     }
     /**
+     * Test if `position` is in `range`. If the position is at the edges, will return false.
+     * @internal
+     */
+    static strictContainsPosition(range, position) {
+        if (position.lineNumber < range.startLineNumber || position.lineNumber > range.endLineNumber) {
+            return false;
+        }
+        if (position.lineNumber === range.startLineNumber && position.column <= range.startColumn) {
+            return false;
+        }
+        if (position.lineNumber === range.endLineNumber && position.column >= range.endColumn) {
+            return false;
+        }
+        return true;
+    }
+    /**
      * Test if range is in this range. If the range is equal to this range, will return true.
      */
     containsRange(range) {
@@ -356,5 +372,8 @@ export class Range {
      */
     static spansMultipleLines(range) {
         return range.endLineNumber > range.startLineNumber;
+    }
+    toJSON() {
+        return this;
     }
 }

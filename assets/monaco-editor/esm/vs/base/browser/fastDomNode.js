@@ -15,13 +15,16 @@ export class FastDomNode {
         this._fontFamily = '';
         this._fontWeight = '';
         this._fontSize = -1;
+        this._fontStyle = '';
         this._fontFeatureSettings = '';
+        this._textDecoration = '';
         this._lineHeight = -1;
         this._letterSpacing = -100;
         this._className = '';
         this._display = '';
         this._position = '';
         this._visibility = '';
+        this._color = '';
         this._backgroundColor = '';
         this._layerHint = false;
         this._contain = 'none';
@@ -104,12 +107,26 @@ export class FastDomNode {
         this._fontSize = fontSize;
         this.domNode.style.fontSize = this._fontSize + 'px';
     }
+    setFontStyle(fontStyle) {
+        if (this._fontStyle === fontStyle) {
+            return;
+        }
+        this._fontStyle = fontStyle;
+        this.domNode.style.fontStyle = this._fontStyle;
+    }
     setFontFeatureSettings(fontFeatureSettings) {
         if (this._fontFeatureSettings === fontFeatureSettings) {
             return;
         }
         this._fontFeatureSettings = fontFeatureSettings;
         this.domNode.style.fontFeatureSettings = this._fontFeatureSettings;
+    }
+    setTextDecoration(textDecoration) {
+        if (this._textDecoration === textDecoration) {
+            return;
+        }
+        this._textDecoration = textDecoration;
+        this.domNode.style.textDecoration = this._textDecoration;
     }
     setLineHeight(lineHeight) {
         if (this._lineHeight === lineHeight) {
@@ -156,6 +173,13 @@ export class FastDomNode {
         }
         this._visibility = visibility;
         this.domNode.style.visibility = this._visibility;
+    }
+    setColor(color) {
+        if (this._color === color) {
+            return;
+        }
+        this._color = color;
+        this.domNode.style.color = this._color;
     }
     setBackgroundColor(backgroundColor) {
         if (this._backgroundColor === backgroundColor) {

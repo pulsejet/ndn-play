@@ -300,6 +300,7 @@ Color.white = new Color(new RGBA(255, 255, 255, 1));
 Color.black = new Color(new RGBA(0, 0, 0, 1));
 Color.red = new Color(new RGBA(255, 0, 0, 1));
 Color.blue = new Color(new RGBA(0, 0, 255, 1));
+Color.green = new Color(new RGBA(0, 255, 0, 1));
 Color.cyan = new Color(new RGBA(0, 255, 255, 1));
 Color.lightgrey = new Color(new RGBA(211, 211, 211, 1));
 Color.transparent = new Color(new RGBA(0, 0, 0, 0));

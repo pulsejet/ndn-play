@@ -24,7 +24,7 @@ import { Registry } from '../../../../platform/registry/common/platform.js';
 import { Extensions } from '../../../../platform/quickinput/common/quickAccess.js';
 import { QuickCommandNLS } from '../../../common/standaloneStrings.js';
 import { ICodeEditorService } from '../../../browser/services/codeEditorService.js';
-import { AbstractEditorCommandsQuickAccessProvider } from '../../../contrib/quickAccess/commandsQuickAccess.js';
+import { AbstractEditorCommandsQuickAccessProvider } from '../../../contrib/quickAccess/browser/commandsQuickAccess.js';
 import { withNullAsUndefined } from '../../../../base/common/types.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';

@@ -874,7 +874,7 @@ let UndoRedoService = class UndoRedoService {
         return __awaiter(this, void 0, void 0, function* () {
             const result = yield this._dialogService.show(Severity.Info, nls.localize('confirmDifferentSource', "Would you like to undo '{0}'?", element.label), [
                 nls.localize('confirmDifferentSource.yes', "Yes"),
-                nls.localize('cancel', "Cancel"),
+                nls.localize('confirmDifferentSource.no', "No"),
             ], {
                 cancelId: 1
             });

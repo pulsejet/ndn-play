@@ -5,6 +5,11 @@ export class VSBuffer {
         this.buffer = buffer;
         this.byteLength = this.buffer.byteLength;
     }
+    /**
+     * When running in a nodejs context, if `actual` is not a nodejs Buffer, the backing store for
+     * the returned `VSBuffer` instance might use a nodejs Buffer allocated from node's Buffer pool,
+     * which is not transferrable.
+     */
     static wrap(actual) {
         if (hasBuffer && !(Buffer.isBuffer(actual))) {
             // https://nodejs.org/dist/latest-v10.x/docs/api/buffer.html#buffer_class_method_buffer_from_arraybuffer_byteoffset_length

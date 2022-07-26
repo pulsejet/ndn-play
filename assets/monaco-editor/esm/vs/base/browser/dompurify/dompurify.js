@@ -1382,5 +1382,3 @@ export const removeHook = purify.removeHook;
 export const removeHooks = purify.removeHooks;
 export const removeAllHooks = purify.removeAllHooks;
 // ESM-uncomment-end
-
-//# sourceMappingURL=purify.es.js.map

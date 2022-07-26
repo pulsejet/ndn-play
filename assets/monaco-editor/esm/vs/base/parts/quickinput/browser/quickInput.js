@@ -22,11 +22,12 @@ import { Action } from '../../../common/actions.js';
 import { equals } from '../../../common/arrays.js';
 import { TimeoutTimer } from '../../../common/async.js';
 import { CancellationToken } from '../../../common/cancellation.js';
-import { Codicon, registerCodicon } from '../../../common/codicons.js';
+import { Codicon } from '../../../common/codicons.js';
 import { Emitter } from '../../../common/event.js';
 import { Disposable, DisposableStore, dispose } from '../../../common/lifecycle.js';
 import { isIOS } from '../../../common/platform.js';
 import Severity from '../../../common/severity.js';
+import { withNullAsUndefined } from '../../../common/types.js';
 import { getIconClass } from './quickInputUtils.js';
 import { ItemActivation, NO_KEY_MODS, QuickInputHideReason } from '../common/quickInput.js';
 import './media/quickInput.css';
@@ -34,9 +35,8 @@ import { localize } from '../../../../nls.js';
 import { QuickInputBox } from './quickInputBox.js';
 import { QuickInputList, QuickInputListFocus } from './quickInputList.js';
 const $ = dom.$;
-const backButtonIcon = registerCodicon('quick-input-back', Codicon.arrowLeft);
 const backButton = {
-    iconClass: backButtonIcon.classNames,
+    iconClass: Codicon.quickInputBack.classNames,
     tooltip: localize('quickInput.back', "Back"),
     handle: -1 // TODO
 };
@@ -269,13 +269,13 @@ class QuickInput extends Disposable {
             this.ui.message.style.color = styles.foreground ? `${styles.foreground}` : '';
             this.ui.message.style.backgroundColor = styles.background ? `${styles.background}` : '';
             this.ui.message.style.border = styles.border ? `1px solid ${styles.border}` : '';
-            this.ui.message.style.paddingBottom = '4px';
+            this.ui.message.style.marginBottom = '-2px';
         }
         else {
             this.ui.message.style.color = '';
             this.ui.message.style.backgroundColor = '';
             this.ui.message.style.border = '';
-            this.ui.message.style.paddingBottom = '';
+            this.ui.message.style.marginBottom = '';
         }
     }
     dispose() {
@@ -335,9 +335,20 @@ class QuickPick extends QuickInput {
         return this._value;
     }
     set value(value) {
+        this.doSetValue(value);
+    }
+    doSetValue(value, skipUpdate) {
         if (this._value !== value) {
-            this._value = value || '';
-            this.update();
+            this._value = value;
+            if (!skipUpdate) {
+                this.update();
+            }
+            if (this.visible) {
+                const didFilter = this.ui.list.filter(this.filterValue(this._value));
+                if (didFilter) {
+                    this.trySelectFirst();
+                }
+            }
             this.onDidChangeValueEmitter.fire(this._value);
         }
     }
@@ -505,15 +516,7 @@ class QuickPick extends QuickInput {
     show() {
         if (!this.visible) {
             this.visibleDisposables.add(this.ui.inputBox.onDidChange(value => {
-                if (value === this.value) {
-                    return;
-                }
-                this._value = value;
-                const didFilter = this.ui.list.filter(this.filterValue(this.ui.inputBox.value));
-                if (didFilter) {
-                    this.trySelectFirst();
-                }
-                this.onDidChangeValueEmitter.fire(value);
+                this.doSetValue(value, true /* skip update since this originates from the UI */);
             }));
             this.visibleDisposables.add(this.ui.inputBox.onMouseDown(event => {
                 if (!this.autoFocusOnList) {
@@ -583,7 +586,17 @@ class QuickPick extends QuickInput {
                 }
             }));
             this.visibleDisposables.add(this.ui.onDidAccept(() => {
-                if (!this.canSelectMany && this.activeItems[0]) {
+                if (this.canSelectMany) {
+                    // if there are no checked elements, it means that an onDidChangeSelection never fired to overwrite
+                    // `_selectedItems`. In that case, we should emit one with an empty array to ensure that
+                    // `.selectedItems` is up to date.
+                    if (!this.ui.list.getCheckedElements().length) {
+                        this._selectedItems = [];
+                        this.onDidChangeSelectionEmitter.fire(this.selectedItems);
+                    }
+                }
+                else if (this.activeItems[0]) {
+                    // For single-select, we set `selectedItems` to the item that was accepted.
                     this._selectedItems = [this.activeItems[0]];
                     this.onDidChangeSelectionEmitter.fire(this.selectedItems);
                 }
@@ -1200,8 +1213,12 @@ export class QuickInputController extends Disposable {
             this.onHideEmitter.fire();
             this.getUI().container.style.display = 'none';
             if (!focusChanged) {
-                if (this.previousFocusElement && this.previousFocusElement.offsetParent) {
-                    this.previousFocusElement.focus();
+                let currentElement = this.previousFocusElement;
+                while (currentElement && !currentElement.offsetParent) {
+                    currentElement = withNullAsUndefined(currentElement.parentElement);
+                }
+                if (currentElement === null || currentElement === void 0 ? void 0 : currentElement.offsetParent) {
+                    currentElement.focus();
                     this.previousFocusElement = undefined;
                 }
                 else {

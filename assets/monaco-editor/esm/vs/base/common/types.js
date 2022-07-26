@@ -33,6 +33,12 @@ export function isNumber(obj) {
     return (typeof obj === 'number' && !isNaN(obj));
 }
 /**
+ * @returns whether the provided parameter is an Iterable, casting to the given generic
+ */
+export function isIterable(obj) {
+    return !!obj && typeof obj[Symbol.iterator] === 'function';
+}
+/**
  * @returns whether the provided parameter is a JavaScript Boolean or not.
  */
 export function isBoolean(obj) {
@@ -43,6 +49,12 @@ export function isBoolean(obj) {
  */
 export function isUndefined(obj) {
     return (typeof obj === 'undefined');
+}
+/**
+ * @returns whether the provided parameter is defined.
+ */
+export function isDefined(arg) {
+    return !isUndefinedOrNull(arg);
 }
 /**
  * @returns whether the provided parameter is undefined or null.

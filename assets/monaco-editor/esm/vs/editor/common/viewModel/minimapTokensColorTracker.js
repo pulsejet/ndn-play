@@ -5,7 +5,7 @@
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable, markAsSingleton } from '../../../base/common/lifecycle.js';
 import { RGBA8 } from '../core/rgba.js';
-import { TokenizationRegistry } from '../modes.js';
+import { TokenizationRegistry } from '../languages.js';
 export class MinimapTokensColorTracker extends Disposable {
     constructor() {
         super();
@@ -37,7 +37,7 @@ export class MinimapTokensColorTracker extends Disposable {
             // Use a VM friendly data-type
             this._colors[colorId] = new RGBA8(source.r, source.g, source.b, Math.round(source.a * 255));
         }
-        let backgroundLuminosity = colorMap[2 /* DefaultBackground */].getRelativeLuminance();
+        const backgroundLuminosity = colorMap[2 /* DefaultBackground */].getRelativeLuminance();
         this._backgroundIsLight = backgroundLuminosity >= 0.5;
         this._onDidChange.fire(undefined);
     }

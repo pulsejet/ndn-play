@@ -8,7 +8,7 @@ import { StandardKeyboardEvent } from './keyboardEvent.js';
 import { StandardMouseEvent } from './mouseEvent.js';
 import { TimeoutTimer } from '../common/async.js';
 import { onUnexpectedError } from '../common/errors.js';
-import { Emitter } from '../common/event.js';
+import * as event from '../common/event.js';
 import { Disposable, DisposableStore, toDisposable } from '../common/lifecycle.js';
 import { FileAccess, RemoteAuthorities } from '../common/network.js';
 import * as platform from '../common/platform.js';
@@ -66,14 +66,18 @@ export let addStandardDisposableListener = function addStandardDisposableListene
     }
     return addDisposableListener(node, type, wrapHandler, useCapture);
 };
-export let addStandardDisposableGenericMouseDownListner = function addStandardDisposableListener(node, handler, useCapture) {
+export let addStandardDisposableGenericMouseDownListener = function addStandardDisposableListener(node, handler, useCapture) {
     let wrapHandler = _wrapAsStandardMouseEvent(handler);
-    return addDisposableGenericMouseDownListner(node, wrapHandler, useCapture);
+    return addDisposableGenericMouseDownListener(node, wrapHandler, useCapture);
 };
-export function addDisposableGenericMouseDownListner(node, handler, useCapture) {
+export let addStandardDisposableGenericMouseUpListener = function addStandardDisposableListener(node, handler, useCapture) {
+    let wrapHandler = _wrapAsStandardMouseEvent(handler);
+    return addDisposableGenericMouseUpListener(node, wrapHandler, useCapture);
+};
+export function addDisposableGenericMouseDownListener(node, handler, useCapture) {
     return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_DOWN : EventType.MOUSE_DOWN, handler, useCapture);
 }
-export function addDisposableGenericMouseUpListner(node, handler, useCapture) {
+export function addDisposableGenericMouseUpListener(node, handler, useCapture) {
     return addDisposableListener(node, platform.isIOS && BrowserFeatures.pointerEvents ? EventType.POINTER_UP : EventType.MOUSE_UP, handler, useCapture);
 }
 export function addDisposableNonBubblingMouseOutListener(node, handler) {
@@ -101,6 +105,23 @@ export function addDisposableNonBubblingPointerOutListener(node, handler) {
         }
         handler(e);
     });
+}
+export function createEventEmitter(target, type, options) {
+    let domListener = null;
+    const handler = (e) => result.fire(e);
+    const onFirstListenerAdd = () => {
+        if (!domListener) {
+            domListener = new DomListener(target, type, handler, options);
+        }
+    };
+    const onLastListenerRemove = () => {
+        if (domListener) {
+            domListener.dispose();
+            domListener = null;
+        }
+    };
+    const result = new event.Emitter({ onFirstListenerAdd, onLastListenerRemove });
+    return result;
 }
 let _animationFrame = null;
 function doRequestAnimationFrame(callback) {
@@ -353,6 +374,7 @@ export class Dimension {
         return a.width === b.width && a.height === b.height;
     }
 }
+Dimension.None = new Dimension(0, 0);
 export function getTopLeftOffset(element) {
     // Adapted from WinJS.Utilities.getPosition
     // and added borders to the mix
@@ -581,6 +603,8 @@ export const EventType = {
     LOAD: 'load',
     BEFORE_UNLOAD: 'beforeunload',
     UNLOAD: 'unload',
+    PAGE_SHOW: 'pageshow',
+    PAGE_HIDE: 'pagehide',
     ABORT: 'abort',
     ERROR: 'error',
     RESIZE: 'resize',
@@ -651,11 +675,11 @@ export function restoreParentsScrollTop(node, state) {
 class FocusTracker extends Disposable {
     constructor(element) {
         super();
-        this._onDidFocus = this._register(new Emitter());
+        this._onDidFocus = this._register(new event.Emitter());
         this.onDidFocus = this._onDidFocus.event;
-        this._onDidBlur = this._register(new Emitter());
+        this._onDidBlur = this._register(new event.Emitter());
         this.onDidBlur = this._onDidBlur.event;
-        let hasFocus = isAncestor(document.activeElement, element);
+        let hasFocus = FocusTracker.hasFocusWithin(element);
         let loosingFocus = false;
         const onFocus = () => {
             loosingFocus = false;
@@ -677,7 +701,7 @@ class FocusTracker extends Disposable {
             }
         };
         this._refreshStateHandler = () => {
-            let currentNodeHasFocus = isAncestor(document.activeElement, element);
+            let currentNodeHasFocus = FocusTracker.hasFocusWithin(element);
             if (currentNodeHasFocus !== hasFocus) {
                 if (hasFocus) {
                     onBlur();
@@ -689,6 +713,13 @@ class FocusTracker extends Disposable {
         };
         this._register(addDisposableListener(element, EventType.FOCUS, onFocus, true));
         this._register(addDisposableListener(element, EventType.BLUR, onBlur, true));
+        this._register(addDisposableListener(element, EventType.FOCUS_IN, () => this._refreshStateHandler()));
+        this._register(addDisposableListener(element, EventType.FOCUS_OUT, () => this._refreshStateHandler()));
+    }
+    static hasFocusWithin(element) {
+        const shadowRoot = getShadowRoot(element);
+        const activeElement = (shadowRoot ? shadowRoot.activeElement : document.activeElement);
+        return isAncestor(activeElement, element);
     }
 }
 export function trackFocus(element) {
@@ -793,7 +824,7 @@ export function computeScreenAwareSize(cssPx) {
 /**
  * Open safely a new window. This is the best way to do so, but you cannot tell
  * if the window was opened or if it was blocked by the browser's popup blocker.
- * If you want to tell if the browser blocked the new window, use `windowOpenNoOpenerWithSuccess`.
+ * If you want to tell if the browser blocked the new window, use {@link windowOpenWithSuccess}.
  *
  * See https://github.com/microsoft/monaco-editor/issues/601
  * To protect against malicious code in the linked site, particularly phishing attempts,
@@ -831,7 +862,7 @@ export function asCSSUrl(uri) {
 export function asCSSPropertyValue(value) {
     return `'${value.replace(/'/g, '%27')}'`;
 }
-export class ModifierKeyEmitter extends Emitter {
+export class ModifierKeyEmitter extends event.Emitter {
     constructor() {
         super();
         this._subscriptions = new DisposableStore();
@@ -955,11 +986,5 @@ export class ModifierKeyEmitter extends Emitter {
 }
 export function addMatchMediaChangeListener(query, callback) {
     const mediaQueryList = window.matchMedia(query);
-    if (typeof mediaQueryList.addEventListener === 'function') {
-        mediaQueryList.addEventListener('change', callback);
-    }
-    else {
-        // Safari 13.x
-        mediaQueryList.addListener(callback);
-    }
+    mediaQueryList.addEventListener('change', callback);
 }

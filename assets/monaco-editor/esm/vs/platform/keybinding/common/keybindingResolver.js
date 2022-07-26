@@ -8,15 +8,15 @@ export class KeybindingResolver {
         this._log = log;
         this._defaultKeybindings = defaultKeybindings;
         this._defaultBoundCommands = new Map();
-        for (let i = 0, len = defaultKeybindings.length; i < len; i++) {
-            const command = defaultKeybindings[i].command;
-            if (command) {
+        for (const defaultKeybinding of defaultKeybindings) {
+            const command = defaultKeybinding.command;
+            if (command && command.charAt(0) !== '-') {
                 this._defaultBoundCommands.set(command, true);
             }
         }
         this._map = new Map();
         this._lookupMap = new Map();
-        this._keybindings = KeybindingResolver.combine(defaultKeybindings, overrides);
+        this._keybindings = KeybindingResolver.handleRemovals([].concat(defaultKeybindings).concat(overrides));
         for (let i = 0, len = this._keybindings.length; i < len; i++) {
             let k = this._keybindings[i];
             if (k.keypressParts.length === 0) {
@@ -31,10 +31,7 @@ export class KeybindingResolver {
             this._addKeyPress(k.keypressParts[0], k);
         }
     }
-    static _isTargetedForRemoval(defaultKb, keypressFirstPart, keypressChordPart, command, when) {
-        if (defaultKb.command !== command) {
-            return false;
-        }
+    static _isTargetedForRemoval(defaultKb, keypressFirstPart, keypressChordPart, when) {
         // TODO@chords
         if (keypressFirstPart && defaultKb.keypressParts[0] !== keypressFirstPart) {
             return false;
@@ -54,28 +51,60 @@ export class KeybindingResolver {
         return true;
     }
     /**
-     * Looks for rules containing -command in `overrides` and removes them directly from `defaults`.
+     * Looks for rules containing "-commandId" and removes them.
      */
-    static combine(defaults, rawOverrides) {
-        defaults = defaults.slice(0);
-        let overrides = [];
-        for (const override of rawOverrides) {
-            if (!override.command || override.command.length === 0 || override.command.charAt(0) !== '-') {
-                overrides.push(override);
-                continue;
-            }
-            const command = override.command.substr(1);
-            // TODO@chords
-            const keypressFirstPart = override.keypressParts[0];
-            const keypressChordPart = override.keypressParts[1];
-            const when = override.when;
-            for (let j = defaults.length - 1; j >= 0; j--) {
-                if (this._isTargetedForRemoval(defaults[j], keypressFirstPart, keypressChordPart, command, when)) {
-                    defaults.splice(j, 1);
+    static handleRemovals(rules) {
+        // Do a first pass and construct a hash-map for removals
+        const removals = new Map();
+        for (let i = 0, len = rules.length; i < len; i++) {
+            const rule = rules[i];
+            if (rule.command && rule.command.charAt(0) === '-') {
+                const command = rule.command.substring(1);
+                if (!removals.has(command)) {
+                    removals.set(command, [rule]);
+                }
+                else {
+                    removals.get(command).push(rule);
                 }
             }
         }
-        return defaults.concat(overrides);
+        if (removals.size === 0) {
+            // There are no removals
+            return rules;
+        }
+        // Do a second pass and keep only non-removed keybindings
+        const result = [];
+        for (let i = 0, len = rules.length; i < len; i++) {
+            const rule = rules[i];
+            if (!rule.command || rule.command.length === 0) {
+                result.push(rule);
+                continue;
+            }
+            if (rule.command.charAt(0) === '-') {
+                continue;
+            }
+            const commandRemovals = removals.get(rule.command);
+            if (!commandRemovals || !rule.isDefault) {
+                result.push(rule);
+                continue;
+            }
+            let isRemoved = false;
+            for (const commandRemoval of commandRemovals) {
+                // TODO@chords
+                const keypressFirstPart = commandRemoval.keypressParts[0];
+                const keypressChordPart = commandRemoval.keypressParts[1];
+                const when = commandRemoval.when;
+                if (this._isTargetedForRemoval(rule, keypressFirstPart, keypressChordPart, when)) {
+                    isRemoved = true;
+                    break;
+                }
+            }
+            if (!isRemoved) {
+                result.push(rule);
+                continue;
+            }
+        }
+        return result;
     }
     _addKeyPress(keypress, item) {
         const conflicts = this._map.get(keypress);
@@ -222,14 +251,14 @@ export class KeybindingResolver {
     _findCommand(context, matches) {
         for (let i = matches.length - 1; i >= 0; i--) {
             let k = matches[i];
-            if (!KeybindingResolver.contextMatchesRules(context, k.when)) {
+            if (!KeybindingResolver._contextMatchesRules(context, k.when)) {
                 continue;
             }
             return k;
         }
         return null;
     }
-    static contextMatchesRules(context, rules) {
+    static _contextMatchesRules(context, rules) {
         if (!rules) {
             return true;
         }

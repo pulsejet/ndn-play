@@ -47,6 +47,9 @@ export var Schemas;
     Schemas.vscodeSettings = 'vscode-settings';
     Schemas.vscodeWorkspaceTrust = 'vscode-workspace-trust';
     Schemas.vscodeTerminal = 'vscode-terminal';
+    /**
+     * Scheme used internally for webviews that aren't linked to a resource (i.e. not custom editors)
+     */
     Schemas.webviewPanel = 'webview-panel';
     /**
      * Scheme used for loading the wrapper html and script in webviews.
@@ -65,7 +68,12 @@ export var Schemas;
      * Scheme used for temporary resources
      */
     Schemas.tmp = 'tmp';
+    /**
+     * Scheme used vs live share
+     */
+    Schemas.vsls = 'vsls';
 })(Schemas || (Schemas = {}));
+export const connectionTokenQueryName = 'tkn';
 class RemoteAuthoritiesImpl {
     constructor() {
         this._hosts = Object.create(null);
@@ -90,7 +98,7 @@ class RemoteAuthoritiesImpl {
         const connectionToken = this._connectionTokens[authority];
         let query = `path=${encodeURIComponent(uri.path)}`;
         if (typeof connectionToken === 'string') {
-            query += `&tkn=${encodeURIComponent(connectionToken)}`;
+            query += `&${connectionTokenQueryName}=${encodeURIComponent(connectionToken)}`;
         }
         return URI.from({
             scheme: platform.isWeb ? this._preferredWebSchema : Schemas.vscodeRemoteResource,
@@ -116,7 +124,7 @@ class FileAccessImpl {
             // ...and we run in native environments
             platform.isNative ||
                 // ...or web worker extensions on desktop
-                (typeof platform.globals.importScripts === 'function' && platform.globals.origin === `${Schemas.vscodeFileResource}://${FileAccessImpl.FALLBACK_AUTHORITY}`))) {
+                (platform.isWebWorker && platform.globals.origin === `${Schemas.vscodeFileResource}://${FileAccessImpl.FALLBACK_AUTHORITY}`))) {
             return uri.with({
                 scheme: Schemas.vscodeFileResource,
                 // We need to provide an authority here so that it can serve

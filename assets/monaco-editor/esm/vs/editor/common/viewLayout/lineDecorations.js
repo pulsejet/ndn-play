@@ -51,7 +51,8 @@ export class LineDecoration {
         if (lineDecorations.length === 0) {
             return [];
         }
-        let result = [], resultLen = 0;
+        const result = [];
+        let resultLen = 0;
         for (let i = 0, len = lineDecorations.length; i < len; i++) {
             const d = lineDecorations[i];
             const range = d.range;
@@ -164,7 +165,7 @@ export class LineDecorationsNormalizer {
         if (lineDecorations.length === 0) {
             return [];
         }
-        let result = [];
+        const result = [];
         const stack = new Stack();
         let nextStartOffset = 0;
         for (let i = 0, len = lineDecorations.length; i < len; i++) {

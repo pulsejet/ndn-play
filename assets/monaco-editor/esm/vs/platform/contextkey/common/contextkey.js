@@ -2,10 +2,9 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { isLinux, isMacintosh, isWeb, isWindows, userAgent } from '../../../base/common/platform.js';
+import { isChrome, isEdge, isFirefox, isLinux, isMacintosh, isSafari, isWeb, isWindows } from '../../../base/common/platform.js';
 import { isFalsyOrWhitespace } from '../../../base/common/strings.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
-let _userAgent = userAgent || '';
 const CONSTANT_VALUES = new Map();
 CONSTANT_VALUES.set('false', false);
 CONSTANT_VALUES.set('true', true);
@@ -14,10 +13,10 @@ CONSTANT_VALUES.set('isLinux', isLinux);
 CONSTANT_VALUES.set('isWindows', isWindows);
 CONSTANT_VALUES.set('isWeb', isWeb);
 CONSTANT_VALUES.set('isMacNative', isMacintosh && !isWeb);
-CONSTANT_VALUES.set('isEdge', _userAgent.indexOf('Edg/') >= 0);
-CONSTANT_VALUES.set('isFirefox', _userAgent.indexOf('Firefox') >= 0);
-CONSTANT_VALUES.set('isChrome', _userAgent.indexOf('Chrome') >= 0);
-CONSTANT_VALUES.set('isSafari', _userAgent.indexOf('Safari') >= 0);
+CONSTANT_VALUES.set('isEdge', isEdge);
+CONSTANT_VALUES.set('isFirefox', isFirefox);
+CONSTANT_VALUES.set('isChrome', isChrome);
+CONSTANT_VALUES.set('isSafari', isSafari);
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 export class ContextKeyExpr {
     static has(key) {
@@ -507,6 +506,18 @@ export class ContextKeyNotExpr {
         return this.negated;
     }
 }
+function withFloatOrStr(value, callback) {
+    if (typeof value === 'string') {
+        const n = parseFloat(value);
+        if (!isNaN(n)) {
+            value = n;
+        }
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+        return callback(value);
+    }
+    return ContextKeyFalseExpr.INSTANCE;
+}
 export class ContextKeyGreaterExpr {
     constructor(key, value, negated) {
         this.key = key;
@@ -514,8 +525,8 @@ export class ContextKeyGreaterExpr {
         this.negated = negated;
         this.type = 12 /* Greater */;
     }
-    static create(key, value, negated = null) {
-        return new ContextKeyGreaterExpr(key, value, negated);
+    static create(key, _value, negated = null) {
+        return withFloatOrStr(_value, (value) => new ContextKeyGreaterExpr(key, value, negated));
     }
     cmp(other) {
         if (other.type !== this.type) {
@@ -533,7 +544,10 @@ export class ContextKeyGreaterExpr {
         return this;
     }
     evaluate(context) {
-        return (parseFloat(context.getValue(this.key)) > parseFloat(this.value));
+        if (typeof this.value === 'string') {
+            return false;
+        }
+        return (parseFloat(context.getValue(this.key)) > this.value);
     }
     serialize() {
         return `${this.key} > ${this.value}`;
@@ -555,8 +569,8 @@ export class ContextKeyGreaterEqualsExpr {
         this.negated = negated;
         this.type = 13 /* GreaterEquals */;
     }
-    static create(key, value, negated = null) {
-        return new ContextKeyGreaterEqualsExpr(key, value, negated);
+    static create(key, _value, negated = null) {
+        return withFloatOrStr(_value, (value) => new ContextKeyGreaterEqualsExpr(key, value, negated));
     }
     cmp(other) {
         if (other.type !== this.type) {
@@ -574,7 +588,10 @@ export class ContextKeyGreaterEqualsExpr {
         return this;
     }
     evaluate(context) {
-        return (parseFloat(context.getValue(this.key)) >= parseFloat(this.value));
+        if (typeof this.value === 'string') {
+            return false;
+        }
+        return (parseFloat(context.getValue(this.key)) >= this.value);
     }
     serialize() {
         return `${this.key} >= ${this.value}`;
@@ -596,8 +613,8 @@ export class ContextKeySmallerExpr {
         this.negated = negated;
         this.type = 14 /* Smaller */;
     }
-    static create(key, value, negated = null) {
-        return new ContextKeySmallerExpr(key, value, negated);
+    static create(key, _value, negated = null) {
+        return withFloatOrStr(_value, (value) => new ContextKeySmallerExpr(key, value, negated));
     }
     cmp(other) {
         if (other.type !== this.type) {
@@ -615,7 +632,10 @@ export class ContextKeySmallerExpr {
         return this;
     }
     evaluate(context) {
-        return (parseFloat(context.getValue(this.key)) < parseFloat(this.value));
+        if (typeof this.value === 'string') {
+            return false;
+        }
+        return (parseFloat(context.getValue(this.key)) < this.value);
     }
     serialize() {
         return `${this.key} < ${this.value}`;
@@ -637,8 +657,8 @@ export class ContextKeySmallerEqualsExpr {
         this.negated = negated;
         this.type = 15 /* SmallerEquals */;
     }
-    static create(key, value, negated = null) {
-        return new ContextKeySmallerEqualsExpr(key, value, negated);
+    static create(key, _value, negated = null) {
+        return withFloatOrStr(_value, (value) => new ContextKeySmallerEqualsExpr(key, value, negated));
     }
     cmp(other) {
         if (other.type !== this.type) {
@@ -656,7 +676,10 @@ export class ContextKeySmallerEqualsExpr {
         return this;
     }
     evaluate(context) {
-        return (parseFloat(context.getValue(this.key)) <= parseFloat(this.value));
+        if (typeof this.value === 'string') {
+            return false;
+        }
+        return (parseFloat(context.getValue(this.key)) <= this.value);
     }
     serialize() {
         return `${this.key} <= ${this.value}`;

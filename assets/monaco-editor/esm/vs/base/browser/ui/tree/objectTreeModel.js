@@ -88,6 +88,10 @@ export class ObjectTreeModel {
         const location = this.getElementLocation(element);
         this.model.rerender(location);
     }
+    getFirstElementChild(ref = null) {
+        const location = this.getElementLocation(ref);
+        return this.model.getFirstElementChild(location);
+    }
     has(element) {
         return this.nodes.has(element);
     }

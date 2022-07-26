@@ -14,6 +14,20 @@ const intlFileNameCollatorBaseNumeric = new IdleValue(() => {
         collatorIsNumeric: collator.resolvedOptions().numeric
     };
 });
+// A collator with numeric sorting enabled.
+const intlFileNameCollatorNumeric = new IdleValue(() => {
+    const collator = new Intl.Collator(undefined, { numeric: true });
+    return {
+        collator: collator
+    };
+});
+// A collator with numeric sorting enabled, and sensitivity to accents and diacritics but not case.
+const intlFileNameCollatorNumericCaseInsensitive = new IdleValue(() => {
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'accent' });
+    return {
+        collator: collator
+    };
+});
 /** Compares filenames without distinguishing the name from the extension. Disambiguates by unicode comparison. */
 export function compareFileNames(one, other, caseSensitive = false) {
     const a = one || '';

@@ -20,7 +20,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import * as dom from '../../../browser/dom.js';
 import { StandardKeyboardEvent } from '../../../browser/keyboardEvent.js';
 import { ActionBar } from '../../../browser/ui/actionbar/actionbar.js';
-import { HighlightedLabel } from '../../../browser/ui/highlightedlabel/highlightedLabel.js';
 import { IconLabel } from '../../../browser/ui/iconLabel/iconLabel.js';
 import { KeybindingLabel } from '../../../browser/ui/keybindingLabel/keybindingLabel.js';
 import { Action } from '../../../common/actions.js';
@@ -89,7 +88,7 @@ class ListElementRenderer {
         data.keybinding = new KeybindingLabel(keybindingContainer, platform.OS);
         // Detail
         const detailContainer = dom.append(row2, $('.quick-input-list-label-meta'));
-        data.detail = new HighlightedLabel(detailContainer, true);
+        data.detail = new IconLabel(detailContainer, { supportHighlights: true, supportIcons: true });
         // Separator
         data.separator = dom.append(data.entry, $('.quick-input-list-separator'));
         // Actions
@@ -116,7 +115,12 @@ class ListElementRenderer {
         // Keybinding
         data.keybinding.set(element.item.keybinding);
         // Meta
-        data.detail.set(element.saneDetail, detailHighlights);
+        if (element.saneDetail) {
+            data.detail.setLabel(element.saneDetail, undefined, {
+                matches: detailHighlights,
+                title: element.saneDetail
+            });
+        }
         // Separator
         if (element.separator && element.separator.label) {
             data.separator.textContent = element.separator.label;
@@ -224,23 +228,25 @@ export class QuickInputList {
                 case 10 /* Space */:
                     this.toggleCheckbox();
                     break;
-                case 31 /* KEY_A */:
+                case 31 /* KeyA */:
                     if (platform.isMacintosh ? e.metaKey : e.ctrlKey) {
                         this.list.setFocus(range(this.list.length));
                     }
                     break;
-                case 16 /* UpArrow */:
+                case 16 /* UpArrow */: {
                     const focus1 = this.list.getFocus();
                     if (focus1.length === 1 && focus1[0] === 0) {
                         this._onLeave.fire();
                     }
                     break;
-                case 18 /* DownArrow */:
+                }
+                case 18 /* DownArrow */: {
                     const focus2 = this.list.getFocus();
                     if (focus2.length === 1 && focus2[0] === this.list.length - 1) {
                         this._onLeave.fire();
                     }
                     break;
+                }
             }
             this._onKeyDown.fire(event);
         }));
@@ -350,7 +356,9 @@ export class QuickInputList {
                     .map(s => getCodiconAriaLabel(s))
                     .filter(s => !!s)
                     .join(', ');
+                const hasCheckbox = this.parent.classList.contains('show-checkboxes');
                 result.push(new ListElement({
+                    hasCheckbox,
                     index,
                     item,
                     saneLabel,
@@ -611,7 +619,16 @@ class QuickInputAccessibilityProvider {
     getWidgetRole() {
         return 'listbox';
     }
-    getRole() {
-        return 'option';
+    getRole(element) {
+        return element.hasCheckbox ? 'checkbox' : 'option';
+    }
+    isChecked(element) {
+        if (!element.hasCheckbox) {
+            return undefined;
+        }
+        return {
+            value: element.checked,
+            onDidChange: element.onChecked
+        };
     }
 }

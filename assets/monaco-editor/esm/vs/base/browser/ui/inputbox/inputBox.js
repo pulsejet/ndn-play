@@ -213,12 +213,8 @@ export class InputBox extends Widget {
         }
     }
     set paddingRight(paddingRight) {
-        if (this.options.flexibleHeight && this.options.flexibleWidth) {
-            this.input.style.width = `calc(100% - ${paddingRight}px)`;
-        }
-        else {
-            this.input.style.paddingRight = paddingRight + 'px';
-        }
+        // Set width to avoid hint text overlapping buttons
+        this.input.style.width = `calc(100% - ${paddingRight}px)`;
         if (this.mirror) {
             this.mirror.style.paddingRight = paddingRight + 'px';
         }

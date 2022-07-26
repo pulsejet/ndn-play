@@ -1,11 +1,23 @@
-/*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
-import { registerLanguage } from '../_.contribution.js';
+/*!-----------------------------------------------------------------------------
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Version: 0.33.0(4b1abad427e58dbedc1215d99a0902ffc885fcd4)
+ * Released under the MIT license
+ * https://github.com/microsoft/monaco-editor/blob/main/LICENSE.txt
+ *-----------------------------------------------------------------------------*/
+
+// src/basic-languages/flow9/flow9.contribution.ts
+import { registerLanguage } from "../_.contribution.js";
 registerLanguage({
-    id: 'flow9',
-    extensions: ['.flow'],
-    aliases: ['Flow9', 'Flow', 'flow9', 'flow'],
-    loader: function () { return import('./flow9.js'); }
+  id: "flow9",
+  extensions: [".flow"],
+  aliases: ["Flow9", "Flow", "flow9", "flow"],
+  loader: () => {
+    if (false) {
+      return new Promise((resolve, reject) => {
+        __require(["vs/basic-languages/flow9/flow9"], resolve, reject);
+      });
+    } else {
+      return import("./flow9.js");
+    }
+  }
 });

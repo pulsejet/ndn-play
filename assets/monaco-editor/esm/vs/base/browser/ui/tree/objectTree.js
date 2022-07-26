@@ -16,6 +16,7 @@ import { Iterable } from '../../../common/iterator.js';
 export class ObjectTree extends AbstractTree {
     constructor(user, container, delegate, renderers, options = {}) {
         super(user, container, delegate, renderers, options);
+        this.user = user;
     }
     get onDidChangeCollapseState() { return this.model.onDidChangeCollapseState; }
     setChildren(element, children = Iterable.empty(), options) {

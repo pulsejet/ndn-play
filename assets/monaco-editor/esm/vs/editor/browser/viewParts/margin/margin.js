@@ -8,7 +8,7 @@ export class Margin extends ViewPart {
     constructor(context) {
         super(context);
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(129 /* layoutInfo */);
+        const layoutInfo = options.get(131 /* layoutInfo */);
         this._canUseLayerHinting = !options.get(28 /* disableLayerHinting */);
         this._contentLeft = layoutInfo.contentLeft;
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;
@@ -31,7 +31,7 @@ export class Margin extends ViewPart {
     // --- begin event handlers
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(129 /* layoutInfo */);
+        const layoutInfo = options.get(131 /* layoutInfo */);
         this._canUseLayerHinting = !options.get(28 /* disableLayerHinting */);
         this._contentLeft = layoutInfo.contentLeft;
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;

@@ -16,12 +16,13 @@ import { ComposedTreeDelegate } from './abstractTree.js';
 import { getVisibleState, isFilterResult } from './indexTreeModel.js';
 import { CompressibleObjectTree, ObjectTree } from './objectTree.js';
 import { TreeError, WeakMapper } from './tree.js';
-import { treeItemLoadingIcon } from './treeIcons.js';
 import { createCancelablePromise, Promises, timeout } from '../../../common/async.js';
-import { isPromiseCanceledError, onUnexpectedError } from '../../../common/errors.js';
+import { Codicon } from '../../../common/codicons.js';
+import { isCancellationError, onUnexpectedError } from '../../../common/errors.js';
 import { Emitter, Event } from '../../../common/event.js';
 import { Iterable } from '../../../common/iterator.js';
 import { DisposableStore, dispose } from '../../../common/lifecycle.js';
+import { isIterable } from '../../../common/types.js';
 function createAsyncDataTreeNode(props) {
     return Object.assign(Object.assign({}, props), { children: [], refreshPromise: undefined, stale: true, slow: false, collapsedByDefault: undefined });
 }
@@ -70,11 +71,11 @@ class AsyncDataTreeRenderer {
     }
     renderTwistie(element, twistieElement) {
         if (element.slow) {
-            twistieElement.classList.add(...treeItemLoadingIcon.classNamesArray);
+            twistieElement.classList.add(...Codicon.treeItemLoading.classNamesArray);
             return true;
         }
         else {
-            twistieElement.classList.remove(...treeItemLoadingIcon.classNamesArray);
+            twistieElement.classList.remove(...Codicon.treeItemLoading.classNamesArray);
             return false;
         }
     }
@@ -215,6 +216,8 @@ export class AsyncDataTree {
     get onMouseDblClick() { return Event.map(this.tree.onMouseDblClick, asTreeMouseEvent); }
     get onPointer() { return Event.map(this.tree.onPointer, asTreeMouseEvent); }
     get onDidFocus() { return this.tree.onDidFocus; }
+    get onDidChangeModel() { return this.tree.onDidChangeModel; }
+    get onDidChangeCollapseState() { return this.tree.onDidChangeCollapseState; }
     get onDidDispose() { return this.tree.onDidDispose; }
     createTree(user, container, delegate, renderers, options) {
         const objectTreeDelegate = new ComposedTreeDelegate(delegate);
@@ -295,6 +298,12 @@ export class AsyncDataTree {
         const node = this.getDataNode(element);
         this.tree.rerender(node);
     }
+    // Tree
+    getNode(element = this.root.element) {
+        const dataNode = this.getDataNode(element);
+        const node = this.tree.getNode(dataNode === this.root ? null : dataNode);
+        return this.nodeMapper.map(node);
+    }
     collapse(element, recursive = false) {
         const node = this.getDataNode(element);
         return this.tree.collapse(node === this.root ? null : node, recursive);
@@ -345,6 +354,16 @@ export class AsyncDataTree {
     }
     reveal(element, relativeTop) {
         this.tree.reveal(this.getDataNode(element), relativeTop);
+    }
+    // Tree navigation
+    getParentElement(element) {
+        const node = this.tree.getParentElement(this.getDataNode(element));
+        return (node && node.element);
+    }
+    getFirstElementChild(element = this.root.element) {
+        const dataNode = this.getDataNode(element);
+        const node = this.tree.getFirstElementChild(dataNode === this.root ? null : dataNode);
+        return (node && node.element);
     }
     // Implementation
     getDataNode(element) {
@@ -401,13 +420,18 @@ export class AsyncDataTree {
                 childrenPromise = Promise.resolve(Iterable.empty());
             }
             else {
-                const slowTimeout = timeout(800);
-                slowTimeout.then(() => {
-                    node.slow = true;
-                    this._onDidChangeNodeSlowState.fire(node);
-                }, _ => null);
-                childrenPromise = this.doGetChildren(node)
-                    .finally(() => slowTimeout.cancel());
+                const children = this.doGetChildren(node);
+                if (isIterable(children)) {
+                    childrenPromise = Promise.resolve(children);
+                }
+                else {
+                    const slowTimeout = timeout(800);
+                    slowTimeout.then(() => {
+                        node.slow = true;
+                        this._onDidChangeNodeSlowState.fire(node);
+                    }, _ => null);
+                    childrenPromise = children.finally(() => slowTimeout.cancel());
+                }
             }
             try {
                 const children = yield childrenPromise;
@@ -417,7 +441,7 @@ export class AsyncDataTree {
                 if (node !== this.root && this.tree.hasElement(node)) {
                     this.tree.collapse(node);
                 }
-                if (isPromiseCanceledError(err)) {
+                if (isCancellationError(err)) {
                     return [];
                 }
                 throw err;
@@ -435,12 +459,15 @@ export class AsyncDataTree {
         if (result) {
             return result;
         }
-        result = createCancelablePromise(() => __awaiter(this, void 0, void 0, function* () {
-            const children = yield this.dataSource.getChildren(node.element);
+        const children = this.dataSource.getChildren(node.element);
+        if (isIterable(children)) {
             return this.processChildren(children);
-        }));
-        this.refreshPromises.set(node, result);
-        return result.finally(() => { this.refreshPromises.delete(node); });
+        }
+        else {
+            result = createCancelablePromise(() => __awaiter(this, void 0, void 0, function* () { return this.processChildren(yield children); }));
+            this.refreshPromises.set(node, result);
+            return result.finally(() => { this.refreshPromises.delete(node); });
+        }
     }
     _onDidChangeCollapseState({ node, deep }) {
         if (node.element === null) {
@@ -624,11 +651,11 @@ class CompressibleAsyncDataTreeRenderer {
     }
     renderTwistie(element, twistieElement) {
         if (element.slow) {
-            twistieElement.classList.add(...treeItemLoadingIcon.classNamesArray);
+            twistieElement.classList.add(...Codicon.treeItemLoading.classNamesArray);
             return true;
         }
         else {
-            twistieElement.classList.remove(...treeItemLoadingIcon.classNamesArray);
+            twistieElement.classList.remove(...Codicon.treeItemLoading.classNamesArray);
             return false;
         }
     }

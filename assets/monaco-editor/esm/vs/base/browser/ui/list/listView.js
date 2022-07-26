@@ -119,6 +119,16 @@ class ListViewAccessibilityProvider {
         }
     }
 }
+/**
+ * The {@link ListView} is a virtual scrolling engine.
+ *
+ * Given that it only renders elements within its viewport, it can hold large
+ * collections of elements and stay very performant. The performance bottleneck
+ * usually lies within the user's rendering code for each element.
+ *
+ * @remarks It is a low-level widget, not meant to be used directly. Refer to the
+ * List widget instead.
+ */
 export class ListView {
     constructor(container, virtualDelegate, renderers, options = DefaultOptions) {
         this.virtualDelegate = virtualDelegate;
@@ -165,7 +175,11 @@ export class ListView {
             this.rowsContainer.style.transform = 'translate3d(0px, 0px, 0px)';
         }
         this.disposables.add(Gesture.addTarget(this.rowsContainer));
-        this.scrollable = new Scrollable(getOrDefault(options, o => o.smoothScrolling, false) ? 125 : 0, cb => scheduleAtNextAnimationFrame(cb));
+        this.scrollable = new Scrollable({
+            forceIntegerValues: true,
+            smoothScrollDuration: getOrDefault(options, o => o.smoothScrolling, false) ? 125 : 0,
+            scheduleAtNextAnimationFrame: cb => scheduleAtNextAnimationFrame(cb)
+        });
         this.scrollableElement = this.disposables.add(new SmoothScrollableElement(this.rowsContainer, {
             alwaysConsumeMouseWheel: getOrDefault(options, o => o.alwaysConsumeMouseWheel, DefaultOptions.alwaysConsumeMouseWheel),
             horizontal: 1 /* Auto */,
@@ -253,7 +267,7 @@ export class ListView {
         const removeRange = Range.intersect(previousRenderRange, deleteRange);
         // try to reuse rows, avoid removing them from DOM
         const rowsToDispose = new Map();
-        for (let i = removeRange.start; i < removeRange.end; i++) {
+        for (let i = removeRange.end - 1; i >= removeRange.start; i--) {
             const item = this.items[i];
             item.dragStartDisposable.dispose();
             if (item.row) {
@@ -284,7 +298,8 @@ export class ListView {
             row: null,
             uri: undefined,
             dropTarget: false,
-            dragStartDisposable: Disposable.None
+            dragStartDisposable: Disposable.None,
+            checkedDisposable: Disposable.None
         }));
         let deleted;
         // TODO@joao: improve this optimization to catch even more cases
@@ -463,8 +478,13 @@ export class ListView {
         const role = this.accessibilityProvider.getRole(item.element) || 'listitem';
         item.row.domNode.setAttribute('role', role);
         const checked = this.accessibilityProvider.isChecked(item.element);
-        if (typeof checked !== 'undefined') {
+        if (typeof checked === 'boolean') {
             item.row.domNode.setAttribute('aria-checked', String(!!checked));
+        }
+        else if (checked) {
+            const update = (checked) => item.row.domNode.setAttribute('aria-checked', String(!!checked));
+            update(checked.value);
+            item.checkedDisposable = checked.onDidChange(update);
         }
         if (!item.row.domNode.parentElement) {
             if (beforeElement) {
@@ -527,6 +547,7 @@ export class ListView {
     removeItemFromDOM(index) {
         const item = this.items[index];
         item.dragStartDisposable.dispose();
+        item.checkedDisposable.dispose();
         if (item.row) {
             const renderer = this.renderers.get(item.templateId);
             if (renderer && renderer.disposeElement) {

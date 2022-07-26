@@ -66,7 +66,7 @@ export function isMarkdownString(thing) {
 }
 export function escapeMarkdownSyntaxTokens(text) {
     // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
-    return text.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&');
+    return text.replace(/[\\`*_{}[\]()#+\-!]/g, '\\$&');
 }
 export function removeMarkdownEscapes(text) {
     if (!text) {

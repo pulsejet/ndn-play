@@ -113,7 +113,7 @@ export class Storage extends Disposable {
             // Event
             this._onDidChangeStorage.fire(key);
             // Accumulate work by scheduling after timeout
-            return this.flushDelayer.trigger(() => this.flushPending());
+            return this.doFlush();
         });
     }
     delete(key) {
@@ -133,7 +133,7 @@ export class Storage extends Disposable {
             // Event
             this._onDidChangeStorage.fire(key);
             // Accumulate work by scheduling after timeout
-            return this.flushDelayer.trigger(() => this.flushPending());
+            return this.doFlush();
         });
     }
     get hasPending() {
@@ -159,6 +159,11 @@ export class Storage extends Disposable {
                     }
                 }
             });
+        });
+    }
+    doFlush(delay) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.flushDelayer.trigger(() => this.flushPending(), delay);
         });
     }
     dispose() {

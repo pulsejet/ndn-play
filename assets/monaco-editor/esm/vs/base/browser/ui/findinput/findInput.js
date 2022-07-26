@@ -161,13 +161,13 @@ export class FindInput extends Widget {
                 }
             }
         });
-        let controls = document.createElement('div');
-        controls.className = 'controls';
-        controls.style.display = this._showOptionButtons ? 'block' : 'none';
-        controls.appendChild(this.caseSensitive.domNode);
-        controls.appendChild(this.wholeWords.domNode);
-        controls.appendChild(this.regex.domNode);
-        this.domNode.appendChild(controls);
+        this.controls = document.createElement('div');
+        this.controls.className = 'controls';
+        this.controls.style.display = this._showOptionButtons ? 'block' : 'none';
+        this.controls.appendChild(this.caseSensitive.domNode);
+        this.controls.appendChild(this.wholeWords.domNode);
+        this.controls.appendChild(this.regex.domNode);
+        this.domNode.appendChild(this.controls);
         if (parent) {
             parent.appendChild(this.domNode);
         }

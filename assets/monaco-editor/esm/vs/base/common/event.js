@@ -1,10 +1,34 @@
 import { onUnexpectedError } from './errors.js';
-import { combinedDisposable, Disposable, DisposableStore, toDisposable } from './lifecycle.js';
+import { combinedDisposable, Disposable, DisposableStore, SafeDisposable, toDisposable } from './lifecycle.js';
 import { LinkedList } from './linkedList.js';
 import { StopWatch } from './stopwatch.js';
+// -----------------------------------------------------------------------------------------------------------------------
+// Uncomment the next line to print warnings whenever an emitter with listeners is disposed. That is a sign of code smell.
+// -----------------------------------------------------------------------------------------------------------------------
+let _enableDisposeWithListenerWarning = false;
+// _enableDisposeWithListenerWarning = Boolean("TRUE"); // causes a linter warning so that it cannot be pushed
+// -----------------------------------------------------------------------------------------------------------------------
+// Uncomment the next line to print warnings whenever a snapshotted event is used repeatedly without cleanup.
+// See https://github.com/microsoft/vscode/issues/142851
+// -----------------------------------------------------------------------------------------------------------------------
+let _enableSnapshotPotentialLeakWarning = false;
 export var Event;
 (function (Event) {
     Event.None = () => Disposable.None;
+    function _addLeakageTraceLogic(options) {
+        if (_enableSnapshotPotentialLeakWarning) {
+            const { onListenerDidAdd: origListenerDidAdd } = options;
+            const stack = Stacktrace.create();
+            let count = 0;
+            options.onListenerDidAdd = () => {
+                if (++count === 2) {
+                    console.warn('snapshotted emitter LIKELY used public and SHOULD HAVE BEEN created with DisposableStore. snapshotted here');
+                    stack.print();
+                }
+                origListenerDidAdd === null || origListenerDidAdd === void 0 ? void 0 : origListenerDidAdd();
+            };
+        }
+    }
     /**
      * Given an event, returns another event which only fires once.
      */
@@ -33,21 +57,25 @@ export var Event;
     }
     Event.once = once;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function map(event, map) {
-        return snapshot((listener, thisArgs = null, disposables) => event(i => listener.call(thisArgs, map(i)), null, disposables));
+    function map(event, map, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event(i => listener.call(thisArgs, map(i)), null, disposables), disposable);
     }
     Event.map = map;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function forEach(event, each) {
-        return snapshot((listener, thisArgs = null, disposables) => event(i => { each(i); listener.call(thisArgs, i); }, null, disposables));
+    function forEach(event, each, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event(i => { each(i); listener.call(thisArgs, i); }, null, disposables), disposable);
     }
     Event.forEach = forEach;
-    function filter(event, filter) {
-        return snapshot((listener, thisArgs = null, disposables) => event(e => filter(e) && listener.call(thisArgs, e), null, disposables));
+    function filter(event, filter, disposable) {
+        return snapshot((listener, thisArgs = null, disposables) => event(e => filter(e) && listener.call(thisArgs, e), null, disposables), disposable);
     }
     Event.filter = filter;
     /**
@@ -62,40 +90,43 @@ export var Event;
     }
     Event.any = any;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function reduce(event, merge, initial) {
+    function reduce(event, merge, initial, disposable) {
         let output = initial;
         return map(event, e => {
             output = merge(output, e);
             return output;
-        });
+        }, disposable);
     }
     Event.reduce = reduce;
-    /**
-     * @deprecated DO NOT use, this leaks memory
-     */
-    function snapshot(event) {
+    function snapshot(event, disposable) {
         let listener;
-        const emitter = new Emitter({
+        const options = {
             onFirstListenerAdd() {
                 listener = event(emitter.fire, emitter);
             },
             onLastListenerRemove() {
                 listener.dispose();
             }
-        });
+        };
+        if (!disposable) {
+            _addLeakageTraceLogic(options);
+        }
+        const emitter = new Emitter(options);
+        if (disposable) {
+            disposable.add(emitter);
+        }
         return emitter.event;
     }
-    /**
-     * @deprecated DO NOT use, this leaks memory
-     */
-    function debounce(event, merge, delay = 100, leading = false, leakWarningThreshold) {
+    function debounce(event, merge, delay = 100, leading = false, leakWarningThreshold, disposable) {
         let subscription;
         let output = undefined;
         let handle = undefined;
         let numDebouncedCalls = 0;
-        const emitter = new Emitter({
+        const options = {
             leakWarningThreshold,
             onFirstListenerAdd() {
                 subscription = event(cur => {
@@ -120,14 +151,23 @@ export var Event;
             onLastListenerRemove() {
                 subscription.dispose();
             }
-        });
+        };
+        if (!disposable) {
+            _addLeakageTraceLogic(options);
+        }
+        const emitter = new Emitter(options);
+        if (disposable) {
+            disposable.add(emitter);
+        }
         return emitter.event;
     }
     Event.debounce = debounce;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function latch(event, equals = (a, b) => a === b) {
+    function latch(event, equals = (a, b) => a === b, disposable) {
         let firstCall = true;
         let cache;
         return filter(event, value => {
@@ -135,23 +175,27 @@ export var Event;
             firstCall = false;
             cache = value;
             return shouldEmit;
-        });
+        }, disposable);
     }
     Event.latch = latch;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function split(event, isT) {
+    function split(event, isT, disposable) {
         return [
-            Event.filter(event, isT),
-            Event.filter(event, e => !isT(e)),
+            Event.filter(event, isT, disposable),
+            Event.filter(event, e => !isT(e), disposable),
         ];
     }
     Event.split = split;
     /**
-     * @deprecated DO NOT use, this leaks memory
+     * *NOTE* that this function returns an `Event` and it MUST be called with a `DisposableStore` whenever the returned
+     * event is accessible to "third parties", e.g the event is a public property. Otherwise a leaked listener on the
+     * returned event causes this utility to leak a listener on the original event.
      */
-    function buffer(event, nextTick = false, _buffer = []) {
+    function buffer(event, flushAfterTimeout = false, _buffer = []) {
         let buffer = _buffer.slice();
         let listener = event(e => {
             if (buffer) {
@@ -175,7 +219,7 @@ export var Event;
             },
             onFirstListenerDidAdd() {
                 if (buffer) {
-                    if (nextTick) {
+                    if (flushAfterTimeout) {
                         setTimeout(flush);
                     }
                     else {
@@ -249,6 +293,26 @@ export var Event;
         return new Promise(resolve => once(event)(resolve));
     }
     Event.toPromise = toPromise;
+    function runAndSubscribe(event, handler) {
+        handler(undefined);
+        return event(e => handler(e));
+    }
+    Event.runAndSubscribe = runAndSubscribe;
+    function runAndSubscribeWithStore(event, handler) {
+        let store = null;
+        function run(e) {
+            store === null || store === void 0 ? void 0 : store.dispose();
+            store = new DisposableStore();
+            handler(e, store);
+        }
+        run(undefined);
+        const disposable = event(e => run(e));
+        return toDisposable(() => {
+            disposable.dispose();
+            store === null || store === void 0 ? void 0 : store.dispose();
+        });
+    }
+    Event.runAndSubscribeWithStore = runAndSubscribeWithStore;
 })(Event || (Event = {}));
 class EventProfiling {
     constructor(name) {
@@ -284,7 +348,7 @@ class LeakageMonitor {
             this._stacks.clear();
         }
     }
-    check(listenerCount) {
+    check(stack, listenerCount) {
         let threshold = _globalLeakWarningThreshold;
         if (typeof this.customThreshold === 'number') {
             threshold = this.customThreshold;
@@ -295,9 +359,8 @@ class LeakageMonitor {
         if (!this._stacks) {
             this._stacks = new Map();
         }
-        const stack = new Error().stack.split('\n').slice(3).join('\n');
-        const count = (this._stacks.get(stack) || 0);
-        this._stacks.set(stack, count + 1);
+        const count = (this._stacks.get(stack.value) || 0);
+        this._stacks.set(stack.value, count + 1);
         this._warnCountdown -= 1;
         if (this._warnCountdown <= 0) {
             // only warn on first exceed and then every time the limit
@@ -316,9 +379,32 @@ class LeakageMonitor {
             console.warn(topStack);
         }
         return () => {
-            const count = (this._stacks.get(stack) || 0);
-            this._stacks.set(stack, count - 1);
+            const count = (this._stacks.get(stack.value) || 0);
+            this._stacks.set(stack.value, count - 1);
         };
+    }
+}
+class Stacktrace {
+    constructor(value) {
+        this.value = value;
+    }
+    static create() {
+        var _a;
+        return new Stacktrace((_a = new Error().stack) !== null && _a !== void 0 ? _a : '');
+    }
+    print() {
+        console.warn(this.value.split('\n').slice(2).join('\n'));
+    }
+}
+class Listener {
+    constructor(callback, callbackThis, stack) {
+        this.callback = callback;
+        this.callbackThis = callbackThis;
+        this.stack = stack;
+        this.subscription = new SafeDisposable();
+    }
+    invoke(e) {
+        this.callback.call(this.callbackThis, e);
     }
 }
 /**
@@ -350,36 +436,78 @@ export class Emitter {
         this._leakageMon = _globalLeakWarningThreshold > 0 ? new LeakageMonitor(this._options && this._options.leakWarningThreshold) : undefined;
         this._perfMon = ((_a = this._options) === null || _a === void 0 ? void 0 : _a._profName) ? new EventProfiling(this._options._profName) : undefined;
     }
+    dispose() {
+        var _a, _b, _c, _d;
+        if (!this._disposed) {
+            this._disposed = true;
+            // It is bad to have listeners at the time of disposing an emitter, it is worst to have listeners keep the emitter
+            // alive via the reference that's embedded in their disposables. Therefore we loop over all remaining listeners and
+            // unset their subscriptions/disposables. Looping and blaming remaining listeners is done on next tick because the
+            // the following programming pattern is very popular:
+            //
+            // const someModel = this._disposables.add(new ModelObject()); // (1) create and register model
+            // this._disposables.add(someModel.onDidChange(() => { ... }); // (2) subscribe and register model-event listener
+            // ...later...
+            // this._disposables.dispose(); disposes (1) then (2): don't warn after (1) but after the "overall dispose" is done
+            if (this._listeners) {
+                if (_enableDisposeWithListenerWarning) {
+                    const listeners = Array.from(this._listeners);
+                    queueMicrotask(() => {
+                        var _a;
+                        for (const listener of listeners) {
+                            if (listener.subscription.isset()) {
+                                listener.subscription.unset();
+                                (_a = listener.stack) === null || _a === void 0 ? void 0 : _a.print();
+                            }
+                        }
+                    });
+                }
+                this._listeners.clear();
+            }
+            (_a = this._deliveryQueue) === null || _a === void 0 ? void 0 : _a.clear();
+            (_c = (_b = this._options) === null || _b === void 0 ? void 0 : _b.onLastListenerRemove) === null || _c === void 0 ? void 0 : _c.call(_b);
+            (_d = this._leakageMon) === null || _d === void 0 ? void 0 : _d.dispose();
+        }
+    }
     /**
      * For the public to allow to subscribe
      * to events from this Emitter
      */
     get event() {
         if (!this._event) {
-            this._event = (listener, thisArgs, disposables) => {
-                var _a;
+            this._event = (callback, thisArgs, disposables) => {
+                var _a, _b, _c;
                 if (!this._listeners) {
                     this._listeners = new LinkedList();
                 }
                 const firstListener = this._listeners.isEmpty();
-                if (firstListener && this._options && this._options.onFirstListenerAdd) {
+                if (firstListener && ((_a = this._options) === null || _a === void 0 ? void 0 : _a.onFirstListenerAdd)) {
                     this._options.onFirstListenerAdd(this);
                 }
-                const remove = this._listeners.push(!thisArgs ? listener : [listener, thisArgs]);
-                if (firstListener && this._options && this._options.onFirstListenerDidAdd) {
+                let removeMonitor;
+                let stack;
+                if (this._leakageMon && this._listeners.size >= 30) {
+                    // check and record this emitter for potential leakage
+                    stack = Stacktrace.create();
+                    removeMonitor = this._leakageMon.check(stack, this._listeners.size + 1);
+                }
+                if (_enableDisposeWithListenerWarning) {
+                    stack = stack !== null && stack !== void 0 ? stack : Stacktrace.create();
+                }
+                const listener = new Listener(callback, thisArgs, stack);
+                const removeListener = this._listeners.push(listener);
+                if (firstListener && ((_b = this._options) === null || _b === void 0 ? void 0 : _b.onFirstListenerDidAdd)) {
                     this._options.onFirstListenerDidAdd(this);
                 }
-                if (this._options && this._options.onListenerDidAdd) {
-                    this._options.onListenerDidAdd(this, listener, thisArgs);
+                if ((_c = this._options) === null || _c === void 0 ? void 0 : _c.onListenerDidAdd) {
+                    this._options.onListenerDidAdd(this, callback, thisArgs);
                 }
-                // check and record this emitter for potential leakage
-                const removeMonitor = (_a = this._leakageMon) === null || _a === void 0 ? void 0 : _a.check(this._listeners.size);
-                const result = toDisposable(() => {
+                const result = listener.subscription.set(() => {
                     if (removeMonitor) {
                         removeMonitor();
                     }
                     if (!this._disposed) {
-                        remove();
+                        removeListener();
                         if (this._options && this._options.onLastListenerRemove) {
                             const hasListeners = (this._listeners && !this._listeners.isEmpty());
                             if (!hasListeners) {
@@ -420,28 +548,13 @@ export class Emitter {
             while (this._deliveryQueue.size > 0) {
                 const [listener, event] = this._deliveryQueue.shift();
                 try {
-                    if (typeof listener === 'function') {
-                        listener.call(undefined, event);
-                    }
-                    else {
-                        listener[0].call(listener[1], event);
-                    }
+                    listener.invoke(event);
                 }
                 catch (e) {
                     onUnexpectedError(e);
                 }
             }
             (_b = this._perfMon) === null || _b === void 0 ? void 0 : _b.stop();
-        }
-    }
-    dispose() {
-        var _a, _b, _c, _d, _e;
-        if (!this._disposed) {
-            this._disposed = true;
-            (_a = this._listeners) === null || _a === void 0 ? void 0 : _a.clear();
-            (_b = this._deliveryQueue) === null || _b === void 0 ? void 0 : _b.clear();
-            (_d = (_c = this._options) === null || _c === void 0 ? void 0 : _c.onLastListenerRemove) === null || _d === void 0 ? void 0 : _d.call(_c);
-            (_e = this._leakageMon) === null || _e === void 0 ? void 0 : _e.dispose();
         }
     }
 }

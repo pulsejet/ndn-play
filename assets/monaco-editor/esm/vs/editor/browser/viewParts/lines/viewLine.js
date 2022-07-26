@@ -6,7 +6,7 @@ import * as browser from '../../../../base/browser/browser.js';
 import { createFastDomNode } from '../../../../base/browser/fastDomNode.js';
 import * as platform from '../../../../base/common/platform.js';
 import { RangeUtil } from './rangeUtil.js';
-import { FloatHorizontalRange, VisibleRanges } from '../../../common/view/renderingContext.js';
+import { FloatHorizontalRange, VisibleRanges } from '../../view/renderingContext.js';
 import { LineDecoration } from '../../../common/viewLayout/lineDecorations.js';
 import { RenderLineInput, renderViewLine, LineRange, DomPosition } from '../../../common/viewLayout/viewLineRenderer.js';
 import { ColorScheme } from '../../../../platform/theme/common/theme.js';
@@ -37,33 +37,47 @@ export class DomReadingContext {
     constructor(domNode, endNode) {
         this._domNode = domNode;
         this._clientRectDeltaLeft = 0;
-        this._clientRectDeltaLeftRead = false;
+        this._clientRectScale = 1;
+        this._clientRectRead = false;
         this.endNode = endNode;
     }
+    readClientRect() {
+        if (!this._clientRectRead) {
+            this._clientRectRead = true;
+            const rect = this._domNode.getBoundingClientRect();
+            this._clientRectDeltaLeft = rect.left;
+            this._clientRectScale = rect.width / this._domNode.offsetWidth;
+        }
+    }
     get clientRectDeltaLeft() {
-        if (!this._clientRectDeltaLeftRead) {
-            this._clientRectDeltaLeftRead = true;
-            this._clientRectDeltaLeft = this._domNode.getBoundingClientRect().left;
+        if (!this._clientRectRead) {
+            this.readClientRect();
         }
         return this._clientRectDeltaLeft;
+    }
+    get clientRectScale() {
+        if (!this._clientRectRead) {
+            this.readClientRect();
+        }
+        return this._clientRectScale;
     }
 }
 export class ViewLineOptions {
     constructor(config, themeType) {
         this.themeType = themeType;
         const options = config.options;
-        const fontInfo = options.get(43 /* fontInfo */);
-        this.renderWhitespace = options.get(87 /* renderWhitespace */);
-        this.renderControlCharacters = options.get(82 /* renderControlCharacters */);
+        const fontInfo = options.get(44 /* fontInfo */);
+        this.renderWhitespace = options.get(88 /* renderWhitespace */);
+        this.renderControlCharacters = options.get(83 /* renderControlCharacters */);
         this.spaceWidth = fontInfo.spaceWidth;
         this.middotWidth = fontInfo.middotWidth;
         this.wsmiddotWidth = fontInfo.wsmiddotWidth;
         this.useMonospaceOptimizations = (fontInfo.isMonospace
             && !options.get(29 /* disableMonospaceOptimizations */));
         this.canUseHalfwidthRightwardsArrow = fontInfo.canUseHalfwidthRightwardsArrow;
-        this.lineHeight = options.get(58 /* lineHeight */);
-        this.stopRenderingLineAfter = options.get(104 /* stopRenderingLineAfter */);
-        this.fontLigatures = options.get(44 /* fontLigatures */);
+        this.lineHeight = options.get(59 /* lineHeight */);
+        this.stopRenderingLineAfter = options.get(105 /* stopRenderingLineAfter */);
+        this.fontLigatures = options.get(45 /* fontLigatures */);
     }
     equals(other) {
         return (this.themeType === other.themeType
@@ -230,11 +244,9 @@ export class ViewLine {
         if (!this._renderedViewLine) {
             return null;
         }
-        startColumn = startColumn | 0; // @perf
-        endColumn = endColumn | 0; // @perf
         startColumn = Math.min(this._renderedViewLine.input.lineContent.length + 1, Math.max(1, startColumn));
         endColumn = Math.min(this._renderedViewLine.input.lineContent.length + 1, Math.max(1, endColumn));
-        const stopRenderingLineAfter = this._renderedViewLine.input.stopRenderingLineAfter | 0; // @perf
+        const stopRenderingLineAfter = this._renderedViewLine.input.stopRenderingLineAfter;
         let outsideRenderedLine = false;
         if (stopRenderingLineAfter !== -1 && startColumn > stopRenderingLineAfter + 1 && endColumn > stopRenderingLineAfter + 1) {
             // This range is obviously not visible
@@ -426,7 +438,7 @@ class RenderedViewLine {
     _actualReadPixelOffset(domNode, lineNumber, column, context) {
         if (this._characterMapping.length === 0) {
             // This line has no content
-            const r = RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), 0, 0, 0, 0, context.clientRectDeltaLeft, context.endNode);
+            const r = RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), 0, 0, 0, 0, context.clientRectDeltaLeft, context.clientRectScale, context.endNode);
             if (!r || r.length === 0) {
                 return -1;
             }
@@ -437,7 +449,7 @@ class RenderedViewLine {
             return this.getWidth();
         }
         const domPosition = this._characterMapping.getDomPosition(column);
-        const r = RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), domPosition.partIndex, domPosition.charIndex, domPosition.partIndex, domPosition.charIndex, context.clientRectDeltaLeft, context.endNode);
+        const r = RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), domPosition.partIndex, domPosition.charIndex, domPosition.partIndex, domPosition.charIndex, context.clientRectDeltaLeft, context.clientRectScale, context.endNode);
         if (!r || r.length === 0) {
             return -1;
         }
@@ -458,7 +470,7 @@ class RenderedViewLine {
         }
         const startDomPosition = this._characterMapping.getDomPosition(startColumn);
         const endDomPosition = this._characterMapping.getDomPosition(endColumn);
-        return RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), startDomPosition.partIndex, startDomPosition.charIndex, endDomPosition.partIndex, endDomPosition.charIndex, context.clientRectDeltaLeft, context.endNode);
+        return RangeUtil.readHorizontalRanges(this._getReadingTarget(domNode), startDomPosition.partIndex, startDomPosition.charIndex, endDomPosition.partIndex, endDomPosition.charIndex, context.clientRectDeltaLeft, context.clientRectScale, context.endNode);
     }
     /**
      * Returns the column for the text found at a specific offset inside a rendered dom node

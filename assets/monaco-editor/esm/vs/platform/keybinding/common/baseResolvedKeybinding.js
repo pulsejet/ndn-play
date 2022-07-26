@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 import { illegalArgument } from '../../../base/common/errors.js';
 import { AriaLabelProvider, ElectronAcceleratorLabelProvider, UILabelProvider } from '../../../base/common/keybindingLabels.js';
-import { ResolvedKeybinding, ResolvedKeybindingPart } from '../../../base/common/keyCodes.js';
+import { ResolvedKeybinding, ResolvedKeybindingPart } from '../../../base/common/keybindings.js';
 export class BaseResolvedKeybinding extends ResolvedKeybinding {
     constructor(os, parts) {
         super();
@@ -22,7 +22,12 @@ export class BaseResolvedKeybinding extends ResolvedKeybinding {
     }
     getElectronAccelerator() {
         if (this._parts.length > 1) {
-            // Electron cannot handle chords
+            // [Electron Accelerators] Electron cannot handle chords
+            return null;
+        }
+        if (this._parts[0].isDuplicateModifierCase()) {
+            // [Electron Accelerators] Electron cannot handle modifier only keybindings
+            // e.g. "shift shift"
             return null;
         }
         return ElectronAcceleratorLabelProvider.toLabel(this._os, this._parts, (keybinding) => this._getElectronAccelerator(keybinding));

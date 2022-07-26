@@ -22,6 +22,8 @@ export function or(...filter) {
         return null;
     };
 }
+// Prefix
+export const matchesStrictPrefix = _matchesPrefix.bind(undefined, false);
 export const matchesPrefix = _matchesPrefix.bind(undefined, true);
 function _matchesPrefix(ignoreCase, word, wordToMatchAgainst) {
     if (!wordToMatchAgainst || wordToMatchAgainst.length < word.length) {
@@ -86,7 +88,9 @@ function isWhitespace(code) {
         || code === 13 /* CarriageReturn */);
 }
 const wordSeparators = new Set();
-'`~!@#$%^&*()-=+[{]}\\|;:\'",.<>/?'
+// These are chosen as natural word separators based on writen text.
+// It is a subset of the word separators used by the monaco editor.
+'()[]{}<>`\'"-/;:,.?!'
     .split('')
     .forEach(s => wordSeparators.add(s.charCodeAt(0)));
 function isWordSeparator(code) {

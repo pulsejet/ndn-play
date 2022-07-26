@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { globals, isMacintosh, isWindows, setImmediate } from './platform.js';
+import { globals, isMacintosh, isWindows } from './platform.js';
 let safeProcess;
 // Native sandbox environment
 if (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== 'undefined') {
@@ -11,8 +11,7 @@ if (typeof globals.vscode !== 'undefined' && typeof globals.vscode.process !== '
         get platform() { return sandboxProcess.platform; },
         get arch() { return sandboxProcess.arch; },
         get env() { return sandboxProcess.env; },
-        cwd() { return sandboxProcess.cwd(); },
-        nextTick(callback) { return setImmediate(callback); }
+        cwd() { return sandboxProcess.cwd(); }
     };
 }
 // Native node.js environment
@@ -21,8 +20,7 @@ else if (typeof process !== 'undefined') {
         get platform() { return process.platform; },
         get arch() { return process.arch; },
         get env() { return process.env; },
-        cwd() { return process.env['VSCODE_CWD'] || process.cwd(); },
-        nextTick(callback) { return process.nextTick(callback); }
+        cwd() { return process.env['VSCODE_CWD'] || process.cwd(); }
     };
 }
 // Web environment
@@ -31,7 +29,6 @@ else {
         // Supported
         get platform() { return isWindows ? 'win32' : isMacintosh ? 'darwin' : 'linux'; },
         get arch() { return undefined; /* arch is undefined in web */ },
-        nextTick(callback) { return setImmediate(callback); },
         // Unsupported
         get env() { return {}; },
         cwd() { return '/'; }

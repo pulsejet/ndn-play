@@ -249,7 +249,7 @@ let SubmenuEntryActionViewItem = class SubmenuEntryActionViewItem extends Dropdo
     constructor(action, options, contextMenuService) {
         var _a, _b;
         const dropdownOptions = Object.assign({}, options !== null && options !== void 0 ? options : Object.create(null), {
-            menuAsChild: (_a = options === null || options === void 0 ? void 0 : options.menuAsChild) !== null && _a !== void 0 ? _a : true,
+            menuAsChild: (_a = options === null || options === void 0 ? void 0 : options.menuAsChild) !== null && _a !== void 0 ? _a : false,
             classNames: (_b = options === null || options === void 0 ? void 0 : options.classNames) !== null && _b !== void 0 ? _b : (ThemeIcon.isThemeIcon(action.item.icon) ? ThemeIcon.asClassName(action.item.icon) : undefined),
         });
         super(action, { getActions: () => action.actions }, contextMenuService, dropdownOptions);

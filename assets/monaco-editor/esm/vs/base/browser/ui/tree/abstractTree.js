@@ -10,9 +10,9 @@ import { ElementsDragAndDropData } from '../list/listView.js';
 import { DefaultKeyboardNavigationDelegate, isInputElement, isMonacoEditor, List, MouseController } from '../list/listWidget.js';
 import { getVisibleState, isFilterResult } from './indexTreeModel.js';
 import { TreeMouseEventTarget } from './tree.js';
-import { treeFilterClearIcon, treeFilterOnTypeOffIcon, treeFilterOnTypeOnIcon, treeItemExpandedIcon } from './treeIcons.js';
-import { distinctES6, equals, range } from '../../../common/arrays.js';
+import { distinct, equals, range } from '../../../common/arrays.js';
 import { disposableTimeout } from '../../../common/async.js';
+import { Codicon } from '../../../common/codicons.js';
 import { SetMap } from '../../../common/collections.js';
 import { Emitter, Event, EventBufferer, Relay } from '../../../common/event.js';
 import { fuzzyScore, FuzzyScore } from '../../../common/filters.js';
@@ -272,14 +272,14 @@ class TreeRenderer {
         this.renderIndentGuides(node, data.templateData);
     }
     renderTwistie(node, templateData) {
-        templateData.twistie.classList.remove(...treeItemExpandedIcon.classNamesArray);
+        templateData.twistie.classList.remove(...Codicon.treeItemExpanded.classNamesArray);
         let twistieRendered = false;
         if (this.renderer.renderTwistie) {
             twistieRendered = this.renderer.renderTwistie(node.element, templateData.twistie);
         }
         if (node.collapsible && (!this.hideTwistiesOfChildlessElements || node.visibleChildrenCount > 0)) {
             if (!twistieRendered) {
-                templateData.twistie.classList.add(...treeItemExpandedIcon.classNamesArray);
+                templateData.twistie.classList.add(...Codicon.treeItemExpanded.classNamesArray);
             }
             templateData.twistie.classList.add('collapsible');
             templateData.twistie.classList.toggle('collapsed', node.collapsed);
@@ -469,7 +469,7 @@ class TypeFilterController {
         this.filterOnTypeDomNode.tabIndex = -1;
         this.updateFilterOnTypeTitleAndIcon();
         this.disposables.add(addDisposableListener(this.filterOnTypeDomNode, 'input', () => this.onDidChangeFilterOnType()));
-        this.clearDomNode = append(controls, $('button.clear' + treeFilterClearIcon.cssSelector));
+        this.clearDomNode = append(controls, $('button.clear' + Codicon.treeFilterClear.cssSelector));
         this.clearDomNode.tabIndex = -1;
         this.clearDomNode.title = localize('clear', "Clear");
         this.keyboardNavigationEventFilter = tree.options.keyboardNavigationEventFilter;
@@ -642,13 +642,13 @@ class TypeFilterController {
     }
     updateFilterOnTypeTitleAndIcon() {
         if (this.filterOnType) {
-            this.filterOnTypeDomNode.classList.remove(...treeFilterOnTypeOffIcon.classNamesArray);
-            this.filterOnTypeDomNode.classList.add(...treeFilterOnTypeOnIcon.classNamesArray);
+            this.filterOnTypeDomNode.classList.remove(...Codicon.treeFilterOnTypeOff.classNamesArray);
+            this.filterOnTypeDomNode.classList.add(...Codicon.treeFilterOnTypeOn.classNamesArray);
             this.filterOnTypeDomNode.title = localize('disable filter on type', "Disable Filter on Type");
         }
         else {
-            this.filterOnTypeDomNode.classList.remove(...treeFilterOnTypeOnIcon.classNamesArray);
-            this.filterOnTypeDomNode.classList.add(...treeFilterOnTypeOffIcon.classNamesArray);
+            this.filterOnTypeDomNode.classList.remove(...Codicon.treeFilterOnTypeOn.classNamesArray);
+            this.filterOnTypeDomNode.classList.add(...Codicon.treeFilterOnTypeOff.classNamesArray);
             this.filterOnTypeDomNode.title = localize('enable filter on type', "Enable Filter on Type");
         }
     }
@@ -724,8 +724,7 @@ class Trait {
         return this._nodeSet;
     }
     set(nodes, browserEvent) {
-        var _a;
-        if (!((_a = browserEvent) === null || _a === void 0 ? void 0 : _a.__forceEvent) && equals(this.nodes, nodes)) {
+        if (!(browserEvent === null || browserEvent === void 0 ? void 0 : browserEvent.__forceEvent) && equals(this.nodes, nodes)) {
             return;
         }
         this._set(nodes, false, browserEvent);
@@ -881,10 +880,10 @@ class TreeNodeList extends List {
             }
         });
         if (additionalFocus.length > 0) {
-            super.setFocus(distinctES6([...super.getFocus(), ...additionalFocus]));
+            super.setFocus(distinct([...super.getFocus(), ...additionalFocus]));
         }
         if (additionalSelection.length > 0) {
-            super.setSelection(distinctES6([...super.getSelection(), ...additionalSelection]));
+            super.setSelection(distinct([...super.getSelection(), ...additionalSelection]));
         }
         if (typeof anchor === 'number') {
             super.setAnchor(anchor);
@@ -915,7 +914,8 @@ class TreeNodeList extends List {
     }
 }
 export class AbstractTree {
-    constructor(user, container, delegate, renderers, _options = {}) {
+    constructor(_user, container, delegate, renderers, _options = {}) {
+        this._user = _user;
         this._options = _options;
         this.eventBufferer = new EventBufferer();
         this.disposables = new DisposableStore();
@@ -939,8 +939,8 @@ export class AbstractTree {
         this.focus = new Trait(() => this.view.getFocusedElements()[0], _options.identityProvider);
         this.selection = new Trait(() => this.view.getSelectedElements()[0], _options.identityProvider);
         this.anchor = new Trait(() => this.view.getAnchorElement(), _options.identityProvider);
-        this.view = new TreeNodeList(user, container, treeDelegate, this.renderers, this.focus, this.selection, this.anchor, Object.assign(Object.assign({}, asListOptions(() => this.model, _options)), { tree: this }));
-        this.model = this.createModel(user, this.view, _options);
+        this.view = new TreeNodeList(_user, container, treeDelegate, this.renderers, this.focus, this.selection, this.anchor, Object.assign(Object.assign({}, asListOptions(() => this.model, _options)), { tree: this }));
+        this.model = this.createModel(_user, this.view, _options);
         onDidChangeCollapseStateRelay.input = this.model.onDidChangeCollapseState;
         const onDidModelSplice = Event.forEach(this.model.onDidSplice, e => {
             this.eventBufferer.bufferEvents(() => {
@@ -988,6 +988,7 @@ export class AbstractTree {
     get onMouseDblClick() { return Event.map(this.view.onMouseDblClick, asTreeMouseEvent); }
     get onPointer() { return Event.map(this.view.onPointer, asTreeMouseEvent); }
     get onDidFocus() { return this.view.onDidFocus; }
+    get onDidChangeModel() { return Event.signal(this.model.onDidSplice); }
     get onDidChangeCollapseState() { return this.model.onDidChangeCollapseState; }
     get expandOnDoubleClick() { return typeof this._options.expandOnDoubleClick === 'undefined' ? true : this._options.expandOnDoubleClick; }
     get expandOnlyOnTwistieClick() { return typeof this._options.expandOnlyOnTwistieClick === 'undefined' ? true : this._options.expandOnlyOnTwistieClick; }
@@ -1032,6 +1033,19 @@ export class AbstractTree {
         }
         this.styleElement.textContent = content.join('\n');
         this.view.style(styles);
+    }
+    // Tree navigation
+    getParentElement(location) {
+        const parentRef = this.model.getParentNodeLocation(location);
+        const parentNode = this.model.getNode(parentRef);
+        return parentNode.element;
+    }
+    getFirstElementChild(location) {
+        return this.model.getFirstElementChild(location);
+    }
+    // Tree
+    getNode(location) {
+        return this.model.getNode(location);
     }
     collapse(location, recursive = false) {
         return this.model.setCollapsed(location, true, recursive);

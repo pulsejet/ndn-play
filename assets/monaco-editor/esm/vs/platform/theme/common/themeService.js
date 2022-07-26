@@ -35,6 +35,10 @@ export var ThemeIcon;
         return { id: name };
     }
     ThemeIcon.fromString = fromString;
+    function fromId(id) {
+        return { id };
+    }
+    ThemeIcon.fromId = fromId;
     function modify(icon, modifier) {
         let id = icon.id;
         const tildeIndex = id.lastIndexOf('~');
@@ -47,6 +51,14 @@ export var ThemeIcon;
         return { id };
     }
     ThemeIcon.modify = modify;
+    function getModifier(icon) {
+        const tildeIndex = icon.id.lastIndexOf('~');
+        if (tildeIndex !== -1) {
+            return icon.id.substring(tildeIndex + 1);
+        }
+        return undefined;
+    }
+    ThemeIcon.getModifier = getModifier;
     function isEqual(ti1, ti2) {
         var _a, _b;
         return ti1.id === ti2.id && ((_a = ti1.color) === null || _a === void 0 ? void 0 : _a.id) === ((_b = ti2.color) === null || _b === void 0 ? void 0 : _b.id);

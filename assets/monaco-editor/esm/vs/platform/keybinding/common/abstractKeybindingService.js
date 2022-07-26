@@ -199,8 +199,8 @@ export class AbstractKeybindingService extends Disposable {
         }
         // weak check for certain ranges. this is properly implemented in a subclass
         // with access to the KeyboardMapperFactory.
-        if ((event.keyCode >= 31 /* KEY_A */ && event.keyCode <= 56 /* KEY_Z */)
-            || (event.keyCode >= 21 /* KEY_0 */ && event.keyCode <= 30 /* KEY_9 */)) {
+        if ((event.keyCode >= 31 /* KeyA */ && event.keyCode <= 56 /* KeyZ */)
+            || (event.keyCode >= 21 /* Digit0 */ && event.keyCode <= 30 /* Digit9 */)) {
             return true;
         }
         return false;

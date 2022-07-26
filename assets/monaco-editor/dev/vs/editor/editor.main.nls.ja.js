@@ -1,6 +1,6 @@
 /*!-----------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * Version: 0.29.2(df04357573e045be658960bd50ff0a45d6d1eadb)
+ * Version: 0.33.0(c722ca6c7eed3d7987c0d5c3df5c45f6b15e77d1)
  * Released under the MIT license
  * https://github.com/microsoft/vscode/blob/main/LICENSE.txt
  *-----------------------------------------------------------*/
@@ -33,9 +33,6 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/base/browser/ui/keybindingLabel/keybindingLabel": [
 		"バインドなし",
 	],
-	"vs/base/browser/ui/menu/menu": [
-		"{0} ({1})",
-	],
 	"vs/base/browser/ui/tree/abstractTree": [
 		"クリア",
 		"型のフィルターを無効にする",
@@ -65,7 +62,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"Super",
 		"Control",
 		"Shift",
-		"Alt",
+		"オプション",
 		"コマンド",
 		"Control",
 		"Shift",
@@ -91,17 +88,14 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/base/parts/quickinput/browser/quickInputList": [
 		"クイック入力",
 	],
-	"vs/editor/browser/controller/coreCommands": [
-		"長い行に移動しても行末に位置します",
-		"長い行に移動しても行末に位置します",
-		"セカンダリ カーソルが削除されました",
-	],
 	"vs/editor/browser/controller/textAreaHandler": [
 		"エディター",
 		"この時点では、エディターにアクセスできません。オプションを表示するには、{0} を押します。",
 	],
-	"vs/editor/browser/core/keybindingCancellation": [
-		"エディターで取り消し可能な操作 (\'参照をここに表示\' など) を実行するかどうか",
+	"vs/editor/browser/coreCommands": [
+		"長い行に移動しても行末に位置します",
+		"長い行に移動しても行末に位置します",
+		"セカンダリ カーソルが削除されました",
 	],
 	"vs/editor/browser/editorExtensions": [
 		"元に戻す(&&U)",
@@ -139,11 +133,15 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/editor/browser/widget/inlineDiffMargin": [
 		"削除された行のコピー",
 		"削除された行のコピー",
+		"変更された行のコピー",
+		"変更された行のコピー",
 		"削除された行のコピー ({0})",
+		"変更された行のコピー ({0})",
 		"この変更を元に戻す",
 		"削除された行のコピー ({0})",
+		"変更された行のコピー ({0})",
 	],
-	"vs/editor/common/config/commonEditorConfig": [
+	"vs/editor/common/config/editorConfigurationSchema": [
 		"エディター",
 		"1 つのタブに相当するスペースの数。`#editor.detectIndentation#` がオンの場合、この設定はファイル コンテンツに基づいて上書きされます。",
 		"`Tab` キーを押すとスペースが挿入されます。`#editor.detectIndentation#` がオンの場合、この設定はファイル コンテンツに基づいて上書きされます。",
@@ -161,6 +159,12 @@ define("vs/editor/editor.main.nls.ja", {
 		"semanticHighlighting をサポートされる言語で表示するかどうかを制御します。",
 		"エディターのコンテンツをダブルクリックするか、`Escape` キーを押しても、ピーク エディターを開いたままにします。",
 		"この長さを越える行は、パフォーマンス上の理由によりトークン化されません。",
+		"インデントを増減する角かっこを定義します。",
+		"左角かっこまたは文字列シーケンス。",
+		"右角かっこまたは文字列シーケンス。",
+		"角かっこのペアの色付けが有効になっている場合、入れ子のレベルによって色付けされる角かっこのペアを定義します。",
+		"左角かっこまたは文字列シーケンス。",
+		"右角かっこまたは文字列シーケンス。",
 		"差分計算が取り消された後のタイムアウト (ミリ秒単位)。タイムアウトなしには 0 を使用します。",
 		"差分を計算する場合の最大ファイル サイズ (MB)。制限なしの場合は 0 を使用します。",
 		"差分エディターが差分を横に並べて表示するか、行内に表示するかを制御します。",
@@ -214,6 +218,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"ホバーを表示するかどうかを制御します。",
 		"ホバーを表示後の待ち時間 (ミリ秒) を制御します。",
 		"ホバーにマウスを移動したときに、ホバーを表示し続けるかどうかを制御します。",
+		"スペースがある場合は、行の上にマウス カーソルを被せて表示する。",
 		"エディターでコード アクションの電球を有効にします。",
 		"エディターでインレー ヒントを有効にします。",
 		"エディター内のインレイ ヒントのフォント サイズを制御します。既定値の 90% の `#editor.fontSize#` は、構成された値が `5` より小さいか、エディター フォント サイズより大きい場合に使用されます。",
@@ -256,9 +261,24 @@ define("vs/editor/editor.main.nls.ja", {
 		"垂直スクロールバーの幅。",
 		"水平スクロールバーの高さ。",
 		"クリックするとページ単位でスクロールするか、クリック位置にジャンプするかを制御します。",
+		"基本以外のすべての ASCII 文字を強調表示するかどうかを制御します。U+0020 から U+007Eの間の文字、Tab、改行コード、行頭復帰のみが基本 ASCII と見なされます。",
+		"スペースを予約するだけの文字または幅がまったくない文字を強調表示するかどうかを制御します。",
+		"現在のユーザー ロケールで一般的な文字を除き、基本的な ASCII 文字と混同される可能性のある文字を強調表示するかどうかを制御します。",
+		"コメント内の文字を Unicode 強調表示の対象にするかどうかを制御します。",
+		"文字列内の文字を Unicode 強調表示の対象にするかどうかを制御します。",
+		"強調表示されていない許可される文字を定義します。",
+		"許可されているロケールで一般的な Unicode 文字が強調表示されていません。",
 		"エディターにインライン候補を自動的に表示するかどうかを制御します。",
 		"角かっこのペアの彩色を有効にするかどうかを制御します。角かっこの強調表示の色をオーバーライドするには、\'workbench.colorCustomizations\' を使用します。",
+		"ブラケット ペア ガイドを有効にする。",
+		"アクティブなブラケット ペアに対してのみブラケット ペア ガイドを有効にします。",
+		"ブラケット ペア ガイドを無効にします。",
 		"ブラケット ペアのガイドを有効にするかどうかを制御します。",
+		"縦のブラケット ペアのガイドに加えて、同じく水平のガイドを有効にします。",
+		"アクティブなブラケット ペアに対してのみ、水平のガイドを有効にします。",
+		"水平ブラケット ペア ガイドを無効にします。",
+		"水平方向のブラケット ペアのガイドを有効にするかどうかを制御します。",
+		"エディターでアクティブな角かっこのペアを強調表示するかどうかを制御します。",
 		"エディターでインデント ガイドを表示するかどうかを制御します。",
 		"エディターでアクティブなインデントのガイドを強調表示するかどうかを制御します。",
 		"カーソルの右のテキストを上書きせずに候補を挿入します。",
@@ -352,6 +372,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"折りたたみ範囲の計算方法を制御します。",
 		"エディターで折りたたまれた範囲を強調表示するかどうかをコントロールします。",
 		"エディターがインポート範囲を自動的に折りたたむかどうかを制御します。",
+		"折りたたみ可能な領域の最大数です。この値を大きくすると、現在のソースに多数の折りたたみ可能な領域がある場合にエディターの応答性が低下する可能性があります。",
 		"折りたたまれた線の後の空のコンテンツをクリックすると線が展開されるかどうかを制御します。",
 		"フォント ファミリを制御します。",
 		"貼り付けた内容がエディターにより自動的にフォーマットされるかどうかを制御します。フォーマッタを使用可能にする必要があります。また、フォーマッタがドキュメント内の範囲をフォーマットできなければなりません。",
@@ -367,7 +388,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"複数のカーソルが重なっているときは、マージします。",
 		"Windows および Linux 上の `Control` キーと macOS 上の `Command` キーに割り当てます。",
 		"Windows および Linux 上の `Alt` キーと macOS 上の `Option` キーに割り当てます。",
-		"マウスを使用して複数のカーソルを追加するときに使用する修飾キーです。「定義に移動」や「リンクを開く」のマウス操作は、マルチカーソルの修飾キーと競合しないように適用されます。[詳細](https://code.visualstudio.com/docs/editor/codebasics#_multicursor-modifier)",
+		"マウスを使用して複数のカーソルを追加するときに使用する修飾子です。「定義に移動」や「リンクを開く」のマウス ジェスチャーは、マルチカーソルの修飾子と競合しないように適用されます。[詳細](https://code.visualstudio.com/docs/editor/codebasics#_multicursor-modifier)。",
 		"カーソルごとにテキストを 1 行ずつ貼り付けます。",
 		"各カーソルは全文を貼り付けます。",
 		"貼り付けたテキストの行数がカーソル数と一致する場合の貼り付けを制御します。",
@@ -438,6 +459,59 @@ define("vs/editor/editor.main.nls.ja", {
 		"折り返しポイントの計算をブラウザーにデリゲートします。これは、大きなファイルのフリーズを引き起こす可能性があるものの、すべてのケースで正しく動作する低速なアルゴリズムです。",
 		"折り返しポイントを計算するアルゴリズムを制御します。",
 	],
+	"vs/editor/common/core/editorColorRegistry": [
+		"カーソル位置の行を強調表示する背景色。",
+		"カーソル位置の行の境界線を強調表示する背景色。",
+		"(Quick Open や検出機能などにより) 強調表示されている範囲の色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"強調表示された範囲の境界線の背景色。",
+		"強調表示された記号の背景色 (定義へ移動、次または前の記号へ移動など)。基になる装飾が覆われないようにするため、色を不透明にすることはできません。",
+		"強調表示された記号の周りの境界線の背景色。",
+		"エディターのカーソルの色。",
+		"選択された文字列の背景色です。選択された文字列の背景色をカスタマイズ出来ます。",
+		"エディターのスペース文字の色。",
+		"エディター インデント ガイドの色。",
+		"アクティブなエディターのインデント ガイドの色。",
+		"エディターの行番号の色。",
+		"エディターのアクティブ行番号の色",
+		"id は使用しないでください。代わりに \'EditorLineNumber.activeForeground\' を使用してください。",
+		"エディターのアクティブ行番号の色",
+		"エディター ルーラーの色。",
+		"CodeLens エディターの前景色。",
+		"一致するかっこの背景色",
+		"一致するかっこ内のボックスの色",
+		"概要ルーラーの境界色。",
+		"エディターの概要ルーラーの背景色です。ミニマップが有効で、エディターの右側に配置されている場合にのみ使用します。",
+		"エディターの余白の背景色。余白にはグリフ マージンと行番号が含まれます。",
+		"エディターでの不要な (未使用の) ソース コードの罫線の色。",
+		"エディター内の不要な (未使用の) ソース コードの不透明度。たとえば、\"#000000c0\" は不透明度 75% でコードを表示します。ハイ コントラストのテーマの場合、\'editorUnnecessaryCode.border\' テーマ色を使用して、不要なコードをフェードアウトするのではなく下線を付けます。",
+		"エディター内の透かし文字の境界線の色です。",
+		"エディターの透かし文字の前景色です。",
+		"エディターのゴースト テキストの背景色。",
+		"範囲強調表示のための概要ルーラー マーカーの色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"エラーを示す概要ルーラーのマーカー色。",
+		"警告を示す概要ルーラーのマーカー色。",
+		"情報を示す概要ルーラーのマーカー色。",
+		"角かっこ (1) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"角かっこ (2) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"角かっこ (3) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"角かっこ (4) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"角かっこ (5) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"角かっこ (6) の前景色。角かっこのペアの色付けを有効にする必要があります。",
+		"予期しないブラケットの前景色。",
+		"非アクティブな角かっこのペア ガイドの背景色 (1)。角かっこのペア ガイドを有効にする必要があります。",
+		"非アクティブな角かっこのペア ガイドの背景色 (2)。角かっこのペア ガイドを有効にする必要があります。",
+		"非アクティブな角かっこのペア ガイドの背景色 (3)。角かっこのペア ガイドを有効にする必要があります。",
+		"非アクティブな角かっこのペア ガイドの背景色 (4)。角かっこのペア ガイドを有効にする必要があります。",
+		"非アクティブな角かっこのペア ガイドの背景色 (5)。角かっこのペア ガイドを有効にする必要があります。",
+		"非アクティブな角かっこのペア ガイドの背景色 (6)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (1)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (2)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (3)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (4)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (5)。角かっこのペア ガイドを有効にする必要があります。",
+		"アクティブな角かっこのペア ガイドの背景色 (6)。角かっこのペア ガイドを有効にする必要があります。",
+		"Unicode 文字を強調表示するために使用される境界線の色。",
+	],
 	"vs/editor/common/editorContextKeys": [
 		"エディターのテキストにフォーカスがある (カーソルが点滅している) かどうか",
 		"エディターまたはエディター ウィジェットにフォーカスがある (例: 検索ウィジェットにフォーカスがある) かどうか",
@@ -470,11 +544,11 @@ define("vs/editor/editor.main.nls.ja", {
 		"エディターに複数のドキュメント書式設定プロバイダーがあるかどうか",
 		"エディターに複数のドキュメント選択書式設定プロバイダーがあるかどうか",
 	],
+	"vs/editor/common/languages/modesRegistry": [
+		"プレーンテキスト",
+	],
 	"vs/editor/common/model/editStack": [
 		"入力しています",
-	],
-	"vs/editor/common/modes/modesRegistry": [
-		"プレーンテキスト",
 	],
 	"vs/editor/common/standaloneStrings": [
 		"選択されていません",
@@ -512,46 +586,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"ハイ コントラスト テーマの切り替え",
 		"{1} 個のファイルに {0} 個の編集が行われました",
 	],
-	"vs/editor/common/view/editorColorRegistry": [
-		"カーソル位置の行を強調表示する背景色。",
-		"カーソル位置の行の境界線を強調表示する背景色。",
-		"(Quick Open や検出機能などにより) 強調表示されている範囲の色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
-		"強調表示された範囲の境界線の背景色。",
-		"強調表示された記号の背景色 (定義へ移動、次または前の記号へ移動など)。基になる装飾が覆われないようにするため、色を不透明にすることはできません。",
-		"強調表示された記号の周りの境界線の背景色。",
-		"エディターのカーソルの色。",
-		"選択された文字列の背景色です。選択された文字列の背景色をカスタマイズ出来ます。",
-		"エディターのスペース文字の色。",
-		"エディター インデント ガイドの色。",
-		"アクティブなエディターのインデント ガイドの色。",
-		"エディターの行番号の色。",
-		"エディターのアクティブ行番号の色",
-		"id は使用しないでください。代わりに \'EditorLineNumber.activeForeground\' を使用してください。",
-		"エディターのアクティブ行番号の色",
-		"エディター ルーラーの色。",
-		"CodeLens エディターの前景色。",
-		"一致するかっこの背景色",
-		"一致するかっこ内のボックスの色",
-		"概要ルーラーの境界色。",
-		"エディターの概要ルーラーの背景色です。ミニマップが有効で、エディターの右側に配置されている場合にのみ使用します。",
-		"エディターの余白の背景色。余白にはグリフ マージンと行番号が含まれます。",
-		"エディターでの不要な (未使用の) ソース コードの罫線の色。",
-		"エディター内の不要な (未使用の) ソース コードの不透明度。たとえば、\"#000000c0\" は不透明度 75% でコードを表示します。ハイ コントラストのテーマの場合、\'editorUnnecessaryCode.border\' テーマ色を使用して、不要なコードをフェードアウトするのではなく下線を付けます。",
-		"エディター内の透かし文字の境界線の色です。",
-		"エディターの透かし文字の前景色です。",
-		"範囲強調表示のための概要ルーラー マーカーの色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
-		"エラーを示す概要ルーラーのマーカー色。",
-		"警告を示す概要ルーラーのマーカー色。",
-		"情報を示す概要ルーラーのマーカー色。",
-		"角かっこ (1) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"角かっこ (2) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"角かっこ (3) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"角かっこ (4) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"角かっこ (5) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"角かっこ (6) の前景色。角かっこのペアの色付けを有効にする必要があります。",
-		"予期しないブラケットの前景色。",
-	],
-	"vs/editor/contrib/anchorSelect/anchorSelect": [
+	"vs/editor/contrib/anchorSelect/browser/anchorSelect": [
 		"選択アンカー",
 		"アンカーが {0}:{1} に設定されました",
 		"選択アンカーの設定",
@@ -559,20 +594,20 @@ define("vs/editor/editor.main.nls.ja", {
 		"アンカーからカーソルへ選択",
 		"選択アンカーの取り消し",
 	],
-	"vs/editor/contrib/bracketMatching/bracketMatching": [
+	"vs/editor/contrib/bracketMatching/browser/bracketMatching": [
 		"一致するブラケットを示す概要ルーラーのマーカー色。",
 		"ブラケットへ移動",
 		"ブラケットに選択",
 		"ブラケットに移動(&&B)",
 	],
-	"vs/editor/contrib/caretOperations/caretOperations": [
+	"vs/editor/contrib/caretOperations/browser/caretOperations": [
 		"選択したテキストを左に移動",
 		"選択したテキストを右に移動",
 	],
-	"vs/editor/contrib/caretOperations/transpose": [
+	"vs/editor/contrib/caretOperations/browser/transpose": [
 		"文字の入れ替え",
 	],
-	"vs/editor/contrib/clipboard/clipboard": [
+	"vs/editor/contrib/clipboard/browser/clipboard": [
 		"切り取り(&&T)",
 		"切り取り",
 		"切り取り",
@@ -581,15 +616,15 @@ define("vs/editor/editor.main.nls.ja", {
 		"コピー",
 		"コピー",
 		"コピー",
-		"名前を付けてコピー",
-		"名前を付けてコピー",
+		"形式を指定してコピー",
+		"形式を指定してコピー",
 		"貼り付け(&&P)",
 		"貼り付け",
 		"貼り付け",
 		"貼り付け",
 		"構文を強調表示してコピー",
 	],
-	"vs/editor/contrib/codeAction/codeActionCommands": [
+	"vs/editor/contrib/codeAction/browser/codeActionCommands": [
 		"実行するコード アクションの種類。",
 		"返されたアクションが適用されるタイミングを制御します。",
 		"最初に返されたコード アクションを常に適用します。",
@@ -620,15 +655,18 @@ define("vs/editor/editor.main.nls.ja", {
 		"自動修正...",
 		"利用可能な自動修正はありません",
 	],
-	"vs/editor/contrib/codeAction/lightBulbWidget": [
+	"vs/editor/contrib/codeAction/browser/lightBulbWidget": [
 		"コードアクションを表示します。使用可能な優先のクイック修正 ({0})",
 		"コード アクションの表示 ({0})",
 		"コード アクションの表示",
 	],
-	"vs/editor/contrib/codelens/codelensController": [
+	"vs/editor/contrib/codelens/browser/codelensController": [
 		"現在の行のコード レンズ コマンドを表示",
 	],
-	"vs/editor/contrib/comment/comment": [
+	"vs/editor/contrib/colorPicker/browser/colorPickerWidget": [
+		"クリックして色オプションを切り替えます (rgb/hsl/hex)",
+	],
+	"vs/editor/contrib/comment/browser/comment": [
 		"行コメントの切り替え",
 		"行コメントの切り替え(&&T)",
 		"行コメントの追加",
@@ -636,16 +674,24 @@ define("vs/editor/editor.main.nls.ja", {
 		"ブロック コメントの切り替え",
 		"ブロック コメントの切り替え(&&B)",
 	],
-	"vs/editor/contrib/contextmenu/contextmenu": [
+	"vs/editor/contrib/contextmenu/browser/contextmenu": [
 		"エディターのコンテキスト メニューの表示",
 	],
-	"vs/editor/contrib/cursorUndo/cursorUndo": [
+	"vs/editor/contrib/cursorUndo/browser/cursorUndo": [
 		"カーソルを元に戻す",
 		"カーソルのやり直し",
 	],
-	"vs/editor/contrib/find/findController": [
+	"vs/editor/contrib/editorState/browser/keybindingCancellation": [
+		"エディターで取り消し可能な操作 (\'参照をここに表示\' など) を実行するかどうか",
+	],
+	"vs/editor/contrib/find/browser/findController": [
 		"検索",
 		"検索(&&F)",
+		"\"正規表現を使用する\" フラグをオーバーライドします。\r\nフラグは今後保存されません。\r\n0: 何もしない\r\n1: True\r\n2: False",
+		"\"単語単位で検索する\" フラグをオーバーライドします。\r\nフラグは今後保存されません。\r\n0: 何もしない\r\n1: True\r\n2: False",
+		"\"数式ケース\" フラグをオーバーライドします。\r\nフラグは今後保存されません。\r\n0: 何もしない\r\n1: True\r\n2: False",
+		"\"ケースの保持\" フラグをオーバーライドします。\r\nフラグは今後保存されません。\r\n0: 何もしない\r\n1: True\r\n2: False",
+		"引数を使用した検索",
 		"選択範囲で検索",
 		"次を検索",
 		"前を検索",
@@ -654,7 +700,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"置換",
 		"置換(&&R)",
 	],
-	"vs/editor/contrib/find/findWidget": [
+	"vs/editor/contrib/find/browser/findWidget": [
 		"エディターの検索ウィジェット内の \'選択範囲を検索\' のアイコン。",
 		"エディターの検索ウィジェットが折りたたまれていることを示すアイコン。",
 		"エディターの検索ウィジェットが展開されていることを示すアイコン。",
@@ -682,7 +728,8 @@ define("vs/editor/editor.main.nls.ja", {
 		"{0} が \'{1}\' で見つかりました",
 		"Ctrl + Enter キーを押すと、すべて置換するのではなく、改行が挿入されるようになりました。editor.action.replaceAll のキーバインドを変更して、この動作をオーバーライドできます。",
 	],
-	"vs/editor/contrib/folding/folding": [
+	"vs/editor/contrib/folding/browser/folding": [
+		"折りたたみ可能な領域の数は、最大 {0} 個に制限されます。より多くを有効にするには、構成オプション [\'Folding Maximum Regions\'](command:workbench.action.openSettings?[\"editor.foldingMaximumRegions\"]) の値を大きくします。",
 		"展開",
 		"再帰的に展開する",
 		"折りたたみ",
@@ -702,26 +749,26 @@ define("vs/editor/editor.main.nls.ja", {
 		"折り曲げる範囲の背景色。基の装飾を隠さないように、色は不透明であってはなりません。",
 		"エディターの余白にある折りたたみコントロールの色。",
 	],
-	"vs/editor/contrib/folding/foldingDecorations": [
+	"vs/editor/contrib/folding/browser/foldingDecorations": [
 		"エディターのグリフ余白内の展開された範囲のアイコン。",
 		"エディターのグリフ余白内の折りたたまれた範囲のアイコン。",
 	],
-	"vs/editor/contrib/fontZoom/fontZoom": [
+	"vs/editor/contrib/fontZoom/browser/fontZoom": [
 		"エディターのフォントを拡大",
 		"エディターのフォントを縮小",
 		"エディターのフォントのズームをリセット",
 	],
-	"vs/editor/contrib/format/format": [
+	"vs/editor/contrib/format/browser/format": [
 		"行 {0} で 1 つの書式設定を編集",
 		"行 {1} で {0} 個の書式設定を編集",
 		"行 {0} と {1} の間で 1 つの書式設定を編集",
 		"行 {1} と {2} の間で {0} 個の書式設定を編集",
 	],
-	"vs/editor/contrib/format/formatActions": [
+	"vs/editor/contrib/format/browser/formatActions": [
 		"ドキュメントのフォーマット",
 		"選択範囲のフォーマット",
 	],
-	"vs/editor/contrib/gotoError/gotoError": [
+	"vs/editor/contrib/gotoError/browser/gotoError": [
 		"次の問題 (エラー、警告、情報) へ移動",
 		"次のマーカーへ移動するためのアイコン。",
 		"前の問題 (エラー、警告、情報) へ移動",
@@ -731,7 +778,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"ファイル内の前の問題 (エラー、警告、情報) へ移動",
 		"前の問題箇所(&&P)",
 	],
-	"vs/editor/contrib/gotoError/gotoErrorWidget": [
+	"vs/editor/contrib/gotoError/browser/gotoErrorWidget": [
 		"エラー",
 		"警告",
 		"情報",
@@ -747,7 +794,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"エディターのマーカー ナビゲーション ウィジェット情報の見出しの背景。",
 		"エディターのマーカー ナビゲーション ウィジェットの背景。",
 	],
-	"vs/editor/contrib/gotoSymbol/goToCommands": [
+	"vs/editor/contrib/gotoSymbol/browser/goToCommands": [
 		"ピーク",
 		"定義",
 		"\'{0}\' の定義は見つかりません",
@@ -775,38 +822,38 @@ define("vs/editor/editor.main.nls.ja", {
 		"\'{0}\' の参照が見つかりません",
 		"参照が見つかりません",
 		"参照へ移動",
-		"参照設定",
+		"参照",
 		"参照をここに表示",
-		"参照設定",
-		"任意の記号へ移動",
+		"参照",
+		"任意のシンボルへ移動",
 		"場所",
 		"\'{0}\' に一致する結果は見つかりませんでした",
-		"参照設定",
+		"参照",
 		"定義に移動(&&D)",
 		"宣言へ移動(&&D)",
 		"型定義に移動(&&T)",
 		"実装箇所に移動(&&I)",
 		"参照へ移動(&&R)",
 	],
-	"vs/editor/contrib/gotoSymbol/link/goToDefinitionAtPosition": [
+	"vs/editor/contrib/gotoSymbol/browser/link/goToDefinitionAtPosition": [
 		"クリックして、{0} の定義を表示します。",
 	],
-	"vs/editor/contrib/gotoSymbol/peek/referencesController": [
+	"vs/editor/contrib/gotoSymbol/browser/peek/referencesController": [
 		"参照のプレビューが表示されるかどうか (\'参照のプレビュー\' または \'定義をここに表示\' など)",
 		"読み込んでいます...",
 		"{0} ({1})",
 	],
-	"vs/editor/contrib/gotoSymbol/peek/referencesTree": [
+	"vs/editor/contrib/gotoSymbol/browser/peek/referencesTree": [
 		"{0} 個の参照",
 		"{0} 個の参照",
-		"参照",
+		"参照設定",
 	],
-	"vs/editor/contrib/gotoSymbol/peek/referencesWidget": [
+	"vs/editor/contrib/gotoSymbol/browser/peek/referencesWidget": [
 		"プレビューを表示できません",
 		"結果はありません。",
 		"参照設定",
 	],
-	"vs/editor/contrib/gotoSymbol/referencesModel": [
+	"vs/editor/contrib/gotoSymbol/browser/referencesModel": [
 		"列 {2} の {1} 行目に {0} つのシンボル",
 		"列 {2}、{3} の {1} 行目の {0} にある記号",
 		"{0} に 1 個のシンボル、完全なパス {1}",
@@ -816,31 +863,31 @@ define("vs/editor/editor.main.nls.ja", {
 		"{1} に {0} 個のシンボルが見つかりました",
 		"{1} 個のファイルに {0} 個のシンボルが見つかりました",
 	],
-	"vs/editor/contrib/gotoSymbol/symbolNavigation": [
+	"vs/editor/contrib/gotoSymbol/browser/symbolNavigation": [
 		"キーボードのみで移動できるシンボルの場所があるかどうか。",
 		"{1} のシンボル {0}、次に {2}",
 		"シンボル {0}/{1}",
 	],
-	"vs/editor/contrib/hover/hover": [
+	"vs/editor/contrib/hover/browser/hover": [
 		"ホバーの表示",
 		"定義プレビューのホバーを表示する",
 	],
-	"vs/editor/contrib/hover/markdownHoverParticipant": [
+	"vs/editor/contrib/hover/browser/markdownHoverParticipant": [
 		"読み込んでいます...",
 		"パフォーマンス上の理由からトークン化はスキップされます。その長い行の長さは `editor.maxTokenizationLineLength` で構成できます。",
 	],
-	"vs/editor/contrib/hover/markerHoverParticipant": [
+	"vs/editor/contrib/hover/browser/markerHoverParticipant": [
 		"問題の表示",
 		"利用できるクイックフィックスはありません",
 		"クイックフィックスを確認しています...",
 		"利用できるクイックフィックスはありません",
 		"クイック フィックス...",
 	],
-	"vs/editor/contrib/inPlaceReplace/inPlaceReplace": [
+	"vs/editor/contrib/inPlaceReplace/browser/inPlaceReplace": [
 		"前の値に置換",
 		"次の値に置換",
 	],
-	"vs/editor/contrib/indentation/indentation": [
+	"vs/editor/contrib/indentation/browser/indentation": [
 		"インデントをスペースに変換",
 		"インデントをタブに変換",
 		"構成されたタブのサイズ",
@@ -851,20 +898,33 @@ define("vs/editor/editor.main.nls.ja", {
 		"行の再インデント",
 		"選択行を再インデント",
 	],
-	"vs/editor/contrib/inlineCompletions/ghostTextController": [
+	"vs/editor/contrib/inlayHints/browser/inlayHintsHover": [
+		"cmd キーを押しながらクリック",
+		"ctrl キーを押しながら クリック",
+		"option キーを押しながらクリック",
+		"alt キーを押しながらクリック",
+		"[定義] ({0}) に移動し、右クリックして詳細を表示します",
+		"定義に移動 ({0})",
+		"コマンドの実行",
+	],
+	"vs/editor/contrib/inlineCompletions/browser/ghostTextController": [
 		"インライン候補を表示するかどうか",
 		"インライン候補がスペースで始まるかどうか",
+		"インライン候補が、タブで挿入されるものよりも小さいスペースで始まるかどうか",
 		"次のインライン候補を表示する",
 		"前のインライン候補を表示する",
 		"インライン候補をトリガーする",
 	],
-	"vs/editor/contrib/inlineCompletions/inlineCompletionsHoverParticipant": [
+	"vs/editor/contrib/inlineCompletions/browser/inlineCompletionsHoverParticipant": [
 		"次へ",
 		"前へ",
 		"同意する",
 		"おすすめ:",
 	],
-	"vs/editor/contrib/linesOperations/linesOperations": [
+	"vs/editor/contrib/lineSelection/browser/lineSelection": [
+		"線の選択を展開する",
+	],
+	"vs/editor/contrib/linesOperations/browser/linesOperations": [
 		"行を上へコピー",
 		"行を上へコピー(&&C)",
 		"行を下へコピー",
@@ -877,6 +937,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"行を下へ移動(&&L)",
 		"行を昇順に並べ替え",
 		"行を降順に並べ替え",
+		"重複する行を削除",
 		"末尾の空白のトリミング",
 		"行の削除",
 		"行のインデント",
@@ -892,11 +953,13 @@ define("vs/editor/editor.main.nls.ja", {
 		"先頭文字を大文字に変換する",
 		"スネーク ケースに変換する",
 	],
-	"vs/editor/contrib/linkedEditing/linkedEditing": [
+	"vs/editor/contrib/linkedEditing/browser/linkedEditing": [
 		"リンクされた編集の開始",
 		"エディターが型の名前の自動変更を行うときの背景色です。",
 	],
-	"vs/editor/contrib/links/links": [
+	"vs/editor/contrib/links/browser/links": [
+		"このリンクは形式が正しくないため開くことができませんでした: {0}",
+		"このリンクはターゲットが存在しないため開くことができませんでした。",
 		"コマンドの実行",
 		"リンク先を表示",
 		"cmd + クリック",
@@ -904,15 +967,13 @@ define("vs/editor/editor.main.nls.ja", {
 		"option + クリック",
 		"alt + クリック",
 		"コマンド {0} の実行",
-		"このリンクは形式が正しくないため開くことができませんでした: {0}",
-		"このリンクはターゲットが存在しないため開くことができませんでした。",
 		"リンクを開く",
 	],
-	"vs/editor/contrib/message/messageController": [
+	"vs/editor/contrib/message/browser/messageController": [
 		"エディターに現在インライン メッセージが表示されているかどうか",
 		"読み取り専用のエディターは編集できません",
 	],
-	"vs/editor/contrib/multicursor/multicursor": [
+	"vs/editor/contrib/multicursor/browser/multicursor": [
 		"追加されたカーソル: {0}",
 		"追加されたカーソル: {0}",
 		"カーソルを上に挿入",
@@ -933,15 +994,16 @@ define("vs/editor/editor.main.nls.ja", {
 		"すべての出現箇所を選択(&&O)",
 		"すべての出現箇所を変更",
 	],
-	"vs/editor/contrib/parameterHints/parameterHints": [
+	"vs/editor/contrib/parameterHints/browser/parameterHints": [
 		"パラメーター ヒントをトリガー",
 	],
-	"vs/editor/contrib/parameterHints/parameterHintsWidget": [
+	"vs/editor/contrib/parameterHints/browser/parameterHintsWidget": [
 		"次のパラメーター ヒントを表示するためのアイコン。",
 		"前のパラメーター ヒントを表示するためのアイコン。",
 		"{0}、ヒント",
+		"パラメーター ヒント内のアクティブな項目の前景色。",
 	],
-	"vs/editor/contrib/peekView/peekView": [
+	"vs/editor/contrib/peekView/browser/peekView": [
 		"現在のコード エディターがプレビュー内に埋め込まれるかどうか",
 		"閉じる",
 		"ピーク ビューのタイトル領域の背景色。",
@@ -959,14 +1021,14 @@ define("vs/editor/editor.main.nls.ja", {
 		"ピーク ビュー エディターの一致した強調表示色。",
 		"ピーク ビュー エディターの一致した強調境界色。",
 	],
-	"vs/editor/contrib/quickAccess/gotoLineQuickAccess": [
+	"vs/editor/contrib/quickAccess/browser/gotoLineQuickAccess": [
 		"最初にテキスト エディターを開いて、行に移動します。",
 		"行 {0}、文字 {1} に移動します。",
 		"{0} 行に移動します。",
 		"現在の行: {0}、文字: {1}。移動先となる、1 から {2} までの行番号を入力します。",
 		"現在の行: {0}、文字: {1}。移動先の行番号を入力します。",
 	],
-	"vs/editor/contrib/quickAccess/gotoSymbolQuickAccess": [
+	"vs/editor/contrib/quickAccess/browser/gotoSymbolQuickAccess": [
 		"シンボルに移動するには、まずシンボル情報を含むテキスト エディターを開きます。",
 		"アクティブなテキスト エディターでは、シンボル情報は表示されません。",
 		"一致するエディター シンボルがありません",
@@ -1001,7 +1063,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"フィールド ({0})",
 		"定数 ({0})",
 	],
-	"vs/editor/contrib/rename/rename": [
+	"vs/editor/contrib/rename/browser/rename": [
 		"結果がありません。",
 		"名前変更の場所を解決しようとして不明なエラーが発生しました",
 		"\'{0}\' の名前の変更中",
@@ -1012,23 +1074,23 @@ define("vs/editor/editor.main.nls.ja", {
 		"シンボルの名前変更",
 		"名前を変更する前に変更をプレビューする機能を有効または無効にする",
 	],
-	"vs/editor/contrib/rename/renameInputField": [
+	"vs/editor/contrib/rename/browser/renameInputField": [
 		"名前の変更入力ウィジェットが表示されるかどうか",
 		"名前変更入力。新しい名前を入力し、Enter キーを押してコミットしてください。",
 		"名前を変更するには {0}、プレビューするには {1}",
 	],
-	"vs/editor/contrib/smartSelect/smartSelect": [
+	"vs/editor/contrib/smartSelect/browser/smartSelect": [
 		"選択範囲を拡張",
 		"選択範囲の展開(&&E)",
 		"選択範囲を縮小",
 		"選択範囲の縮小(&&S)",
 	],
-	"vs/editor/contrib/snippet/snippetController2": [
+	"vs/editor/contrib/snippet/browser/snippetController2": [
 		"現在のエディターがスニペット モードであるかどうか",
 		"スニペット モードのときに、次のタブ位置があるかどうか",
 		"スニペット モードのときに、前のタブ位置があるかどうか",
 	],
-	"vs/editor/contrib/snippet/snippetVariables": [
+	"vs/editor/contrib/snippet/browser/snippetVariables": [
 		"日曜日",
 		"月曜日",
 		"火曜日",
@@ -1068,8 +1130,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"11 月",
 		"12 月",
 	],
-	"vs/editor/contrib/suggest/suggest": [
-		"候補を表示するかどうか",
+	"vs/editor/contrib/suggest/browser/suggest": [
 		"候補の詳細が表示されるかどうか",
 		"選択する複数の候補があるかどうか",
 		"現在の候補を挿入したとき、変更を行うか、または既に入力した内容をすべて入力するかどうか",
@@ -1078,7 +1139,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"既定の動作が挿入または置換であるかどうか",
 		"現在の候補からの詳細の解決をサポートするかどうか",
 	],
-	"vs/editor/contrib/suggest/suggestController": [
+	"vs/editor/contrib/suggest/browser/suggestController": [
 		"{1} が追加編集した \'{0}\' を受け入れる",
 		"候補をトリガー",
 		"挿入",
@@ -1090,7 +1151,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"さらに表示",
 		"候補のウィジェットのサイズをリセット",
 	],
-	"vs/editor/contrib/suggest/suggestWidget": [
+	"vs/editor/contrib/suggest/browser/suggestWidget": [
 		"候補のウィジェットの背景色。",
 		"候補ウィジェットの境界線色。",
 		"候補ウィジェットの前景色。",
@@ -1099,23 +1160,27 @@ define("vs/editor/editor.main.nls.ja", {
 		"候補ウィジェット内で選択済みエントリの背景色。",
 		"候補のウィジェット内で一致したハイライトの色。",
 		"項目がフォーカスされている場合に、候補ウィジェットでの一致の強調表示の色です。",
+		"ウィジェット状態の提案の前景色。",
 		"読み込んでいます...",
 		"候補はありません。",
-		"{0}、ドキュメント: {1}",
 		"提案",
+		"({0},{1}) {2}",
+		"{0}{1}",
+		"{0}、 {1}",
+		"{0}、ドキュメント: {1}",
 	],
-	"vs/editor/contrib/suggest/suggestWidgetDetails": [
+	"vs/editor/contrib/suggest/browser/suggestWidgetDetails": [
 		"閉じる",
 		"読み込んでいます...",
 	],
-	"vs/editor/contrib/suggest/suggestWidgetRenderer": [
+	"vs/editor/contrib/suggest/browser/suggestWidgetRenderer": [
 		"提案ウィジェットの詳細情報のアイコン。",
 		"詳細を参照",
 	],
-	"vs/editor/contrib/suggest/suggestWidgetStatus": [
+	"vs/editor/contrib/suggest/browser/suggestWidgetStatus": [
 		"{0} ({1})",
 	],
-	"vs/editor/contrib/symbolIcons/symbolIcons": [
+	"vs/editor/contrib/symbolIcons/browser/symbolIcons": [
 		"配列記号の前景色。これらの記号は、アウトライン、階層リンク、および候補のウィジェットに表示されます。",
 		"ブール値記号の前景色。これらの記号は、アウトライン、階層リンク、および候補のウィジェットに表示されます。",
 		"クラス記号の前景色。これらの記号は、アウトライン、階層リンク、および候補のウィジェットに表示されます。",
@@ -1150,22 +1215,47 @@ define("vs/editor/editor.main.nls.ja", {
 		"単位記号の前景色。これらの記号は、アウトライン、階層リンク、および候補のウィジェットに表示されます。",
 		"変数記号の前景色。これらの記号は、アウトライン、階層リンク、および候補のウィジェットに表示されます。",
 	],
-	"vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode": [
+	"vs/editor/contrib/toggleTabFocusMode/browser/toggleTabFocusMode": [
 		"Tab キーを切り替えるとフォーカスが移動します",
 		"Tab キーを押すと、次のフォーカス可能な要素にフォーカスを移動します",
 		"Tab キーを押すと、タブ文字が挿入されます",
 	],
-	"vs/editor/contrib/tokenization/tokenization": [
+	"vs/editor/contrib/tokenization/browser/tokenization": [
 		"開発者: トークン再作成の強制",
 	],
-	"vs/editor/contrib/unusualLineTerminators/unusualLineTerminators": [
+	"vs/editor/contrib/unicodeHighlighter/browser/unicodeHighlighter": [
+		"拡張機能のエディターで警告メッセージと共に表示されるアイコン。",
+		"このドキュメントには、数多くの非基本 ASCII Unicode 文字が含まれています",
+		"このドキュメントには多義性を持つ Unicode 文字が多数含まれています",
+		"このドキュメントには非表示の Unicode 文字が多数含まれています",
+		"文字 {0}は、ソース コードでより一般的な文字{1}と混同される可能性があります。",
+		"文字 {0}は非表示です。",
+		"文字 {0} は基本的な ASCII 文字ではありません。",
+		"設定の調整",
+		"コメントの強調表示を無効にする",
+		"コメントの文字の強調表示を無効にする",
+		"文字列の強調表示を無効にする",
+		"文字列の文字の強調表示を無効にする",
+		"多義性文字の強調表示を無効にする",
+		"あいまいな文字の強調表示を無効にする",
+		"非表示文字の強調表示を無効にする",
+		"非表示の文字の強調表示を無効にする",
+		"非 ASCII 文字の強調表示を無効にする",
+		"基本以外の ASCII 文字の強調表示を無効にする",
+		"除外オプションの表示",
+		"{0} (非表示の文字) を強調表示から除外する",
+		"強調表示から {0} を除外します",
+		"言語 \"{0}\" でより一般的な Unicode 文字を許可します。",
+		"Unicode の強調表示オプションを構成する",
+	],
+	"vs/editor/contrib/unusualLineTerminators/browser/unusualLineTerminators": [
 		"普通ではない行終端記号",
 		"普通ではない行終端記号が検出されました",
 		"このファイル \'{0}\' には、行区切り文字 (LS) や段落区切り記号 (PS) などの特殊な行の終端文字が 1 つ以上含まれています。\r\n\r\nそれらをファイルから削除することをお勧めします。これは \'editor.unusualLineTerminators\' を使用して構成できます。",
 		"特殊な行の終端記号を削除する",
 		"無視する",
 	],
-	"vs/editor/contrib/wordHighlighter/wordHighlighter": [
+	"vs/editor/contrib/wordHighlighter/browser/wordHighlighter": [
 		"変数の読み取りなど、読み取りアクセス中のシンボルの背景色。下にある装飾を隠さないために、色は不透過であってはなりません。",
 		"変数への書き込みなど、書き込みアクセス中のシンボル背景色。下にある装飾を隠さないために、色は不透過であってはなりません。",
 		"変数の読み取りなど読み取りアクセス中のシンボルの境界線の色。",
@@ -1176,7 +1266,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"前のシンボル ハイライトに移動",
 		"シンボル ハイライトをトリガー",
 	],
-	"vs/editor/contrib/wordOperations/wordOperations": [
+	"vs/editor/contrib/wordOperations/browser/wordOperations": [
 		"単語の削除",
 	],
 	"vs/platform/actions/browser/menuEntryActionViewItem": [
@@ -1185,6 +1275,9 @@ define("vs/editor/editor.main.nls.ja", {
 	],
 	"vs/platform/configuration/common/configurationRegistry": [
 		"既定の言語構成のオーバーライド",
+		"{0} 言語の場合にオーバーライドされる設定を構成します。",
+		"言語に対して上書きされるエディター設定を構成します。",
+		"この設定では、言語ごとの構成はサポートされていません。",
 		"言語に対して上書きされるエディター設定を構成します。",
 		"この設定では、言語ごとの構成はサポートされていません。",
 		"空のプロパティは登録できません",
@@ -1195,7 +1288,16 @@ define("vs/editor/editor.main.nls.ja", {
 		"コンテキスト キーに関する情報を返すコマンド",
 	],
 	"vs/platform/contextkey/common/contextkeys": [
+		"オペレーティング システムが macOS であるかどうか",
+		"オペレーティング システムが Linux であるかどうか",
 		"オペレーティング システムが Windows であるかどうか",
+		"プラットフォームが Web ブラウザーであるかどうか",
+		"オペレーティング システムが非ブラウザー プラットフォーム上の macOS であるかどうか",
+		"オペレーティング システムが iOS であるかどうか",
+		"キーボードのフォーカスが入力ボックス内にあるかどうか",
+	],
+	"vs/platform/history/browser/contextScopedHistoryWidget": [
+		"候補を表示するかどうか",
 	],
 	"vs/platform/keybinding/common/abstractKeybindingService": [
 		"({0}) が渡されました。2 番目のキーを待っています...",
@@ -1239,12 +1341,18 @@ define("vs/editor/editor.main.nls.ja", {
 	"vs/platform/theme/common/colorRegistry": [
 		"全体の前景色。この色は、コンポーネントによってオーバーライドされていない場合にのみ使用されます。",
 		"エラー メッセージ全体の前景色。この色は、コンポーネントによって上書きされていない場合にのみ使用されます。",
+		"追加情報を提供する説明文の前景色、例:ラベル。",
 		"ワークベンチのアイコンの既定の色。",
 		"フォーカスされた要素の境界線全体の色。この色はコンポーネントによって上書きされていない場合にのみ使用されます。",
 		"コントラストを強めるために、他の要素と隔てる追加の境界線。",
 		"コントラストを強めるために、アクティブな他要素と隔てる追加の境界線。",
+		"ワークベンチ内のテキスト選択の背景色 (例: 入力フィールドやテキストエリア)。エディター内の選択には適用されないことに注意してください。",
+		"テキストの区切り文字の色。",
 		"テキスト内のリンクの前景色。",
 		"クリックされたときとマウスをホバーしたときのテキスト内のリンクの前景色。",
+		"フォーマット済みテキスト セグメントの前景色。",
+		"テキスト内のブロック引用の背景色。",
+		"テキスト内のブロック引用の境界線色。",
 		"テキスト内のコード ブロックの背景色。",
 		"エディター内の検索/置換窓など、エディター ウィジェットの影の色。",
 		"入力ボックスの背景。",
@@ -1252,7 +1360,9 @@ define("vs/editor/editor.main.nls.ja", {
 		"入力ボックスの境界線。",
 		"入力フィールドのアクティブ オプションの境界線の色。",
 		"入力フィールドでアクティブ化されたオプションの背景色。",
+		"入力フィールドのオプションの背景のホバー色。",
 		"入力フィールドでアクティブ化されたオプションの前景色。",
+		"入力ボックスのプレースホルダー テキストの前景色。",
 		"情報の重大度を示す入力検証の背景色。",
 		"情報の重大度を示す入力検証の前景色。",
 		"情報の重大度を示す入力検証の境界線色。",
@@ -1263,10 +1373,19 @@ define("vs/editor/editor.main.nls.ja", {
 		"エラーの重大度を示す入力検証の前景色。",
 		"エラーの重大度を示す入力検証の境界線色。",
 		"ドロップダウンの背景。",
+		"ドロップダウン リストの背景色。",
 		"ドロップダウンの前景。",
+		"ドロップダウンの境界線。",
+		"チェックボックス ウィジェットの背景色。",
+		"チェックボックス ウィジェットの前景色。",
+		"チェックボックス ウィジェットの境界線の色。",
 		"ボタンの前景色。",
 		"ボタンの背景色。",
 		"ホバー時のボタン背景色。",
+		"ボタンの境界線の色。",
+		"ボタンの 2 次的な前景色。",
+		"ボタンの 2 次的な背景色。",
+		"ホバー時のボタンの 2 次的な背景色。",
 		"バッジの背景色。バッジとは小さな情報ラベルのことです。例:検索結果の数",
 		"バッジの前景色。バッジとは小さな情報ラベルのことです。例:検索結果の数",
 		"ビューがスクロールされたことを示すスクロール バーの影。",
@@ -1285,6 +1404,7 @@ define("vs/editor/editor.main.nls.ja", {
 		"エディター内の情報ボックスの境界線の色です。",
 		"エディターでヒントを示す波線の前景色。",
 		"エディター内のヒント ボックスの境界線の色。",
+		"アクティブな枠の境界線の色。",
 		"エディターの背景色。",
 		"エディターの既定の前景色。",
 		"検索/置換窓など、エディター ウィジェットの背景色。",
@@ -1311,6 +1431,8 @@ define("vs/editor/editor.main.nls.ja", {
 		"現在の検索一致項目の境界線の色。",
 		"他の検索一致項目の境界線の色。",
 		"検索を制限する範囲の境界線色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"検索エディターのクエリの色が一致します。",
+		"検索エディター クエリの境界線の色が一致します。",
 		"ホバーが表示されている語の下を強調表示します。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
 		"エディター ホバーの背景色。",
 		"エディター ホバーの前景色。",
@@ -1327,6 +1449,12 @@ define("vs/editor/editor.main.nls.ja", {
 		"自動修正の電球アクション アイコンとして使用される色。",
 		"挿入されたテキストの背景色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
 		"削除したテキストの背景色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"挿入された行の背景色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"削除した行の背景色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"挿入された行の余白の背景色。",
+		"削除された行の余白の背景色。",
+		"挿入されたコンテンツについて、差分概要ルーラーを前面に置きます。",
+		"削除されたコンテンツについて、差分概要ルーラーを前面に置きます。",
 		"挿入されたテキストの輪郭の色。",
 		"削除されたテキストの輪郭の色。",
 		"2 つのテキスト エディターの間の境界線の色。",
@@ -1347,11 +1475,18 @@ define("vs/editor/editor.main.nls.ja", {
 		"マウス操作で項目を移動するときのツリーリスト ドラッグ アンド ドロップの背景。",
 		"ツリーリスト内を検索しているとき、一致した強調のツリーリスト前景色。",
 		"ツリー/リスト内を検索しているとき、一致した強調のツリー/リストの前景色。",
+		"無効な項目のツリーリストの前景色。たとえばエクスプローラーの未解決なルート。",
+		"エラーを含むリスト項目の前景色。",
+		"警告が含まれるリスト項目の前景色。",
 		"リストおよびツリーの型フィルター ウェジェットの背景色。",
 		"リストおよびツリーの型フィルター ウィジェットのアウトライン色。",
 		"一致項目がない場合の、リストおよびツリーの型フィルター ウィジェットのアウトライン色。",
+		"フィルタリングされた一致の背景色。",
+		"フィルタリングされた一致の境界線の色。",
 		"インデント ガイドのツリー ストロークの色。",
-		"インデント ガイドのツリー ストロークの色。",
+		"列間の表の境界線の色。",
+		"奇数テーブル行の背景色。",
+		"強調表示されていない項目のリスト/ツリー前景色。 ",
 		"代わりに quickInputList.focusBackground を使用してください",
 		"フォーカスされた項目のクイック選択の前景色。",
 		"フォーカスされた項目のクイック選択のアイコン前景色。",
@@ -1364,10 +1499,27 @@ define("vs/editor/editor.main.nls.ja", {
 		"メニューで選択されたメニュー項目の境界線色。",
 		"メニュー内のメニュー項目の境界線色。",
 		"アクションの上にマウス ポインターを合わせたときのツール バーのアウトライン",
+		"アクションの上にマウス ポインターを合わせたときのツール バーのアウトライン",
+		"アクションの上にマウス ポインターを合わせるとツール バーの背景が表示される",
 		"スニペット tabstop の背景色を強調表示します。",
 		"スニペット tabstop の境界線の色を強調表示します。",
 		"スニペットの最後の tabstop の背景色を強調表示します。",
 		"スニペットの最後のタブストップで境界線の色を強調表示します。",
+		"フォーカスされた階層リンクの項目の色。",
+		"階層リンクの項目の背景色。",
+		"フォーカスされた階層リンクの項目の色。",
+		"選択された階層リンクの項目の色。",
+		"階層項目ピッカーの背景色。",
+		"インライン マージ競合の現在のヘッダーの背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"インライン マージ競合の現在のコンテンツ背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"インライン マージ競合の着信ヘッダーの背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"インライン マージ競合の着信コンテンツの背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"インライン マージ競合の共通の先祖のヘッダー背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"インライン マージ競合の共通の先祖のコンテンツ背景。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
+		"行内マージ競合のヘッダーとスプリッターの境界線の色。",
+		"行内マージ競合の現在の概要ルーラー前景色。",
+		"行内マージ競合の入力側の概要ルーラー前景色。",
+		"行内マージ競合の共通の祖先概要ルーラー前景色。",
 		"検出された一致項目の概要ルーラー マーカーの色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
 		"選択範囲を強調表示するための概要ルーラー マーカーの色。この色は、基本装飾が非表示にならないよう不透明にすることはできません。",
 		"一致を検索するためのミニマップ マーカーの色。",
@@ -1383,11 +1535,21 @@ define("vs/editor/editor.main.nls.ja", {
 		"問題のエラー アイコンに使用される色。",
 		"問題の警告アイコンに使用される色。",
 		"問題情報アイコンに使用される色。",
+		"グラフで使用される前景色。",
+		"グラフの水平線に使用される色。",
+		"グラフの視覚化に使用される赤色。",
+		"グラフの視覚化に使用される青色。",
+		"グラフの視覚化に使用される黄色。",
+		"グラフの視覚化に使用されるオレンジ色。",
+		"グラフの視覚化に使用される緑色。",
+		"グラフの視覚化に使用される紫色。",
 	],
 	"vs/platform/theme/common/iconRegistry": [
 		"使用するフォントの ID。設定されていない場合は、最初に定義されているフォントが使用されます。",
 		"アイコン定義に関連付けられたフォント文字。",
 		"ウィジェットにある閉じるアクションのアイコン。",
+		"前のエディターの場所に移動するためのアイコン。",
+		"次のエディターの場所に移動するためのアイコン。",
 	],
 	"vs/platform/undoRedo/common/undoRedoService": [
 		"次のファイルが閉じられ、ディスク上で変更されました: {0}。",
@@ -1404,12 +1566,15 @@ define("vs/editor/editor.main.nls.ja", {
 		"元に戻すまたはやり直し操作が既に実行されているため、\'{0}\' を元に戻すことはできませんでした。",
 		"\'{0}\' を元に戻しますか?",
 		"はい",
-		"キャンセル",
+		"いいえ",
 		"すべてのファイルで \'{0}\' をやり直しできませんでした。{1}",
 		"すべてのファイルで \'{0}\' をやり直しできませんでした。{1}",
 		"{1} に変更が加えられたため、すべてのファイルで \'{0}\' を再実行できませんでした",
 		"{1} で元に戻すまたはやり直し操作が既に実行されているため、すべてのファイルに対して \'{0}\' をやり直すことはできませんでした",
 		"元に戻すまたはやり直し操作がその期間に実行中であったため、すべてのファイルに対して \'{0}\' をやり直すことはできませんでした",
 		"元に戻すまたはやり直し操作が既に実行されているため、\'{0}\' をやり直すことはできませんでした。",
+	],
+	"vs/platform/workspace/common/workspace": [
+		"コード ワークスペース",
 	]
 });

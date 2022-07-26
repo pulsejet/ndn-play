@@ -67,7 +67,7 @@ export class IntervalNode {
     }
     setOptions(options) {
         this.options = options;
-        let className = this.options.className;
+        const className = this.options.className;
         setNodeIsForValidation(this, (className === "squiggly-error" /* EditorErrorDecoration */
             || className === "squiggly-warning" /* EditorWarningDecoration */
             || className === "squiggly-info" /* EditorInfoDecoration */));
@@ -300,7 +300,7 @@ function searchForEditing(T, start, end) {
     let nodeMaxEnd = 0;
     let nodeStart = 0;
     let nodeEnd = 0;
-    let result = [];
+    const result = [];
     let resultLen = 0;
     while (node !== SENTINEL) {
         if (getNodeIsVisited(node)) {
@@ -419,7 +419,7 @@ function noOverlapReplace(T, start, end, textLength) {
 //#region Searching
 function collectNodesFromOwner(T, ownerId) {
     let node = T.root;
-    let result = [];
+    const result = [];
     let resultLen = 0;
     while (node !== SENTINEL) {
         if (getNodeIsVisited(node)) {
@@ -450,7 +450,7 @@ function collectNodesFromOwner(T, ownerId) {
 }
 function collectNodesPostOrder(T) {
     let node = T.root;
-    let result = [];
+    const result = [];
     let resultLen = 0;
     while (node !== SENTINEL) {
         if (getNodeIsVisited(node)) {
@@ -482,7 +482,7 @@ function search(T, filterOwnerId, filterOutValidation, cachedVersionId) {
     let delta = 0;
     let nodeStart = 0;
     let nodeEnd = 0;
-    let result = [];
+    const result = [];
     let resultLen = 0;
     while (node !== SENTINEL) {
         if (getNodeIsVisited(node)) {
@@ -537,7 +537,7 @@ function intervalSearch(T, intervalStart, intervalEnd, filterOwnerId, filterOutV
     let nodeMaxEnd = 0;
     let nodeStart = 0;
     let nodeEnd = 0;
-    let result = [];
+    const result = [];
     let resultLen = 0;
     while (node !== SENTINEL) {
         if (getNodeIsVisited(node)) {
@@ -747,7 +747,7 @@ function rbTreeDelete(T, z) {
         T.root.parent = SENTINEL;
         return;
     }
-    let yWasRed = (getNodeColor(y) === 1 /* Red */);
+    const yWasRed = (getNodeColor(y) === 1 /* Red */);
     if (y === y.parent.left) {
         y.parent.left = x;
     }

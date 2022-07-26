@@ -58,9 +58,9 @@ export class GlyphMarginOverlay extends DedupOverlay {
         super();
         this._context = context;
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(129 /* layoutInfo */);
-        this._lineHeight = options.get(58 /* lineHeight */);
-        this._glyphMargin = options.get(49 /* glyphMargin */);
+        const layoutInfo = options.get(131 /* layoutInfo */);
+        this._lineHeight = options.get(59 /* lineHeight */);
+        this._glyphMargin = options.get(50 /* glyphMargin */);
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;
         this._glyphMarginWidth = layoutInfo.glyphMarginWidth;
         this._renderResult = null;
@@ -74,9 +74,9 @@ export class GlyphMarginOverlay extends DedupOverlay {
     // --- begin event handlers
     onConfigurationChanged(e) {
         const options = this._context.configuration.options;
-        const layoutInfo = options.get(129 /* layoutInfo */);
-        this._lineHeight = options.get(58 /* lineHeight */);
-        this._glyphMargin = options.get(49 /* glyphMargin */);
+        const layoutInfo = options.get(131 /* layoutInfo */);
+        this._lineHeight = options.get(59 /* lineHeight */);
+        this._glyphMargin = options.get(50 /* glyphMargin */);
         this._glyphMarginLeft = layoutInfo.glyphMarginLeft;
         this._glyphMarginWidth = layoutInfo.glyphMarginWidth;
         return true;
@@ -105,7 +105,8 @@ export class GlyphMarginOverlay extends DedupOverlay {
     // --- end event handlers
     _getDecorations(ctx) {
         const decorations = ctx.getDecorationsInViewport();
-        let r = [], rLen = 0;
+        const r = [];
+        let rLen = 0;
         for (let i = 0, len = decorations.length; i < len; i++) {
             const d = decorations[i];
             const glyphMarginClassName = d.options.glyphMarginClassName;

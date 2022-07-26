@@ -1,3 +1,7 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 // Avoid circular dependency on EventEmitter by implementing a subset of the interface.
 export class ErrorHandler {
     constructor() {
@@ -28,14 +32,14 @@ export class ErrorHandler {
 export const errorHandler = new ErrorHandler();
 export function onUnexpectedError(e) {
     // ignore errors from cancelled promises
-    if (!isPromiseCanceledError(e)) {
+    if (!isCancellationError(e)) {
         errorHandler.onUnexpectedError(e);
     }
     return undefined;
 }
 export function onUnexpectedExternalError(e) {
     // ignore errors from cancelled promises
-    if (!isPromiseCanceledError(e)) {
+    if (!isCancellationError(e)) {
         errorHandler.onUnexpectedExternalError(e);
     }
     return undefined;
@@ -58,11 +62,22 @@ const canceledName = 'Canceled';
 /**
  * Checks if the given error is a promise in canceled state
  */
-export function isPromiseCanceledError(error) {
+export function isCancellationError(error) {
+    if (error instanceof CancellationError) {
+        return true;
+    }
     return error instanceof Error && error.name === canceledName && error.message === canceledName;
 }
+// !!!IMPORTANT!!!
+// Do NOT change this class because it is also used as an API-type.
+export class CancellationError extends Error {
+    constructor() {
+        super(canceledName);
+        this.name = this.message;
+    }
+}
 /**
- * Returns an error that signals cancellation.
+ * @deprecated use {@link CancellationError `new CancellationError()`} instead
  */
 export function canceled() {
     const error = new Error(canceledName);

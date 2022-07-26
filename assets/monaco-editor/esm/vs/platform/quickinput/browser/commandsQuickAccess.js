@@ -21,7 +21,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { toErrorMessage } from '../../../base/common/errorMessage.js';
-import { isPromiseCanceledError } from '../../../base/common/errors.js';
+import { isCancellationError } from '../../../base/common/errors.js';
 import { matchesContiguousSubString, matchesPrefix, matchesWords, or } from '../../../base/common/filters.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { LRUCache } from '../../../base/common/map.js';
@@ -132,7 +132,7 @@ let AbstractCommandsQuickAccessProvider = class AbstractCommandsQuickAccessProvi
                             yield this.commandService.executeCommand(commandPick.commandId);
                         }
                         catch (error) {
-                            if (!isPromiseCanceledError(error)) {
+                            if (!isCancellationError(error)) {
                                 this.dialogService.show(Severity.Error, localize('canNotRun', "Command '{0}' resulted in an error ({1})", commandPick.label, toErrorMessage(error)));
                             }
                         }

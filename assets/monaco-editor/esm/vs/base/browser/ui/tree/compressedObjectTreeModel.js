@@ -186,6 +186,10 @@ export class CompressedObjectTreeModel {
         }
         return parentNode.elements[parentNode.elements.length - 1];
     }
+    getFirstElementChild(location) {
+        const compressedNode = this.getCompressedNode(location);
+        return this.model.getFirstElementChild(compressedNode);
+    }
     isCollapsible(location) {
         const compressedNode = this.getCompressedNode(location);
         return this.model.isCollapsible(compressedNode);
@@ -311,6 +315,13 @@ export class CompressibleObjectTreeModel {
     }
     getParentNodeLocation(location) {
         return this.model.getParentNodeLocation(location);
+    }
+    getFirstElementChild(location) {
+        const result = this.model.getFirstElementChild(location);
+        if (result === null || typeof result === 'undefined') {
+            return result;
+        }
+        return this.elementMapper(result.elements);
     }
     isCollapsible(location) {
         return this.model.isCollapsible(location);

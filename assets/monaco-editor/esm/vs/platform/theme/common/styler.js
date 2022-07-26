@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, listActiveSelectionBackground, listActiveSelectionForeground, listActiveSelectionIconForeground, listDropBackground, listFilterWidgetBackground, listFilterWidgetNoMatchesOutline, listFilterWidgetOutline, listFocusBackground, listFocusForeground, listFocusOutline, listHoverBackground, listHoverForeground, listInactiveFocusBackground, listInactiveFocusOutline, listInactiveSelectionBackground, listInactiveSelectionForeground, listInactiveSelectionIconForeground, menuBackground, menuBorder, menuForeground, menuSelectionBackground, menuSelectionBorder, menuSelectionForeground, menuSeparatorBackground, resolveColorValue, tableColumnsBorder, treeIndentGuidesStroke, widgetShadow } from './colorRegistry.js';
+import { activeContrastBorder, badgeBackground, badgeForeground, contrastBorder, listActiveSelectionBackground, listActiveSelectionForeground, listActiveSelectionIconForeground, listDropBackground, listFilterWidgetBackground, listFilterWidgetNoMatchesOutline, listFilterWidgetOutline, listFocusBackground, listFocusForeground, listFocusOutline, listHoverBackground, listHoverForeground, listInactiveFocusBackground, listInactiveFocusOutline, listInactiveSelectionBackground, listInactiveSelectionForeground, listInactiveSelectionIconForeground, menuBackground, menuBorder, menuForeground, menuSelectionBackground, menuSelectionBorder, menuSelectionForeground, menuSeparatorBackground, resolveColorValue, scrollbarShadow, scrollbarSliderActiveBackground, scrollbarSliderBackground, scrollbarSliderHoverBackground, tableColumnsBorder, tableOddRowsBackgroundColor, treeIndentGuidesStroke, widgetShadow } from './colorRegistry.js';
 export function computeStyles(theme, styleMap) {
     const styles = Object.create(null);
     for (let key in styleMap) {
@@ -60,7 +60,8 @@ export const defaultListStyles = {
     listFilterWidgetNoMatchesOutline,
     listMatchesShadow: widgetShadow,
     treeIndentGuidesStroke,
-    tableColumnsBorder
+    tableColumnsBorder,
+    tableOddRowsBackgroundColor
 };
 export const defaultMenuStyles = {
     shadowColor: widgetShadow,
@@ -70,7 +71,11 @@ export const defaultMenuStyles = {
     selectionForegroundColor: menuSelectionForeground,
     selectionBackgroundColor: menuSelectionBackground,
     selectionBorderColor: menuSelectionBorder,
-    separatorColor: menuSeparatorBackground
+    separatorColor: menuSeparatorBackground,
+    scrollbarShadow: scrollbarShadow,
+    scrollbarSliderBackground: scrollbarSliderBackground,
+    scrollbarSliderHoverBackground: scrollbarSliderHoverBackground,
+    scrollbarSliderActiveBackground: scrollbarSliderActiveBackground
 };
 export function attachMenuStyler(widget, themeService, style) {
     return attachStyler(themeService, Object.assign(Object.assign({}, defaultMenuStyles), style), widget);

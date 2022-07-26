@@ -20,7 +20,6 @@ export class Action extends Disposable {
         this._onDidChange = this._register(new Emitter());
         this.onDidChange = this._onDidChange.event;
         this._enabled = true;
-        this._checked = false;
         this._id = id;
         this._label = label;
         this._cssClass = cssClass;
@@ -140,7 +139,7 @@ export class SubmenuAction {
     constructor(id, label, actions, cssClass) {
         this.tooltip = '';
         this.enabled = true;
-        this.checked = false;
+        this.checked = undefined;
         this.id = id;
         this.label = label;
         this.class = cssClass;

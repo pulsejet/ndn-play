@@ -18,7 +18,7 @@ Example with signed data
 
 ```js
 const { Data, Interest, Name } = ndn.packet;
-const { fromUtf8, toUtf8 } = ndn.tlv;
+const { fromUtf8, toUtf8 } = ndn.util;
 
 const data = new Data(new Name('/ndn/test/alice/test'));
 data.content = toUtf8("Test");
@@ -33,7 +33,7 @@ A simple ping program is described below.
 ```js
 // Producer
 const { Data, Interest } = ndn.packet;
-const { fromUtf8, toUtf8 } = ndn.tlv;
+const { fromUtf8, toUtf8 } = ndn.util;
 
 const endpoint = node.nfw.getEndpoint();
 var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
@@ -44,7 +44,7 @@ var myProducer = endpoint.produce('/ndn/producer/test', async (interest) => {
 
 // Consumer
 const { Data, Interest } = ndn.packet;
-const { fromUtf8, toUtf8 } = ndn.tlv;
+const { fromUtf8, toUtf8 } = ndn.util;
 
 const endpoint = node.nfw.getEndpoint();
 const interest = new Interest('/ndn/producer/test');
@@ -58,7 +58,7 @@ A sample application running PSync (run this code on multiple nodes)
 
 ```js
 const { Data, Interest, Name } = ndn.packet;
-const { fromUtf8, toUtf8 } = ndn.tlv;
+const { fromUtf8, toUtf8 } = ndn.util;
 
 const endpoint = node.nfw.getEndpoint();
 

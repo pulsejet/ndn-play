@@ -46,6 +46,8 @@ export interface INode extends Node {
     nfw?: NFW;
     /** Extra data object */
     extra: INodeExtra;
+    /** Label of this node */
+    label: string;
 }
 
 export interface ILinkExtra {

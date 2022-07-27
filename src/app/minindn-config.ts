@@ -27,12 +27,19 @@ export function load(topo: Topology, confStr: string) {
         } else if (line.includes('[links]')) {
             mode = 2;
             continue;
+        } else if (line.includes('[switches]')) {
+            mode = 3;
+            continue;
         }
 
         // Add nodes
-        if (mode == 1) {
+        if (mode == 1 || mode == 3) {
             const nodeId = line.split(':')[0];
-            readNodes.push({ id: nodeId, label: nodeId });
+            readNodes.push({
+                id: nodeId,
+                label: nodeId,
+                isSwitch: (mode == 3) || undefined,
+            });
         }
 
         // Add links
@@ -80,10 +87,21 @@ export function generate(topo: Topology): string {
     }
 
     // Nodes
+    const switches: string[] = [];
     out.push('[nodes]');
     for (const node of nodes) {
         const name = nodeNames[node.id];
-        out.push(`${name}: _ network=/world router=/${name}.Router/`);
+        if (node.isSwitch) {
+            switches.push(name);
+        } else {
+            out.push(`${name}: _ network=/world router=/${name}.Router/`);
+        }
+    }
+
+    // Switches
+    out.push('[switches]');
+    for (const nodeName of switches) {
+        out.push(`${nodeName}: _`);
     }
 
     // Edges

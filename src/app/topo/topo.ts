@@ -80,6 +80,20 @@ export class Topology {
 
     // Bind functions
     this.network?.on("click", this.onNetworkClick.bind(this));
+    this.network?.on("doubleClick", () => {
+      if (this.selectedNode) {
+        // Open existing terminal
+        for (const pty of this.activePtys) {
+          if (pty.name.endsWith(`[${this.selectedNode.label}]`)) {
+            pty.focus?.emit();
+            return
+          }
+        }
+
+        // Open new terminal
+        this.provider?.openTerminal?.(this.selectedNode);
+      }
+    });
 
     await this.provider.initializePostNetwork();
   }

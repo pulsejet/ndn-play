@@ -89,5 +89,6 @@ export interface IPty {
     write: EventEmitter<any>,
     data: EventEmitter<any>,
     resized: EventEmitter<any>,
+    focus?: EventEmitter<any>,
     initBuf?: Uint8Array,
   }

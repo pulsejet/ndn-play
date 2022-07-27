@@ -22,7 +22,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('pty') pty_e!: ElementRef;
   @Input() public pty?: IPty;
   @Input() public resize?: EventEmitter<any>;
-  @Output() public afterInit: EventEmitter<any> = new EventEmitter();
+  @Output() public focus: EventEmitter<any> = new EventEmitter();
 
   /** Call on console resize */
   public doResize?: () => void;
@@ -108,8 +108,9 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
       window.removeEventListener('resize', resizeIfActive);
     }
 
+    this.pty!.focus = this.focus;
     setTimeout(() => {
-      this.afterInit.emit();
+      this.focus.emit();
     }, 100);
   }
 }

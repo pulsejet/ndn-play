@@ -352,6 +352,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   }
 
   public visualizeCaptured(packet: ICapturedPacket, node: INode) {
+    (<any>window).visualize();
     this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, node.label, packet[1]);
   }
 

@@ -25,6 +25,8 @@ export class VisualizerComponent implements OnInit {
   ngOnChanges() {
     if (this.tlv) {
       this.visualizedTlv = this.visualize(this.tlv);
+    } else {
+      this.visualizedTlv = undefined;
     }
   }
 

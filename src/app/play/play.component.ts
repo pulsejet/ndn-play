@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
+import { ICapturedPacket, INode } from '../interfaces';
 import { ext as ndnUserTypes } from '../user-types';
 
 @Component({
@@ -58,11 +59,12 @@ export class PlayComponent implements OnInit, AfterViewInit {
     }
   }
 
-  setVisualized(p: any) {
-    if (!p.p && this.gs.topo.provider.visualizeCaptured) {
-      this.gs.topo.provider.visualizeCaptured(p);
-    } else {
-      this.visualizedTlv = p.p;
+  setVisualized(p: ICapturedPacket, node: INode) {
+    // Check for wire
+    if (p[8]) {
+      this.visualizedTlv = p[8];
+    } else if (this.gs.topo.provider.visualizeCaptured) {
+      this.gs.topo.provider.visualizeCaptured(p, node);
     }
   }
 }

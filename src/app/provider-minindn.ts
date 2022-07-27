@@ -153,17 +153,20 @@ export class ProviderMiniNDN implements ForwardingProvider {
           if (p[0] <= lastKnownFrame) {
             continue;
           }
-          cp.push({
-            node: msg?.[MSG_KEY_RESULT].id,
-            fn: Number(p[0]),
-            t: Number(p[1]),
-            l: Number(p[2]),
-            type: p[3],
-            name: p[4],
-            from: p[5],
-            to: p[6],
-            p: p[7] || undefined,
-          } as ICapturedPacket);
+
+          // Add packet to list
+          // See definition of ICapturedPacket in interfaces.ts
+          cp.push([
+            0,
+            Number(p[0]),
+            Number(p[1]),
+            Number(p[2]),
+            p[3],
+            p[4],
+            p[5],
+            p[6],
+            p[7] || undefined,
+          ]);
         }
 
         // Creating dump
@@ -340,7 +343,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   private _lastKnownFrame(node: INode): number {
     const cp = node.extra.capturedPackets;
-    const knownFrame = cp.length > 0 ? Number(cp[cp.length - 1]?.fn) : 0;
+    const knownFrame = cp.length > 0 ? Number(cp[cp.length - 1]?.[1]) : 0;
     return knownFrame;
   }
 
@@ -348,8 +351,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, this._lastKnownFrame(node));
   }
 
-  public visualizeCaptured(packet: any) {
-    this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, packet.node, packet.fn);
+  public visualizeCaptured(packet: ICapturedPacket, node: INode) {
+    this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, node.label, packet[1]);
   }
 
   /** Download a dump of experiment */

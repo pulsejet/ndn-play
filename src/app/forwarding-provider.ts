@@ -1,4 +1,4 @@
-import { IEdge, INode } from "./interfaces";
+import { ICapturedPacket, IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
 export interface ForwardingProvider {
@@ -35,7 +35,7 @@ export interface ForwardingProvider {
 
   // Packet capture
   fetchCapturedPackets?: (node: INode) => void;
-  visualizeCaptured?: (packet: any) => void;
+  visualizeCaptured?: (packet: ICapturedPacket, node: INode) => void;
 
   // Dump of experiment
   downloadExperimentDump?: () => void;

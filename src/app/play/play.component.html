@@ -56,7 +56,7 @@
                     <app-captured-list *ngIf="lowerTabs.selection == captureTab"
                         [node]="gs.topo.selectedNode"
                         [provider]="gs.topo.provider"
-                        (packetClick)="setVisualized($event); lowerTabs.set(lowerVisTab)"
+                        (packetClick)="setVisualized($event, gs.topo.selectedNode); lowerTabs.set(lowerVisTab)"
                     ></app-captured-list>
                 </div>
             </app-tab>

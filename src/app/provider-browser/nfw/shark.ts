@@ -40,9 +40,6 @@ export class Shark {
         const encoder = new Encoder();
         encoder.encode(pkt.l3);
 
-        // Store hex so we can dump later
-        const hex = [...encoder.output].map((b) => (b.toString(16).padStart(2, "0"))).join("");
-
         // Get hops
         // If hops field doesn't exist then it is a local face (SCK)
         const thisHop = <string>this.nodeId!;
@@ -51,16 +48,22 @@ export class Shark {
         const fromHop = event == 'rx' ? otherHop : thisHop;
         const toHop = event == 'rx' ? thisHop : otherHop;
 
+        // Make a copy of the buffer just to be safe
+        const packBuf = new Uint8Array(new ArrayBuffer(encoder.output.byteLength));
+        packBuf.set(encoder.output);
+
         // Create packet object
-        const pack: ICapturedPacket = {
-            t: performance.now(),
-            p: hex,
-            l: encoder.output.length,
-            type: type,
-            name: AltUri.ofName(pkt.l3.name).substr(0, 48),
-            from: fromHop,
-            to: toHop,
-        };
+        const pack: ICapturedPacket = [
+            0,
+            0,
+            performance.now(),
+            encoder.output.length,
+            type,
+            AltUri.ofName(pkt.l3.name).substring(0, 48),
+            fromHop,
+            toHop,
+            packBuf,
+        ];
 
         // Check if we want to capture this packet
         if (!this.topo.globalCaptureFilter(pack)) {

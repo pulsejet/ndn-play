@@ -6,24 +6,24 @@
             <th>Length</th>
             <th>Name</th>
         </tr>
-        <ng-container *cdkVirtualFor="let packet of this.packets; let i = index">
-            <tr [ngClass]="packet.type"
+        <ng-container *cdkVirtualFor="let packet of packets; let i = index">
+            <tr [ngClass]="packet[4]"
                 [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
                 (click)="packetClick.emit(packet)">
                 <td>
-                    {{ round(packet.t) }} ms
+                    {{ round(packet[2]) }} ms
                 </td>
                 <td>
-                    {{ packet.type }}
-                    <ng-container *ngIf="packet.from">
-                        [{{ getNodeLabel(packet.from) }} &#8594; {{ getNodeLabel(packet.to) }}]
+                    {{ packet[4] }}
+                    <ng-container *ngIf="packet[6]">
+                        [{{ getNodeLabel(packet[6]) }} &#8594; {{ getNodeLabel(packet[7]) }}]
                     </ng-container>
                 </td>
                 <td>
-                    {{ packet.l }}
+                    {{ packet[3] }}
                 </td>
-                <td [title]="packet.name">
-                    {{ ellipsis(packet.name) }}
+                <td [title]="packet[5]">
+                    {{ ellipsis(packet[5]) }}
                 </td>
             </tr>
         </ng-container>

@@ -2,28 +2,28 @@ import { EventEmitter } from '@angular/core';
 import { Node, Edge } from 'vis-network/standalone';
 import { NFW } from './provider-browser/nfw/nfw';
 
-export interface ICapturedPacket {
-    /** Node for which this packet is captured */
-    node?: string;
+export const CAPTURED_FLAG_REPLAYING = 1;
+
+export type ICapturedPacket = [
+    /** Internal flags */
+    flags: number,
     /** Frame number */
-    fn?: number | string;
+    frame_number: number,
     /** Timestamp in ms */
-    t: number;
+    timestamp: number,
     /** Length of packet in bytes */
-    l: number;
+    length: number,
     /** Interest/Data/Nack */
-    type: string;
+    type: string,
     /** NDN name of packet */
-    name: string;
+    name: string,
     /** Originating node */
-    from?: string;
+    from: string | undefined,
     /** Destination node */
-    to?: string;
+    to?: string | undefined,
     /** Contents of the packet for visualization */
-    p?: any;
-    /** Currently replaying this packet */
-    a?: boolean;
-}
+    p?: Uint8Array | undefined,
+];
 
 export interface INodeExtra {
     /** Units of traffic pending on this node */

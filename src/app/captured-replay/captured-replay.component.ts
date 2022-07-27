@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { GlobalService } from '../global.service';
-import { ICapturedPacket, IEdge } from '../interfaces';
+import { CAPTURED_FLAG_REPLAYING, ICapturedPacket, IEdge } from '../interfaces';
 
 @Component({
   selector: 'app-captured-replay',
@@ -77,8 +77,8 @@ export class CapturedReplayComponent implements OnInit {
         return;
       }
 
-      this.startTime = Math.min(this.startTime, node.extra.capturedPackets[0].t);
-      this.endTime = Math.max(this.endTime, node.extra.capturedPackets[node.extra.capturedPackets.length - 1].t);
+      this.startTime = Math.min(this.startTime, node.extra.capturedPackets[0][2]);
+      this.endTime = Math.max(this.endTime, node.extra.capturedPackets[node.extra.capturedPackets.length - 1][2]);
     });
 
     this.gs.topo.edges.forEach((edge) => {
@@ -91,10 +91,10 @@ export class CapturedReplayComponent implements OnInit {
   }
 
   public getLink(p: ICapturedPacket): IEdge | undefined {
-    if (!p?.from || !p?.to) return undefined;
+    if (!p?.[6] || !p?.[7]) return undefined;
 
     const edge = this.gs.topo.edges.get().find((e) => {
-      return e.from == p.from && e.to == p.to || e.from == p.to && e.to == p.from;
+      return e.from == p[6] && e.to == p[7] || e.from == p[7] && e.to == p[6];
     });
 
     return edge;
@@ -137,17 +137,17 @@ export class CapturedReplayComponent implements OnInit {
       };
 
       while (cwf < cw &&
-             node.extra.capturedPackets[cwf].t <= this.t - this.transferTime)
+             node.extra.capturedPackets[cwf][2] <= this.t - this.transferTime)
       {
         const pack = node.extra.capturedPackets[cwf];
 
-        if (pack.a) {
-          delete pack.a;
-          node.extra.pendingTraffic -= pack.l;
+        if (pack[0] & CAPTURED_FLAG_REPLAYING) {
+          pack[0] &= ~CAPTURED_FLAG_REPLAYING;
+          node.extra.pendingTraffic -= pack[3];
 
           const link = this.getLink(pack);
           if (link) {
-            link.extra.pendingTraffic -= pack.l;
+            link.extra.pendingTraffic -= pack[3];
             this.gs.topo.updateEdgeColor(link);
           }
         }
@@ -166,25 +166,25 @@ export class CapturedReplayComponent implements OnInit {
 
       // Check outdated packets
       while (cw < node.extra.capturedPackets.length &&
-             node.extra.capturedPackets[cw].t < this.t) {
+             node.extra.capturedPackets[cw][2] < this.t) {
         cw++;
       }
 
       // Add traffic
       while (cw < node.extra.capturedPackets.length &&
-             node.extra.capturedPackets[cw].t >= this.t &&
-             node.extra.capturedPackets[cw].t <= this.t + this.transferTime)
+             node.extra.capturedPackets[cw][2] >= this.t &&
+             node.extra.capturedPackets[cw][2] <= this.t + this.transferTime)
       {
         const pack = node.extra.capturedPackets[cw];
 
-        const pType = pack.type.toLocaleLowerCase();
+        const pType = pack[4].toLocaleLowerCase();
         if (showTypes.includes(pType) && this.gs.topo.globalCaptureFilter(pack)) {
-          pack.a = true;
-          node.extra.pendingTraffic += pack.l;
+          pack[0] |= CAPTURED_FLAG_REPLAYING;
+          node.extra.pendingTraffic += pack[3];
 
           const link = this.getLink(pack);
           if (link) {
-            link.extra.pendingTraffic += pack.l;
+            link.extra.pendingTraffic += pack[3];
             this.gs.topo.updateEdgeColor(link);
           }
         }

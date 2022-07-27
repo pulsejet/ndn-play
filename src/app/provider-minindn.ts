@@ -171,11 +171,13 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
         // Creating dump
         if (this.dump) {
+          console.log(`Received data for ${node.label}`);
           this.dump.nodes.push(node);
-          this.dump.positions = this.topo.network.getPositions();
 
           // Did we get everything?
           if (this.dump.nodes.length == this.topo.nodes.length) {
+            console.log(`Received data for all nodes -- generating dump`);
+            this.dump.positions = this.topo.network.getPositions();
             downloadFile(msgpackEncode(this.dump), 'BIN', 'experiment.bin');
             this.dump = undefined;
           }
@@ -364,7 +366,11 @@ export class ProviderMiniNDN implements ForwardingProvider {
       edges: this.topo.edges.get(),
     };
     this.topo.nodes.forEach((node) => {
-      this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, 0, true);
+      if (node.isSwitch) {
+        this.dump!.nodes.push(node);
+      } else {
+        this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, 0, true);
+      }
     });
   }
 

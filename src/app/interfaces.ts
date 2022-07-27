@@ -49,6 +49,8 @@ export interface INode extends Node {
     extra: INodeExtra;
     /** Label of this node */
     label: string;
+    /** Set if this node is a passive switch */
+    isSwitch?: boolean;
 }
 
 export interface ILinkExtra {

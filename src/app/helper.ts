@@ -3,6 +3,7 @@ import * as pako from 'pako';
 export function downloadFile(bin: Uint8Array, fileType: string, fileName: string, deflate=true) {
     // Compress if BIN
     if (deflate) {
+        console.log('Compressing binary dump');
         bin = pako.deflate(bin);
     }
 
@@ -35,6 +36,7 @@ export function loadFileBin(inflate=true): Promise<ArrayBuffer> {
                     } else {
                         const buf = content as ArrayBuffer;
                         if (inflate) {
+                            console.log('Decompressing binary dump');
                             resolve(pako.inflate(buf));
                         } else {
                             resolve(buf);

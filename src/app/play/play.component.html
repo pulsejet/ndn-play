@@ -51,7 +51,7 @@
                 </div>
             </app-tab>
 
-            <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode" #captureTab>
+            <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode && !gs.topo.selectedNode.isSwitch" #captureTab>
                 <div class="m-1 mr-0" style="height: calc(100% - 0.5rem);">
                     <app-captured-list *ngIf="lowerTabs.selection == captureTab"
                         [node]="gs.topo.selectedNode"

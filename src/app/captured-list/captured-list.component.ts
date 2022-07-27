@@ -26,11 +26,23 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Look for potential to redraw periodically
+    // This component exists only when it is active
+    // so this is not that expensive
+    let i = 0;
     this.redrawInterval = window.setInterval(() => {
+      i++;
+
+      // Redraw every 100ms
       if (this.node.extra.capturedPackets.length != this.packets.length) {
         this.redraw();
       }
-    }, 1000);
+
+      // Refresh every 2000ms
+      if (i % 20 == 0) {
+        this.refresh();
+      }
+    }, 100);
   }
 
   ngOnDestroy(): void {

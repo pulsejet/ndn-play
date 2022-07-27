@@ -6,6 +6,7 @@ import { Topology } from "../topo/topo";
 import { RoutingHelper } from "./routing-helper";
 import { downloadFile, loadFileBin } from "../helper";
 import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
+import { inflate as pakoInflate } from "pako";
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -205,7 +206,10 @@ export class ProviderBrowser implements ForwardingProvider {
 
   public loadExperimentDumpFromBin(val: ArrayBuffer) {
     try {
-      const dump = msgpackDecode(new Uint8Array(val));
+      console.log('Decompressing binary dump');
+      const inflated = pakoInflate(new Uint8Array(val));
+      console.log('Decompressing experiment');
+      const dump = msgpackDecode(inflated);
       this.topo.edges.clear();
       this.topo.nodes.clear();
 

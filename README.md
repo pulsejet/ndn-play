@@ -38,6 +38,9 @@ For example, go to `node D`'s configuration page, and check the `enable packet c
 Checking out the `TLV visualizer` section will give the packet structure of captured packet.
 You can try to capture and visualize the Data packets generated during `ping` in a similar way.
 
+### Experiment Dumps
+The current state of the experiment including the topology and the captured packets can be downloaded using the experiment generation function. Internally, the dump uses Message Pack encoding that is compressed using the DEFLATE algorithm.
+
 ### Future Work
 In order to help NDN beginners better understand the security primitives in NDN, we plan to visualize the ceritificate chain and signing relationships in the future.
 

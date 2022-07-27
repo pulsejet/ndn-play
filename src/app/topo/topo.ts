@@ -144,6 +144,7 @@ export class Topology {
         this.nodes.update({
           id: node.id,
           color: this.DEFAULT_NODE_COLOR,
+          shape: node.isSwitch ? 'box' : 'circle',
           extra: {
             producedPrefixes: [],
             pendingTraffic: 0,

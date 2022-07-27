@@ -1512,6 +1512,8 @@ declare interface INode extends Node_2 {
     extra: INodeExtra;
     /** Label of this node */
     label: string;
+    /** Set if this node is a passive switch */
+    isSwitch?: boolean;
 }
 
 declare interface INodeExtra {
@@ -2649,7 +2651,7 @@ declare class ProviderBrowser implements ForwardingProvider {
     private ensureInitialized;
     downloadExperimentDump(): void;
     loadExperimentDump(): void;
-    loadExperimentDumpFromStr(val: string): void;
+    loadExperimentDumpFromBin(val: ArrayBuffer): void;
 }
 
 declare class PSyncCodec {

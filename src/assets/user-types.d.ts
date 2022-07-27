@@ -1058,7 +1058,15 @@ export declare namespace ext {
         util: typeof util;
     };
     const node: INode;
-    export function visualize(packet: any): void;
+    /**
+     * Visualize a packet
+     * @param packet can be hex string, binary buffer or an encodable e.g. Interest
+     */
+    export function visualize(packet: string | Uint8Array | tlv.Encodable): void;
+    /**
+     * Filter packets to be captured
+     * @param filter filter: function to check if captured packet should be stored
+     */
     export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void;
 }
 
@@ -1230,7 +1238,7 @@ declare interface ForwardingProvider {
     sendPingInterest?: (from: INode, to: INode) => void;
     sendInterest?: (name: string, node: INode) => void;
     fetchCapturedPackets?: (node: INode) => void;
-    visualizeCaptured?: (packet: any) => void;
+    visualizeCaptured?: (packet: ICapturedPacket, node: INode) => void;
     downloadExperimentDump?: () => void;
     loadExperimentDump?: () => void;
     runCode?: (code: string, node: INode) => void;
@@ -1452,28 +1460,26 @@ declare class IbltCodec {
     comp2iblt(comp: Component): IBLT;
 }
 
-declare interface ICapturedPacket {
-    /** Node for which this packet is captured */
-    node?: string;
-    /** Frame number */
-    fn?: number | string;
-    /** Timestamp in ms */
-    t: number;
-    /** Length of packet in bytes */
-    l: number;
-    /** Interest/Data/Nack */
-    type: string;
-    /** NDN name of packet */
-    name: string;
-    /** Originating node */
-    from?: string;
-    /** Destination node */
-    to?: string;
-    /** Contents of the packet for visualization */
-    p?: any;
-    /** Currently replaying this packet */
-    a?: boolean;
-}
+declare type ICapturedPacket = [
+/** Internal flags */
+flags: number,
+/** Frame number */
+frame_number: number,
+/** Timestamp in ms */
+timestamp: number,
+/** Length of packet in bytes */
+length: number,
+/** Interest/Data/Nack */
+type: string,
+/** NDN name of packet */
+name: string,
+/** Originating node */
+from: string | undefined,
+/** Destination node */
+to?: string | undefined,
+/** Contents of the packet for visualization */
+p?: Uint8Array | undefined
+];
 
 declare interface IEdge extends Edge {
     /** Latency in milliseconds */
@@ -1584,6 +1590,16 @@ declare namespace Interest {
 }
 
 declare type IntervalRange = [min: number, max: number];
+
+/** Connected Pty */
+declare interface IPty {
+    id: string;
+    name: string;
+    write: EventEmitter<any>;
+    data: EventEmitter<any>;
+    resized: EventEmitter<any>;
+    initBuf?: Uint8Array;
+}
 
 /** Determine whether the name is a certificate name. */
 declare function isCertName(name: Name): boolean;
@@ -3756,13 +3772,7 @@ declare class Topology {
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
     globalCaptureFilter: (packet: ICapturedPacket) => boolean;
-    activePtys: {
-        id: string;
-        name: string;
-        write: EventEmitter<any>;
-        data: EventEmitter<any>;
-        resized: EventEmitter<any>;
-    }[];
+    activePtys: IPty[];
     constructor(provider: ForwardingProvider);
     /** Initialize the network */
     createNetwork: (container: HTMLElement) => Promise<void>;

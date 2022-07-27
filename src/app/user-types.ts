@@ -11,7 +11,17 @@ import { ICapturedPacket, INode } from './interfaces';
 export namespace ext {
     export const ndnTypes = { packet, tlv, sync, keychain, util };
     export const node: INode = <any> null;
-    export function visualize(packet: any): void {};
+
+    /**
+     * Visualize a packet
+     * @param packet can be hex string, binary buffer or an encodable e.g. Interest
+     */
+    export function visualize(packet: string | Uint8Array | tlv.Encodable): void {};
+
+    /**
+     * Filter packets to be captured
+     * @param filter filter: function to check if captured packet should be stored
+     */
     export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void {};
 }
 

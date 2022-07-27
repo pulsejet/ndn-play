@@ -1,5 +1,5 @@
-export function downloadString(text: string, fileType: string, fileName: string) {
-    const blob = new Blob([text], { type: fileType });
+export function downloadFile(bin: Buffer, fileType: string, fileName: string) {
+    const blob = new Blob([bin], { type: fileType });
     const a = document.createElement('a');
     a.download = fileName;
     a.href = URL.createObjectURL(blob);
@@ -11,7 +11,7 @@ export function downloadString(text: string, fileType: string, fileName: string)
     setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
 }
 
-export function loadFileString(): Promise<string> {
+export function loadFileBin(): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -19,13 +19,13 @@ export function loadFileString(): Promise<string> {
             if ((<any>e)?.target?.files?.[0]) {
                 const file = (<any>e).target.files[0];
                 var reader = new FileReader();
-                reader.readAsText(file, 'UTF-8');
+                reader.readAsArrayBuffer(file);
                 reader.onload = (readerEvent) => {
                     const content = readerEvent?.target?.result;
                     if (!content) {
                         reject();
                     } else {
-                        resolve(content as string);
+                        resolve(content as ArrayBuffer);
                     }
                 }
             } else {

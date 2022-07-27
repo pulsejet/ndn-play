@@ -2,9 +2,9 @@ import { ForwardingProvider } from "./forwarding-provider";
 import { ICapturedPacket, IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { downloadString } from "./helper";
+import { downloadFile } from "./helper";
 import { EventEmitter } from "@angular/core";
-import * as msgpack from "msgpack-lite"
+import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 
 const WS_FUNCTIONS = {
   GET_TOPO: 'get_topo',
@@ -74,10 +74,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
     this.ws = webSocket({
       url: this.wsUrl,
       binaryType: "arraybuffer",
-      serializer: msgpack.encode,
+      serializer: msgpackEncode,
       deserializer: (e) => {
         try {
-          return msgpack.decode(new Uint8Array(e.data));
+          return msgpackDecode(new Uint8Array(e.data));
         } catch {
           console.error('Failed to decode msgpack. You may need to refresh the page.');
         }
@@ -141,42 +141,42 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
       case WS_FUNCTIONS.GET_PCAP:
         const newPacks = msg?.[MSG_KEY_RESULT].packets;
-        if (newPacks.length === 0) {
-          return;
-        }
-
-        // Captured packets list
         const node = this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!;
-        const cp = node.extra.capturedPackets;
-        const lastKnownFrame = this._lastKnownFrame(node);
-        for (const p of newPacks) {
-          if (p[0] <= lastKnownFrame) {
-            continue;
-          }
 
-          // Add packet to list
-          // See definition of ICapturedPacket in interfaces.ts
-          cp.push([
-            0,
-            Number(p[0]),
-            Number(p[1]),
-            Number(p[2]),
-            p[3],
-            p[4],
-            p[5],
-            p[6],
-            p[7] || undefined,
-          ]);
+        // Add new packets to node
+        if (newPacks.length > 0) {
+          // Captured packets list
+          const cp = node.extra.capturedPackets;
+          const lastKnownFrame = this._lastKnownFrame(node);
+          for (const p of newPacks) {
+            if (p[0] <= lastKnownFrame) {
+              continue;
+            }
+
+            // Add packet to list
+            // See definition of ICapturedPacket in interfaces.ts
+            cp.push([
+              0,
+              Number(p[0]),
+              Number(p[1]),
+              Number(p[2]),
+              p[3],
+              p[4],
+              p[5],
+              p[6],
+              p[7] || undefined,
+            ]);
+          }
         }
 
         // Creating dump
         if (this.dump) {
-          this.dump.nodes.push(this.topo.nodes.get(<string>msg?.[MSG_KEY_RESULT].id)!);
+          this.dump.nodes.push(node);
           this.dump.positions = this.topo.network.getPositions();
 
           // Did we get everything?
           if (this.dump.nodes.length == this.topo.nodes.length) {
-            downloadString(JSON.stringify(this.dump), 'JSON', 'experiment.json');
+            downloadFile(msgpackEncode(this.dump), 'BIN', 'experiment.bin');
             this.dump = undefined;
           }
         }

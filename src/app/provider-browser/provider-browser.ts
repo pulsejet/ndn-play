@@ -4,7 +4,8 @@ import { IEdge, INode } from "../interfaces";
 import { NFW } from "./nfw/nfw";
 import { Topology } from "../topo/topo";
 import { RoutingHelper } from "./routing-helper";
-import { downloadString, loadFileString } from "../helper";
+import { downloadFile, loadFileBin } from "../helper";
+import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -40,7 +41,7 @@ export class ProviderBrowser implements ForwardingProvider {
       setTimeout(() => {
         if (dump.startsWith(OFFICIAL_PREFIX) || confirm(`Do you want to load the experiment at ${dump}`)) {
           fetch(dump).then(e => {
-            e.text().then(this.loadExperimentDumpFromStr.bind(this)).catch(console.error);
+            e.arrayBuffer().then(this.loadExperimentDumpFromBin.bind(this)).catch(console.error);
           }).catch(e => {
             console.error(e);
             alert('Failed to load remote experiment')
@@ -185,26 +186,26 @@ export class ProviderBrowser implements ForwardingProvider {
       return copy;
     });
 
-    const dump = JSON.stringify({
+    const dump = msgpackEncode({
       exporter: 'BROWSER',
       nodes: nodes,
       edges: this.topo.edges.get(),
       positions: this.topo.network.getPositions(),
     });
-    downloadString(dump, 'JSON', 'experiment.json');
+    downloadFile(dump, 'BIN', 'experiment.bin');
   }
 
   public loadExperimentDump() {
-    loadFileString().then((val) => {
-      this.loadExperimentDumpFromStr(val);
+    loadFileBin().then((val) => {
+      this.loadExperimentDumpFromBin(val);
     }).catch(() => {
       console.error('Failed to read dump file');
     });
   }
 
-  public loadExperimentDumpFromStr(val: string) {
+  public loadExperimentDumpFromBin(val: ArrayBuffer) {
     try {
-      const dump = JSON.parse(val);
+      const dump = msgpackDecode(new Uint8Array(val));
       this.topo.edges.clear();
       this.topo.nodes.clear();
 

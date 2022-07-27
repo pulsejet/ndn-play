@@ -1,4 +1,12 @@
-export function downloadFile(bin: Buffer, fileType: string, fileName: string) {
+import * as pako from 'pako';
+
+export function downloadFile(bin: Uint8Array, fileType: string, fileName: string, deflate=true) {
+    // Compress if BIN
+    if (deflate) {
+        bin = pako.deflate(bin);
+    }
+
+    // Download
     const blob = new Blob([bin], { type: fileType });
     const a = document.createElement('a');
     a.download = fileName;
@@ -11,7 +19,7 @@ export function downloadFile(bin: Buffer, fileType: string, fileName: string) {
     setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
 }
 
-export function loadFileBin(): Promise<ArrayBuffer> {
+export function loadFileBin(inflate=true): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -25,7 +33,12 @@ export function loadFileBin(): Promise<ArrayBuffer> {
                     if (!content) {
                         reject();
                     } else {
-                        resolve(content as ArrayBuffer);
+                        const buf = content as ArrayBuffer;
+                        if (inflate) {
+                            resolve(pako.inflate(buf));
+                        } else {
+                            resolve(buf);
+                        }
                     }
                 }
             } else {

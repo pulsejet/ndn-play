@@ -57,14 +57,6 @@ enum TlvNC {
     SequenceNumNameComponent = 37,
 }
 
-enum TlvSign {
-    DigestSha256             = 0,
-    SignatureSha256WithRsa   = 1,
-    SignatureSha256WithEcdsa = 3,
-    SignatureHmacWithSha256  = 4,
-    NullSignature            = 200,
-}
-
 enum TlvSignInfo {
     ValidityPeriod = 253,
     NotBefore = 254,
@@ -74,16 +66,6 @@ enum TlvSignInfo {
     DescriptionEntry = 512,
     DescriptionKey = 513,
     DescriptionValue = 514
-}
-
-enum TlvContentInfo {
-    ContentType_Blob      = 0,    ///< payload
-    ContentType_Link      = 1,    ///< another name that identifies the actual data content
-    ContentType_Key       = 2,    ///< public key, certificate
-    ContentType_Nack      = 3,    ///< application-level nack
-    ContentType_Manifest  = 4,
-    ContentType_PrefixAnn = 5,    ///< prefix announcement
-    ContentType_Flic      = 1024, ///< File-Like ICN Collection
 }
 
 enum NDNLPv2 {
@@ -108,7 +90,25 @@ enum NDNLPv2 {
 
 export function getTlvTypeText(type: number) {
     return TlvV3[type] || TlvV2[type] || TlvNC[type] ||
-           TlvSign[type] || TlvSignInfo[type] || TlvContentInfo[type] ||
-           NDNLPv2[type] ||
+           TlvSignInfo[type] || NDNLPv2[type] ||
            `T=${type}`;
+}
+
+// Special NNI types
+export enum TlvSign {
+    DigestSha256             = 0,
+    SignatureSha256WithRsa   = 1,
+    SignatureSha256WithEcdsa = 3,
+    SignatureHmacWithSha256  = 4,
+    NullSignature            = 200,
+}
+
+export enum TlvContentInfo {
+    Blob      = 0,    ///< payload
+    Link      = 1,    ///< another name that identifies the actual data content
+    Key       = 2,    ///< public key, certificate
+    Nack      = 3,    ///< application-level nack
+    Manifest  = 4,
+    PrefixAnn = 5,    ///< prefix announcement
+    Flic      = 1024, ///< File-Like ICN Collection
 }

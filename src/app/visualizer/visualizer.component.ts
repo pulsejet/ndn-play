@@ -1,8 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AltUri, Component as NameComponent } from "@ndn/packet";
-import { Decoder, Encoder, Encodable } from '@ndn/tlv';
+import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
 import { visTlv } from '../interfaces';
-import { getTlvTypeText, TlvV3 } from '../tlv-types';
+import { getTlvTypeText, TlvContentInfo, TlvSign, TlvV3 } from '../tlv-types';
 
 @Component({
   selector: 'app-visualizer',
@@ -81,6 +81,34 @@ export class VisualizerComponent implements OnInit {
           default:
             // ASCII value with . for unknown
             obj.hs = [...obj.vl].map((b) => b >= 32 && b <= 126 ? String.fromCharCode(b) : '.').join('');
+        }
+
+        // Non negative integers
+        const NNI_TYPES = [
+          TlvV3.InterestLifetime,
+          TlvV3.FreshnessPeriod,
+          TlvV3.ContentType,
+          TlvV3.SignatureType,
+          TlvV3.SignatureTime,
+          TlvV3.SignatureSeqNum,
+        ]
+        if (NNI_TYPES.includes(obj.t)) {
+          try {
+            obj.hs = NNI.decode(t.value);
+          } catch {}
+          obj.human = true;
+        }
+
+        // NNI special types
+        if (typeof obj.hs === 'number') {
+          switch(obj.t) {
+            case TlvV3.ContentType:
+              obj.hs = TlvContentInfo[obj.hs] || obj.hs;
+              break;
+            case TlvV3.SignatureType:
+              obj.hs = TlvSign[obj.hs] || obj.hs;
+              break;
+          }
         }
 
         arr.push(obj);

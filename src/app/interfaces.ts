@@ -79,7 +79,7 @@ export interface visTlv {
     /** Hex representation of value */
     vs?: string;
     /** Human/ASCII representation of value */
-    hs?: string;
+    hs?: string | number;
     /** Total length of the TLV block */
     tl: number;
 

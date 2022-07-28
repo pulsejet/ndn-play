@@ -41,6 +41,9 @@ export class Topology {
   // Active terminals
   public activePtys: IPty[] = [];
 
+  // TLV types code
+  public tlvTypesCode: string = '';
+
   constructor(public provider: ForwardingProvider) {
     // Pass back to provider
     this.provider.topo = this;

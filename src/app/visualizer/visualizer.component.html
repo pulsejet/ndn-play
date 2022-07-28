@@ -26,7 +26,7 @@
              (mouseover)="tlv.hover = true; $event.stopPropagation()"
              (mouseout)="tlv.hover = undefined">
             <span class="type" [title]="tlv.t" (click)="tlv.human = !tlv.human">
-                {{ getTlvTypeText(tlv.t) }}
+                {{ getTlvTypeText(tlv.t) || "T=" + tlv.t }}
             </span>
             <span class="length">
                 {{ tlv.l }}

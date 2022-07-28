@@ -1,8 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
+import { GlobalService } from '../global.service';
 import { visTlv } from '../interfaces';
-import { getTlvTypeText, TlvContentInfo, TlvSign, TlvV3 } from '../tlv-types';
+import { TlvV3 } from '../tlv-types';
 
 @Component({
   selector: 'app-visualizer',
@@ -10,16 +11,22 @@ import { getTlvTypeText, TlvContentInfo, TlvSign, TlvV3 } from '../tlv-types';
   styleUrls: ['visualizer.component.css']
 })
 export class VisualizerComponent implements OnInit {
-
-  public getTlvTypeText = getTlvTypeText;
-
   @Input() public tlv?: any;
   public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
 
-  constructor() { }
+  private tlvTypes?: {[key: string]: {[key: string | number]: string | number}};
+  private compiledTlvCode: string = '';
+
+  constructor(private gs: GlobalService) { }
 
   ngOnInit(): void {
+    fetch('/assets/tlv-types.ts').then((res) => res.text()).then((code) => {
+      this.gs.topo.tlvTypesCode = code;
+      this.compileTlvTypes();
+    }).catch((err) => {
+      console.error(err);
+    });
   }
 
   ngOnChanges() {
@@ -30,8 +37,41 @@ export class VisualizerComponent implements OnInit {
     }
   }
 
+  compileTlvTypes() {
+    if (this.compiledTlvCode === this.gs.topo.tlvTypesCode) return;
+    this.compiledTlvCode = this.gs.topo.tlvTypesCode;
+
+    // Transpile as module and get exports
+    let code = (<any>window).ts.transpileModule(this.gs.topo.tlvTypesCode, {
+      target: (<any>window).ts.ScriptTarget.ES2015,
+    });
+    code = `
+      const exports = {};
+      ${code.outputText};
+      return exports;`;
+
+    try {
+      const fun = new Function(code);
+      this.tlvTypes = fun.call(null);
+      console.warn('Compiled TLV types');
+    } catch (e) {
+      console.error('Failed to compile TLV types');
+      console.error(e);
+    }
+  }
+
+  getTlvTypeText(type: number): string | undefined {
+    for (const key in this.tlvTypes) {
+      if (key.startsWith('TLV_') && this.tlvTypes[key][type]) {
+        return this.tlvTypes[key][type] as string;
+      }
+    }
+    return undefined;
+  }
+
   visualize(tlv: string | Uint8Array | Encodable): visTlv[] {
     if (!tlv) return [];
+    this.compileTlvTypes();
 
     let buffer: Uint8Array;
 
@@ -58,14 +98,19 @@ export class VisualizerComponent implements OnInit {
     while (true) {
       try {
         t = decoder.read()
+        const typeText = this.getTlvTypeText(t.type);
+        const isUnknown = !this.attemptUnknownDecode && !typeText;
+        const isCritical = (t.type & 1);
+        if (t.type == 0 || (isUnknown && isCritical)) return [];
+
+        const children = isUnknown ? [] : this.decodeRecursive(t.value);
         const obj: visTlv = {
           t: t.type,
           l: t.length,
-          v: this.decodeRecursive(t.value),
+          v: children,
           vl: t.value,
           tl: t.tlv.length,
         };
-        if (t.type == 0 || (!this.attemptUnknownDecode && getTlvTypeText(t.type).startsWith('T='))) return [];
 
         // Binary hex
         obj.vs = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -83,32 +128,16 @@ export class VisualizerComponent implements OnInit {
             obj.hs = [...obj.vl].map((b) => b >= 32 && b <= 126 ? String.fromCharCode(b) : '.').join('');
         }
 
-        // Non negative integers
-        const NNI_TYPES = [
-          TlvV3.InterestLifetime,
-          TlvV3.FreshnessPeriod,
-          TlvV3.ContentType,
-          TlvV3.SignatureType,
-          TlvV3.SignatureTime,
-          TlvV3.SignatureSeqNum,
-        ]
-        if (NNI_TYPES.includes(obj.t)) {
+        // NNI Decoding
+        const nniEnum = this.tlvTypes?.[`NNI_${typeText}`];
+        if (nniEnum) {
           try {
             obj.hs = NNI.decode(t.value);
+            if (typeof nniEnum === 'object') {
+              obj.hs = nniEnum[obj.hs] || obj.hs;
+            }
           } catch {}
           obj.human = true;
-        }
-
-        // NNI special types
-        if (typeof obj.hs === 'number') {
-          switch(obj.t) {
-            case TlvV3.ContentType:
-              obj.hs = TlvContentInfo[obj.hs] || obj.hs;
-              break;
-            case TlvV3.SignatureType:
-              obj.hs = TlvSign[obj.hs] || obj.hs;
-              break;
-          }
         }
 
         arr.push(obj);

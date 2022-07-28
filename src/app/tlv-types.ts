@@ -88,12 +88,6 @@ enum NDNLPv2 {
     PrefixAnnouncement = 848,
 }
 
-export function getTlvTypeText(type: number) {
-    return TlvV3[type] || TlvV2[type] || TlvNC[type] ||
-           TlvSignInfo[type] || NDNLPv2[type] ||
-           `T=${type}`;
-}
-
 // Special NNI types
 export enum TlvSign {
     DigestSha256             = 0,
@@ -104,11 +98,11 @@ export enum TlvSign {
 }
 
 export enum TlvContentInfo {
-    Blob      = 0,    ///< payload
-    Link      = 1,    ///< another name that identifies the actual data content
-    Key       = 2,    ///< public key, certificate
-    Nack      = 3,    ///< application-level nack
+    Blob      = 0,
+    Link      = 1,
+    Key       = 2,
+    Nack      = 3,
     Manifest  = 4,
-    PrefixAnn = 5,    ///< prefix announcement
-    Flic      = 1024, ///< File-Like ICN Collection
+    PrefixAnn = 5,
+    Flic      = 1024,
 }

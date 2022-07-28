@@ -36,6 +36,10 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
       // Redraw every 100ms
       if (this.node.extra.capturedPackets.length != this.packets.length) {
         this.redraw();
+
+        // Seems like we are receiving packets. Reset the counter to prevent
+        // unnecessary refreshes and an infinite loop
+        i = 1; // note: not zero
       }
 
       // Refresh every 2000ms

@@ -16,7 +16,7 @@ export class PlayComponent implements OnInit, AfterViewInit {
   public visualizedTlv: any;
 
   /** Notification of pane size change */
-  public paneChange = new EventEmitter<any>;
+  public paneResizeEmitter = new EventEmitter<any>;
 
   /** Active pty tab */
   public activePtyTab?: any;
@@ -34,11 +34,11 @@ export class PlayComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {});
-    window.addEventListener('resize', this.paneResize.bind(this));
+    window.addEventListener('resize', this.paneResized.bind(this));
   }
 
-  paneResize() {
-    this.paneChange.emit(null);
+  paneResized() {
+    this.paneResizeEmitter.emit(null);
   }
 
   setActivePtyTab(pty: any) {

@@ -23,7 +23,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 
   // Resizing
-  @Input() public resize?: EventEmitter<void>;
+  @Input() public resizeEmitter?: EventEmitter<void>;
   private resizeSub?: Subscription;
 
   constructor(
@@ -32,7 +32,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     // Subscribe to resizes
-    this.resizeSub = this.resize?.subscribe(() => {
+    this.resizeSub = this.resizeEmitter?.subscribe(() => {
       this.viewPort.checkViewportSize();
     })
 

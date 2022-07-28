@@ -25,12 +25,12 @@
                 <div class="console">
                     <app-tabs class="tab-container main-lower" #consoleSubTabs>
                         <app-tab name="JS" (select)="console.doResize?.()" #jsConsoleTab>
-                            <div class="console"> <console #console [resize]="paneChange"></console> </div>
+                            <div class="console"> <console #console [resizeEmitter]="paneResizeEmitter"></console> </div>
                         </app-tab>
 
                         <app-tab *ngFor="let t of gs.topo.activePtys" [name]="t.name"
                                  (select)="setActivePtyTab(pty)" #ptyTab>
-                            <pty [pty]="t" [resize]="paneChange" #pty
+                            <pty [pty]="t" [resizeEmitter]="paneResizeEmitter" #pty
                                  (focus)="lowerTabs.set(consoleTab); consoleSubTabs.set(ptyTab)">
                             </pty>
                         </app-tab>
@@ -40,7 +40,7 @@
 
             <ng-template #consoleOnly>
                 <app-tab name="Console" (select)="console.doResize?.()">
-                    <div class="console"> <console #console [resize]="paneChange"></console> </div>
+                    <div class="console"> <console #console [resizeEmitter]="paneResizeEmitter"></console> </div>
                 </app-tab>
             </ng-template>
 
@@ -57,7 +57,7 @@
                         [node]="gs.topo.selectedNode"
                         [provider]="gs.topo.provider"
                         (packetClick)="setVisualized($event, gs.topo.selectedNode); lowerTabs.set(lowerVisTab)"
-                        [resize]="paneChange">
+                        [resizeEmitter]="paneResizeEmitter">
                     ></app-captured-list>
                 </div>
             </app-tab>
@@ -73,9 +73,9 @@
     <div class="full-width">
         <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
                   [vertical]="true" basis="70%"
-                  (resize)="paneResize()">
+                  (resize)="paneResized()">
         </app-pane>
     </div>
 </ng-template>
 
-<app-pane [pane1]="sidebarPane" [pane2]="mainPane" basis="300px" (resize)="paneResize()"></app-pane>
+<app-pane [pane1]="sidebarPane" [pane2]="mainPane" basis="300px" (resize)="paneResized()"></app-pane>

@@ -21,7 +21,7 @@ import { IPty } from '../interfaces';
 export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('pty') pty_e!: ElementRef;
   @Input() public pty?: IPty;
-  @Input() public resize?: EventEmitter<any>;
+  @Input() public resizeEmitter?: EventEmitter<any>;
   @Output() public focus: EventEmitter<any> = new EventEmitter();
 
   /** Call on console resize */
@@ -100,7 +100,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.doResize();
-    this.resizeSub = this.resize?.subscribe(resizeIfActive);
+    this.resizeSub = this.resizeEmitter?.subscribe(resizeIfActive);
 
     this.pty!.focus = this.focus;
     setTimeout(() => {

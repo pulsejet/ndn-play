@@ -80,6 +80,11 @@ export interface visTlv {
     vs?: string
     /** Total length of the TLV block */
     tl: number;
+
+    /** Hovering */
+    hover?: boolean;
+    /** Expand full content */
+    expand?: boolean;
 };
 
 /** Connected Pty */

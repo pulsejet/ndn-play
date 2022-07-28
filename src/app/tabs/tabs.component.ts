@@ -46,7 +46,7 @@ export class TabsComponent implements OnInit, AfterContentInit   {
 
   @ContentChildren(TabComponent) children!: QueryList<TabComponent>;
   private prevChildren: TabComponent[] = [];
-  public selection!: TabComponent;
+  public selection?: TabComponent;
   public initialized = false;
 
   constructor() { }
@@ -65,7 +65,7 @@ export class TabsComponent implements OnInit, AfterContentInit   {
       const newChildren = this.children.toArray();
 
       // Selection does not exist anymore
-      if (newChildren.indexOf(this.selection) === -1) {
+      if (this.selection && newChildren.indexOf(this.selection) === -1) {
         // Select the same index or last
         let i = this.prevChildren.indexOf(this.selection);
         if (i >= newChildren.length) {
@@ -84,5 +84,13 @@ export class TabsComponent implements OnInit, AfterContentInit   {
       }
       this.initialized = true;
     }, 0);
+  }
+
+  /**
+   * Resend the select event to the selected tab.
+   * Useful when selecting a parent tab.
+   */
+  public reselect() {
+    this.selection?.select.emit();
   }
 }

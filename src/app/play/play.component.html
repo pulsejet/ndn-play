@@ -21,7 +21,8 @@
 
     <ng-template #mainLowerPane>
         <app-tabs class="tab-container main-lower" #lowerTabs>
-            <app-tab name="Console" *ngIf="gs.topo.provider.openTerminal; else consoleOnly" #consoleTab>
+            <app-tab name="Console" *ngIf="gs.topo.provider.openTerminal; else consoleOnly" #consoleTab
+                     (select)="consoleSubTabs.reselect()">
                 <div class="console">
                     <app-tabs class="tab-container main-lower" #consoleSubTabs>
                         <app-tab name="JS" (select)="console.doResize?.()" #jsConsoleTab>

@@ -369,6 +369,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
       if (node.isSwitch) {
         this.dump!.nodes.push(node);
       } else {
+        node.extra.capturedPackets = [];
         this.wsFun(WS_FUNCTIONS.GET_PCAP, node.label, 0, true);
       }
     });

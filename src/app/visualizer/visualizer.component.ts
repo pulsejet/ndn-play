@@ -3,7 +3,6 @@ import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
 import { visTlv } from '../interfaces';
-import { TlvV3 } from '../tlv-types';
 
 @Component({
   selector: 'app-visualizer',
@@ -117,7 +116,7 @@ export class VisualizerComponent implements OnInit {
 
         // Creative visualization
         switch (obj.t) {
-          case (TlvV3.GenericNameComponent): {
+          case (0x08): { // GenericNameComponent
             obj.hs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
             obj.human = true;
             break;

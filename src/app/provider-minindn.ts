@@ -170,7 +170,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         }
 
         // Creating dump
-        if (this.dump) {
+        if (this.dump && msg?.[MSG_KEY_RESULT].last) {
           console.log(`Received data for ${node.label}`);
           this.dump.nodes.push(node);
 

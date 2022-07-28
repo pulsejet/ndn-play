@@ -1,4 +1,6 @@
-<cdk-virtual-scroll-viewport itemSize="20">
+<cdk-virtual-scroll-viewport itemSize="20"
+    (keydown.arrowdown)="$event.preventDefault()"
+    (keydown.arrowup)="$event.preventDefault()">
     <table class="packets">
         <tr>
             <th>Timestamp</th>
@@ -9,7 +11,14 @@
         <ng-container *cdkVirtualFor="let packet of packets; let i = index">
             <tr [ngClass]="packet[4]"
                 [class.active]="(node.extra.replayWindow || -1) > i && (node.extra.replayWindowF || -1) <= i"
-                (click)="packetClick.emit(packet)">
+                [class.selected]="gs.topo.selectedPacket == packet"
+                (click)="setSelected(packet)"
+                (focus)="setSelected(packet)"
+                (keydown.arrowup)="$any($event).srcElement.previousElementSibling?.focus()"
+                (keydown.arrowdown)="$any($event).srcElement.nextElementSibling?.focus()"
+                (dblclick)="packetClick.emit(packet)"
+                (keydown.enter)="packetClick.emit(packet)"
+                [tabIndex]="0">
                 <td>
                     {{ round(packet[2]) }} ms
                 </td>

@@ -18,7 +18,12 @@ cdk-virtual-scroll-viewport {
 }
 
 .packets .active {
-    background-color: cyan;
+    background-color: magenta;
+}
+
+.packets .selected {
+    background-color: blueviolet;
+    color: white;
 }
 
 .packets tr {

@@ -27,6 +27,7 @@ export class Topology {
   // Selected objects
   public selectedNode?: INode;
   public selectedEdge?: IEdge;
+  public selectedPacket?: ICapturedPacket;
 
   // Capture packets on all nodes
   public captureAll = false;

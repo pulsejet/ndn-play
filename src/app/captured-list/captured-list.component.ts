@@ -22,7 +22,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 
   constructor(
-    private gs: GlobalService,
+    public gs: GlobalService,
   ) { }
 
   ngOnInit(): void {
@@ -88,6 +88,10 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public round(a: number) {
     return Math.round(a);
+  }
+
+  public setSelected(packet: ICapturedPacket) {
+    this.gs.topo.selectedPacket = packet;
   }
 
   public ellipsis(s: string) {

@@ -1,5 +1,34 @@
 // Exports named TLV_* will be used for decoding TLVs.
 // To decode TLVs as NonNegativeInteger, see the NNI section.
+// Note that all names are case sensitive.
+//
+// You can define your custom TLV types at the end of this
+// file as shown below (scroll down to the custom section).
+//
+// export enum TLV_CUSTOM {
+//     MyType      = 285,
+//     MyOtherType = 0x424,
+// };
+//
+// In case your TLV types conflict or are repeated in multiple
+// contexts, you can use the T_IN_* prefix to constain TLVs
+// to a specific context.
+//
+// For example, if the type MyType can only be used inside
+// the content of a Data packet, you can add this constraint:
+//
+// export const T_IN_MyType = [TLV_V3.Content];
+//
+// Note that only the immediate parent TLV is considered
+// as the context. So if the TLV MyType is inside a MyOtherType,
+// which in turn in inside Content, then the MyType TLV
+// definition will be ignored in this case.
+
+
+// =============================================================
+// Standard NDN TLV types. If you need to change any of these,
+// you are probably doing something wrong.
+// =============================================================
 
 export enum TLV_V3 {
     Invalid                         = 0,
@@ -85,8 +114,10 @@ export enum TLV_NDNLPv2 {
     PrefixAnnouncement = 848,
 }
 
+// =============================================================
 // If an object with NNI_* is exported then the corresponding.
 // TLV will be decoded as an NNI, with values from the enum.
+// =============================================================
 
 export const NNI_FreshnessPeriod = 1;
 export const NNI_InterestLifetime = 1;
@@ -110,3 +141,10 @@ export enum NNI_ContentType {
     PrefixAnn = 5,
     Flic      = 1024,
 };
+
+// =============================================================
+// CUSTOM TLV TYPES
+// =============================================================
+// Everything below this line is considered custom TLV types,
+// and will be persisted by your browser after compilation.
+// +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+

@@ -70,6 +70,8 @@ export interface IEdge extends Edge {
 export interface visTlv {
     /** Type */
     t: number;
+    /** Type text */
+    tts: string;
     /** Length of value */
     l: number;
     /** Nested TLV objects */

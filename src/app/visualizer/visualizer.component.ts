@@ -14,7 +14,7 @@ export class VisualizerComponent implements OnInit {
   public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
 
-  private tlvTypes?: {[key: string]: {[key: string | number]: string | number}};
+  private tlvTypes?: {[key: string]: any};
   private compiledTlvCode: string = '';
 
   constructor(private gs: GlobalService) { }
@@ -59,10 +59,19 @@ export class VisualizerComponent implements OnInit {
     }
   }
 
-  getTlvTypeText(type: number): string | undefined {
+  getTlvTypeText(type: number, parent: number): string | undefined {
+    /** Check if constrained parent is valid */
+    const isValidParent = (text: string) => {
+      const inClause = this.tlvTypes?.[`T_IN_${text}`];
+      if (!inClause) return true;
+      return inClause.includes(parent);
+    }
+
+    /** Try to find the type */
     for (const key in this.tlvTypes) {
       if (key.startsWith('TLV_') && this.tlvTypes[key][type]) {
-        return this.tlvTypes[key][type] as string;
+        const text = this.tlvTypes[key][type] as string;
+        return isValidParent(text) ? text : undefined;
       }
     }
     return undefined;
@@ -85,10 +94,10 @@ export class VisualizerComponent implements OnInit {
       buffer = encoder.output;
     }
 
-    return this.decodeRecursive(buffer);
+    return this.decodeRecursive(buffer, 0);
   }
 
-  decodeRecursive(input: Uint8Array): visTlv[] {
+  decodeRecursive(input: Uint8Array, parent: number): visTlv[] {
     let t: Decoder.Tlv;
     let decoder = new Decoder(input);
     const arr: visTlv[] = [];
@@ -97,14 +106,15 @@ export class VisualizerComponent implements OnInit {
     while (true) {
       try {
         t = decoder.read()
-        const typeText = this.getTlvTypeText(t.type);
+        const typeText = this.getTlvTypeText(t.type, parent);
         const isUnknown = !this.attemptUnknownDecode && !typeText;
         const isCritical = (t.type & 1);
         if (t.type == 0 || (isUnknown && isCritical)) return [];
 
-        const children = isUnknown ? [] : this.decodeRecursive(t.value);
+        const children = isUnknown ? [] : this.decodeRecursive(t.value, t.type);
         const obj: visTlv = {
           t: t.type,
+          tts: typeText || `T=${t.type}`,
           l: t.length,
           v: children,
           vl: t.value,

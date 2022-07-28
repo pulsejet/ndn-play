@@ -4,6 +4,7 @@ import { AltUri } from '@ndn/packet';
 import { ForwardingProvider } from '../forwarding-provider';
 import { ICapturedPacket, INode } from '../interfaces';
 import { GlobalService } from '../global.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-captured-list[node]',
@@ -21,11 +22,20 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 
+  // Resizing
+  @Input() public resize?: EventEmitter<void>;
+  private resizeSub?: Subscription;
+
   constructor(
     public gs: GlobalService,
   ) { }
 
   ngOnInit(): void {
+    // Subscribe to resizes
+    this.resizeSub = this.resize?.subscribe(() => {
+      this.viewPort.checkViewportSize();
+    })
+
     // Look for potential to redraw periodically
     // This component exists only when it is active
     // so this is not that expensive
@@ -50,6 +60,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.resizeSub?.unsubscribe();
     clearInterval(this.redrawInterval);
   }
 

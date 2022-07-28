@@ -27,7 +27,6 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Call on console resize */
   public doResize?: () => void;
   private resizeSub?: Subscription;
-  private unsubWindowResize?: () => void;
   public resizeTimer = 0;
   public active: boolean = true;
 
@@ -41,7 +40,6 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeSub?.unsubscribe();
-    this.unsubWindowResize?.();
   }
 
   public write(msg: string | Uint8Array) {
@@ -103,10 +101,6 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.doResize();
     this.resizeSub = this.resize?.subscribe(resizeIfActive);
-    window.addEventListener('resize', resizeIfActive);
-    this.unsubWindowResize = () => {
-      window.removeEventListener('resize', resizeIfActive);
-    }
 
     this.pty!.focus = this.focus;
     setTimeout(() => {

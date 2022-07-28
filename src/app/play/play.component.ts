@@ -33,8 +33,8 @@ export class PlayComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {
-    });
+    this.gs.topo.createNetwork(this.topoContainer?.nativeElement).then(() => {});
+    window.addEventListener('resize', this.paneResize.bind(this));
   }
 
   paneResize() {

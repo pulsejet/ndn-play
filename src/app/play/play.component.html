@@ -57,6 +57,7 @@
                         [node]="gs.topo.selectedNode"
                         [provider]="gs.topo.provider"
                         (packetClick)="setVisualized($event, gs.topo.selectedNode); lowerTabs.set(lowerVisTab)"
+                        [resize]="paneChange">
                     ></app-captured-list>
                 </div>
             </app-tab>

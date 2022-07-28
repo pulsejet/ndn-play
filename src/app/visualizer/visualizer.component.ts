@@ -21,7 +21,15 @@ export class VisualizerComponent implements OnInit {
 
   ngOnInit(): void {
     fetch('/assets/tlv-types.ts').then((res) => res.text()).then((code) => {
-      this.gs.topo.tlvTypesCode = code;
+      this.gs.topo.tlvTypesCode = code.trim();
+
+      // Load custom TLV types from local storage
+      const customTlvTypes = localStorage.getItem('customTlvTypes');
+      if (customTlvTypes) {
+        this.gs.topo.tlvTypesCode += customTlvTypes;
+      }
+
+      // Compile TLV types
       this.compileTlvTypes();
     }).catch((err) => {
       console.error(err);
@@ -56,7 +64,13 @@ export class VisualizerComponent implements OnInit {
     } catch (e) {
       console.error('Failed to compile TLV types');
       console.error(e);
+      return;
     }
+
+    // Persist custom TLV types
+    const i = this.compiledTlvCode.lastIndexOf('+==+==+');
+    const customTlvTypes = this.compiledTlvCode.substring(i + 7);
+    localStorage.setItem('customTlvTypes', customTlvTypes);
   }
 
   getTlvTypeText(type: number, parent: number): string | undefined {

@@ -76,12 +76,7 @@ export class VisualizerComponent implements OnInit {
           }
 
           default:
-            obj.vs = '0x' + [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        if (obj.vs) {
-          const maxlen = 32;
-          obj.vs =  obj.vs.substr(0, maxlen) + (obj.vs.length > maxlen ? ' ...' : '');
+            obj.vs = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
         }
 
         arr.push(obj);

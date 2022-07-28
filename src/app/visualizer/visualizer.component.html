@@ -27,13 +27,15 @@
             <span class="length">
                 {{ tlv.l }}
             </span>
+            <span class="value" *ngIf="tlv.v.length == 0 && tlv.vl.length > 0">
+                {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }}
+            </span>
+
+            <!-- Nested TLV -->
             <ng-container
                 *ngIf="tlv.v.length > 0"
                 [ngTemplateOutlet]="visTlvA"
                 [ngTemplateOutletContext]="{tlvs: tlv.v}">
-            </ng-container>
-            <ng-container *ngIf="tlv.v.length == 0 && tlv.vl.length > 0">
-                {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }}
             </ng-container>
         </div>
     </ng-container>

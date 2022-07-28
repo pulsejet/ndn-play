@@ -76,7 +76,7 @@ export interface visTlv {
     v: visTlv[];
     /** Value array */
     vl: Uint8Array;
-    /** String representation of value */
+    /** Hex representation of value */
     vs?: string
     /** Total length of the TLV block */
     tl: number;

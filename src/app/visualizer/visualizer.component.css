@@ -19,13 +19,16 @@
     margin: 1px;
     max-width: 100%;
 }
-.tlv .type { color: red; }
+.tlv .type {
+    color: red;
+    cursor: pointer;
+}
 .tlv .length { color: blue; }
 .tlv .value {
     display: inline-table; /* Prevents overflow of selection on double click */
 }
 .tlv .value span {
-    color: black;
+    color: gray;
     max-width: 250px;
     display: inline-block;
     vertical-align: middle;
@@ -35,6 +38,10 @@
 .tlv .value.expand span {
     max-width: none;
     word-break: break-all;
+}
+.tlv .value.human span {
+    color: green;
+    font-weight: bold;
 }
 
 .tlv.hover {

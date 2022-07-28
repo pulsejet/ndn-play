@@ -77,7 +77,9 @@ export interface visTlv {
     /** Value array */
     vl: Uint8Array;
     /** Hex representation of value */
-    vs?: string
+    vs?: string;
+    /** Human/ASCII representation of value */
+    hs?: string;
     /** Total length of the TLV block */
     tl: number;
 
@@ -85,6 +87,8 @@ export interface visTlv {
     hover?: boolean;
     /** Expand full content */
     expand?: boolean;
+    /** Showing human readable / ascii content */
+    human?: boolean;
 };
 
 /** Connected Pty */

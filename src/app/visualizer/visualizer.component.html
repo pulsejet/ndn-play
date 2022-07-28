@@ -24,7 +24,7 @@
              [class.hover]="tlv.hover"
              (mouseover)="tlv.hover = true; $event.stopPropagation()"
              (mouseout)="tlv.hover = undefined">
-            <span class="type" [title]="tlv.t">
+            <span class="type" [title]="tlv.t" (click)="tlv.human = !tlv.human">
                 {{ getTlvTypeText(tlv.t) }}
             </span>
             <span class="length">
@@ -32,8 +32,9 @@
             </span>
             <span class="value" *ngIf="tlv.v.length == 0 && tlv.vl.length > 0"
                   (click)="tlv.expand = true; $event.stopPropagation()"
-                  [class.expand]="tlv.expand">
-                <span> {{ tlv.vs ? tlv.vs : tlv.vl.length + 'B' }} </span>
+                  [class.expand]="tlv.expand"
+                  [class.human]="tlv.human">
+                <span> {{ tlv.human ? tlv.hs : (tlv.vs ? tlv.vs : tlv.vl.length + 'B') }} </span>
             </span>
 
             <!-- Nested TLV -->

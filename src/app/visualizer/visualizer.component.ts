@@ -67,16 +67,20 @@ export class VisualizerComponent implements OnInit {
         };
         if (t.type == 0 || (!this.attemptUnknownDecode && getTlvTypeText(t.type).startsWith('T='))) return [];
 
+        // Binary hex
+        obj.vs = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
+
         // Creative visualization
         switch (obj.t) {
-          // Don't show the entire name
           case (TlvV3.GenericNameComponent): {
-            obj.vs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
+            obj.hs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
+            obj.human = true;
             break;
           }
 
           default:
-            obj.vs = [...obj.vl].map((b) => b.toString(16).padStart(2, '0')).join('');
+            // ASCII value with . for unknown
+            obj.hs = [...obj.vl].map((b) => b >= 32 && b <= 126 ? String.fromCharCode(b) : '.').join('');
         }
 
         arr.push(obj);

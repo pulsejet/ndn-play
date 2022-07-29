@@ -76,11 +76,11 @@ export enum TLV_V2 {
 
 export enum TLV_NameComponent {
     KeywordNameComponent     = 32,
-    SegmentNameComponent     = 33,
-    ByteOffsetNameComponent  = 34,
-    VersionNameComponent     = 35,
-    TimestampNameComponent   = 36,
-    SequenceNumNameComponent = 37,
+    SegmentNameComponent     = 50,
+    ByteOffsetNameComponent  = 52,
+    VersionNameComponent     = 54,
+    TimestampNameComponent   = 56,
+    SequenceNumNameComponent = 58,
 }
 
 export enum TLV_SignInfo {

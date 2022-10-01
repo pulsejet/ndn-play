@@ -35,5 +35,13 @@
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/psync.bin",
       "text": "Distributed Dataset Synchronization, or Sync, plays the role of a transport service in the NDN architecture. Sync provides namespace synchronization, by informing consumers about new data that is available at producers. This experiment demonstrates PSync, which synchronizes namespaces named sequentially. Each of the nodes <span class=\"is-family-monospace\">A</span>, <span class=\"is-family-monospace\">B</span> and <span class=\"is-family-monospace\">C</span> run PSync, and periodically publish new data, indicating this to the Sync protocol by incrementing the sequence number. PSync then synchronizes this sequence number to the other participants in the Sync group, thereby informing them about the availability of new data at the producer.",
       "link": "https://named-data.net/wp-content/uploads/2019/01/li2018sync-intro.pdf"
+    },
+    {
+      "title": "Testbed",
+      "subtitle": "Connecting to NDN testbed with NDNts",
+      "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/testbed.png",
+      "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/testbed.bin",
+      "text": "In this demonstration, two nodes independently connect to the NDN testbed using the NDNts websocket transport. The nodes send a few ping Interests to the ping servers running on the testbed nodes.",
+      "link": "https://named-data.net/ndn-testbed/"
     }
 ]

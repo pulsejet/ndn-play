@@ -631,6 +631,38 @@ declare interface DataBuffer {
     insert: (...pkts: Data[]) => Promise<void>;
 }
 
+/** Prototype of DataStore from @ndn/repo package. */
+declare interface DataStore {
+    find: (interest: Interest) => Promise<Data | undefined>;
+    insert: (opts: {
+        expireTime?: number;
+    }, ...pkts: Data[]) => Promise<void>;
+}
+
+/**
+ * DataBuffer implementation based on DataStore from @ndn/repo package.
+ *
+ * @example
+ * new DataStoreBuffer(new DataStore(memdown()))
+ */
+declare class DataStoreBuffer implements DataBuffer {
+    readonly store: DataStore;
+    constructor(store: DataStore, { ttl, dataSigner, }?: DataStoreBuffer.Options);
+    private readonly ttl;
+    private readonly dataSigner?;
+    find(interest: Interest): Promise<Data | undefined>;
+    insert(...pkts: Data[]): Promise<void>;
+}
+
+declare namespace DataStoreBuffer {
+    interface Options {
+        /** Data expiration time. Default is 60000ms. 0 means infinity. */
+        ttl?: number;
+        /** If specified, automatically sign Data packets unless already signed. */
+        dataSigner?: Signer;
+    }
+}
+
 declare interface DebugEntry {
     action: string;
     ownIblt: IBLT;
@@ -895,6 +927,23 @@ declare namespace Endpoint {
     type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
 }
 
+declare namespace endpoint {
+    export {
+        RetxOptions,
+        RetxPolicy,
+        ConsumerContext,
+        ConsumerOptions,
+        DataBuffer,
+        DataStoreBuffer,
+        ProducerHandler,
+        ProducerOptions,
+        Producer,
+        Options_2 as Options,
+        Endpoint
+    }
+}
+export { endpoint }
+
 /** Consumer functionality of Endpoint. */
 declare class EndpointConsumer {
     fw: Forwarder;
@@ -1073,6 +1122,7 @@ export declare namespace ext {
         keychain: typeof keychain;
         util: typeof util;
         ws_transport: typeof ws_transport;
+        endpoint: typeof endpoint;
     };
     const node: INode;
     /**

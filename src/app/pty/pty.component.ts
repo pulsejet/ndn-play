@@ -52,7 +52,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
       theme: {
         background: 'white',
         foreground: 'black',
-        selection: '#ddd',
+        selectionBackground: 'rgba(0, 0, 0, 0.1)',
         cursor: '#555'
       },
       fontSize: 14,

@@ -78,7 +78,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
       theme: {
         background: 'white',
         foreground: 'black',
-        selection: '#ddd',
+        selectionBackground: 'rgba(0, 0, 0, 0.1)',
       },
       fontFamily: 'Consolas, Ubuntu Mono, courier-new, courier, monospace',
       fontSize: 14,

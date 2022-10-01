@@ -3,13 +3,14 @@ import * as tlv from "@ndn/tlv";
 import * as sync from '@ndn/sync';
 import * as keychain from '@ndn/keychain';
 import * as util from '@ndn/util';
+import * as ws_transport from '@ndn/ws-transport';
 
-export { packet, tlv, sync, keychain, util }
+export { packet, tlv, sync, keychain, util, ws_transport }
 
 import { ICapturedPacket, INode } from './interfaces';
 
 export namespace ext {
-    export const ndnTypes = { packet, tlv, sync, keychain, util };
+    export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport };
     export const node: INode = <any> null;
 
     /**

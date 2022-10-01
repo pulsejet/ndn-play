@@ -8,6 +8,7 @@ import { EventEmitter } from '@angular/core';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
+import type WsWebSocket from 'ws';
 
 /** AES block size in octets. */
 declare const AesBlockSize = 16;
@@ -1049,6 +1050,21 @@ declare type Events_7 = {
     debug: (entry: DebugEntry_5) => void;
 };
 
+declare type Events_8 = {
+    /** Emitted upon face state change. */
+    state: (state: L3Face.State) => void;
+    /** Emitted upon state becomes UP. */
+    up: () => void;
+    /** Emitted upon state becomes DOWN. */
+    down: (err: Error) => void;
+    /** Emitted upon state becomes CLOSED. */
+    close: () => void;
+    /** Emitted upon RX decoding error. */
+    rxerror: (err: L3Face.RxError) => void;
+    /** Emitted upon TX preparation error. */
+    txerror: (err: L3Face.TxError) => void;
+};
+
 export declare namespace ext {
     const ndnTypes: {
         packet: typeof packet;
@@ -1056,6 +1072,7 @@ export declare namespace ext {
         sync: typeof sync;
         keychain: typeof keychain;
         util: typeof util;
+        ws_transport: typeof ws_transport;
     };
     const node: INode;
     /**
@@ -1600,6 +1617,7 @@ declare interface IPty {
     write: EventEmitter<any>;
     data: EventEmitter<any>;
     resized: EventEmitter<any>;
+    focus?: EventEmitter<any>;
     initBuf?: Uint8Array;
 }
 
@@ -1990,6 +2008,74 @@ declare namespace KeyStore {
     }
 }
 
+/** Network layer face for sending and receiving L3 packets. */
+declare class L3Face extends L3Face_base implements FwFace.RxTx {
+    private transport;
+    readonly attributes: L3Face.Attributes;
+    readonly lp: LpService;
+    readonly rx: AsyncIterable<FwPacket>;
+    private readonly wireTokenPrefix;
+    get state(): L3Face.State;
+    private set state(value);
+    private state_;
+    private lastError?;
+    private readonly rxSources;
+    private reopenRetry?;
+    constructor(transport: Transport, attributes?: L3Face.Attributes, lpOptions?: LpService.Options);
+    private makeRx;
+    private rxTransform;
+    private txTransform;
+    tx: (iterable: AsyncIterable<FwPacket>) => Promise<void>;
+    private reopenTransport;
+}
+
+declare namespace L3Face {
+    enum State {
+        UP = 0,
+        DOWN = 1,
+        CLOSED = 2
+    }
+    interface Attributes extends Transport.Attributes {
+        /** Whether to readvertise registered routes. */
+        advertiseFrom?: boolean;
+    }
+    type RxError = LpService.RxError;
+    type TxError = LpService.TxError;
+    /** Options to createFace function as first parameter. */
+    interface CreateFaceOptions {
+        /**
+         * Forwarder instance to add the face to.
+         * Default is the default Forwarder.
+         */
+        fw?: Forwarder;
+        /** Routes to be added on the created face. Default is ["/"]. */
+        addRoutes?: NameLike[];
+        /**
+         * L3Face attributes.
+         * l3.advertiseFrom defaults to false in createFace function.
+         */
+        l3?: Attributes;
+        /** NDNLP service options. */
+        lp?: LpService.Options;
+        /**
+         * A callback to receive Transport, L3Face, and FwFace objects.
+         * This can be useful for reading counters or listening to events on these objects.
+         */
+        callback?: (transport: Transport, l3face: L3Face, fwFace: FwFace) => void;
+    }
+    /**
+     * A function to create a transport then add to forwarder.
+     * First parameter is CreateFaceOptions.
+     * Subsequent parameters are passed to Transport.connect() function.
+     * Returns FwFace.
+     */
+    type CreateFaceFunc<R extends Transport | Transport[], P extends any[]> = (opts: CreateFaceOptions, ...args: P) => Promise<R extends Transport[] ? FwFace[] : FwFace>;
+    function makeCreateFace<C extends (...args: any[]) => Promise<Transport | Transport[]>>(createTransport: C): CreateFaceFunc<C extends (...args: any[]) => Promise<infer R> ? R : never, Parameters<C>>;
+    function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
+}
+
+declare const L3Face_base: new () => TypedEventEmitter<Events_8>;
+
 declare type L3Pkt = Interest | Data | Nack;
 
 declare type Len = 1 | 2 | 4 | 8;
@@ -2070,6 +2156,64 @@ declare namespace LLVerify {
  * @param get callback function to retrieve entry by hexadecimal name prefix.
  */
 declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Iterable<Entry>;
+
+/** NDNLPv2 service. */
+declare class LpService {
+    private readonly transport;
+    constructor({ keepAlive, mtu, reassemblerCapacity, }: LpService.Options, transport: LpService.Transport);
+    private readonly keepAlive?;
+    private readonly mtu;
+    private readonly fragmenter;
+    private readonly reassembler;
+    rx: (iterable: AsyncIterable<Decoder.Tlv>) => AsyncIterable<LpService.Packet | LpService.RxError>;
+    private decode;
+    private decodeL3;
+    tx: (iterable: AsyncIterable<LpService.Packet>) => AsyncIterable<Uint8Array | LpService.TxError>;
+    private encode;
+}
+
+declare namespace LpService {
+    /** An object to report transport MTU. */
+    interface Transport {
+        /**
+         * Return current transport MTU.
+         */
+        readonly mtu: number;
+    }
+    interface Options {
+        /**
+         * How often to send IDLE packets if nothing else was sent, in milliseconds.
+         * Set false or zero to disable keep-alive.
+         * @default 60000
+         */
+        keepAlive?: false | number;
+        /**
+         * Administrative MTU.
+         * The lesser of this MTU and the transport's reported MTU is used for fragmentation.
+         * @default Infinity
+         */
+        mtu?: number;
+        /**
+         * Maximum number of partial packets kept in the reassembler.
+         * @default 16
+         */
+        reassemblerCapacity?: number;
+    }
+    type L3Pkt = Interest | Data | Nack;
+    interface Packet {
+        l3: L3Pkt;
+        token?: Uint8Array;
+    }
+    class RxError extends Error {
+        readonly packet: Uint8Array;
+        constructor(inner: Error, packet: Uint8Array);
+    }
+    class TxError extends Error {
+        readonly packet: L3Pkt;
+        constructor(inner: Error, packet: L3Pkt);
+    }
+        {};
+}
 
 /**
  * Create certificate name from subject name, key name, or certificate name.
@@ -3771,10 +3915,12 @@ declare class Topology {
     busiestLink?: IEdge;
     selectedNode?: INode;
     selectedEdge?: IEdge;
+    selectedPacket?: ICapturedPacket;
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
     globalCaptureFilter: (packet: ICapturedPacket) => boolean;
     activePtys: IPty[];
+    tlvTypesCode: string;
     constructor(provider: ForwardingProvider);
     /** Initialize the network */
     createNetwork: (container: HTMLElement) => Promise<void>;
@@ -3793,6 +3939,63 @@ declare function toSubjectName(name: Name): Name;
 
 /** Convert string to UTF-8 byte array. */
 declare function toUtf8(s: string): Uint8Array;
+
+/**
+ * Low-level transport.
+ *
+ * The transport understands NDN TLV structures, but does not otherwise concern with packet format.
+ */
+declare abstract class Transport {
+    readonly attributes: Transport.Attributes;
+    abstract readonly rx: Transport.Rx;
+    abstract readonly tx: Transport.Tx;
+    protected constructor(attributes: Transport.Attributes);
+    /**
+     * Return the transport MTU, if known.
+     * The transport should be able to send TLV structure of up to this size.
+     */
+    get mtu(): number;
+    /**
+     * Reopen the transport after it has failed.
+     * @returns the same transport or a new transport after it has been reconnected.
+     */
+    reopen(): Promise<Transport>;
+    toString(): string;
+}
+
+declare namespace Transport {
+    interface Attributes extends Record<string, any> {
+        /**
+         * Textual description.
+         * Default is automatically generated from constructor name.
+         */
+        describe?: string;
+        /**
+         * Whether the transport connects to a destination on the local machine.
+         * Default is false.
+         */
+        local?: boolean;
+        /**
+         * Whether the transport can possibly talk to multiple peers.
+         * Default is false;
+         */
+        multicast?: boolean;
+    }
+    /** RX iterable for incoming packets. */
+    type Rx = AsyncIterable<Decoder.Tlv>;
+    /**
+     * TX function for outgoing packets.
+     * @returns Promise that resolves when iterable is exhausted, and rejects upon error.
+     */
+    type Tx = (iterable: AsyncIterable<Uint8Array>) => Promise<void>;
+    /**
+     * Error thrown by transport.reopen() to indicate that reopen operation is not supported.
+     * No further reopen() will be attempted.
+     */
+    class ReopenNotSupportedError extends Error {
+        constructor();
+    }
+}
 
 declare const TT: {
     Name: number;
@@ -3938,6 +4141,49 @@ declare namespace Verifier {
     function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
     /** Throw bad signature error if not OK. */
     function throwOnBadSig(ok: boolean): asserts ok;
+}
+
+declare namespace ws_transport {
+    export {
+        WsTransport
+    }
+}
+export { ws_transport }
+
+/** WebSocket transport. */
+declare class WsTransport extends Transport {
+    private readonly sock;
+    private readonly opts;
+    readonly rx: Transport.Rx;
+    private readonly highWaterMark;
+    private readonly lowWaterMark;
+    constructor(sock: WebSocket, opts: WsTransport.Options);
+    close(): void;
+    get mtu(): number;
+    readonly tx: (iterable: AsyncIterable<Uint8Array>) => Promise<void>;
+    private waitForTxBuffer;
+    reopen(): Promise<WsTransport>;
+}
+
+declare namespace WsTransport {
+    interface Options {
+        /** Connect timeout (in milliseconds). */
+        connectTimeout?: number;
+        /** AbortSignal that allows canceling connection attempt via AbortController. */
+        signal?: AbortSignal;
+        /** Buffer amount (in bytes) to start TX throttling. */
+        highWaterMark?: number;
+        /** Buffer amount (in bytes) to stop TX throttling. */
+        lowWaterMark?: number;
+    }
+    /**
+     * Create a transport and connect to remote endpoint.
+     * @param uri server URI or WebSocket object.
+     * @param opts other options.
+     */
+    function connect(uri: string | WebSocket | WsWebSocket, opts?: WsTransport.Options): Promise<WsTransport>;
+    /** Create a transport and add to forwarder. */
+    const createFace: L3Face.CreateFaceFunc<WsTransport, [uri: string | WebSocket | WsWebSocket, opts?: Options | undefined]>;
 }
 
 export { }

@@ -10,7 +10,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "15.1.2",
-    "@angular/cdk": "14.2.3",
+    "@angular/cdk": "15.1.2",
     "@angular/common": "15.1.2",
     "@angular/compiler": "15.1.2",
     "@angular/core": "15.1.2",
@@ -34,29 +34,29 @@
     "event-iterator": "^2.0.0",
     "hammerjs": "^2.0.8",
     "keycharm": "^0.4.0",
-    "monaco-editor": "^0.34.0",
+    "monaco-editor": "^0.34.1",
     "msgpack-lite": "^0.1.26",
     "ngx-monaco-editor-v2": "^15.0.1",
-    "pako": "^2.0.4",
-    "rxjs": "~7.5.7",
+    "pako": "^2.1.0",
+    "rxjs": "~7.8.0",
     "vis-data": "^7.1.4",
     "vis-network": "^9.1.2",
     "vis-util": "^5.0.3",
-    "xterm": "^5.0.0",
-    "xterm-addon-fit": "^0.6.0",
-    "zone.js": "~0.11.8"
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0",
+    "zone.js": "~0.12.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "15.1.3",
     "@angular/cli": "15.1.3",
     "@angular/compiler-cli": "15.1.2",
-    "@microsoft/api-extractor": "^7.32.0",
+    "@microsoft/api-extractor": "^7.34.1",
     "@types/hammerjs": "^2.0.41",
     "@types/msgpack-lite": "^0.1.8",
-    "@types/node": "^18.7.23",
+    "@types/node": "^18.11.18",
     "@types/pako": "^2.0.0",
-    "@types/web": "0.0.75",
-    "tslib": "^2.4.0",
-    "typescript": "~4.8.4"
+    "@types/web": "0.0.90",
+    "tslib": "^2.5.0",
+    "typescript": "~4.9.5"
   }
 }

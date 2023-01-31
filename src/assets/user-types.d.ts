@@ -3,6 +3,7 @@
 import type * as asn1 from '@yoursunny/asn1';
 import assert from 'minimalistic-assert';
 import { DataSet } from './esm';
+import type { DataStore } from '@ndn/repo-api';
 import { Edge } from './esm';
 import { EventEmitter } from '@angular/core';
 import { IdType } from './esm';
@@ -319,6 +320,9 @@ declare interface Compression {
     decompress: (compressed: Uint8Array) => Uint8Array;
 }
 
+/** Concatenate Uint8Arrays. */
+declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number): Uint8Array;
+
 /** Console on stderr. */
 declare const console_2: Console;
 
@@ -632,7 +636,7 @@ declare interface DataBuffer {
 }
 
 /** Prototype of DataStore from @ndn/repo package. */
-declare interface DataStore {
+declare interface DataStore_2 {
     find: (interest: Interest) => Promise<Data | undefined>;
     insert: (opts: {
         expireTime?: number;
@@ -646,8 +650,8 @@ declare interface DataStore {
  * new DataStoreBuffer(new DataStore(memdown()))
  */
 declare class DataStoreBuffer implements DataBuffer {
-    readonly store: DataStore;
-    constructor(store: DataStore, { ttl, dataSigner, }?: DataStoreBuffer.Options);
+    readonly store: DataStore_2;
+    constructor(store: DataStore_2, { ttl, dataSigner, }?: DataStoreBuffer.Options);
     private readonly ttl;
     private readonly dataSigner?;
     find(interest: Interest): Promise<Data | undefined>;
@@ -769,6 +773,7 @@ declare class DefaultServers {
     private setupCertServer;
 }
 
+/** Make a Promise that resolves after specified duration. */
 declare const delay: <T = void>(after: number, value?: T) => Promise<T>;
 
 declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
@@ -1091,15 +1096,19 @@ declare type Events_5 = {
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 };
 
-declare type Events_6 = SyncProtocol.Events<SvSync.ID> & {
+declare type Events_6 = SyncProtocol.Events<Name> & {
     debug: (entry: DebugEntry_4) => void;
 };
 
 declare type Events_7 = {
-    debug: (entry: DebugEntry_5) => void;
+    error: (err: Error) => void;
 };
 
 declare type Events_8 = {
+    debug: (entry: DebugEntry_5) => void;
+};
+
+declare type Events_9 = {
     /** Emitted upon face state change. */
     state: (state: L3Face.State) => void;
     /** Emitted upon state becomes UP. */
@@ -1251,7 +1260,7 @@ declare class Fields_2 {
  * Map and flatten once.
  * This differs from flatMap in streaming-iterables, which recursively flattens the result.
  */
-declare function flatMapOnce<T, R>(f: (item: T) => Iterable<R> | AsyncIterable<R>, iterable: AsyncIterable<T>): AsyncIterable<R>;
+declare function flatMapOnce<T, R>(f: (item: T) => Iterable<R> | AsyncIterable<R>, iterable: Iterable<T> | AsyncIterable<T>): AsyncIterable<R>;
 
 /** Forwarding plane. */
 declare interface Forwarder extends TypedEventEmitter<Events_2> {
@@ -1446,12 +1455,11 @@ declare class IBLT {
     constructor(p: IBLT.Parameters | IBLT.PreparedParameters);
     private readonly p;
     private readonly ht;
+    private readonly key;
     /** Insert a key. */
     insert(key: number): void;
     /** Erase a key. */
     erase(key: number): void;
-    private checkHash;
-    private keyToBuffer;
     private update;
     private update2;
     /** Compute the difference between this (first) and other (second) IBLT. */
@@ -1965,6 +1973,8 @@ declare class KeyMultiMap<K, V, I, L = K> {
     remove(key: K | L, value: V): number;
     /** Iterate over key and associated values. */
     associations(): IterableIterator<[key: K, values: ReadonlySet<V>]>;
+    /** Iterate over key-value pairs. */
+    [Symbol.iterator](): IterableIterator<[key: K, value: V]>;
 }
 
 /**
@@ -2124,7 +2134,7 @@ declare namespace L3Face {
     function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
 }
 
-declare const L3Face_base: new () => TypedEventEmitter<Events_8>;
+declare const L3Face_base: new () => TypedEventEmitter<Events_9>;
 
 declare type L3Pkt = Interest | Data | Nack;
 
@@ -2345,6 +2355,11 @@ declare namespace makeSyncpsCompatParam {
          */
         expectedEntries?: number;
     }
+}
+
+/** Container that associates a key with multiple distinct values. */
+declare class MultiMap<K, V> extends KeyMultiMap<K, V, K> {
+    constructor();
 }
 
 /** Nack packet. */
@@ -3173,6 +3188,16 @@ declare class RandomIvGen extends IvGen {
     protected generate(): Uint8Array;
 }
 
+/**
+ * Create a random jitter generator function.
+ * @param r jitter factor around 1.
+ * @param x median value.
+ * @returns jitter generator function.
+ *
+ * randomJitter(0.1, 2) generates random values within [1.8, 2.2].
+ */
+declare function randomJitter(r: number, x?: number): () => number;
+
 /** Indicate an Interest has been rejected. */
 declare class RejectInterest implements FwPacket<Interest> {
     reject: RejectInterest.Reason;
@@ -3567,12 +3592,167 @@ declare namespace Subscription {
     };
 }
 
+/** SVS-PS publisher. */
+declare class SvPublisher {
+    constructor({ endpoint, sync, id, store, chunkSize, innerSigner, outerSigner, mappingSigner, }: SvPublisher.Options);
+    private readonly node;
+    private readonly nodeSyncPrefix;
+    private readonly store;
+    private readonly chunkOptions;
+    private readonly innerSigner;
+    private readonly outerSigner;
+    private readonly outerProducer;
+    private readonly mappingProducer;
+    /** Publisher node ID. */
+    get id(): Name;
+    /**
+     * Stop publisher operations.
+     * This does not stop the SvSync instance or the DataStore.
+     */
+    close(): Promise<void>;
+    /**
+     * Publish application data.
+     * @param name application-specified inner name.
+     * @param payload application payload.
+     * @returns seqNum.
+     */
+    publish(name: NameLike, payload: Uint8Array): Promise<number>;
+    private readonly handleOuter;
+    private readonly handleMapping;
+}
+
+declare namespace SvPublisher {
+    type DataStore = DataStore.Get & DataStore.Find & DataStore.Insert;
+    interface Options {
+        /** Endpoint for communication. */
+        endpoint?: Endpoint;
+        /**
+         * SvSync instance.
+         *
+         * Multiple SvSubscribers and SvPublishers may reuse the same SvSync instance. However,
+         * publications from a SvPublisher cannot reach SvSubscribers on the same SvSync instance.
+         */
+        sync: SvSync;
+        /** Publisher node ID. */
+        id: Name;
+        /**
+         * Data repository used for this publisher.
+         * DataStore type from @ndn/repo package satisfies the requirement.
+         * Other lightweight implementations may be possible.
+         */
+        store: DataStore;
+        /**
+         * Segment chunk size of inner Data packet.
+         * Default is 8000.
+         */
+        chunkSize?: number;
+        /**
+         * Inner Data signer.
+         * Default is NullSigning.
+         */
+        innerSigner?: Signer;
+        /**
+         * Outer Data signer.
+         * Default is NullSigning.
+         */
+        outerSigner?: Signer;
+        /**
+         * Mapping Data signer.
+         * Default is NullSigning.
+         */
+        mappingSigner?: Signer;
+    }
+}
+
+/** SVS-PS subscriber. */
+declare class SvSubscriber extends SvSubscriber_base implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo> {
+    constructor({ endpoint, sync, retxLimit, mappingBatch, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
+    private readonly abort;
+    private readonly endpoint;
+    private readonly syncPrefix;
+    private readonly nameSubs;
+    private readonly publisherSubs;
+    private readonly mappingBatch;
+    private readonly innerVerifier;
+    private readonly outerFetchOpts;
+    private readonly outerConsumerOpts;
+    private readonly mappingConsumerOpts;
+    /**
+     * Stop subscriber operations.
+     * This does not stop the SvSync instance.
+     */
+    close(): void;
+    /** Subscribe to either a topic prefix or a publisher node ID. */
+    subscribe(topic: SvSubscriber.SubscribeInfo): Subscription<Name, SvSubscriber.Update>;
+    private readonly handleSyncUpdate;
+    private retrieveMapping;
+    private dispatchUpdate;
+    private listNameSubs;
+    private retrieveSegmented;
+}
+
+declare namespace SvSubscriber {
+    interface Options {
+        /** Endpoint for communication. */
+        endpoint?: Endpoint;
+        /**
+         * SvSync instance.
+         * See notes on SvPublisher.Options regarding reuse.
+         */
+        sync: SvSync;
+        /**
+         * Retransmission limit for Data retrieval.
+         * Default is 2.
+         */
+        retxLimit?: number;
+        /**
+         * Maximum number of MappingEntry to retrieve in a single query.
+         * Default is 10.
+         * @see https://github.com/named-data/ndn-svs/blob/e39538ed1ddd789de9a34c242af47c3ba4f3583d/ndn-svs/svspubsub.cpp#L199
+         */
+        mappingBatch?: number;
+        /**
+         * Inner Data verifier.
+         * Default is no verification.
+         */
+        innerVerifier?: Verifier;
+        /**
+         * Outer Data verifier.
+         * Default is no verification.
+         */
+        outerVerifier?: Verifier;
+        /**
+         * Mapping Data verifier.
+         * Default is no verification.
+         */
+        mappingVerifier?: Verifier;
+    }
+    /**
+     * Subscribe parameters.
+     * If specified as Name, the subscription receives messages with specified name prefix,
+     * regardless of who published it.
+     * If specified as `{ publisher }`, the subscription receives messages from specified publisher.
+     */
+    type SubscribeInfo = Name | {
+        publisher: Name;
+    };
+    /** Received update. */
+    interface Update {
+        readonly publisher: Name;
+        readonly seqNum: number;
+        readonly name: Name;
+        readonly payload: Uint8Array;
+    }
+}
+
+declare const SvSubscriber_base: new () => TypedEventEmitter<Events_7>;
+
 /** StateVectorSync participant. */
-declare class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
+declare class SvSync extends SvSync_base implements SyncProtocol<Name> {
     constructor({ endpoint, describe, syncPrefix, syncInterestLifetime, steadyTimer, suppressionTimer, signer, verifier, }: SvSync.Options);
     private readonly endpoint;
     readonly describe: string;
-    private readonly syncPrefix;
+    readonly syncPrefix: Name;
     private readonly syncInterestLifetime;
     private readonly steadyTimer;
     private readonly suppressionTimer;
@@ -3590,9 +3770,8 @@ declare class SvSync extends SvSync_base implements SyncProtocol<SvSync.ID> {
     private timer;
     private debug;
     close(): void;
-    get(id: SvSync.IDLike): SyncNode<SvSync.ID>;
-    add(id: SvSync.IDLike): SyncNode<SvSync.ID>;
-    private makeNode;
+    get(id: NameLike): SyncNode<Name>;
+    add(id: NameLike): SyncNode<Name>;
     private readonly handlePublish;
     private readonly handleSyncInterest;
     private resetTimer;
@@ -3640,14 +3819,6 @@ declare namespace SvSync {
          */
         verifier?: Verifier;
     }
-    type IDLike = ID | NameLike;
-    class ID {
-        constructor(input: IDLike);
-        readonly name: Name;
-        get text(): string;
-    }
-    interface Node extends SyncNode<ID> {
-    }
 }
 
 declare const SvSync_base: new () => TypedEventEmitter<Events_6>;
@@ -3661,6 +3832,8 @@ declare namespace sync {
         PSyncPartialPublisher,
         PSyncPartialSubscriber,
         SvSync,
+        SvPublisher,
+        SvSubscriber,
         makeSyncpsCompatParam,
         SyncpsPubsub,
         SyncProtocol,
@@ -3891,7 +4064,7 @@ declare namespace SyncpsPubsub {
     type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
-declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_7>;
+declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_8>;
 
 /** A received update regarding a node. */
 declare class SyncUpdate<ID = any> {
@@ -4126,6 +4299,7 @@ declare namespace util {
         console_2 as console,
         crypto_2 as crypto,
         delay,
+        concatBuffers,
         asUint8Array,
         asDataView,
         Closer,
@@ -4136,11 +4310,13 @@ declare namespace util {
         flatMapOnce,
         KeyMap,
         KeyMultiMap,
+        MultiMap,
         KeyMultiSet,
         toHex,
         fromHex,
         toUtf8,
         fromUtf8,
+        randomJitter,
         timeoutAbortSignal
     }
 }

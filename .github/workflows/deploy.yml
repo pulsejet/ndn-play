@@ -1,12 +1,11 @@
-name: deploy
+name: Build and Deploy
 
 on:
   push:
-    branches:
-      - 'master'
+  pull_request:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,6 +17,7 @@ jobs:
       - run: npm run build
 
       - uses: peaceiris/actions-gh-pages@v3
+        if: github.ref == 'refs/heads/master'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/ndn-play

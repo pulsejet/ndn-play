@@ -1,7 +1,8 @@
 import { ICapturedPacket, IEdge, INode, INodeExtra, IPty } from "../interfaces";
 import { ForwardingProvider } from "../forwarding-provider";
-import chroma from "chroma-js";
 import { DataSet, Network, IdType } from 'vis-network/standalone';
+import { COLOR_MAP } from "./color.map";
+import chroma from "chroma-js";
 
 export class Topology {
   // Constants
@@ -159,17 +160,21 @@ export class Topology {
     // Initialize nodes
     for (const node of this.nodes.get()) {
       if (!node.extra) {
-        this.nodes.update({
-          id: node.id,
-          color: this.DEFAULT_NODE_COLOR,
-          shape: node.isSwitch ? 'box' : 'ellipse',
-          extra: {
-            producedPrefixes: [],
-            pendingTraffic: 0,
-            codeEdit: '',
-            capturedPackets: [],
-          },
-        });
+        const id = node.id;
+        const shape = node.isSwitch ? 'box' : 'ellipse';
+
+        let color = node.color?.toString();
+        color = color ? (COLOR_MAP[color] || color) : this.DEFAULT_NODE_COLOR;
+
+        const extra = {
+          producedPrefixes: [],
+          pendingTraffic: 0,
+          codeEdit: '',
+          capturedPackets: [],
+          color: color,
+        };
+
+        this.nodes.update({ id, color, shape, extra });
       }
     }
   }
@@ -185,7 +190,7 @@ export class Topology {
       this.busiestNode = <any>this.nodes.get(nodeId);
     }
 
-    let color = this.DEFAULT_NODE_COLOR
+    let color = nodeExtra.color || this.DEFAULT_NODE_COLOR
     if (nodeExtra.pendingTraffic > 0) {
         color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
                             (nodeExtra.pendingTraffic / ((this.busiestNode?.extra.pendingTraffic || 0) + 5)).toString();

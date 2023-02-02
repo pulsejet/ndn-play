@@ -40,6 +40,8 @@ export interface INodeExtra {
     replayWindow?: number;
     /** Replay position (first) */
     replayWindowF?: number;
+    /** Color of node */
+    color?: string;
 }
 
 export interface INode extends Node {

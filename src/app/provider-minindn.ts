@@ -106,18 +106,20 @@ export class ProviderMiniNDN implements ForwardingProvider {
     const pack = {} as any;
     pack[MSG_KEY_FUN] = fun;
     pack[MSG_KEY_ARGS] = args;
+    // console.debug('SEND', pack);
     this.ws.next(pack);
   };
 
   private wsMessageCallback = async (msg: any) => {
-    // console.log(msg);
+    // console.debug('RECV', msg);
 
-    // Refresh topology
     switch (msg[MSG_KEY_FUN]) {
       case WS_FUNCTIONS.GET_TOPO:
+        // Refresh topology
+        const nodes = msg?.[MSG_KEY_RESULT]?.nodes.map(this._processNodeRes);
         this.topo.nodes.clear();
         this.topo.edges.clear();
-        this.topo.nodes.add(msg?.[MSG_KEY_RESULT]?.nodes);
+        this.topo.nodes.add(nodes);
         this.topo.edges.add(msg?.[MSG_KEY_RESULT]?.links);
         this.topo.network.stabilize();
         setTimeout(() => this.topo.network.fit(), 200);
@@ -378,4 +380,19 @@ export class ProviderMiniNDN implements ForwardingProvider {
   /** Ensure all nodes and edges are initialized */
   private ensureInitialized = () => {
   };
+
+  /** Post process node data */
+  private _processNodeRes(node: INode) {
+    const pos: number[] = (<any>node).pos;
+    if (pos) {
+      node.x = pos[0];
+      node.y = pos[1];
+
+      if (pos[2]) {
+        console.warn('Z coordinate is not supported: ', node.label, pos);
+      }
+    }
+
+    return node;
+  }
 }

@@ -14,6 +14,7 @@ const WS_FUNCTIONS = {
   UPD_LINK: 'upd_link',
   DEL_NODE: 'del_node',
   ADD_NODE: 'add_node',
+  SET_NODE_POS: 'set_node_pos',
   GET_FIB: 'get_fib',
   GET_PCAP: 'get_pcap',
   GET_PCAP_WIRE: 'get_pcap_wire',
@@ -41,9 +42,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public pendingUpdatesNodes: { [id: string]: Partial<INode>; } = {};
   public pendingUpdatesEdges: { [id: string]: Partial<IEdge>; } = {};
 
-  // Global defaults
+  // Global parameters
   public defaultLatency = 10;
   public defaultLoss = 0;
+  public needPosition = false;
 
   // Websocket connection
   public ws!: WebSocketSubject<any>;
@@ -115,15 +117,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
     switch (msg[MSG_KEY_FUN]) {
       case WS_FUNCTIONS.GET_TOPO:
-        // Refresh topology
-        const nodes = msg?.[MSG_KEY_RESULT]?.nodes.map(this._processNodeRes);
-        this.topo.nodes.clear();
-        this.topo.edges.clear();
-        this.topo.nodes.add(nodes);
-        this.topo.edges.add(msg?.[MSG_KEY_RESULT]?.links);
-        this.topo.network.stabilize();
-        setTimeout(() => this.topo.network.fit(), 200);
-
+        this._processTopology(
+          msg[MSG_KEY_RESULT].nodes,
+          msg[MSG_KEY_RESULT].links,
+        );
         if (!this.initialized) this.setTopoManipulationCallbacks();
         this.initialized = true;
         console.warn(`Refreshed current topology`);
@@ -247,6 +244,18 @@ export class ProviderMiniNDN implements ForwardingProvider {
       for (const nodeId of nodes?.items || []) {
         const label = window.prompt('Enter name for new node');
         this.wsFun(WS_FUNCTIONS.ADD_NODE, nodeId, label);
+      }
+    });
+
+    // Call on moving node
+    this.topo.network.on('dragEnd', (params) => {
+      if (this.needPosition && (params.nodes || [])?.length > 0) {
+        for (const nodeId of params.nodes || []) {
+          const node = this.topo.nodes.get(<string>nodeId);
+          if (!node) continue;
+          const pos = this.topo.network.getPosition(nodeId)
+          this.wsFun(WS_FUNCTIONS.SET_NODE_POS, node.label, pos.x, pos.y);
+        }
       }
     });
   }
@@ -381,18 +390,24 @@ export class ProviderMiniNDN implements ForwardingProvider {
   private ensureInitialized = () => {
   };
 
-  /** Post process node data */
-  private _processNodeRes(node: INode) {
-    const pos: number[] = (<any>node).pos;
-    if (pos) {
-      node.x = pos[0];
-      node.y = pos[1];
+  /** Process topology data */
+  private _processTopology = (nodes: INode[], links: IEdge[]) => {
+    // Disable physics if any node has position set
+    this.needPosition = nodes.some((n) => n.x !== undefined || n.y !== undefined);
+    this.topo.network.setOptions({ physics: { enabled: !this.needPosition } });
 
-      if (pos[2]) {
-        console.warn('Z coordinate is not supported: ', node.label, pos);
-      }
+    // Remove all nodes and edges
+    this.topo.nodes.clear();
+    this.topo.edges.clear();
+
+    // Add new nodes and edges
+    this.topo.nodes.add(nodes);
+    this.topo.edges.add(links);
+
+    // Stabilize physics if needed
+    if (!this.needPosition) {
+      this.topo.network.stabilize();
     }
-
-    return node;
+    setTimeout(() => this.topo.network.fit(), 200);
   }
 }

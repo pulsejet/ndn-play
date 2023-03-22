@@ -89,7 +89,7 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
           rows: this.term.rows,
           cols: this.term.cols,
         })
-      }, 200);
+      }, 50);
     };
 
     // Prevent unnecessary resize

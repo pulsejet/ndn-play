@@ -258,7 +258,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         for (const nodeId of params.nodes || []) {
           const node = this.topo.nodes.get(<string>nodeId);
           if (!node) continue;
-          const pos = this.topo.network.getPosition(nodeId)
+          const pos = this.topo.network.getPosition(nodeId);
           this.wsFun(WS_FUNCTIONS.SET_NODE_POS, node.label, pos.x, pos.y);
         }
       }

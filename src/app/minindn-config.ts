@@ -94,7 +94,9 @@ export function generate(topo: Topology): string {
         if (node.isSwitch) {
             switches.push(name);
         } else {
-            out.push(`${name}: _ network=/world router=/${name}.Router/`);
+            const pos = topo.network.getPosition(node.id);
+            const posStr = `${pos.x / 10},${pos.y / 10},0`;
+            out.push(`${name}: _ network=/world router=/${name}.Router/ position=${posStr}`);
         }
     }
 

@@ -23,6 +23,7 @@ const WS_FUNCTIONS = {
   PTY_RESIZE: 'pty_resize',
   OPEN_TERMINAL: 'open_term',
   CLOSE_TERMINAL: 'close_term',
+  MONITOR_COUNTS: 'monitor_counts'
 };
 
 const MSG_KEY_FUN = 'F'
@@ -196,6 +197,10 @@ export class ProviderMiniNDN implements ForwardingProvider {
         this.closeTerminalInternal(msg?.[MSG_KEY_ID]);
         break;
 
+      case WS_FUNCTIONS.MONITOR_COUNTS:
+        this.updateNodeMonitorCounts(msg?.[MSG_KEY_RESULT]);
+        break;
+
       case WS_FUNCTIONS.PTY_OUT:
         this.writeTerminal(msg?.[MSG_KEY_ID], msg?.[MSG_KEY_RESULT])
         break;
@@ -351,6 +356,15 @@ export class ProviderMiniNDN implements ForwardingProvider {
         console.warn(`Disconnected from remote PTY ${t.name} [${t.id}]`);
         this.topo.activePtys.splice(this.topo.activePtys.indexOf(t), 1);
       }
+    }
+  }
+
+  private updateNodeMonitorCounts(counts: {[id: string]: number}) {
+    for (const [id, count] of Object.entries(counts)) {
+      const node = this.topo.nodes.get(id);
+      if (!node || count === node.extra.pendingTraffic) continue;
+      node.extra.pendingTraffic = count;
+      this.topo.updateNodeColor(node.id, node.extra);
     }
   }
 

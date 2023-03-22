@@ -15,9 +15,10 @@ import { TabComponent } from './tab.component';
         </ul>
       </div>
 
-      <div *ngFor="let tab of children" [hidden]="tab !== selection"
-            class="main-space">
-          <ng-container [ngTemplateOutlet]="tab.template"></ng-container>
+      <div class="main-space">
+        <div *ngFor="let tab of children" [class.hidden]="tab !== selection">
+            <ng-container [ngTemplateOutlet]="tab.template"></ng-container>
+        </div>
       </div>
     </div>
   `,
@@ -38,6 +39,19 @@ import { TabComponent } from './tab.component';
       .main-space {
         flex: 1;
         overflow: hidden;
+        position: relative;
+      }
+
+      .main-space > div {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      .main-space > .hidden {
+        visibility: hidden;
       }
     `
   ]

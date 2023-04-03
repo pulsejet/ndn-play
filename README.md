@@ -8,7 +8,7 @@ Visualizer for NDN, running completely in the browser.
 
 This is simulator project aims to help NDN beginners better understand NDN via visualizing both network topology and Interest/Data exchanges. The master branch is continuously deployed at [play.ndn.today](https://play.ndn.today)
 
-NDN-Play can also be used
+NDN-Play can also be used as a GUI for [MiniNDN](https://github.com/named-data/mini-ndn) using [minindn_play](https://github.com/pulsejet/minindn_play). This provides additional featues such as getting an interactive shell on each node along with log and traffic monitoring.
 
 ## Build
 

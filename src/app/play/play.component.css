@@ -26,3 +26,8 @@
     padding: 2px;
     overflow: hidden;
 }
+
+.tab-full {
+    height: 100%;
+    overflow-y: auto;
+}

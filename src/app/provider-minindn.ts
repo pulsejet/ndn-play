@@ -362,7 +362,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   private updateNodeMonitorCounts(counts: {[id: string]: number}) {
     for (const [id, count] of Object.entries(counts)) {
       const node = this.topo.nodes.get(id);
-      if (!node || count === node.extra.pendingTraffic) continue;
+      if (typeof node?.extra?.pendingTraffic !== "number" || count === node.extra.pendingTraffic) continue;
       node.extra.pendingTraffic = count;
       this.topo.updateNodeColor(node.id, node.extra);
     }

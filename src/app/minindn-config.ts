@@ -64,7 +64,7 @@ export function load(topo: Topology, confStr: string) {
     topo.edges.add(<any>readLinks);
 
     topo.network.stabilize();
-    setTimeout(() => topo.network.fit(), 200);
+    topo.network.fit();
 }
 
 export function generate(topo: Topology): string {

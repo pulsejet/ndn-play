@@ -225,8 +225,7 @@ export class ProviderBrowser implements ForwardingProvider {
       this.topo.nodes.add(dump.nodes);
       this.topo.edges.add(dump.edges);
 
-      this.topo.network.stabilize();
-      setTimeout(() => this.topo.network.fit(), 200);
+      this.topo.network.fit();
     } catch (err) {
       console.error('Failed to parse dump file', err);
     }

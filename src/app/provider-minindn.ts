@@ -422,6 +422,6 @@ export class ProviderMiniNDN implements ForwardingProvider {
     if (!this.needPosition) {
       this.topo.network.stabilize();
     }
-    setTimeout(() => this.topo.network.fit(), 200);
+    this.topo.network.fit();
   }
 }

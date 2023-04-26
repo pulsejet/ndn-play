@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
@@ -12,6 +12,9 @@ import { visTlv } from '../interfaces';
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: any;
   @Input() public guessBox?: boolean = true;
+
+  @ViewChild('outer') outer?: ElementRef;
+  private resizeObserver?: ResizeObserver;
 
   public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
@@ -47,6 +50,21 @@ export class VisualizerComponent implements OnInit {
     } else {
       this.visualizedTlv = undefined;
     }
+  }
+
+  ngAfterViewInit() {
+    if (this.outer?.nativeElement) {
+      this.resizeObserver = new ResizeObserver(() => {
+        window.parent?.postMessage({
+          visHeight: this.outer?.nativeElement.offsetHeight,
+        }, '*');
+      });
+      this.resizeObserver.observe(this.outer.nativeElement);
+    }
+  }
+
+  ngOnDestroy() {
+    this.resizeObserver?.disconnect();
   }
 
   compileTlvTypes() {

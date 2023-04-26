@@ -1,21 +1,23 @@
-<div class="outer" *ngIf="visualizedTlv">
-    <ng-container *ngIf="visualizedTlv.length > 0; else noTlvs"
-        [ngTemplateOutlet]="visTlvA"
-        [ngTemplateOutletContext]="{tlvs: visualizedTlv}">
+<div class="outer" #outer>
+    <ng-container *ngIf="visualizedTlv">
+        <ng-container *ngIf="visualizedTlv.length > 0; else noTlvs"
+            [ngTemplateOutlet]="visTlvA"
+            [ngTemplateOutletContext]="{tlvs: visualizedTlv}">
+        </ng-container>
+        <ng-template #noTlvs>
+            No valid TLV blocks could be decoded <br/>
+        </ng-template>
+
+        <div class="guess-box" *ngIf="guessBox">
+            <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
+        </div>
     </ng-container>
-    <ng-template #noTlvs>
-        No valid TLV blocks could be decoded <br/>
-    </ng-template>
 
-    <div class="guess-box" *ngIf="guessBox">
-        <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
-    </div>
-</div>
-
-<div class="outer" *ngIf="!visualizedTlv">
-    No TLV Selected <br/>
-    Call <span class="has-text-danger">visualize(tlv)</span> to visualize a TLV block <br/>
-    Input may be an encodable, wire byte array or hex string
+    <ng-container *ngIf="!visualizedTlv">
+        No TLV Selected <br/>
+        Call <span class="has-text-danger">visualize(tlv)</span> to visualize a TLV block <br/>
+        Input may be an encodable, wire byte array or hex string
+    </ng-container>
 </div>
 
 <ng-template #visTlvA let-tlvs='tlvs'>

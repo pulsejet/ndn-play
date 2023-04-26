@@ -7,16 +7,24 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AppComponent implements OnInit {
   title = 'ndn-play';
-  public start = false;
+  public mode: "home" | "play" | "visualize" = "home";
 
   constructor() {
     const url = new URL(window.location.href);
     const params = ['minindn', 'dump', 'default'];
     if (params.some(p => url.searchParams.get(p))) {
-      this.start = true;
+      this.mode = "play";
+    }
+
+    if (url.searchParams.get('visualize')) {
+      this.mode = "visualize";
     }
   }
 
   ngOnInit() {
+  }
+
+  public getVisualizeTlv(): string {
+    return new URL(window.location.href).searchParams.get('visualize') || '';
   }
 }

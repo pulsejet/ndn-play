@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { ProviderBrowser } from './provider-browser/provider-browser';
 import { ProviderMiniNDN } from './provider-minindn';
+import { ProviderNull } from './provider-null';
 import { Topology } from './topo/topo';
 
 @Injectable({
@@ -19,14 +20,16 @@ export class GlobalService {
   public autoScrollCaptureReplay = true;
 
   constructor() {
-    // Connect to miniNDN
-    const curl = new URL(window.location.href);
-    const minindn = curl.searchParams.get("minindn");
-    if (minindn) {
-      console.log('Starting MiniNDN provider', minindn);
-      const auth = curl.searchParams.get("auth");
-      const url = auth ? `${minindn}?auth=${auth}` : minindn;
+    const pageUrl = new URL(window.location.href);
+    const queryMinindn = pageUrl.searchParams.get("minindn");
+    const queryVisualize = pageUrl.searchParams.get("visualize");
+    const queryAuth = pageUrl.searchParams.get("auth");
+
+    if (queryMinindn) {
+      const url = queryAuth ? `${queryMinindn}?auth=${queryAuth}` : queryMinindn;
       this.topo = new Topology(new ProviderMiniNDN(url))
+    } else if (queryVisualize) {
+      this.topo = new Topology(new ProviderNull());
     } else {
       this.topo = new Topology(new ProviderBrowser());
     }

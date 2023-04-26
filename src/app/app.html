@@ -1,2 +1,13 @@
-<app-home *ngIf="!start"></app-home>
-<app-play *ngIf="start"></app-play>
+<ng-container [ngSwitch]="mode">
+    <!-- List of standard experiments (default) -->
+    <app-home *ngSwitchCase="'home'"></app-home>
+
+    <!-- NDN Play main interface -->
+    <app-play *ngSwitchCase="'play'"></app-play>
+
+    <!-- Visualize a single packet -->
+    <app-visualizer *ngSwitchCase="'visualize'"
+        [tlv]="getVisualizeTlv()"
+        [guessBox]="false">
+    </app-visualizer>
+</ng-container>

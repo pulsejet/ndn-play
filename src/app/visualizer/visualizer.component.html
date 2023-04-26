@@ -7,7 +7,7 @@
         No valid TLV blocks could be decoded <br/>
     </ng-template>
 
-    <div class="guess-box">
+    <div class="guess-box" *ngIf="guessBox">
         <input type="checkbox" [(ngModel)]="attemptUnknownDecode" (change)="ngOnChanges()" /> Attempt to decode unknown TLV types
     </div>
 </div>

@@ -11,6 +11,8 @@ import { visTlv } from '../interfaces';
 })
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: any;
+  @Input() public guessBox?: boolean = true;
+
   public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
 
@@ -31,6 +33,9 @@ export class VisualizerComponent implements OnInit {
 
       // Compile TLV types
       this.compileTlvTypes();
+
+      // Check if TLV types specified
+      this.ngOnChanges();
     }).catch((err) => {
       console.error(err);
     });

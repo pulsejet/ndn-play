@@ -115,6 +115,15 @@ export enum TLV_NDNLPv2 {
 }
 
 // =============================================================
+// If an object with BLOB_* is exported then the corresponding
+// TLV will not be decoded and will be treated as a opaque blob.
+// =============================================================
+
+export const BLOB_InterestSignatureValue = 1;
+export const BLOB_SignatureValue = 1;
+export const BLOB_KeyDigest = 1;
+
+// =============================================================
 // If an object with NNI_* is exported then the corresponding.
 // TLV will be decoded as an NNI, with values from the enum.
 // =============================================================

@@ -146,9 +146,10 @@ export class VisualizerComponent implements OnInit {
         const typeText = this.getTlvTypeText(t.type, parent);
         const isUnknown = !this.attemptUnknownDecode && !typeText;
         const isCritical = (t.type & 1);
+        const isBlob = this.tlvTypes?.[`BLOB_${typeText}`];
         if (t.type == 0 || (isUnknown && isCritical)) return [];
 
-        const children = isUnknown ? [] : this.decodeRecursive(t.value, t.type);
+        const children = (isUnknown || isBlob) ? [] : this.decodeRecursive(t.value, t.type);
         const obj: visTlv = {
           t: t.type,
           tts: typeText || `T=${t.type}`,

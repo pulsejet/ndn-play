@@ -1,9 +1,9 @@
 import { IEdge, INode } from "./interfaces";
 import { Topology } from "./topo/topo";
 
-export function load(topo: Topology, confStr: string) {
+export function load(topo: Topology, confStr: string): boolean {
     if (!confirm("Are you sure you want to load the configuration?")) {
-        return;
+        return false;
     }
 
     topo.selectedEdge = undefined;
@@ -21,15 +21,26 @@ export function load(topo: Topology, confStr: string) {
         if (line.length == 0 || line.startsWith('#')) continue;
 
         // Modes
-        if (line.includes('[nodes]')) {
-            mode = 1;
-            continue;
-        } else if (line.includes('[links]')) {
-            mode = 2;
-            continue;
-        } else if (line.includes('[switches]')) {
-            mode = 3;
-            continue;
+        if (line.match(/\[.*\]/)) {
+            if (line.match(/\[nodes\]/i)) {
+                mode = 1;
+                continue;
+            } else if (line.match(/\[links\]/i)) {
+                mode = 2;
+                continue;
+            } else if (line.match(/\[switches\]/i)) {
+                mode = 3;
+                continue;
+            } else {
+                console.error(`Unknown mode: ${line}`);
+                mode = null;
+                continue;
+            }
+        }
+
+        // Unknown mode
+        if (!mode) {
+            console.warn(`Skipping line in unknown mode: ${line}`);
         }
 
         // Add nodes
@@ -65,6 +76,8 @@ export function load(topo: Topology, confStr: string) {
 
     topo.network.stabilize();
     topo.network.fit();
+
+    return true;
 }
 
 export function generate(topo: Topology): string {

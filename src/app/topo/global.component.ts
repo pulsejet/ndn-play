@@ -120,7 +120,9 @@ import { Topology } from './topo';
             </header>
             <section class="modal-card-body">
                 <textarea #mnConf rows=20
-                        class="textarea full-width is-small"
+                        spellcheck="false" autocomplete="off"
+                        autocorrect="off" autocapitalize="off"
+                        class="textarea full-width is-small is-family-monospace"
                         style="white-space: nowrap"></textarea>
             </section>
             <footer class="modal-card-foot">

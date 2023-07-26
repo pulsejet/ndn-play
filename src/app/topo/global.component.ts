@@ -56,6 +56,7 @@ import { Topology } from './topo';
         <div class="field">
             <label class="label is-small">Experiment:</label>
             <button class="button is-success is-light is-small full-width"
+                    [disabled]="runExpDebounce"
                     *ngIf="topo.provider.runCode"
                     (click)="runExperiment();">
                 Run
@@ -136,6 +137,7 @@ export class TopoGlobalComponent implements OnInit {
 
   public miniNDN = miniNDN;
 
+  public runExpDebounce = false;
   public showExpDump = false;
   public showMnConfig = false;
 
@@ -148,6 +150,9 @@ export class TopoGlobalComponent implements OnInit {
   }
 
   runExperiment() {
+    this.runExpDebounce = true;
+    setTimeout(() => this.runExpDebounce = false, 1000);
+
     for (const node of this.topo.nodes.get()) {
         this.topo.provider.runCode?.(node.extra.codeEdit, node);
     }

@@ -171,7 +171,6 @@ export class VisualizerComponent implements OnInit {
         switch (obj.t) {
           case (0x08): { // GenericNameComponent
             obj.hs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
-            obj.human = true;
             break;
           }
 
@@ -189,6 +188,11 @@ export class VisualizerComponent implements OnInit {
               obj.hs = nniEnum[obj.hs] || obj.hs;
             }
           } catch {}
+          obj.human = true;
+        }
+
+        // Treat as text by default
+        if (this.tlvTypes?.[`TEXT_${typeText}`]) {
           obj.human = true;
         }
 

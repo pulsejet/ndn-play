@@ -124,6 +124,15 @@ export const BLOB_SignatureValue = 1;
 export const BLOB_KeyDigest = 1;
 
 // =============================================================
+// If an object with TEXT_* is exported then the corresponding.
+// TLV will be treated and displayed as plain text by default.
+// =============================================================
+
+export const TEXT_GenericNameComponent = 1;
+export const TEXT_NotBefore = 1;
+export const TEXT_NotAfter = 1;
+
+// =============================================================
 // If an object with NNI_* is exported then the corresponding.
 // TLV will be decoded as an NNI, with values from the enum.
 // =============================================================

@@ -60,24 +60,49 @@ import { Topology } from './topo';
                     (click)="runExperiment();">
                 Run
             </button>
-            <button class="button is-danger is-light is-small full-width mt-1"
-                    *ngIf="topo.provider.loadExperimentDump"
-                    (click)="topo.provider.loadExperimentDump()">
-                Import
-            </button>
-            <button class="button is-link is-light is-small full-width mt-1"
-                    *ngIf="topo.provider.downloadExperimentDump"
-                    (click)="topo.provider.downloadExperimentDump()">
-                Export
-            </button>
         </div>
 
         <div class="field">
             <label class="label is-small">Import / Export:</label>
+            <button class="button is-danger is-light is-small full-width mt-1"
+                    (click)="showExpDump = true">
+                Experiment Dump
+            </button>
             <button class="button is-link is-light is-small full-width mt-1"
                     (click)="showMnConfig = true; mnConf.value = miniNDN.generate(topo)">
                 MiniNDN Config
             </button>
+        </div>
+    </div>
+
+    <div class="modal" [class.is-active]="showExpDump">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Experiment Dump</p>
+                <button class="delete" aria-label="close" (click)="showExpDump = false"></button>
+            </header>
+            <section class="modal-card-body">
+                This function exports a snapshot of the current experiment as a single binary file.
+                This dump can be loaded into the browser again to restore the state of the experiment.
+                <br/><br/>
+                Since the dump contains the capture data on all nodes, it can be quite large and may
+                take a very long time to export. You may monitor the progress of the export in the
+                JS console tab.
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger"
+                        *ngIf="topo.provider.loadExperimentDump"
+                        (click)="importExpDump()">
+                    Import
+                </button>
+                <button class="button is-link"
+                        *ngIf="topo.provider.downloadExperimentDump"
+                        (click)="exportExpDump()">
+                    Export
+                </button>
+                <button class="button" (click)="showExpDump = false">Cancel</button>
+            </footer>
         </div>
     </div>
 
@@ -110,6 +135,8 @@ import { Topology } from './topo';
 export class TopoGlobalComponent implements OnInit {
 
   public miniNDN = miniNDN;
+
+  public showExpDump = false;
   public showMnConfig = false;
 
   /** Global Topology */
@@ -124,5 +151,15 @@ export class TopoGlobalComponent implements OnInit {
     for (const node of this.topo.nodes.get()) {
         this.topo.provider.runCode?.(node.extra.codeEdit, node);
     }
+  }
+
+  async importExpDump() {
+    await this.topo.provider.loadExperimentDump?.();
+    this.showExpDump = false;
+  }
+
+  exportExpDump() {
+    this.topo.provider.downloadExperimentDump?.();
+    this.showExpDump = false;
   }
 }

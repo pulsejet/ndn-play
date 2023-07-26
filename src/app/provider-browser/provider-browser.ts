@@ -196,12 +196,8 @@ export class ProviderBrowser implements ForwardingProvider {
     downloadFile(dump, 'BIN', 'experiment.bin');
   }
 
-  public loadExperimentDump() {
-    loadFileBin().then((val) => {
-      this.loadExperimentDumpFromBin(val);
-    }).catch(() => {
-      console.error('Failed to read dump file');
-    });
+  public async loadExperimentDump(): Promise<void> {
+    this.loadExperimentDumpFromBin(await loadFileBin());
   }
 
   public loadExperimentDumpFromBin(val: ArrayBuffer) {

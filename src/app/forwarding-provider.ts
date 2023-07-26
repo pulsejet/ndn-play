@@ -39,7 +39,7 @@ export interface ForwardingProvider {
 
   // Dump of experiment
   downloadExperimentDump?: () => void;
-  loadExperimentDump?: () => void;
+  loadExperimentDump?: () => Promise<void>;
 
   // Code execution
   runCode?: (code: string, node: INode) => void;

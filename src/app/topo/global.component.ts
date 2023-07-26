@@ -63,26 +63,44 @@ import { Topology } from './topo';
             <button class="button is-danger is-light is-small full-width mt-1"
                     *ngIf="topo.provider.loadExperimentDump"
                     (click)="topo.provider.loadExperimentDump()">
-                Load
+                Import
             </button>
             <button class="button is-link is-light is-small full-width mt-1"
                     *ngIf="topo.provider.downloadExperimentDump"
                     (click)="topo.provider.downloadExperimentDump()">
-                Generate
+                Export
             </button>
         </div>
 
         <div class="field">
-            <label class="label is-small">MiniNDN Config:</label>
-            <textarea class="textarea full-width mb-1 is-small" #mnConf style="white-space: nowrap"></textarea>
-            <button class="button is-danger is-light is-small full-width"
-                    (click)="miniNDN.load(topo, mnConf.value)">
-                Load
-            </button>
+            <label class="label is-small">Import / Export:</label>
             <button class="button is-link is-light is-small full-width mt-1"
-                    (click)="mnConf.value = miniNDN.generate(topo)">
-                Generate
+                    (click)="showMnConfig = true; mnConf.value = miniNDN.generate(topo)">
+                MiniNDN Config
             </button>
+        </div>
+    </div>
+
+    <div class="modal" [class.is-active]="showMnConfig">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">MiniNDN Config</p>
+                <button class="delete" aria-label="close" (click)="showMnConfig = false"></button>
+            </header>
+            <section class="modal-card-body">
+                <textarea #mnConf rows=30
+                        class="textarea full-width is-small"
+                        style="white-space: nowrap"></textarea>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger"
+                        [disabled]="!$any(topo.provider).BROWSER"
+                        (click)="miniNDN.load(this.topo, mnConf.value) && (showMnConfig = false)">
+                  Import
+                </button>
+                <button class="button" (click)="showMnConfig = false">Cancel</button>
+            </footer>
         </div>
     </div>
   `,
@@ -91,8 +109,8 @@ import { Topology } from './topo';
 })
 export class TopoGlobalComponent implements OnInit {
 
-  /** Aliases */
   public miniNDN = miniNDN;
+  public showMnConfig = false;
 
   /** Global Topology */
   @Input() public topo: Topology = <any>undefined;

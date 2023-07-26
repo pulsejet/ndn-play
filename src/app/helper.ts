@@ -1,18 +1,28 @@
 import { deflate as pakoDeflate } from 'pako';
 
-export function downloadFile(bin: Uint8Array, fileType: string, fileName: string, deflate=true) {
-    // Compress if BIN
+/**
+ * Download a file to user's computer
+ * @param bin Buffer to be downloaded
+ * @param type MIME type of the file to be downloaded
+ * @param name Name of the file to be downloaded
+ * @param deflate Compress the buffer using pako DEFLATE
+ */
+export function downloadFile(bin: Uint8Array, type: string, name: string, deflate=false) {
+    // Note: function is exposed globally to the user.
+    // If the signature changes, update user-types.ts
+
+    // Compress if required
     if (deflate) {
-        console.log('Compressing binary dump');
+        console.log('Compressing binary file');
         bin = pakoDeflate(bin);
     }
 
     // Download
-    const blob = new Blob([bin], { type: fileType });
+    const blob = new Blob([bin], { type });
     const a = document.createElement('a');
-    a.download = fileName;
+    a.download = name;
     a.href = URL.createObjectURL(blob);
-    a.dataset.downloadurl = [fileType, a.download, a.href].join(':');
+    a.dataset.downloadurl = [type, a.download, a.href].join(':');
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
@@ -20,7 +30,13 @@ export function downloadFile(bin: Uint8Array, fileType: string, fileName: string
     setTimeout(function() { URL.revokeObjectURL(a.href); }, 1500);
 }
 
-export function loadFileBin(inflate=true): Promise<ArrayBuffer> {
+/**
+ * Load a local file from the user's computer
+ */
+export function loadFileBin(): Promise<ArrayBuffer> {
+    // Note: function is exposed globally to the user.
+    // If the signature changes, update user-types.ts
+
     return new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -46,3 +62,7 @@ export function loadFileBin(inflate=true): Promise<ArrayBuffer> {
         input.click();
     });
 }
+
+// Expose globally
+(<any>window).downloadfile = downloadFile;
+(<any>window).loadfile = loadFileBin;

@@ -25,5 +25,19 @@ export namespace ext {
      * @param filter filter: function to check if captured packet should be stored
      */
     export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void {};
+
+    /**
+     * Load a local file from the user's computer
+     */
+    export function loadfile(): Promise<ArrayBuffer> { return null as any; }
+
+    /**
+     * Download a file to user's computer
+     * @param bin Buffer to be downloaded
+     * @param type MIME type of the file to be downloaded
+     * @param name Name of the file to be downloaded
+     * @param deflate Compress the buffer using pako DEFLATE
+     */
+    export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void {};
 }
 

@@ -1138,12 +1138,24 @@ export declare namespace ext {
      * Visualize a packet
      * @param packet can be hex string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | tlv.Encodable): void;
+    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable): void;
     /**
      * Filter packets to be captured
      * @param filter filter: function to check if captured packet should be stored
      */
     export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void;
+    /**
+     * Load a local file from the user's computer
+     */
+    export function loadfile(): Promise<ArrayBuffer>;
+    /**
+     * Download a file to user's computer
+     * @param bin Buffer to be downloaded
+     * @param type MIME type of the file to be downloaded
+     * @param name Name of the file to be downloaded
+     * @param deflate Compress the buffer using pako DEFLATE
+     */
+    export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
 }
 
 /** An TLV element that allows extension sub element. */
@@ -1316,7 +1328,7 @@ declare interface ForwardingProvider {
     fetchCapturedPackets?: (node: INode) => void;
     visualizeCaptured?: (packet: ICapturedPacket, node: INode) => void;
     downloadExperimentDump?: () => void;
-    loadExperimentDump?: () => void;
+    loadExperimentDump?: () => Promise<void>;
     runCode?: (code: string, node: INode) => void;
     openTerminal?: (node: INode) => void;
 }
@@ -1606,6 +1618,8 @@ declare interface INodeExtra {
     replayWindow?: number;
     /** Replay position (first) */
     replayWindowF?: number;
+    /** Color of node */
+    color?: string;
 }
 
 /** Interest packet. */
@@ -2859,7 +2873,7 @@ declare class ProviderBrowser implements ForwardingProvider {
     /** Ensure all nodes and edges are initialized */
     private ensureInitialized;
     downloadExperimentDump(): void;
-    loadExperimentDump(): void;
+    loadExperimentDump(): Promise<void>;
     loadExperimentDumpFromBin(val: ArrayBuffer): void;
 }
 

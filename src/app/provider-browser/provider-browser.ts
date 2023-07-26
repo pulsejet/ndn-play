@@ -193,7 +193,7 @@ export class ProviderBrowser implements ForwardingProvider {
       edges: this.topo.edges.get(),
       positions: this.topo.network.getPositions(),
     });
-    downloadFile(dump, 'BIN', 'experiment.bin');
+    downloadFile(dump, 'BIN', 'experiment.bin', true);
   }
 
   public async loadExperimentDump(): Promise<void> {

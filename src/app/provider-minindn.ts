@@ -178,7 +178,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
           if (this.dump.nodes.length == this.topo.nodes.length) {
             console.log(`Received data for all nodes -- generating dump`);
             this.dump.positions = this.topo.network.getPositions();
-            downloadFile(msgpackEncode(this.dump), 'BIN', 'experiment.bin');
+            downloadFile(msgpackEncode(this.dump), 'BIN', 'experiment.bin', true);
             this.dump = undefined;
           }
         }

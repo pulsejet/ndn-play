@@ -18,7 +18,7 @@ export namespace ext {
      * Visualize a packet
      * @param packet can be hex string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | tlv.Encodable): void {};
+    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable): void {};
 
     /**
      * Filter packets to be captured

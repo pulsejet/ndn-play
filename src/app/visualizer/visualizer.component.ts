@@ -115,7 +115,7 @@ export class VisualizerComponent implements OnInit {
     return undefined;
   }
 
-  visualize(tlv: string | Uint8Array | Encodable): visTlv[] {
+  visualize(tlv: string | Uint8Array | ArrayBuffer | Encodable): visTlv[] {
     if (!tlv) return [];
     this.compileTlvTypes();
 
@@ -126,6 +126,8 @@ export class VisualizerComponent implements OnInit {
       buffer = new Uint8Array((matches || []).map(byte => parseInt(byte, 16)));
     } else if (tlv instanceof Uint8Array) {
       buffer = tlv;
+    } else if (tlv instanceof ArrayBuffer) {
+      buffer = new Uint8Array(tlv);
     } else {
       const encoder = new Encoder();
       encoder.encode(tlv);

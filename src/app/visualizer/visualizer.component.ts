@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
@@ -12,6 +12,7 @@ import { visTlv } from '../interfaces';
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: any;
   @Input() public guessBox?: boolean = true;
+  @Output() public change = new EventEmitter<any>();
 
   @ViewChild('outer') outer?: ElementRef;
   private resizeObserver?: ResizeObserver;
@@ -130,6 +131,8 @@ export class VisualizerComponent implements OnInit {
       encoder.encode(tlv);
       buffer = encoder.output;
     }
+
+    this.change.emit(tlv);
 
     return this.decodeRecursive(buffer, 0);
   }

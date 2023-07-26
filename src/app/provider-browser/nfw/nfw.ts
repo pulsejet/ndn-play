@@ -90,24 +90,24 @@ export class NFW {
         // Set extra
         this.nodeExtra = this.node().extra;
 
-        this.fw.on("pktrx", (face, pkt) => {
+        this.fw.addEventListener("pktrx", ({face, packet}) => {
             // Not useful stuff
-            if (pkt.cancel || pkt.reject) return;
+            if (packet.cancel || packet.reject) return;
 
             // Wireshark
-            this.shark.capturePacket(face, pkt, "rx");
+            this.shark.capturePacket(face, packet, "rx");
 
             // Put on NFW
-            if (pkt.l3 instanceof Interest) {
-                this.expressInterest(<any>pkt);
-            } else if (pkt.l3 instanceof Data) {
-                this.cs.push(pkt.l3);
+            if (packet.l3 instanceof Interest) {
+                this.expressInterest(<any>packet);
+            } else if (packet.l3 instanceof Data) {
+                this.cs.push(packet.l3);
             }
         });
 
-        this.fw.on("pkttx", (face, pkt) => {
-            if (pkt.cancel || pkt.reject) return;
-            this.shark.capturePacket(face, pkt, "tx");
+        this.fw.addEventListener("pkttx", ({face, packet}) => {
+            if (packet.cancel || packet.reject) return;
+            this.shark.capturePacket(face, packet, "tx");
         });
 
         this.localFace = this.fw.addFace({
@@ -116,20 +116,20 @@ export class NFW {
         });
 
         // Add routes
-        this.fw.on("annadd", (prefix) => {
-            this.nodeExtra.producedPrefixes.push(AltUri.ofName(prefix));
+        this.fw.addEventListener("annadd", ({ name }) => {
+            this.nodeExtra.producedPrefixes.push(AltUri.ofName(name));
             this.provider.scheduleRouteRefresh();
-            this.announcements.push(prefix);
+            this.announcements.push(name);
         });
 
         // Remove routes
-        this.fw.on("annrm", (prefix) => {
+        this.fw.addEventListener("annrm", ({ name }) => {
             const pfxs = this.nodeExtra.producedPrefixes;
-            let i = pfxs.indexOf(AltUri.ofName(prefix));
+            let i = pfxs.indexOf(AltUri.ofName(name));
             if (i !== -1) pfxs.splice(i, 1);
             this.provider.scheduleRouteRefresh();
 
-            i = this.announcements.findIndex((a) => a.equals(prefix));
+            i = this.announcements.findIndex((a) => a.equals(name));
             if (i !== -1) this.announcements.splice(i, 1);
         });
 

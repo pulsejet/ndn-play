@@ -17,6 +17,7 @@ To run the project
 ```bash
 npm install             # install dependencies
 npm run editor-types    # generate type definitions for user code editor
+                        # this step is not run during CI/CD and may require some manual patching
 npm run start           # build with live refresh
 npm run build           # generate production build
 ```

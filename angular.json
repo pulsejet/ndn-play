@@ -60,7 +60,7 @@
             ],
             "scripts": [
               "node_modules/dijkstrajs/dijkstra.js",
-              "node_modules/typescript/lib/typescriptServices.js"
+              "node_modules/typescript/lib/typescript.js"
             ],
             "vendorChunk": true,
             "extractLicenses": false,

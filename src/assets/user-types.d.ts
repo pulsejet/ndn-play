@@ -9,6 +9,7 @@ import { EventEmitter } from '@angular/core';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
+import { TypedEventTarget } from 'typescript-event-target';
 import type WsWebSocket from 'ws';
 
 /** AES block size in octets. */
@@ -258,6 +259,8 @@ declare class Closers extends Array {
     close: () => void;
     /** Schedule a timeout or interval to be canceled via .close(). */
     addTimeout<T extends NodeJS.Timeout | number>(t: T): T;
+    /** Wait for close. */
+    wait(): Promise<void>;
 }
 
 /**
@@ -557,11 +560,15 @@ declare namespace CryptoAlgorithm {
     }
 }
 
-/** A full list of crypto algorithms. */
+/**
+ * A full list of crypto algorithms.
+ * This list encompasses SigningAlgorithmListFull and EncryptionAlgorithmListFull.
+ */
 declare const CryptoAlgorithmListFull: readonly CryptoAlgorithm[];
 
 /**
  * A slim list of crypto algorithms.
+ * This list encompasses SigningAlgorithmListSlim and EncryptionAlgorithmListSlim.
  * If you need more algorithms, explicitly import them or use CryptoAlgorithmListFull.
  */
 declare const CryptoAlgorithmListSlim: readonly CryptoAlgorithm[];
@@ -584,6 +591,9 @@ declare interface CtorTag_3 {
     [ctorAssign_3]: (f: Fields) => void;
 }
 
+/** CustomEvent object. */
+declare const CustomEvent_2: typeof globalThis["CustomEvent"];
+
 /** Data packet. */
 declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
@@ -602,15 +612,21 @@ declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signa
     static decodeFrom(decoder: Decoder): Data;
     encodeTo(encoder: Encoder): void;
     private encodeSignedPortion;
+    /** Return the implicit digest if it's already computed. */
     getImplicitDigest(): Uint8Array | undefined;
+    /** Compute the implicit digest. */
     computeImplicitDigest(): Promise<Uint8Array>;
+    /** Return the full name if the implicit digest is already computed. */
     getFullName(): Name | undefined;
+    /** Compute the full name (name plus implicit digest). */
     computeFullName(): Promise<Name>;
     /**
      * Determine if a Data can satisfy an Interest.
+     * @param isCacheLookup if true, Data with zero FreshnessPeriod cannot satisfy Interest with MustBeFresh;
+     *                      if false, this check does not apply.
      * @returns a Promise that will be resolved with the result.
      */
-    canSatisfy(interest: Interest): Promise<boolean>;
+    canSatisfy(interest: Interest, { isCacheLookup }?: Data.CanSatisfyOptions): Promise<boolean>;
     [LLSign.OP](sign: LLSign): Promise<void>;
     [LLVerify.OP](verify: LLVerify): Promise<void>;
 }
@@ -627,6 +643,16 @@ declare namespace Data {
     const FinalBlock: unique symbol;
     /** Constructor argument. */
     type CtorArg = NameLike | CtorTag_3 | typeof FinalBlock | Uint8Array;
+    /** Data.canSatisfy options. */
+    interface CanSatisfyOptions {
+        /**
+         * Whether the Interest-Data matching is in the context of cache lookup.
+         * If true, Data with zero FreshnessPeriod cannot satisfy Interest with MustBeFresh.
+         * If false, this check does not apply.
+         * @default false
+         */
+        isCacheLookup?: boolean;
+    }
 }
 
 /** Outgoing Data buffer for producer. */
@@ -1055,73 +1081,80 @@ declare type EventMap = {
     [key: string]: (...args: any[]) => void
 }
 
+declare type EventMap_2 = {
+    /** Emitted before adding face. */
+    faceadd: Forwarder.FaceEvent;
+    /** Emitted after removing face. */
+    facerm: Forwarder.FaceEvent;
+    /** Emitted before adding prefix to face. */
+    prefixadd: Forwarder.PrefixEvent;
+    /** Emitted after removing prefix from face. */
+    prefixrm: Forwarder.PrefixEvent;
+    /** Emitted before advertising prefix. */
+    annadd: Forwarder.AnnouncementEvent;
+    /** Emitted before withdrawing prefix. */
+    annrm: Forwarder.AnnouncementEvent;
+    /** Emitted after packet arrival. */
+    pktrx: Forwarder.PacketEvent;
+    /** Emitted before packet transmission. */
+    pkttx: Forwarder.PacketEvent;
+};
+
+declare type EventMap_3 = {
+    /** Emitted upon face is up as reported by lower layer. */
+    up: Event;
+    /** Emitted upon face is down as reported by lower layer. */
+    down: Event;
+    /** Emitted upon face is closed. */
+    close: Event;
+};
+
+declare type EventMap_4 = {
+    /** Emitted upon face state change. */
+    state: L3Face.StateEvent;
+    /** Emitted upon state becomes UP. */
+    up: Event;
+    /** Emitted upon state becomes DOWN. */
+    down: CustomEvent<Error>;
+    /** Emitted upon state becomes CLOSED. */
+    close: Event;
+    /** Emitted upon RX decoding error. */
+    rxerror: CustomEvent<L3Face.RxError>;
+    /** Emitted upon TX preparation error. */
+    txerror: CustomEvent<L3Face.TxError>;
+};
+
 declare type Events = SyncProtocol.Events<Name> & {
     debug: (entry: DebugEntry) => void;
 };
 
-declare type Events_2 = {
-    /** Emitted before adding face. */
-    faceadd: (face: FwFace) => void;
-    /** Emitted after removing face. */
-    facerm: (face: FwFace) => void;
-    /** Emitted before adding prefix to face. */
-    prefixadd: (face: FwFace, prefix: Name) => void;
-    /** Emitted after removing prefix from face. */
-    prefixrm: (face: FwFace, prefix: Name) => void;
-    /** Emitted before advertising prefix. */
-    annadd: (announcement: Name) => void;
-    /** Emitted before withdrawing prefix. */
-    annrm: (announcement: Name) => void;
-    /** Emitted after packet arrival. */
-    pktrx: (face: FwFace, pkt: FwPacket) => void;
-    /** Emitted before packet transmission. */
-    pkttx: (face: FwFace, pkt: FwPacket) => void;
-};
-
-declare type Events_3 = {
-    /** Emitted upon face is up as reported by lower layer. */
-    up: () => void;
-    /** Emitted upon face is down as reported by lower layer. */
-    down: () => void;
-    /** Emitted upon face is closed. */
-    close: () => void;
-};
-
-declare type Events_4 = SyncProtocol.Events<Name> & {
+declare type Events_2 = SyncProtocol.Events<Name> & {
     debug: (entry: DebugEntry_2) => void;
 };
 
-declare type Events_5 = {
+declare type Events_3 = {
     debug: (entry: DebugEntry_3) => void;
     state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
 };
 
-declare type Events_6 = SyncProtocol.Events<Name> & {
+declare type Events_4 = SyncProtocol.Events<Name> & {
     debug: (entry: DebugEntry_4) => void;
 };
 
-declare type Events_7 = {
+declare type Events_5 = {
     error: (err: Error) => void;
 };
 
-declare type Events_8 = {
+declare type Events_6 = {
     debug: (entry: DebugEntry_5) => void;
 };
 
-declare type Events_9 = {
-    /** Emitted upon face state change. */
-    state: (state: L3Face.State) => void;
-    /** Emitted upon state becomes UP. */
-    up: () => void;
-    /** Emitted upon state becomes DOWN. */
-    down: (err: Error) => void;
-    /** Emitted upon state becomes CLOSED. */
-    close: () => void;
-    /** Emitted upon RX decoding error. */
-    rxerror: (err: L3Face.RxError) => void;
-    /** Emitted upon TX preparation error. */
-    txerror: (err: L3Face.TxError) => void;
-};
+/** Delete keys from a Set or Map until its size is below capacity. */
+declare function evict<K>(capacity: number, ct: evict.Container<K>): void;
+
+declare namespace evict {
+    type Container<K> = Pick<Set<K>, "delete" | "size" | "keys">;
+}
 
 export declare namespace ext {
     const ndnTypes: {
@@ -1138,7 +1171,7 @@ export declare namespace ext {
      * Visualize a packet
      * @param packet can be hex string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable): void;
+    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void;
     /**
      * Filter packets to be captured
      * @param filter filter: function to check if captured packet should be stored
@@ -1167,6 +1200,12 @@ declare namespace Extensible {
     const TAG: unique symbol;
     /** Clone extension fields of src to dst. */
     function cloneRecord(dst: Extensible, src: Extensible): void;
+    /**
+     * Define simple getters and setters.
+     * @param typ Extensible subclass constructor.
+     * @param exts extensions, each key is a property name and each value is the TLV-TYPE number.
+     */
+    function defineGettersSetters<T extends Extensible>(typ: new () => T, exts: Record<string, number>): void;
 }
 
 /**
@@ -1275,7 +1314,7 @@ declare class Fields_2 {
 declare function flatMapOnce<T, R>(f: (item: T) => Iterable<R> | AsyncIterable<R>, iterable: Iterable<T> | AsyncIterable<T>): AsyncIterable<R>;
 
 /** Forwarding plane. */
-declare interface Forwarder extends TypedEventEmitter<Events_2> {
+declare interface Forwarder extends TypedEventTarget<EventMap_2> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
@@ -1303,6 +1342,28 @@ declare namespace Forwarder {
     function replaceDefault(fw?: Forwarder): void;
     /** Delete default instance (mainly for unit testing). */
     function deleteDefault(): void;
+    /** Face event. */
+    class FaceEvent extends Event {
+        readonly face: FwFace;
+        constructor(type: string, face: FwFace);
+    }
+    /** Prefix registration event. */
+    class PrefixEvent extends Event {
+        readonly face: FwFace;
+        readonly prefix: Name;
+        constructor(type: string, face: FwFace, prefix: Name);
+    }
+    /** Prefix announcement event. */
+    class AnnouncementEvent extends Event {
+        readonly name: Name;
+        constructor(type: string, name: Name);
+    }
+    /** Packet event. */
+    class PacketEvent extends Event {
+        readonly face: FwFace;
+        readonly packet: FwPacket;
+        constructor(type: string, face: FwFace, packet: FwPacket);
+    }
 }
 
 declare interface ForwardingProvider {
@@ -1349,7 +1410,7 @@ declare namespace fromHex {
 declare function fromUtf8(buf: Uint8Array): string;
 
 /** A socket or network interface associated with forwarding plane. */
-declare interface FwFace extends TypedEventEmitter<Events_3> {
+declare interface FwFace extends TypedEventTarget<EventMap_3> {
     readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
     readonly running: boolean;
@@ -1384,14 +1445,11 @@ declare namespace FwFace {
         routeCapture?: boolean;
     }
     type RouteAnnouncement = boolean | number | NameLike;
-    type RxTxEvents = {
-        up: () => void;
-        down: () => void;
-    };
+    type RxTxEventMap = Pick<EventMap_3, "up" | "down">;
     interface RxTxBase {
         readonly attributes?: Attributes;
-        on?: (...args: Parameters<TypedEventEmitter<RxTxEvents>["on"]>) => void;
-        off?: (...args: Parameters<TypedEventEmitter<RxTxEvents>["off"]>) => void;
+        addEventListener?: <K extends keyof RxTxEventMap>(type: K, listener: (ev: RxTxEventMap[K]) => any, options?: AddEventListenerOptions) => void;
+        removeEventListener?: <K extends keyof RxTxEventMap>(type: K, listener: (ev: RxTxEventMap[K]) => any, options?: EventListenerOptions) => void;
     }
     interface RxTx extends RxTxBase {
         rx: AsyncIterable<FwPacket>;
@@ -2083,7 +2141,7 @@ declare namespace KeyStore {
 }
 
 /** Network layer face for sending and receiving L3 packets. */
-declare class L3Face extends L3Face_base implements FwFace.RxTx {
+declare class L3Face extends TypedEventTarget<EventMap_4> implements FwFace.RxTx {
     private transport;
     readonly attributes: L3Face.Attributes;
     readonly lp: LpService;
@@ -2108,6 +2166,11 @@ declare namespace L3Face {
         UP = 0,
         DOWN = 1,
         CLOSED = 2
+    }
+    class StateEvent extends Event {
+        readonly state: State;
+        readonly prev: State;
+        constructor(type: string, state: State, prev: State);
     }
     interface Attributes extends Transport.Attributes {
         /** Whether to readvertise registered routes. */
@@ -2147,8 +2210,6 @@ declare namespace L3Face {
     function makeCreateFace<C extends (...args: any[]) => Promise<Transport | Transport[]>>(createTransport: C): CreateFaceFunc<C extends (...args: any[]) => Promise<infer R> ? R : never, Parameters<C>>;
     function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
 }
-
-declare const L3Face_base: new () => TypedEventEmitter<Events_9>;
 
 declare type L3Pkt = Interest | Data | Nack;
 
@@ -2762,9 +2823,9 @@ declare function parseCertName(name: Name): CertNameFields;
 declare function parseKeyName(name: Name): KeyNameFields;
 
 declare const PointSizes: {
-    "P-256": number;
-    "P-384": number;
-    "P-521": number;
+    readonly "P-256": 32;
+    readonly "P-384": 48;
+    readonly "P-521": 66;
 };
 
 /** Pretty-print TLV-TYPE number. */
@@ -3116,7 +3177,7 @@ declare namespace PSyncPartialPublisher {
     }
 }
 
-declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_4>;
+declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_2>;
 
 /** PSync - PartialSync subscriber. */
 declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
@@ -3183,7 +3244,7 @@ declare namespace PSyncPartialSubscriber {
     }
 }
 
-declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_5>;
+declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_3>;
 
 /** Use zlib compression with PSync. */
 declare const PSyncZlib: PSyncCodec.Compression;
@@ -3437,7 +3498,7 @@ declare namespace SignedInterestPolicy {
     /**
      * Create a rule to assign or check SigNonce.
      *
-     * This rule assigns a random SigNonce of `minNonceLength` octets that does not duplicate
+     * This rule assigns a random SigNonce of `nonceLength` octets that does not duplicate
      * last `trackedNonces` values.
      *
      * This rule rejects an Interest on any of these conditions:
@@ -3450,7 +3511,7 @@ declare namespace SignedInterestPolicy {
         /**
          * Maximum allowed clock offset in milliseconds.
          *
-         * Minimum is 0. Setting to 0 is generally a bad idea because it would require consumer and
+         * Minimum is 0. However, setting to 0 is inadvisable because it would require consumer and
          * producer to have precisely synchronized clocks.
          * @default 60000
          */
@@ -3606,6 +3667,23 @@ declare namespace Subscription {
     };
 }
 
+/** SVS-PS MappingEntry element. */
+declare class SvMappingEntry implements EncodableObj {
+    seqNum: number;
+    name: Name;
+    static decodeFrom(decoder: Decoder): SvMappingEntry;
+    encodeTo(encoder: Encoder): void;
+    protected encodeValueExt(): Encodable[];
+}
+
+declare namespace SvMappingEntry {
+    interface Constructor<M extends SvMappingEntry = SvMappingEntry> extends Decodable<M> {
+        new (): M;
+    }
+    /** Class decorator on an extensible MappingEntry subclass. */
+    function extend<M extends SvMappingEntry & Extensible>(ctor: new () => M): void;
+}
+
 /** SVS-PS publisher. */
 declare class SvPublisher {
     constructor({ endpoint, sync, id, store, chunkSize, innerSigner, outerSigner, mappingSigner, }: SvPublisher.Options);
@@ -3628,9 +3706,11 @@ declare class SvPublisher {
      * Publish application data.
      * @param name application-specified inner name.
      * @param payload application payload.
+     * @param entry MappingEntry for subscriber-side filtering.
+     *              This is required if subscribers are expecting a certain MappingEntry subclass.
      * @returns seqNum.
      */
-    publish(name: NameLike, payload: Uint8Array): Promise<number>;
+    publish(name: NameLike, payload: Uint8Array, entry?: SvMappingEntry): Promise<number>;
     private readonly handleOuter;
     private readonly handleMapping;
 }
@@ -3678,15 +3758,23 @@ declare namespace SvPublisher {
     }
 }
 
-/** SVS-PS subscriber. */
-declare class SvSubscriber extends SvSubscriber_base implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo> {
-    constructor({ endpoint, sync, retxLimit, mappingBatch, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
+/**
+ * SVS-PS subscriber.
+ *
+ * MappingEntry is a subclass of SvMappingEntry.
+ * If it is not SvMappingEntry base class, its constructor must be specified in Options.mappingEntryType.
+ */
+declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry> extends SvSubscriber_base implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<MappingEntry>> {
+    constructor({ endpoint, sync, retxLimit, mappingBatch, mappingEntryType, mustFilterByMapping, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
     private readonly abort;
     private readonly endpoint;
     private readonly syncPrefix;
     private readonly nameSubs;
+    private readonly nameFilters;
     private readonly publisherSubs;
     private readonly mappingBatch;
+    private readonly mappingEVD;
+    private readonly mustFilterByMapping;
     private readonly innerVerifier;
     private readonly outerFetchOpts;
     private readonly outerConsumerOpts;
@@ -3697,7 +3785,7 @@ declare class SvSubscriber extends SvSubscriber_base implements Subscriber<Name,
      */
     close(): void;
     /** Subscribe to either a topic prefix or a publisher node ID. */
-    subscribe(topic: SvSubscriber.SubscribeInfo): Subscription<Name, SvSubscriber.Update>;
+    subscribe(topic: SvSubscriber.SubscribeInfo<MappingEntry>): Subscription<Name, SvSubscriber.Update>;
     private readonly handleSyncUpdate;
     private retrieveMapping;
     private dispatchUpdate;
@@ -3726,6 +3814,19 @@ declare namespace SvSubscriber {
          */
         mappingBatch?: number;
         /**
+         * MappingEntry constructor.
+         * Default is MappingEntry base type.
+         */
+        mappingEntryType?: SvMappingEntry.Constructor;
+        /**
+         * When an update matches a SubscribePublisher, by default the MappingData is not retrieved.
+         * Since the filter functions in SubscribePrefixFilter depend on MappingEntry, they are not called, and
+         * each SubscribePrefixFilter is treated like a SubscribePrefix, which would receive the message if
+         * the topic prefix matches.
+         * Set this option to true forces the retrieval of MappingData and ensures filter functions are called.
+         */
+        mustFilterByMapping?: boolean;
+        /**
          * Inner Data verifier.
          * Default is no verification.
          */
@@ -3741,15 +3842,24 @@ declare namespace SvSubscriber {
          */
         mappingVerifier?: Verifier;
     }
-    /**
-     * Subscribe parameters.
-     * If specified as Name, the subscription receives messages with specified name prefix,
-     * regardless of who published it.
-     * If specified as `{ publisher }`, the subscription receives messages from specified publisher.
-     */
-    type SubscribeInfo = Name | {
+    /** Subscribe parameters. */
+    type SubscribeInfo<MappingEntry extends SvMappingEntry> = SubscribePrefix | SubscribePrefixFilter<MappingEntry> | SubscribePublisher;
+    /** Subscribe to messages udner a name prefix. */
+    type SubscribePrefix = Name;
+    /** Subscribe to messages under a name prefix that passes a filter. */
+    interface SubscribePrefixFilter<MappingEntry extends SvMappingEntry> {
+        /** Topic prefix. */
+        prefix: Name;
+        /**
+         * Filter function to determine whether to retrieve a message based on MappingEntry.
+         * See limitations in Options.mustFilterByMapping.
+         */
+        filter(entry: MappingEntry): boolean;
+    }
+    /** Subscribe to messages from the specified publisher. */
+    interface SubscribePublisher {
         publisher: Name;
-    };
+    }
     /** Received update. */
     interface Update {
         readonly publisher: Name;
@@ -3759,7 +3869,7 @@ declare namespace SvSubscriber {
     }
 }
 
-declare const SvSubscriber_base: new () => TypedEventEmitter<Events_7>;
+declare const SvSubscriber_base: new () => TypedEventEmitter<Events_5>;
 
 /** StateVectorSync participant. */
 declare class SvSync extends SvSync_base implements SyncProtocol<Name> {
@@ -3835,7 +3945,14 @@ declare namespace SvSync {
     }
 }
 
-declare const SvSync_base: new () => TypedEventEmitter<Events_6>;
+declare const SvSync_base: new () => TypedEventEmitter<Events_4>;
+
+/** SVS-PS MappingEntry with Timestamp element. */
+declare class SvTimedMappingEntry extends SvMappingEntry implements Extensible {
+    constructor();
+    readonly [Extensible.TAG]: ExtensionRegistry<Extensible>;
+    timestamp: Date | undefined;
+}
 
 declare namespace sync {
     export {
@@ -3848,6 +3965,8 @@ declare namespace sync {
         SvSync,
         SvPublisher,
         SvSubscriber,
+        SvMappingEntry,
+        SvTimedMappingEntry,
         makeSyncpsCompatParam,
         SyncpsPubsub,
         SyncProtocol,
@@ -4078,7 +4197,7 @@ declare namespace SyncpsPubsub {
     type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
-declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_8>;
+declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_6>;
 
 /** A received update regarding a node. */
 declare class SyncUpdate<ID = any> {
@@ -4099,9 +4218,6 @@ declare class SyncUpdate<ID = any> {
     /** Iterate over new sequence numbers. */
     seqNums(): Iterable<number>;
 }
-
-/** AbortSignal.timeout ponyfill. */
-declare const timeoutAbortSignal: (time: number) => AbortSignal;
 
 /** Timing-safe equality comparison. */
 declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
@@ -4176,6 +4292,15 @@ declare function toSubjectName(name: Name): Name;
 
 /** Convert string to UTF-8 byte array. */
 declare function toUtf8(s: string): Uint8Array;
+
+/**
+ * Keep records on whether an event listener has been added.
+ * This may allow EventTarget subclass to skip certain event generation code paths.
+ * Tracking is imprecise: it does not consider 'once' and 'removeEventListener'.
+ * @param target EventTarget to override.
+ * @returns map from event type to whether listeners may exist.
+ */
+declare function trackEventListener(target: EventTarget): Record<string, boolean>;
 
 /**
  * Low-level transport.
@@ -4311,17 +4436,20 @@ declare namespace util {
     export {
         assert,
         console_2 as console,
+        concatBuffers,
         crypto_2 as crypto,
         delay,
-        concatBuffers,
         asUint8Array,
         asDataView,
         Closer,
         Closers,
         timingSafeEqual,
         sha256,
+        trackEventListener,
+        CustomEvent_2 as CustomEvent,
         safeIter,
         flatMapOnce,
+        evict,
         KeyMap,
         KeyMultiMap,
         MultiMap,
@@ -4330,8 +4458,7 @@ declare namespace util {
         fromHex,
         toUtf8,
         fromUtf8,
-        randomJitter,
-        timeoutAbortSignal
+        randomJitter
     }
 }
 export { util }

@@ -1,13 +1,13 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AltUri, Component as NameComponent } from "@ndn/packet";
-import { Decoder, Encoder, Encodable, NNI } from '@ndn/tlv';
+import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
 import { visTlv } from '../interfaces';
 
 @Component({
   selector: 'app-visualizer',
   templateUrl: 'visualizer.component.html',
-  styleUrls: ['visualizer.component.css']
+  styleUrls: ['visualizer.component.scss']
 })
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: any;

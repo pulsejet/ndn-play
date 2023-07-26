@@ -5,7 +5,6 @@ import { CAPTURED_FLAG_REPLAYING, ICapturedPacket, IEdge } from '../interfaces';
 @Component({
   selector: 'app-captured-replay',
   templateUrl: 'captured-replay.component.html',
-  styleUrls: ['captured-replay.component.css']
 })
 export class CapturedReplayComponent implements OnInit {
 

@@ -1,10 +1,15 @@
-@import 'bulma/css/bulma.css';
+@import 'bulma/bulma.sass';
 @import 'xterm/css/xterm.css';
+
+:root {
+    --bg-color: white;
+}
 
 body, html {
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden;
+    background-color: var(--bg-color);
 }
 
 *::-webkit-scrollbar {

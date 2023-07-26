@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-captured-list[node]',
   templateUrl: 'captured-list-component.html',
-  styleUrls: ['captured-list-component.css']
+  styleUrls: ['captured-list-component.scss']
 })
 export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   public AltUri = AltUri;

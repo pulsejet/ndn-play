@@ -3,7 +3,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Outp
 @Component({
   selector: 'app-pane',
   templateUrl: 'pane.component.html',
-  styleUrls: ['pane.component.css']
+  styleUrls: ['pane.component.scss']
 })
 export class PaneComponent implements OnInit, AfterViewInit {
 

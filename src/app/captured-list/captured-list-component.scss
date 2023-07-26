@@ -1,0 +1,36 @@
+.packets {
+    width: 100%;
+    font-family: monospace;
+    font-size: 0.8em;
+
+    .Interest {
+        background-color: #ccffcc;
+    }
+
+    .Data {
+        background-color: #ffcccc;
+    }
+
+    .active {
+        background-color: magenta;
+    }
+
+    .selected {
+        background-color: blueviolet;
+        color: white;
+    }
+
+    tr {
+        cursor: pointer;
+    }
+
+    td, th {
+        padding: 1px 2px;
+        border-bottom: 1px solid white;
+    }
+}
+
+cdk-virtual-scroll-viewport {
+    height: 100%;
+    width: 100%;
+}

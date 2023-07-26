@@ -115,6 +115,10 @@ export enum TLV_NDNLPv2 {
     PrefixAnnouncement = 848,
 }
 
+export enum TLV_Reserved {
+    Ignore = 126,
+}
+
 // =============================================================
 // If an object with BLOB_* is exported then the corresponding
 // TLV will not be decoded and will be treated as a opaque blob.

@@ -28,6 +28,7 @@
 // =============================================================
 // Standard NDN TLV types. If you need to change any of these,
 // you are probably doing something wrong.
+// https://docs.named-data.net/NDN-packet-spec/current/types.html
 // =============================================================
 
 export enum TLV_V3 {

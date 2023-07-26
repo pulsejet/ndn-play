@@ -73,8 +73,8 @@ export class VisualizerComponent implements OnInit {
     this.compiledTlvCode = this.gs.topo.tlvTypesCode;
 
     // Transpile as module and get exports
-    let code = (<any>window).ts.transpileModule(this.gs.topo.tlvTypesCode, {
-      target: (<any>window).ts.ScriptTarget.ES2015,
+    let code = window.ts.transpileModule(this.gs.topo.tlvTypesCode, {
+      target: window.ts.ScriptTarget.ES2015,
     });
     code = `
       const exports = {};
@@ -115,7 +115,7 @@ export class VisualizerComponent implements OnInit {
     return undefined;
   }
 
-  visualize(tlv: string | Uint8Array | ArrayBuffer | Encodable): visTlv[] {
+  visualize(tlv: Parameters<typeof window.visualize>[0]): visTlv[] {
     if (!tlv) return [];
     this.compileTlvTypes();
 

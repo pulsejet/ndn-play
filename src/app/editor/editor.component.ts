@@ -3,7 +3,7 @@ import * as userTypes from '../user-types';
 
 export const monacoConfig = {
   onMonacoLoad: async () => {
-    const monaco = (<any>window).monaco;
+    const monaco = window.monaco;
 
     /** Inject library from HTTP */
     const injectLib = async (url: string, namespace: string, constExports: string[]) => {

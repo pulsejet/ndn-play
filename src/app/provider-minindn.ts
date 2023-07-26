@@ -185,7 +185,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
         break;
 
       case WS_FUNCTIONS.GET_PCAP_WIRE:
-        (<any>window).visualize(msg?.[MSG_KEY_RESULT]);
+        window.visualize(msg?.[MSG_KEY_RESULT]);
         break;
 
       case WS_FUNCTIONS.OPEN_TERMINAL:
@@ -379,7 +379,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   }
 
   public visualizeCaptured(packet: ICapturedPacket, node: INode) {
-    (<any>window).visualize();
+    window.visualize(undefined);
     this.wsFun(WS_FUNCTIONS.GET_PCAP_WIRE, node.label, packet[1]);
   }
 

@@ -18,7 +18,7 @@ export namespace ext {
      * Visualize a packet
      * @param packet can be hex string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable): void {};
+    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void {};
 
     /**
      * Filter packets to be captured
@@ -41,3 +41,16 @@ export namespace ext {
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void {};
 }
 
+// These types are visible at NDN-Play compile time on the Window object
+declare global {
+    interface Window {
+        ndn: typeof ext.ndnTypes;
+        visualize: typeof ext.visualize;
+        setGlobalCaptureFilter: typeof ext.setGlobalCaptureFilter;
+        loadfile: typeof ext.loadfile;
+        downloadfile: typeof ext.downloadfile;
+
+        monaco: any; // editor
+        ts: any; // typescript compiler
+    }
+}

@@ -64,5 +64,5 @@ export function loadFileBin(): Promise<ArrayBuffer> {
 }
 
 // Expose globally
-(<any>window).downloadfile = downloadFile;
-(<any>window).loadfile = loadFileBin;
+window.downloadfile = downloadFile;
+window.loadfile = loadFileBin;

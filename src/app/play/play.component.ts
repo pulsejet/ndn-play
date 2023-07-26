@@ -27,9 +27,9 @@ export class PlayComponent implements OnInit, AfterViewInit {
   constructor(public gs: GlobalService) {}
 
   ngOnInit() {
-    (<any>window).ndn = ndnUserTypes.ndnTypes;
-    (<any>window).visualize = (p: any) => this.visualizedTlv = p;
-    (<any>window).setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
+    window.ndn = ndnUserTypes.ndnTypes;
+    window.visualize = (p) => this.visualizedTlv = p;
+    window.setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
   }
 
   ngAfterViewInit() {

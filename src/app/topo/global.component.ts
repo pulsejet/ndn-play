@@ -53,7 +53,7 @@ import { Topology } from './topo';
             </label>
         </div>
 
-        <div class="field">
+        <div class="field" *ngIf="$any(topo.provider).BROWSER">
             <label class="label is-small">Experiment:</label>
             <button class="button is-success is-light is-small full-width"
                     [disabled]="runExpDebounce"

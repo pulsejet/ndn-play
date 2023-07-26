@@ -73,6 +73,10 @@ import { Topology } from './topo';
                     (click)="showMnConfig = true; mnConf.value = miniNDN.generate(topo)">
                 MiniNDN Config
             </button>
+            <button class="button is-link is-light is-small full-width mt-1"
+                    (click)="visualizeFileTLV()">
+                Visualize TLV File
+            </button>
         </div>
     </div>
 
@@ -163,8 +167,12 @@ export class TopoGlobalComponent implements OnInit {
     this.showExpDump = false;
   }
 
-  exportExpDump() {
+  async exportExpDump() {
     this.topo.provider.downloadExperimentDump?.();
     this.showExpDump = false;
+  }
+
+  async visualizeFileTLV() {
+    window.visualize(await window.loadfile());
   }
 }

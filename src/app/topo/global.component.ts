@@ -119,7 +119,7 @@ import { Topology } from './topo';
                 <button class="delete" aria-label="close" (click)="showMnConfig = false"></button>
             </header>
             <section class="modal-card-body">
-                <textarea #mnConf rows=30
+                <textarea #mnConf rows=20
                         class="textarea full-width is-small"
                         style="white-space: nowrap"></textarea>
             </section>

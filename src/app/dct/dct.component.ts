@@ -41,7 +41,7 @@ export class DCTComponent implements OnInit {
     compiler.callMain(['-o', 'schema.scm', 'schema.rules']);
 
     // Save schema to localStorage
-    localforage.setItem('dct:schema', schema);
+    localforage.setItem('dct:schema', this.schema);
   }
 
   getModuleArgs() {

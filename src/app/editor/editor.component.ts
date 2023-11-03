@@ -6,6 +6,16 @@ export const monacoConfig = {
   onMonacoLoad: async () => {
     const monaco = window.monaco;
 
+    // Set dark theme
+    monaco.editor.defineTheme('vs-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: "function.versec", foreground: "666600" },
+      ],
+      colors: {}
+    });
+
     /** Inject library from HTTP */
     const injectLib = async (url: string, namespace: string, constExports: string[]) => {
       const res = await fetch(url);

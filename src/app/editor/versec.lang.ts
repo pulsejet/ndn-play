@@ -18,7 +18,7 @@ export default {
       [/_\w*\b/, { token: "variable" }],
 
       // defns
-      [/^(_|#)?\w+/, { token: "function" }],
+      [/^(_|#)?\w+:/, { token: "function" }],
 
       // invocations
       [/\w+\(\)/, { token: "function" }],

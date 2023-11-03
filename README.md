@@ -25,3 +25,8 @@ npm run build           # generate production build
 ## Contributions
 
 Are welcome though GitHub. All files are licensed under the Apache License v2.0.
+
+## License
+
+All code in the repository is licensed under the Apache License Version 2.0 unless otherwise noted.
+The DCT tools are licensed under the GPLv3 license. If you want a permissive build, remove the `dct-wasm` dependency from `package.json`.

@@ -45,6 +45,9 @@ export class WasmService {
         script.addEventListener('load', async () => {
           this.get(path, name, moduleArgs).then(resolve, reject);
         });
+        script.addEventListener('error', () => {
+          reject(new Error(`Failed to load ${path}`));
+        });
         document.body.appendChild(script);
       });
     }

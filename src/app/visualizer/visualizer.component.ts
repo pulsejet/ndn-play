@@ -3,6 +3,7 @@ import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
 import { visTlv } from '../interfaces';
+import localforage from 'localforage';
 
 @Component({
   selector: 'app-visualizer',
@@ -26,11 +27,11 @@ export class VisualizerComponent implements OnInit {
   constructor(private gs: GlobalService) { }
 
   ngOnInit(): void {
-    fetch('/assets/tlv-types.ts').then((res) => res.text()).then((code) => {
+    fetch('/assets/tlv-types.ts').then((res) => res.text()).then(async (code) => {
       this.gs.topo.tlvTypesCode = code.trim();
 
       // Load custom TLV types from local storage
-      const customTlvTypes = localStorage.getItem('customTlvTypes');
+      const customTlvTypes = await localforage.getItem<string>('customTlvTypes');
       if (customTlvTypes) {
         this.gs.topo.tlvTypesCode += customTlvTypes;
       }
@@ -94,7 +95,7 @@ export class VisualizerComponent implements OnInit {
     // Persist custom TLV types
     const i = this.compiledTlvCode.lastIndexOf('+==+==+');
     const customTlvTypes = this.compiledTlvCode.substring(i + 7);
-    localStorage.setItem('customTlvTypes', customTlvTypes);
+    localforage.setItem('customTlvTypes', customTlvTypes);
   }
 
   getTlvTypeText(type: number, parent: number): string | undefined {

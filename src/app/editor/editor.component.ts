@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
+import versecLang from './versec.lang';
 import * as userTypes from '../user-types';
 
 export const monacoConfig = {
@@ -19,7 +20,7 @@ export const monacoConfig = {
       url);
     }
 
-    // compiler options
+    // diagnostic options
     monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: false,
       noSyntaxValidation: false,
@@ -28,10 +29,15 @@ export const monacoConfig = {
       ]
     });
 
+    // compiler options
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
       target: monaco.languages.typescript.ScriptTarget.ES2015,
       allowNonTsExtensions: true
     });
+
+    // add versec language
+    monaco.languages.register({ id: 'versec' });
+    monaco.languages.setMonarchTokensProvider('versec', versecLang)
 
     await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(userTypes.ext));
   }

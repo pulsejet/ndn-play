@@ -1,15 +1,5 @@
 import { Component } from '@angular/core';
-import { GlobalService } from '../global.service';
 import { WasmService } from '../wasm.service';
-
-// WASM modules
-type WasmModule = {
-  callMain: (args: string[]) => void;
-  FS_createDataFile: (path: string, name: string, data: string, canRead: boolean, canWrite: boolean) => void;
-}
-
-// WASM module names
-type WasmModuleName = 'schemaCompile';
 
 @Component({
   selector: 'app-dct',
@@ -17,21 +7,37 @@ type WasmModuleName = 'schemaCompile';
   styleUrls: ['dct.component.scss']
 })
 export class DCTComponent {
-
   public schema = "// Write DCT schema here";
 
   constructor(
-    private gs: GlobalService,
     private wasm: WasmService,
   ) { }
 
   async compile(): Promise<void> {
+    this.clearConsole();
+
     // Convert line endings to LF. Also add a trailing newline.
     const schema = this.schema.replace(/\r\n/g, '\n') + '\n';
 
     // Compile the schema
-    const compiler = await this.wasm.get('assets/dct/schemaCompile.js', 'schemaCompile', { noInitialRun: true });
+    const compiler = await this.wasm.get('assets/dct/schemaCompile.js', 'schemaCompile', this.getModuleArgs());
     compiler.FS_createDataFile('', 'schema.rules', schema, true, true, true);
     compiler.callMain(['-o', 'schema.scm', 'schema.rules']);
+  }
+
+  getModuleArgs() {
+    const console = (<any>window).console;
+
+    // Enable logging only to our console and not
+    // the browser console to prevent noise.
+    return {
+      noInitialRun: true,
+      print: console.log_play,
+      printErr: console.error_play,
+    };
+  }
+
+  clearConsole(): void {
+    (<any>window).console.clear_play();
   }
 }

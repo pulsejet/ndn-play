@@ -32,16 +32,18 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     // Initialize console logging
+    const c = (<any>console);
     const initConsole = (type: string) => {
-      const c = (<any>console);
       if (!c[type]) {
         c[type] = (...args: any[]) => { };
       }
 
-      c['d' + type] = c[type].bind(console);
-      c[type] = (...args: any[]) => {
-        c['d' + type].apply(console, args);
+      // Original function
+      c[type + '_orig'] = c[type].bind(console);
 
+      // Our console function
+      c[type + '_play'] = (...args: any[]) => {
+        // Print conversion
         for (let i = 0; i < args.length; i++) {
           const a = args[i];
           if (a instanceof Name) {
@@ -58,7 +60,15 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
           msg: args.join(' '),
         });
       };
+
+      // Monkey patch to do both
+      c[type] = (...args: any[]) => {
+        c[type + '_orig'].apply(console, args);
+        c[type + '_play'].apply(console, args);
+      };
     };
+
+    // Initialize console
     initConsole('log');
     initConsole('warn');
     initConsole('error');
@@ -70,6 +80,11 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
         msg: `Uncaught ${event.reason}`,
       });
     });
+
+    // Add clear function
+    c.clear_play = () => {
+      this.term.clear();
+    }
   }
 
   ngAfterViewInit(): void {

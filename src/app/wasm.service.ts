@@ -9,6 +9,8 @@ type WasmModuleArgs = {
   noInitialRun?: boolean;
   noExitRuntime?: boolean;
   noFSInit?: boolean;
+  print?: (msg: string) => void;
+  printErr?: (msg: string) => void;
 }
 
 type WasmModuleName = 'schemaCompile';

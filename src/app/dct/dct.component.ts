@@ -37,7 +37,7 @@ export class DCTComponent implements OnInit {
 
     // Compile the schema
     const compiler = await this.wasm.get('assets/dct/schemaCompile.js', 'schemaCompile', this.getModuleArgs());
-    compiler.FS_createDataFile('', 'schema.rules', schema, true, true, true);
+    compiler.FS.writeFile('schema.rules', schema);
     compiler.callMain(['-o', 'schema.scm', 'schema.rules']);
 
     // Save schema to localStorage

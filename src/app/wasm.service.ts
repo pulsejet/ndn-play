@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 
 type WasmModule = {
   callMain: (args: string[]) => void;
-  FS_createDataFile: (path: string, name: string, data: string, canRead: boolean, canWrite: boolean, canOwn: boolean) => void;
+  FS: {
+    writeFile: (path: string, data: string) => void;
+    readFile: (path: string) => string;
+    unlink: (path: string) => void;
+  };
 }
 
 type WasmModuleArgs = {

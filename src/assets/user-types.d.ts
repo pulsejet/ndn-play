@@ -1,3 +1,4 @@
+/// <reference types="emscripten" />
 /// <reference types="node" />
 
 import type * as asn1 from '@yoursunny/asn1';
@@ -693,6 +694,11 @@ declare namespace DataStoreBuffer {
     }
 }
 
+/** Global type for DCT modules. */
+declare type DCT = {
+    schemaCompile: WasmFunction;
+};
+
 declare interface DebugEntry {
     action: string;
     ownIblt: IBLT;
@@ -1189,6 +1195,8 @@ export declare namespace ext {
      * @param deflate Compress the buffer using pako DEFLATE
      */
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
+    /** DCT tools module */
+    const DCT: DCT;
 }
 
 /** An TLV element that allows extension sub element. */
@@ -4509,6 +4517,9 @@ declare namespace Verifier {
     /** Throw bad signature error if not OK. */
     function throwOnBadSig(ok: boolean): asserts ok;
 }
+
+/** WASM function */
+declare type WasmFunction = (...args: string[]) => Promise<number>;
 
 declare namespace ws_transport {
     export {

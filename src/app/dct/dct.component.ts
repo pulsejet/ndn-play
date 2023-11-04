@@ -2,22 +2,30 @@ import { Component, OnInit } from '@angular/core';
 import { WasmService } from '../wasm.service';
 import localforage from 'localforage';
 
+const LS = {
+  schema: 'dct:schema',
+}
+
 @Component({
   selector: 'app-dct',
   templateUrl: 'dct.component.html',
   styleUrls: ['dct.component.scss']
 })
 export class DCTComponent implements OnInit {
-  public schema = "// Write DCT schema here";
+  public schema = String();
 
   constructor(
     private wasm: WasmService,
   ) { }
 
+  ngOnInit(): void {
+    // Explose global DCT object
+    window.DCT = {
+      schemaCompile: this.wasm.wrapper('assets/dct/schemaCompile.js', 'schemaCompile'),
+    };
 
-  async ngOnInit(): Promise<void> {
     // Load schema from localStorage
-    localforage.getItem<string>('dct:schema').then((schema) => {;
+    localforage.getItem<string>(LS.schema).then((schema) => {;
       if (schema?.trim()) {
         this.schema = schema;
       } else {
@@ -29,34 +37,18 @@ export class DCTComponent implements OnInit {
     });
   }
 
-  async compile(): Promise<void> {
-    this.clearConsole();
+  async compileSchema(): Promise<void> {
+    window.console.clear_play();
 
     // Convert line endings to LF. Also add a trailing newline.
     const schema = this.schema.replace(/\r\n/g, '\n') + '\n';
 
     // Compile the schema
-    const compiler = await this.wasm.get('assets/dct/schemaCompile.js', 'schemaCompile', this.getModuleArgs());
-    compiler.FS.writeFile('schema.rules', schema);
-    compiler.callMain(['-o', 'schema.scm', 'schema.rules']);
+    this.wasm.writeFile('schema.rules', schema);
+    const status = await window.DCT.schemaCompile('-o', 'schema.scm', 'schema.rules');
+    if (status !== 0) return;
 
-    // Save schema to localStorage
-    localforage.setItem('dct:schema', this.schema);
-  }
-
-  getModuleArgs() {
-    const console = (<any>window).console;
-
-    // Enable logging only to our console and not
-    // the browser console to prevent noise.
-    return {
-      noInitialRun: true,
-      print: console.log_play,
-      printErr: console.error_play,
-    };
-  }
-
-  clearConsole(): void {
-    (<any>window).console.clear_play();
+    // Save schema to local storage
+    await localforage.setItem(LS.schema, this.schema);
   }
 }

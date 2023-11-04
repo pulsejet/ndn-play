@@ -1,7 +1,9 @@
-<app-editor [(code)]="schema" language="versec"></app-editor>
+<app-tabs class="tab-container">
+    <app-tab name="Schema">
+        <app-editor [(code)]="schema" language="versec"></app-editor>
 
-<div class="actions">
-    <button class="button is-danger is-light is-small mt-1" (click)="compile()">
-        Compile
-    </button>
-</div>
+        <div class="actions">
+            <button class="button is-danger is-light is-small mt-1" (click)="compileSchema()">Compile</button>
+        </div>
+    </app-tab>
+</app-tabs>

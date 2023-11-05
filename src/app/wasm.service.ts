@@ -52,7 +52,7 @@ export class WasmService {
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = path;
-        script.addEventListener('load', async () => {
+        script.addEventListener('load', () => {
           this.get(path, name, moduleArgs).then(resolve, reject);
         });
         script.addEventListener('error', () => {

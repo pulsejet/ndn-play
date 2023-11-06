@@ -10,6 +10,13 @@
 
     <app-tab name="Visualizer" #visualizerTab>
         <div #dagContainer class="dag"></div>
+
+        <div class="actions">
+            <label class="checkbox is-small">
+                <input type="checkbox" [(ngModel)]="certDagOpts.hideChainInfo" (change)="certDagUpdate()">
+                Hide #chainInfo
+            </label>
+        </div>
     </app-tab>
 
     <app-tab name="Script">

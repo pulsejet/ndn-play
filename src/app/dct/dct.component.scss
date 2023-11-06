@@ -6,6 +6,14 @@ div.actions {
     button {
         margin-left: 5px;
     }
+
+    .checkbox {
+        user-select: none;
+        font-size: 0.8em;
+        > input {
+            height: 0.7em;
+        }
+    }
 }
 
 .dag {

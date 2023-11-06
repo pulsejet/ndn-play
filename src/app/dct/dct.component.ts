@@ -36,6 +36,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
     edges: new DataSet<ICertDagEdge>(),
   };
   private certDagNet!: Network;
+  public certDagOpts = {
+    hideChainInfo: true,
+  };
 
   // Native Elements
   @ViewChild('tabs') tabs!: TabsComponent;
@@ -93,7 +96,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
           enabled: true,
           sortMethod: 'directed',
           levelSeparation: 80,
-          nodeSpacing: 80,
+          nodeSpacing: 50,
           treeSpacing: 80,
           direction: 'UD',
         },
@@ -237,12 +240,25 @@ export class DCTComponent implements OnInit, AfterViewInit {
         this.certDag.nodes.update(node);
       }
     }
-    for (const edge of this.certDag.edges.get())
+    for (const edge of this.certDag.edges.get()) {
       if (!edge.mark) this.certDag.edges.remove(edge.id);
+    }
 
-    // Stabilize physics if needed
+    this.certDagUpdate();
     this.certDagNet.stabilize();
     this.certDagNet.fit();
+  }
+
+  certDagUpdate() {
+    // Set options
+    const chainInfo = this.certDag.nodes.get('#chainInfo');
+    if (chainInfo) {
+      this.certDag.nodes.update({
+        id: chainInfo.id,
+        hidden: this.certDagOpts.hideChainInfo,
+        physics: !this.certDagOpts.hideChainInfo,
+      });
+    }
   }
 
   preHookFS(): void {

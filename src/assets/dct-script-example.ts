@@ -39,7 +39,7 @@ await DCT.schema_cert({
     output: schemaCert,
     input: bschema,
     signer: rootCert,
-})
+});
 
 // make the device certs
 for (const nm of devices) {
@@ -48,7 +48,7 @@ for (const nm of devices) {
         output: `${nm}.cert`,
         name: `${pubPrefix}/device/${nm}`,
         signer: deviceSigner,
-    })
+    });
 }
 
 // make the operator certs
@@ -58,7 +58,7 @@ for (const nm of operators) {
         output: `${nm}.cert`,
         name: `${pubPrefix}/operator/${nm}`,
         signer: rootCert,
-    })
+    });
 }
 
 // make bundles for operators
@@ -66,5 +66,8 @@ for (const nm of operators) {
     await DCT.make_bundle({
         output: `${nm}.bundle`,
         input: [rootCert, schemaCert, `+${nm}.cert`],
-    })
+    });
 }
+
+// visualize alice's bundle
+visualize(WFS.readFile('alice.bundle'));

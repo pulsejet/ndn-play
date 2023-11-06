@@ -41,7 +41,8 @@ export namespace ext {
      */
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void {};
 
-    /** DCT tools module */
+    /** Other modules */
+    export const WFS: typeof FS = <any>null;
     export const DCT: DCT = <any>null;
 }
 
@@ -55,9 +56,6 @@ declare global {
         loadfile: typeof ext.loadfile;
         downloadfile: typeof ext.downloadfile;
 
-        // DCT tools modules
-        DCT: DCT;
-
         // Augment console methods
         console: Console & {
             log_play: (...args: any[]) => void;
@@ -70,5 +68,7 @@ declare global {
         // Other modules
         monaco: any; // editor
         ts: any; // typescript compiler
+        WFS: typeof FS; // wasm filesystem
+        DCT: DCT; // DCT tools
     }
 }

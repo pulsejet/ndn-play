@@ -20,11 +20,8 @@ export const monacoConfig = {
     const injectLib = async (url: string, namespace: string, constExports: string[]) => {
       const res = await fetch(url);
       let libSource = await res.text();
-      monaco.languages.typescript.javascriptDefaults.addExtraLib(
-        `declare namespace ${namespace} {
-          ${libSource}
-        }
-
+      monaco.languages.typescript.javascriptDefaults.addExtraLib(`
+        declare namespace ${namespace} { ${libSource} }
         const { ${constExports.join(',') } } = ${namespace}.ext;
       `,
       url);
@@ -65,7 +62,7 @@ export const monacoConfig = {
   `,
   styles: []
 })
-export class EditorComponent implements OnInit {
+export class EditorComponent {
   editorOptions = {theme: 'vs-light', language: 'javascript', automaticLayout: true};
 
   @Input() public code: string = '';
@@ -74,9 +71,6 @@ export class EditorComponent implements OnInit {
   @Input() public language = 'javascript';
 
   constructor() { }
-
-  ngOnInit(): void {
-  }
 
   ngOnChanges(changes: { [propName: string]: SimpleChange }) {
     if (changes.language) {

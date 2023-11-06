@@ -6,4 +6,12 @@
             <button class="button is-danger is-light is-small mt-1" (click)="compileSchema()">Compile</button>
         </div>
     </app-tab>
+
+    <app-tab name="Script">
+        <app-editor [(code)]="script" language="javascript"></app-editor>
+
+        <div class="actions">
+            <button class="button is-danger is-light is-small mt-1" (click)="runScript()">Run</button>
+        </div>
+    </app-tab>
 </app-tabs>

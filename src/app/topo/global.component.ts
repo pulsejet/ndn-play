@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import * as miniNDN from '../minindn-config';
 import { Topology } from './topo';
 
@@ -139,7 +139,7 @@ import { Topology } from './topo';
   styles: [
   ]
 })
-export class TopoGlobalComponent implements OnInit {
+export class TopoGlobalComponent {
 
   public miniNDN = miniNDN;
 
@@ -151,9 +151,6 @@ export class TopoGlobalComponent implements OnInit {
   @Input() public topo: Topology = <any>undefined;
 
   constructor() { }
-
-  ngOnInit(): void {
-  }
 
   runExperiment() {
     this.runExpDebounce = true;

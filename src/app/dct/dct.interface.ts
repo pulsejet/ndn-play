@@ -74,7 +74,7 @@ export function initialize(wasm: WasmService): DCT {
 
   return {
     schemaCompile: async (opts) => {
-      requireProps(opts, ['input']);
+      requireProps('schemaCompile', opts, ['input']);
 
       const args = [];
       if (opts.quiet) args.push('-q');
@@ -91,7 +91,7 @@ export function initialize(wasm: WasmService): DCT {
     },
 
     schema_info: async (opts) => {
-      requireProps(opts, ['input']);
+      requireProps('schema_info', opts, ['input']);
 
       const args = [];
       if (opts.c) args.push('-c');
@@ -110,7 +110,7 @@ export function initialize(wasm: WasmService): DCT {
     },
 
     make_cert: async (opts) => {
-      requireProps(opts, ['name']);
+      requireProps('make_cert', opts, ['name']);
 
       const args = [];
       if (opts.sigType) args.push('-s', opts.sigType);
@@ -124,7 +124,7 @@ export function initialize(wasm: WasmService): DCT {
     },
 
     schema_cert: async (opts) => {
-      requireProps(opts, ['input']);
+      requireProps('schema_cert', opts, ['input']);
 
       const args = [];
       if (opts.output) args.push('-o', opts.output);
@@ -137,7 +137,7 @@ export function initialize(wasm: WasmService): DCT {
     },
 
     make_bundle: async (opts) => {
-      requireProps(opts, ['input', 'output']);
+      requireProps('make_bundle', opts, ['input', 'output']);
 
       const args = [];
       if (opts.verbose) args.push('-v');
@@ -151,8 +151,8 @@ export function initialize(wasm: WasmService): DCT {
   };
 }
 
-function requireProps<T>(obj: T, props: (keyof T)[]): void {
+function requireProps<T>(name: string, obj: T, props: (keyof T)[]): void {
   for (const prop of props)
     if (!obj[prop])
-      throw new Error(`${String(prop)} is required`);
+      throw new Error(`${name}: ${String(prop)} is required`);
 }

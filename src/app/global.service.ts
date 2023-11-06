@@ -34,12 +34,12 @@ export class GlobalService {
       this.topo = new Topology(new ProviderBrowser());
     }
 
-    requestAnimationFrame(this.runAnimationFrame.bind(this));
+    requestAnimationFrame(() => this.runAnimationFrame());
   }
 
   /** Update objects every animation frame */
   public runAnimationFrame() {
     this.topo.runAnimationFrame();
-    requestAnimationFrame(this.runAnimationFrame.bind(this));
+    requestAnimationFrame(() => this.runAnimationFrame());
   }
 }

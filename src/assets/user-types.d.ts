@@ -694,10 +694,64 @@ declare namespace DataStoreBuffer {
     }
 }
 
-/** Global type for DCT modules. */
-declare type DCT = {
-    schemaCompile: WasmFunction;
-};
+declare interface DCT {
+    /** Compile a trust schema. */
+    schemaCompile: (opts: {
+        /** input file */
+        input: string;
+        /** output file */
+        output?: string;
+        /** quiet (no diagnostic output) */
+        quiet?: boolean;
+        /** increase diagnostic level */
+        verbose?: boolean;
+        /** debug (highest diagnostic level) */
+        debug?: boolean;
+        /** print schema's cert DAG then exit */
+        printDAG?: boolean;
+        /** print compiler version and exit */
+        version?: boolean;
+    }) => Promise<void>;
+    /** Get information about a trust schema. */
+    schema_info: (opts: {
+        /** input binary schema */
+        input: string;
+        /** pass option -c */
+        c?: boolean;
+        /** pass option -t */
+        t?: boolean;
+        /** publication name */
+        pubname?: string;
+    }) => Promise<string>;
+    /** Generate a self-signed certificate. */
+    make_cert: (opts: {
+        /** Type of signature (e.g. EdDSA) */
+        sigType?: string;
+        /** Output file */
+        output?: string;
+        /** Name of certificate */
+        name: string;
+        /** Signer of cert */
+        signer?: string;
+    }) => Promise<void>;
+    /** Sign a schema to create a schema certificate */
+    schema_cert: (opts: {
+        /** Output file */
+        output?: string;
+        /** Input schema file */
+        input: string;
+        /** Schema signer */
+        signer?: string;
+    }) => Promise<void>;
+    make_bundle: (opts: {
+        /** Increase output level */
+        verbose?: boolean;
+        /** Output file */
+        output: string;
+        /** Input files */
+        input: string[];
+    }) => Promise<void>;
+}
 
 declare interface DebugEntry {
     action: string;
@@ -1195,7 +1249,8 @@ export declare namespace ext {
      * @param deflate Compress the buffer using pako DEFLATE
      */
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
-    /** DCT tools module */
+    /** Other modules */
+    const WFS: typeof FS;
     const DCT: DCT;
 }
 
@@ -4517,9 +4572,6 @@ declare namespace Verifier {
     /** Throw bad signature error if not OK. */
     function throwOnBadSig(ok: boolean): asserts ok;
 }
-
-/** WASM function */
-declare type WasmFunction = (...args: string[]) => Promise<number>;
 
 declare namespace ws_transport {
     export {

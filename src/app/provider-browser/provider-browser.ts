@@ -124,13 +124,18 @@ export class ProviderBrowser implements ForwardingProvider {
     }).catch(console.error);
   }
 
-  public runCode(code: string, node: INode) {
-    code = window.ts.transpile(code, {
-      target: window.ts.ScriptTarget.ES2015
-    });
-    code = "try { (async () => { const node = this; " + code + "})() } catch (e) { console.error(e); }";
-    const fun = new Function(code);
-    fun.call(node);
+  public async runCode(code: string, node: INode) {
+    const target = window.ts.ScriptTarget.ES2015;
+    code = `const node = this; return (async () => {
+      ${code}
+    })()`;
+    code = window.ts.transpile(code, { target });
+
+    try {
+      await new Function(code).call(node);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   /** Schedule a refresh of static routes */

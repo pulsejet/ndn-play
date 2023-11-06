@@ -1,5 +1,3 @@
-/// <reference types="emscripten" />
-
 import { Injectable } from '@angular/core';
 
 /** WASM module after load */
@@ -122,7 +120,7 @@ export class WasmService {
     // Initialize filesystem
     if (!this.FS) {
       // Save filesystem for other modules
-      this.FS = module.FS;
+      window.WFS = this.FS = module.FS;
     } else {
       // Mount filesystem to data directory
       module.FS.mount((this.FS as any).filesystems.PROXYFS, {

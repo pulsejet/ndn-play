@@ -73,8 +73,6 @@
     "@ndn/fw",
     "@ndn/util",
     "vis-network",
-    "vis-data",
-    "vis-util",
     "typed-emitter",
     "abort-controller",
     "event-target-shim"

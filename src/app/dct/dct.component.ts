@@ -240,7 +240,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
         const template = match[2].trim();
         const node = this.certDag.nodes.get(certName);
         if (node) {
-          node.template = template;
+          // remove quotes to make it more readable
+          node.template = template.replace(/"/g, '');
         }
         continue;
       }

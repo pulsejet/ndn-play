@@ -1,10 +1,15 @@
-<app-tabs class="tab-container">
+<app-tabs class="tab-container" #tabs>
     <app-tab name="Schema">
         <app-editor [(code)]="schema" language="versec"></app-editor>
 
         <div class="actions">
-            <button class="button is-danger is-light is-small mt-1" (click)="compileSchema()">Compile</button>
+            <button class="button is-link is-light is-small mt-1" (click)="compileSchema()">Compile</button>
+            <button class="button is-link is-light is-small mt-1" (click)="visualizeSchema()">Visualize</button>
         </div>
+    </app-tab>
+
+    <app-tab name="Visualizer" #visualizerTab>
+        <div #dagContainer class="dag"></div>
     </app-tab>
 
     <app-tab name="Script">

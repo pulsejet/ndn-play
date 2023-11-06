@@ -711,7 +711,7 @@ declare interface DCT {
         printDAG?: boolean;
         /** print compiler version and exit */
         version?: boolean;
-    }) => Promise<void>;
+    }) => Promise<string>;
     /** Get information about a trust schema. */
     schema_info: (opts: {
         /** input binary schema */
@@ -1817,10 +1817,13 @@ declare type IntervalRange = [min: number, max: number];
 declare interface IPty {
     id: string;
     name: string;
-    write: EventEmitter<any>;
-    data: EventEmitter<any>;
-    resized: EventEmitter<any>;
-    focus?: EventEmitter<any>;
+    write: EventEmitter<Uint8Array>;
+    data: EventEmitter<string>;
+    resized: EventEmitter<{
+        rows: number;
+        cols: number;
+    }>;
+    focus?: EventEmitter<void>;
     initBuf?: Uint8Array;
 }
 

@@ -17,7 +17,7 @@ export interface DCT {
     printDAG?: boolean,
     /** print compiler version and exit */
     version?: boolean,
-  }) => Promise<void>;
+  }) => Promise<string>;
 
   /** Get information about a trust schema. */
   schema_info: (opts: {
@@ -85,7 +85,11 @@ export function initialize(wasm: WasmService): DCT {
       if (opts.output) args.push('-o', opts.output);
       args.push(opts.input);
 
-      await wrappers.schemaCompile(args);
+      const stdout: string[] = [];
+      await wrappers.schemaCompile(args, {
+        print: (line) => stdout.push(line) && window.console.log_play(line),
+      });
+      return stdout.join('\n');
     },
 
     schema_info: async (opts) => {

@@ -72,13 +72,15 @@ export class Topology {
     };
 
     const options = {
-      interaction: { hover: true },
+      interaction: {
+        hover: true,
+      },
       manipulation: {
         enabled: true,
       },
       layout: {
         randomSeed: 2,
-      }
+      },
     };
 
     this.network = new Network(container, data, options);

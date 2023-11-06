@@ -20,7 +20,7 @@ export const monacoConfig: NgxMonacoEditorConfig = {
     /** Inject library from HTTP */
     const injectLib = async (url: string, namespace: string, constExports: string[]) => {
       const res = await fetch(url);
-      let libSource = await res.text();
+      const libSource = await res.text();
       monaco.languages.typescript.javascriptDefaults.addExtraLib(`
         declare namespace ${namespace} { ${libSource} }
         const { ${constExports.join(',') } } = ${namespace}.ext;
@@ -43,11 +43,12 @@ export const monacoConfig: NgxMonacoEditorConfig = {
       allowNonTsExtensions: true
     });
 
+    // add user types to typescript
+    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(userTypes.ext));
+
     // add versec language
     monaco.languages.register({ id: 'versec' });
-    monaco.languages.setMonarchTokensProvider('versec', versecLang)
-
-    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(userTypes.ext));
+    monaco.languages.setMonarchTokensProvider('versec', versecLang);
   }
 };
 

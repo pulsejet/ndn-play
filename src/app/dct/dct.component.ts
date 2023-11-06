@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
 import { transpile, ScriptTarget } from 'typescript';
-import { DataSet, Network, Node, Edge } from 'vis-network/standalone';
+import { DataSet, Network, Node, Edge, IdType } from 'vis-network/standalone';
 import { COLOR_MAP } from '../topo/color.map';
 import localforage from 'localforage';
 
@@ -20,6 +20,7 @@ interface ICertDagNode extends Node {
 };
 interface ICertDagEdge extends Edge {
   mark: boolean;
+  color: Exclude<Edge['color'], string>;
 };
 
 @Component({
@@ -123,7 +124,12 @@ export class DCTComponent implements OnInit, AfterViewInit {
         },
       },
     };
+
+    // Create network
     this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
+
+    // Add event handlers
+    this.certDagNet.on('select', this.onSelect.bind(this));
   }
 
   async compileSchema(): Promise<boolean> {
@@ -229,7 +235,12 @@ export class DCTComponent implements OnInit, AfterViewInit {
                 id: id,
                 from: prev, to: cert,
                 mark: true,
-                color: COLOR_MAP.DEFAULT_LINK_COLOR,
+                color: {
+                  color: COLOR_MAP.DEFAULT_LINK_COLOR,
+                  hover: COLOR_MAP.DEFAULT_LINK_COLOR,
+                  highlight: COLOR_MAP.DEFAULT_LINK_COLOR,
+                  opacity: 1
+                },
               });
             }
           }
@@ -306,5 +317,74 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
     // Save script to local storage
     await localforage.setItem(LS.script, this.script);
+  }
+
+  onSelect({ edges, nodes }: { edges: IdType[]; nodes: IdType[] }) {
+    // DFS to get all nodes below/above the selected nodes
+    const visitedNodes = new Set<IdType>();
+    const visitedEdges = new Set<IdType>();
+
+    if (nodes.length) {
+      // One or more nodes selected
+      const dfs = (up: boolean) => {
+        const stack = [...nodes];
+        stack.forEach(visitedNodes.delete.bind(visitedNodes));
+
+        while (stack.length) {
+          const node = stack.pop()!;
+          if (visitedNodes.has(node)) continue;
+          visitedNodes.add(node);
+
+          const edges = this.certDagNet.getConnectedEdges(node);
+          for (const edge of edges) {
+            const edgeObj = this.certDag.edges.get(edge)!;
+            if (!edgeObj.from || !edgeObj.to) continue;
+
+            if (!up && edgeObj.from === node) {
+              stack.push(edgeObj.to);
+              visitedEdges.add(edgeObj.id);
+            } else if (up && edgeObj.to === node) {
+              stack.push(edgeObj.from);
+              visitedEdges.add(edgeObj.id);
+            }
+          }
+        }
+      }
+
+      // DFS up and down
+      dfs(false);
+      dfs(true);
+    } else if (edges.length) {
+      // No nodes selected, but edges selected
+      for (const edge of edges) {
+        visitedEdges.add(edge);
+        const edgeObj = this.certDag.edges.get(edge)!;
+        if (!edgeObj.from || !edgeObj.to) continue;
+
+        visitedNodes.add(edgeObj.from);
+        visitedNodes.add(edgeObj.to);
+      }
+    }
+
+    // Highlight node and neigbors
+    for (const node of this.certDag.nodes.get()) {
+      const visible = (!nodes.length && !edges.length) || visitedNodes.has(node.id);
+      this.certDag.nodes.update({
+        id: node.id,
+        opacity: visible ? 1 : 0.2,
+      });
+    }
+
+    // Highlight edges
+    for (const edge of this.certDag.edges.get()) {
+      const visible = (!nodes.length && !edges.length) || visitedEdges.has(edge.id);
+      this.certDag.edges.update({
+        id: edge.id,
+        color: {
+          ...edge.color,
+          opacity: visible ? 1 : 0.2,
+        },
+      });
+    }
   }
 }

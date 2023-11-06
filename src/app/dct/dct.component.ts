@@ -371,7 +371,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
       const visible = (!nodes.length && !edges.length) || visitedNodes.has(node.id);
       this.certDag.nodes.update({
         id: node.id,
-        opacity: visible ? 1 : 0.2,
+        opacity: visible ? 1 : 0.15,
       });
     }
 
@@ -382,7 +382,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
         id: edge.id,
         color: {
           ...edge.color,
-          opacity: visible ? 1 : 0.2,
+          opacity: visible ? 1 : 0.15,
         },
       });
     }

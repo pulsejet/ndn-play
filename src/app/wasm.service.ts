@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 
+/** List of WASM module names */
+type WasmExportName =
+  'schemaCompile' |
+  'schema_info' |
+  'make_cert' |
+  'schema_cert' |
+  'make_bundle';
+
 /** WASM module after load */
-type WasmModule = {
+type WasmModule = EmscriptenModule & {
   callMain: (args: string[]) => number;
   FS: typeof FS;
 }
@@ -12,13 +20,10 @@ type WasmModuleArgs = Partial<EmscriptenModule>;
 /** WASM function */
 type WasmFunction = (args: string[], moduleArgs?: WasmModuleArgs) => Promise<number>;
 
-/** List of WASM module names */
-type WasmModuleName =
-  'schemaCompile' |
-  'schema_info' |
-  'make_cert' |
-  'schema_cert' |
-  'make_bundle';
+/** Internal global functions */
+type WindowInternal = Window & {
+  [key in WasmExportName]?: EmscriptenModuleFactory<WasmModule>;
+};
 
 // Copied from @types/emscripten namespace FS
 // typeof FS doesn't directly work with api-extractor
@@ -54,7 +59,7 @@ export class WasmService {
   /** Working directory for virtual filesystem */
   public readonly cwd = '/data';
   /** List of loaded modules (scripts) */
-  private loaded = new Set<WasmModuleName>();
+  private loaded = new Set<WasmExportName>();
   /** Files in queue to be updated in the filesystem */
   private files: Record<string, string | Uint8Array> = {};
 
@@ -65,7 +70,7 @@ export class WasmService {
    * @param moduleArgs Arguments to pass to WASM module
    * @returns Promise that resolves to the WASM module
    */
-  public async get(path: string, name: WasmModuleName, moduleArgs?: WasmModuleArgs): Promise<WasmModule> {
+  public async get(path: string, name: WasmExportName, moduleArgs?: WasmModuleArgs): Promise<WasmModule> {
     // Load JavaScript if needed
     if (!this.loaded.has(name)) {
       // Set flag for next call
@@ -89,7 +94,8 @@ export class WasmService {
     moduleArgs = { ...this.baseArgs(), ...moduleArgs };
 
     // Load WASM module
-    const module: WasmModule = await (<any>window)[name]?.(moduleArgs ?? {});
+    const w = window as unknown as WindowInternal;
+    const module = await w[name]?.(moduleArgs ?? {});
     if (!module) {
       throw new Error(`${name} is not loaded or failed to load WASM module`);
     }
@@ -110,7 +116,7 @@ export class WasmService {
    */
   public wrapper(
     path: string,
-    name: WasmModuleName,
+    name: WasmExportName,
     wrapperArgs?: WasmModuleArgs,
     expectZero = true,
   ): WasmFunction {

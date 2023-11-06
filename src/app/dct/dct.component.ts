@@ -197,6 +197,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
           let fontColor = 'black';
           if (color === COLOR_MAP.red) fontColor = 'white';
 
+          // Get shape
+          const shape = isleaf ? 'box' : 'ellipse';
+
           // Add certificate node
           const node: ICertDagNode = {
             id: cert,
@@ -205,7 +208,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
             color: color,
             font: {
               color: fontColor,
-            }
+            },
+            shape: shape,
           };
 
           if (this.certDag.nodes.get(node.id!)) {

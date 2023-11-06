@@ -182,21 +182,36 @@ export class DCTComponent implements OnInit, AfterViewInit {
         for (let i = 0; i < chain.length; i++) {
           const cert = chain[i];
           const prev = i > 0 ? chain[i-1] : null;
+          const isroot = i === 0;
+          const isleaf = i === chain.length - 1;
 
           // Excluded nodes
           if (this.certDagOpts.hideChainInfo && cert === '#chainInfo') continue;
 
+          // Get node color
+          let color = COLOR_MAP.DEFAULT_NODE_COLOR;
+          if (isroot) color = COLOR_MAP.red;
+          else if (isleaf) color = COLOR_MAP.lightorange;
+
+          // Get font color
+          let fontColor = 'black';
+          if (color === COLOR_MAP.red) fontColor = 'white';
+
           // Add certificate node
-          const node = this.certDag.nodes.get(cert);
-          if (node) {
-            node.mark = true;
+          const node: ICertDagNode = {
+            id: cert,
+            label: cert,
+            mark: true,
+            color: color,
+            font: {
+              color: fontColor,
+            }
+          };
+
+          if (this.certDag.nodes.get(node.id!)) {
+            this.certDag.nodes.update(node);
           } else {
-            this.certDag.nodes.add({
-              id: cert,
-              label: cert,
-              mark: true,
-              color: COLOR_MAP.DEFAULT_NODE_COLOR,
-            });
+            this.certDag.nodes.add(node);
           }
 
           // Add signing chain edge
@@ -240,8 +255,10 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
       // Set extra info
       if (node.template) {
-        node.title = node.template;
-        this.certDag.nodes.update(node);
+        this.certDag.nodes.update({
+          id: node.id,
+          title: node.template,
+        });
       }
     }
     for (const edge of this.certDag.edges.get()) {

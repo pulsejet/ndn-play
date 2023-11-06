@@ -70,4 +70,4 @@ for (const nm of operators) {
 }
 
 // visualize alice's bundle
-visualize(WFS.readFile('alice.bundle'));
+visualize(FS.readFile('alice.bundle'));

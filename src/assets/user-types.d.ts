@@ -1249,8 +1249,18 @@ export declare namespace ext {
      * @param deflate Compress the buffer using pako DEFLATE
      */
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
-    /** Other modules */
-    const WFS: typeof FS;
+    /**
+     * The WebAssembly filesystem.
+     * @details Allows access to the virtual filesystem.
+     * Note: this module exists only after the first call
+     * to a WASM module has been done and the filesystem has been
+     * initialized. The /data directory is the working directory
+     * and is the only directory that is shared across all modules.
+     */
+    const FS: WasmFS;
+    /**
+     * The DCT tools module.
+     */
     const DCT: DCT;
 }
 
@@ -2989,7 +2999,7 @@ declare class ProviderBrowser implements ForwardingProvider {
     onNetworkClick: () => Promise<void>;
     sendPingInterest(from: INode, to: INode): void;
     sendInterest(name: string, node: INode): void;
-    runCode(code: string, node: INode): void;
+    runCode(code: string, node: INode): Promise<void>;
     /** Schedule a refresh of static routes */
     scheduleRouteRefresh: () => void;
     /** Compute static routes */
@@ -4571,6 +4581,37 @@ declare namespace Verifier {
     function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
     /** Throw bad signature error if not OK. */
     function throwOnBadSig(ok: boolean): asserts ok;
+}
+
+declare interface WasmFS {
+    isFile(mode: number): boolean;
+    isDir(mode: number): boolean;
+    isLink(mode: number): boolean;
+    mkdir(path: string, mode?: number): any;
+    mkdev(path: string, mode?: number, dev?: number): any;
+    symlink(oldpath: string, newpath: string): any;
+    rename(old_path: string, new_path: string): void;
+    rmdir(path: string): void;
+    readdir(path: string): any;
+    unlink(path: string): void;
+    stat(path: string, dontFollow?: boolean): any;
+    chmod(path: string, mode: number, dontFollow?: boolean): void;
+    readFile(path: string, opts: {
+        encoding: "binary";
+        flags?: string | undefined;
+    }): Uint8Array;
+    readFile(path: string, opts: {
+        encoding: "utf8";
+        flags?: string | undefined;
+    }): string;
+    readFile(path: string, opts?: {
+        flags?: string | undefined;
+    }): Uint8Array;
+    writeFile(path: string, data: string | ArrayBufferView, opts?: {
+        flags?: string | undefined;
+    }): void;
+    cwd(): string;
+    chdir(path: string): void;
 }
 
 declare namespace ws_transport {

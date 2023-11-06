@@ -20,6 +20,31 @@ type WasmModuleName =
   'schema_cert' |
   'make_bundle';
 
+// Copied from @types/emscripten namespace FS
+// typeof FS doesn't directly work with api-extractor
+export interface WasmFS {
+  isFile(mode: number): boolean;
+  isDir(mode: number): boolean;
+  isLink(mode: number): boolean;
+
+  mkdir(path: string, mode?: number): any;
+  mkdev(path: string, mode?: number, dev?: number): any;
+  symlink(oldpath: string, newpath: string): any;
+  rename(old_path: string, new_path: string): void;
+  rmdir(path: string): void;
+  readdir(path: string): any;
+  unlink(path: string): void;
+  stat(path: string, dontFollow?: boolean): any;
+  chmod(path: string, mode: number, dontFollow?: boolean): void;
+  readFile(path: string, opts: { encoding: "binary"; flags?: string | undefined }): Uint8Array;
+  readFile(path: string, opts: { encoding: "utf8"; flags?: string | undefined }): string;
+  readFile(path: string, opts?: { flags?: string | undefined }): Uint8Array;
+  writeFile(path: string, data: string | ArrayBufferView, opts?: { flags?: string | undefined }): void;
+
+  cwd(): string;
+  chdir(path: string): void;
+};
+
 @Injectable({
   providedIn: 'root'
 })
@@ -120,7 +145,7 @@ export class WasmService {
     // Initialize filesystem
     if (!this.FS) {
       // Save filesystem for other modules
-      window.WFS = this.FS = module.FS;
+      window.FS = this.FS = module.FS;
     } else {
       // Mount filesystem to data directory
       module.FS.mount((this.FS as any).filesystems.PROXYFS, {

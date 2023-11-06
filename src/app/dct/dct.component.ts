@@ -45,7 +45,7 @@ export class DCTComponent implements OnInit {
         this.script = script;
       } else {
         // Sample rules files
-        fetch('assets/dct-script-example.ts')
+        fetch('assets/dct-script-example.js')
           .then((res) => res.text())
           .then((script) => (this.script = script));
       }

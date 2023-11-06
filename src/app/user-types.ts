@@ -10,6 +10,7 @@ export type { packet, tlv, sync, keychain, util, ws_transport, endpoint }
 
 import type { ICapturedPacket, INode } from './interfaces';
 import type { DCT } from './dct/dct.interface';
+import type { WasmFS } from './wasm.service';
 
 export namespace ext {
     export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport, endpoint };
@@ -41,8 +42,19 @@ export namespace ext {
      */
     export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void {};
 
-    /** Other modules */
-    export const WFS: typeof FS = <any>null;
+    /**
+     * The WebAssembly filesystem.
+     * @details Allows access to the virtual filesystem.
+     * Note: this module exists only after the first call
+     * to a WASM module has been done and the filesystem has been
+     * initialized. The /data directory is the working directory
+     * and is the only directory that is shared across all modules.
+     */
+    export const FS: WasmFS = <any>null;
+
+    /**
+     * The DCT tools module.
+     */
     export const DCT: DCT = <any>null;
 }
 
@@ -68,7 +80,7 @@ declare global {
         // Other modules
         monaco: any; // editor
         ts: any; // typescript compiler
-        WFS: typeof FS; // wasm filesystem
+        FS: typeof FS; // wasm filesystem
         DCT: DCT; // DCT tools
     }
 }

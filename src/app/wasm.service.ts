@@ -105,15 +105,37 @@ export class WasmService {
    * @param path Path to JavaScript asset (e.g. dct/tool.js)
    * @param name Name of WASM module (e.g. schemaCompile)
    * @param wrapperArgs Arguments to pass to WASM module
+   * @param expectZero Whether to throw an error if the return value is not zero
    * @returns Promise that resolves to the WASM module
    */
-  public wrapper(path: string, name: WasmModuleName, wrapperArgs?: WasmModuleArgs): WasmFunction {
+  public wrapper(
+    path: string,
+    name: WasmModuleName,
+    wrapperArgs?: WasmModuleArgs,
+    expectZero = true,
+  ): WasmFunction {
     return async (args: string[], moduleArgs?: WasmModuleArgs) => {
+      // Get the WASM module
+      // This _will_ unfortunately fetch the module every time
       const module = await this.get(path, name, {
         ...wrapperArgs ?? {},
         ...moduleArgs ?? {},
       });
-      return module.callMain(args);
+
+      // Call native main function
+      const status = module.callMain(args);
+
+      // Check status code if needed
+      if (expectZero && status !== 0) {
+        const args_str = args
+          .slice(1) // skip dummy name
+          .map((arg) => arg.includes(' ') ? `"${arg}"` : arg) // escape spaces
+          .join(' '); // join args
+        throw new Error(`exited with status ${status} while running binary\n${name} ${args_str}`);
+      }
+
+      // Return status code
+      return status;
     };
   }
 

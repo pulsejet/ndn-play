@@ -85,9 +85,7 @@ export function initialize(wasm: WasmService): DCT {
       if (opts.output) args.push('-o', opts.output);
       args.push(opts.input);
 
-      const status = await wrappers.schemaCompile(args);
-      if (status !== 0)
-        throw new Error(`schemaCompile exited with status ${status}`);
+      await wrappers.schemaCompile(args);
     },
 
     schema_info: async (opts) => {
@@ -100,12 +98,9 @@ export function initialize(wasm: WasmService): DCT {
       if (opts.pubname) args.push(opts.pubname);
 
       const stdout: string[] = [];
-      const status = await wrappers.schema_info(args, {
+      await wrappers.schema_info(args, {
         print: (line) => stdout.push(line),
       });
-
-      if (status !== 0)
-        throw new Error(`schema_info exited with status ${status}`);
       return stdout.join('\n');
     },
 
@@ -118,9 +113,7 @@ export function initialize(wasm: WasmService): DCT {
       args.push(opts.name);
       if (opts.signer) args.push(opts.signer);
 
-      const status = await wrappers.make_cert(args);
-      if (status !== 0)
-        throw new Error(`make_cert exited with status ${status}`);
+      await wrappers.make_cert(args);
     },
 
     schema_cert: async (opts) => {
@@ -131,9 +124,7 @@ export function initialize(wasm: WasmService): DCT {
       args.push(opts.input);
       if (opts.signer) args.push(opts.signer);
 
-      const status = await wrappers.schema_cert(args);
-      if (status !== 0)
-        throw new Error(`schema_cert exited with status ${status}`);
+      await wrappers.schema_cert(args);
     },
 
     make_bundle: async (opts) => {
@@ -144,15 +135,13 @@ export function initialize(wasm: WasmService): DCT {
       args.push('-o', opts.output);
       args.push(...opts.input);
 
-      const status = await wrappers.make_bundle(args);
-      if (status !== 0)
-        throw new Error(`make_bundle exited with status ${status}`);
+      await wrappers.make_bundle(args);
     },
   };
 }
 
 function requireProps<T>(name: string, obj: T, props: (keyof T)[]): void {
   for (const prop of props)
-    if (!obj[prop])
-      throw new Error(`${name}: ${String(prop)} is required`);
+    if (obj[prop] === undefined)
+      throw new Error(`Invalid Arguments (${name} requires ${String(prop)})`);
 }

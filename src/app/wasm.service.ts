@@ -3,24 +3,24 @@
 import { Injectable } from '@angular/core';
 
 /** WASM module after load */
-export type WasmModule = {
+type WasmModule = {
   callMain: (args: string[]) => number;
   FS: typeof FS;
 }
 
 /** Module arguments for WASM */
-export type WasmModuleArgs = Partial<EmscriptenModule>;
+type WasmModuleArgs = Partial<EmscriptenModule>;
 
 /** WASM function */
-export type WasmFunction = (...args: string[]) => Promise<number>;
+type WasmFunction = (args: string[], moduleArgs?: WasmModuleArgs) => Promise<number>;
 
 /** List of WASM module names */
-export type WasmModuleName = 'schemaCompile' | 'schema_info';
-
-/** Global type for DCT modules. */
-export type DCT = {
-  schemaCompile: WasmFunction;
-};
+type WasmModuleName =
+  'schemaCompile' |
+  'schema_info' |
+  'make_cert' |
+  'schema_cert' |
+  'make_bundle';
 
 @Injectable({
   providedIn: 'root'
@@ -81,12 +81,15 @@ export class WasmService {
    * Get a wrapped WASM module as an async function.
    * @param path Path to JavaScript asset (e.g. dct/tool.js)
    * @param name Name of WASM module (e.g. schemaCompile)
-   * @param moduleArgs Arguments to pass to WASM module
+   * @param wrapperArgs Arguments to pass to WASM module
    * @returns Promise that resolves to the WASM module
    */
-  public wrapper(path: string, name: WasmModuleName, moduleArgs?: WasmModuleArgs): WasmFunction {
-    return async (...args: string[]) => {
-      const module = await this.get(path, name, moduleArgs);
+  public wrapper(path: string, name: WasmModuleName, wrapperArgs?: WasmModuleArgs): WasmFunction {
+    return async (args: string[], moduleArgs?: WasmModuleArgs) => {
+      const module = await this.get(path, name, {
+        ...wrapperArgs ?? {},
+        ...moduleArgs ?? {},
+      });
       return module.callMain(args);
     };
   }

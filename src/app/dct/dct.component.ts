@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { WasmService } from '../wasm.service';
+import { initialize as initIface } from './dct.interface';
 import localforage from 'localforage';
 
 const LS = {
@@ -20,9 +21,7 @@ export class DCTComponent implements OnInit {
 
   ngOnInit(): void {
     // Explose global DCT object
-    window.DCT = {
-      schemaCompile: this.wasm.wrapper('assets/dct/schemaCompile.js', 'schemaCompile'),
-    };
+    window.DCT = initIface(this.wasm);
 
     // Load schema from localStorage
     localforage.getItem<string>(LS.schema).then((schema) => {;
@@ -46,8 +45,10 @@ export class DCTComponent implements OnInit {
 
     // Compile the schema
     this.wasm.writeFile('schema.rules', schema);
-    const status = await window.DCT.schemaCompile('-o', 'schema.scm', 'schema.rules');
-    if (status !== 0) return;
+    await window.DCT.schemaCompile({
+      input: 'schema.rules',
+      output: 'schema.scm',
+    });
 
     // Save schema to local storage
     await localforage.setItem(LS.schema, this.schema);

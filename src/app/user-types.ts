@@ -9,7 +9,7 @@ import * as endpoint from '@ndn/endpoint';
 export type { packet, tlv, sync, keychain, util, ws_transport, endpoint }
 
 import type { ICapturedPacket, INode } from './interfaces';
-import type { DCT } from './wasm.service';
+import type { DCT } from './dct/dct.interface';
 
 export namespace ext {
     export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport, endpoint };
@@ -55,7 +55,7 @@ declare global {
         loadfile: typeof ext.loadfile;
         downloadfile: typeof ext.downloadfile;
 
-        // DCT module
+        // DCT tools modules
         DCT: DCT;
 
         // Augment console methods

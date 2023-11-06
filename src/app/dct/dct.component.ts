@@ -54,20 +54,23 @@ export class DCTComponent implements OnInit {
 
   async compileSchema(): Promise<void> {
     window.console.clear_play();
+    this.preHookFS();
 
-    // Compile the schema
-    this.saveSchema();
-    await window.DCT.schemaCompile({
-      input: 'schema.rules',
-      output: 'schema.scm',
-      verbose: true,
-    });
+    try {
+      await window.DCT.schemaCompile({
+        input: 'schema.rules',
+        output: 'schema.scm',
+        verbose: true,
+      });
+    } catch (e) {
+      console.error(e);
+    }
 
     // Save schema to local storage
     await localforage.setItem(LS.schema, this.schema);
   }
 
-  saveSchema(): void {
+  preHookFS(): void {
     // Convert line endings to LF. Also add a trailing newline.
     const schema = this.schema.replace(/\r\n/g, '\n') + '\n';
 
@@ -76,7 +79,7 @@ export class DCTComponent implements OnInit {
   }
 
   async runScript(): Promise<void> {
-    this.saveSchema();
+    this.preHookFS();
     window.console.clear_play();
 
     // ZoneAwarePromise cannot be used with async functions

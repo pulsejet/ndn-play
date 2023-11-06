@@ -11,7 +11,7 @@ export default {
 
       // types
       [
-        /#(pubPrefix|msgsValidator|certValidator|pduValidator)\b/,
+        /#(msgsValidator|certValidator|pduValidator|pubPrefix|chainInfo)\b/,
         { token: "keyword" },
       ],
       [/#\w+\b/, { token: "type" }],

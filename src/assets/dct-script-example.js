@@ -2,6 +2,9 @@
  * This is an example of a DCT script that generates a set of bundles
  * for the Home IoT example. The script is run as a top-level async
  * function and each DCT call is awaited.
+ *
+ * The schema tab can be used to edit the schema, which is written
+ * before each run to the file "schema.rules" in the working directory
  */
 
 // define any global variables
@@ -20,6 +23,7 @@ const deviceSigner = rootCert;
 await DCT.schemaCompile({
     output: bschema,
     input: rules,
+    verbose: true,
 });
 
 // extract the info needed to make certs from the compiled schema

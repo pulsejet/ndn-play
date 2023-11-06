@@ -60,6 +60,7 @@ export class DCTComponent implements OnInit {
     await window.DCT.schemaCompile({
       input: 'schema.rules',
       output: 'schema.scm',
+      verbose: true,
     });
 
     // Save schema to local storage

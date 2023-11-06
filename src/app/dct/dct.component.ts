@@ -3,10 +3,11 @@ import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
 import { transpile, ScriptTarget } from 'typescript';
 import { DataSet, Network, Node, Edge } from 'vis-network/standalone';
+import { COLOR_MAP } from '../topo/color.map';
 import localforage from 'localforage';
 
 import type { TabsComponent } from '../tabs/tabs.component';
-import type{ TabComponent } from '../tabs/tab.component';
+import type { TabComponent } from '../tabs/tab.component';
 
 const LS = {
   schema: 'dct:schema',
@@ -173,7 +174,12 @@ export class DCTComponent implements OnInit, AfterViewInit {
           if (node) {
             node.mark = true;
           } else {
-            this.certDag.nodes.add({ id: cert, label: cert, mark: true });
+            this.certDag.nodes.add({
+              id: cert,
+              label: cert,
+              mark: true,
+              color: COLOR_MAP.DEFAULT_NODE_COLOR,
+            });
           }
 
           // Add signing chain edge
@@ -183,7 +189,12 @@ export class DCTComponent implements OnInit, AfterViewInit {
             if (edge) {
               edge.mark = true;
             } else {
-              this.certDag.edges.add({ id: id, from: prev, to: cert, mark: true });
+              this.certDag.edges.add({
+                id: id,
+                from: prev, to: cert,
+                mark: true,
+                color: COLOR_MAP.DEFAULT_LINK_COLOR,
+              });
             }
           }
         }

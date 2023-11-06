@@ -5,12 +5,6 @@ import { COLOR_MAP } from "./color.map";
 import chroma from "chroma-js";
 
 export class Topology {
-  // Constants
-  public readonly DEFAULT_LINK_COLOR = "#3583ea";
-  public readonly DEFAULT_NODE_COLOR = '#a4b7fc';
-  public readonly SELECTED_NODE_COLOR = '#4ee44e';
-  public readonly ACTIVE_NODE_COLOR = '#ffcccb';
-
   // Global Dataset
   public readonly nodes: DataSet<INode, "id">;
   public readonly edges: DataSet<IEdge, "id">;
@@ -149,7 +143,7 @@ export class Topology {
       if (!edge.extra) {
         this.edges.update({
           id: edge.id,
-          color: this.DEFAULT_LINK_COLOR,
+          color: COLOR_MAP.DEFAULT_LINK_COLOR,
           latency: edge.latency ?? -1,
           loss: edge.loss ?? -1,
           extra: {
@@ -166,7 +160,7 @@ export class Topology {
         const shape = node.isSwitch ? 'box' : 'ellipse';
 
         let color = node.color?.toString();
-        color = color ? (COLOR_MAP[color] || color) : this.DEFAULT_NODE_COLOR;
+        color = color ? (COLOR_MAP[color] || color) : COLOR_MAP.DEFAULT_NODE_COLOR;
 
         const extra = {
           producedPrefixes: [],
@@ -192,12 +186,12 @@ export class Topology {
       this.busiestNode = <any>this.nodes.get(nodeId);
     }
 
-    let color = nodeExtra.color || this.DEFAULT_NODE_COLOR
+    let color = nodeExtra.color || COLOR_MAP.DEFAULT_NODE_COLOR
     if (nodeExtra.pendingTraffic > 0) {
-        color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
+        color = chroma.scale([COLOR_MAP.ACTIVE_NODE_COLOR, 'red'])
                             (nodeExtra.pendingTraffic / ((this.busiestNode?.extra.pendingTraffic || 0) + 5)).toString();
     } else if (this.selectedNode?.id == nodeId) {
-        color = this.SELECTED_NODE_COLOR;
+        color = COLOR_MAP.SELECTED_NODE_COLOR;
     }
     this.provider.pendingUpdatesNodes[nodeId] = { id: nodeId, color: color };
   }
@@ -205,7 +199,7 @@ export class Topology {
   public updateEdgeColor(edge: IEdge) {
     // No traffic
     if (edge.extra.pendingTraffic === 0) {
-      this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: this.DEFAULT_LINK_COLOR };
+      this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: COLOR_MAP.DEFAULT_LINK_COLOR };
       return;
     }
 
@@ -213,7 +207,7 @@ export class Topology {
     if (edge.extra.pendingTraffic > (this.busiestLink?.extra.pendingTraffic || 0)) {
       this.busiestLink = edge;
     }
-    const color = chroma.scale([this.ACTIVE_NODE_COLOR, 'red'])
+    const color = chroma.scale([COLOR_MAP.ACTIVE_NODE_COLOR, 'red'])
                               (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
     this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: color };
   }

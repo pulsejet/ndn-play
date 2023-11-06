@@ -99,9 +99,9 @@ export interface visTlv {
 export interface IPty {
     id: string,
     name: string,
-    write: EventEmitter<any>,
-    data: EventEmitter<any>,
-    resized: EventEmitter<any>,
-    focus?: EventEmitter<any>,
+    write: EventEmitter<Uint8Array>,
+    data: EventEmitter<string>,
+    resized: EventEmitter<{ rows: number; cols: number; }>,
+    focus?: EventEmitter<void>,
     initBuf?: Uint8Array,
   }

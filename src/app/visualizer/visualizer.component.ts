@@ -6,15 +6,17 @@ import { visTlv } from '../interfaces';
 import { transpileModule } from 'typescript';
 import localforage from 'localforage';
 
+type TlvType = Parameters<typeof window.visualize>[0];
+
 @Component({
   selector: 'app-visualizer',
   templateUrl: 'visualizer.component.html',
   styleUrls: ['visualizer.component.scss']
 })
 export class VisualizerComponent implements OnInit {
-  @Input() public tlv?: any;
+  @Input() public tlv?: TlvType;
   @Input() public guessBox?: boolean = true;
-  @Output() public change = new EventEmitter<any>();
+  @Output() public change = new EventEmitter<TlvType>();
 
   @ViewChild('outer') outer?: ElementRef;
   private resizeObserver?: ResizeObserver;
@@ -22,7 +24,7 @@ export class VisualizerComponent implements OnInit {
   public visualizedTlv?: visTlv[];
   public attemptUnknownDecode: boolean = false;
 
-  private tlvTypes?: {[key: string]: any};
+  private tlvTypes?: Record<string, any>;
   private compiledTlvCode: string = '';
 
   constructor(private gs: GlobalService) { }
@@ -115,7 +117,7 @@ export class VisualizerComponent implements OnInit {
     return undefined;
   }
 
-  visualize(tlv: Parameters<typeof window.visualize>[0]): visTlv[] {
+  visualize(tlv: TlvType): visTlv[] {
     if (!tlv) return [];
     this.compileTlvTypes();
 

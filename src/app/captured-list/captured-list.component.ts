@@ -18,7 +18,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
-  @Output() public packetClick = new EventEmitter<any>()
+  @Output() public packetClick = new EventEmitter<ICapturedPacket>()
 
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 

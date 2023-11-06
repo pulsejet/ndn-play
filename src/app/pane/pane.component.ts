@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-pane',
@@ -7,8 +7,8 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Outp
 })
 export class PaneComponent implements OnInit, AfterViewInit {
 
-  @Input() public pane1: any;
-  @Input() public pane2: any;
+  @Input() public pane1!: TemplateRef<any>;
+  @Input() public pane2!: TemplateRef<any>;
   @Input() public vertical = false;
   @Input() public basis = '25%';
 
@@ -30,14 +30,14 @@ export class PaneComponent implements OnInit, AfterViewInit {
       this.pane1e.nativeElement.style.flexBasis = `${this.basis}`;
     }
 
-    this.resizer?.nativeElement.addEventListener('mousedown', (event: any) => {
+    this.resizer?.nativeElement.addEventListener('mousedown', () => {
       this.paneIsmdwn = 1
       document.body.addEventListener('mousemove', this.paneMove.bind(this))
       document.body.addEventListener('mouseup', this.paneEnd.bind(this))
     });
   }
 
-  paneMove(event: any) {
+  paneMove(event: MouseEvent) {
       if (this.paneIsmdwn === 1 && this.pane1e) {
         this.pane1e.nativeElement.style.flexBasis = (this.vertical ? event.clientY : event.clientX) + "px"
       } else {

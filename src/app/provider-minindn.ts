@@ -303,9 +303,9 @@ export class ProviderMiniNDN implements ForwardingProvider {
     }
 
     // create new terminal
-    const write = new EventEmitter<any>();
-    const data = new EventEmitter<any>();
-    const resized = new EventEmitter<any>();
+    const write = new EventEmitter<Uint8Array>();
+    const data = new EventEmitter<string>();
+    const resized = new EventEmitter<{ rows: number; cols: number; }>();
     this.topo.activePtys.push({
       id: id,
       name: name,
@@ -315,19 +315,19 @@ export class ProviderMiniNDN implements ForwardingProvider {
       initBuf: init,
     });
 
-    data.subscribe((msg: any) => {
+    data.subscribe((msg) => {
       const pack = new TextEncoder().encode(msg);
       this.wsFun(WS_FUNCTIONS.PTY_IN, id, pack);
     });
 
-    resized.subscribe((msg: any) => {
+    resized.subscribe((msg) => {
       this.wsFun(WS_FUNCTIONS.PTY_RESIZE, id, msg.rows, msg.cols);
     });
 
     console.log(`Connected to remote PTY ${name} [${id}]`);
   }
 
-  private writeTerminal(id: string, buf: any) {
+  private writeTerminal(id: string, buf: ArrayBuffer) {
     const ubuf = new Uint8Array(buf);
 
     for (let t of this.topo.activePtys) {

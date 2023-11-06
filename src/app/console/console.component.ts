@@ -22,7 +22,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
   public consoleLog = new EventEmitter<{ type: string, msg: string; }>();
 
   /** Call on console resize */
-  @Input() resizeEmitter!: EventEmitter<any>;
+  @Input() resizeEmitter!: EventEmitter<void>;
   public doResize?: () => void;
   public resizeTimer = 0;
 

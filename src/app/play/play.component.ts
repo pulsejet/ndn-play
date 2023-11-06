@@ -2,6 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild }
 import { GlobalService } from '../global.service';
 import { ICapturedPacket, INode } from '../interfaces';
 import { ext as ndnUserTypes } from '../user-types';
+import type { PtyComponent } from '../pty/pty.component';
 
 @Component({
   selector: 'app-play',
@@ -16,10 +17,10 @@ export class PlayComponent implements OnInit, AfterViewInit {
   public visualizedTlv: any;
 
   /** Notification of pane size change */
-  public paneResizeEmitter = new EventEmitter<any>;
+  public paneResizeEmitter = new EventEmitter<void>;
 
   /** Active pty tab */
-  public activePtyTab?: any;
+  public activePtyTab?: PtyComponent;
 
   // Native Elements
   @ViewChild('topoContainer') topoContainer!: ElementRef;
@@ -38,10 +39,10 @@ export class PlayComponent implements OnInit, AfterViewInit {
   }
 
   paneResized() {
-    this.paneResizeEmitter.emit(null);
+    this.paneResizeEmitter.emit();
   }
 
-  setActivePtyTab(pty: any) {
+  setActivePtyTab(pty: PtyComponent) {
     pty.doResize?.();
     if (this.activePtyTab) {
       this.activePtyTab.active = false;

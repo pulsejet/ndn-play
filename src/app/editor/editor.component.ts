@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
 import versecLang from './versec.lang';
-import * as userTypes from '../user-types';
+import { ext as extUserTypes } from '../user-types';
 import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
 export const monacoConfig: NgxMonacoEditorConfig = {
@@ -44,7 +44,7 @@ export const monacoConfig: NgxMonacoEditorConfig = {
     });
 
     // add user types to typescript
-    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(userTypes.ext));
+    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(extUserTypes));
 
     // add versec language
     monaco.languages.register({ id: 'versec' });

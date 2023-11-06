@@ -55,14 +55,19 @@ export const monacoConfig: NgxMonacoEditorConfig = {
 @Component({
   selector: 'app-editor',
   template: `
-    <div style="height: 100%; width: 100%;">
+    <div class="code-editor">
       <ngx-monaco-editor [options]="editorOptions"
-                         [(ngModel)]="code" (ngModelChange)="codeChange.emit(code)"
-                         style="height: 100%; width: 100%;">
+                         [(ngModel)]="code"
+                         (ngModelChange)="codeChange.emit(code)">
       </ngx-monaco-editor>
     </div>
   `,
-  styles: []
+  styles: [
+    `.code-editor, .code-editor > * {
+      height: 100%;
+      width: 100%;
+    }`
+  ]
 })
 export class EditorComponent {
   editorOptions = {theme: 'vs-light', language: 'javascript', automaticLayout: true};

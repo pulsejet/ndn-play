@@ -61,6 +61,10 @@ export interface DCT {
     /** Input files */
     input: string[],
   }) => Promise<void>;
+
+  schema_dump: (opts: {
+    input: string,
+  }) => Promise<string>;
 };
 
 export function initialize(wasm: WasmService): DCT {
@@ -70,6 +74,7 @@ export function initialize(wasm: WasmService): DCT {
     make_cert: wasm.wrapper('assets/dct/make_cert.js', 'make_cert'),
     schema_cert: wasm.wrapper('assets/dct/schema_cert.js', 'schema_cert'),
     make_bundle: wasm.wrapper('assets/dct/make_bundle.js', 'make_bundle'),
+    schema_dump: wasm.wrapper('assets/dct/schema_dump.js', 'schema_dump'),
   };
 
   return {
@@ -85,11 +90,7 @@ export function initialize(wasm: WasmService): DCT {
       if (opts.output) args.push('-o', opts.output);
       args.push(opts.input);
 
-      const stdout: string[] = [];
-      await wrappers.schemaCompile(args, {
-        print: (line) => stdout.push(line) && window.console.log_play(line),
-      });
-      return stdout.join('\n');
+      return await wasm.stdout(wrappers.schemaCompile, args);
     },
 
     schema_info: async (opts) => {
@@ -101,11 +102,7 @@ export function initialize(wasm: WasmService): DCT {
       args.push(opts.input);
       if (opts.pubname) args.push(opts.pubname);
 
-      const stdout: string[] = [];
-      await wrappers.schema_info(args, {
-        print: (line) => stdout.push(line) && window.console.log_play(line),
-      });
-      return stdout.join('\n');
+      return await wasm.stdout(wrappers.schema_info, args);
     },
 
     make_cert: async (opts) => {
@@ -140,6 +137,15 @@ export function initialize(wasm: WasmService): DCT {
       args.push(...opts.input);
 
       await wrappers.make_bundle(args);
+    },
+
+    schema_dump: async (opts) => {
+      requireProps('schema_dump', opts, ['input']);
+
+      const args = [];
+      args.push(opts.input);
+
+      return await wasm.stdout(wrappers.schema_dump, args);
     },
   };
 }

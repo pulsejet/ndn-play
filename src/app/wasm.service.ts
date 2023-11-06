@@ -6,7 +6,8 @@ type WasmExportName =
   'schema_info' |
   'make_cert' |
   'schema_cert' |
-  'make_bundle';
+  'make_bundle' |
+  'schema_dump';
 
 /** WASM module after load */
 type WasmModule = EmscriptenModule & {
@@ -143,6 +144,19 @@ export class WasmService {
       // Return status code
       return status;
     };
+  }
+
+  /**
+   * Patch a wrapper to return stdout.
+   * @param fun WASM function to wrap
+   */
+  public async stdout(fun: WasmFunction, ...args: Parameters<WasmFunction>): Promise<string> {
+    const stdout: string[] = [];
+    await fun(args[0], {
+      ...args[1] ?? {},
+      print: (line) => stdout.push(line) && window.console.log_play(line),
+    });
+    return stdout.join('\n');
   }
 
   /**

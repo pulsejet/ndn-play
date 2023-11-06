@@ -751,6 +751,9 @@ declare interface DCT {
         /** Input files */
         input: string[];
     }) => Promise<void>;
+    schema_dump: (opts: {
+        input: string;
+    }) => Promise<string>;
 }
 
 declare interface DebugEntry {
@@ -4332,10 +4335,6 @@ declare function toKeyName(name: Name): Name;
 
 declare class Topology {
     provider: ForwardingProvider;
-    readonly DEFAULT_LINK_COLOR = "#3583ea";
-    readonly DEFAULT_NODE_COLOR = "#a4b7fc";
-    readonly SELECTED_NODE_COLOR = "#4ee44e";
-    readonly ACTIVE_NODE_COLOR = "#ffcccb";
     readonly nodes: DataSet<INode, "id">;
     readonly edges: DataSet<IEdge, "id">;
     network: Network;

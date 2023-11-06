@@ -1,8 +1,7 @@
 import { Network, IdType } from 'vis-network/standalone';
 import { ForwardingProvider } from '../forwarding-provider';
 import { Topology } from '../topo/topo';
-
-declare var dijkstra: any;
+import * as dijkstra from 'dijkstrajs';
 
 class _CalculateRoutes {
     private network: Network;

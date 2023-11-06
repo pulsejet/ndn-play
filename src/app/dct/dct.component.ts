@@ -83,7 +83,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
         hover: true,
       },
       manipulation: {
-        enabled: true,
+        enabled: false,
       },
       layout: {
         randomSeed: 2,

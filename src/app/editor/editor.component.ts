@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
 import versecLang from './versec.lang';
 import * as userTypes from '../user-types';
+import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
-export const monacoConfig = {
+export const monacoConfig: NgxMonacoEditorConfig = {
   onMonacoLoad: async () => {
     const monaco = (<any>window).monaco;
 

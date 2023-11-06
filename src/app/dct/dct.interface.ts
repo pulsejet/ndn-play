@@ -103,7 +103,7 @@ export function initialize(wasm: WasmService): DCT {
 
       const stdout: string[] = [];
       await wrappers.schema_info(args, {
-        print: (line) => stdout.push(line),
+        print: (line) => stdout.push(line) && window.console.log_play(line),
       });
       return stdout.join('\n');
     },

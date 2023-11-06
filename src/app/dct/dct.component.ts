@@ -16,6 +16,7 @@ const LS = {
 
 interface ICertDagNode extends Node {
   mark: boolean;
+  template?: string;
 };
 interface ICertDagEdge extends Edge {
   mark: boolean;
@@ -81,6 +82,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     const options = {
       interaction: {
         hover: true,
+        tooltipDelay: 0,
       },
       manipulation: {
         enabled: false,
@@ -147,7 +149,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
     // Patterns in schemaCompile output
     const REGEX = {
-      CHAIN: /chain \w+:(.*)/i
+      CHAIN: /chain \w+:(.*)/i,
+      TEMPLATE: /cert (\w+):(.*)/i,
     }
 
     // Mark all nodes and edges as unvisited
@@ -157,7 +160,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     // Parse compiler output
     for (const line of lines) {
       // Signing chain
-      const match = line.match(REGEX.CHAIN);
+      let match = line.match(REGEX.CHAIN);
       if (match) {
         const chain = match[1].trim()
           .split('<=')
@@ -200,11 +203,33 @@ export class DCTComponent implements OnInit, AfterViewInit {
         }
         continue;
       }
+
+      // Certificate template
+      match = line.match(REGEX.TEMPLATE);
+      if (match) {
+        const certName = match[1].trim();
+        const template = match[2].trim();
+        const node = this.certDag.nodes.get(certName);
+        if (node) {
+          node.template = template;
+        }
+        continue;
+      }
     }
 
     // Clean up unvisited nodes and edges
-    for (const node of this.certDag.nodes.get())
-      if (!node.mark) this.certDag.nodes.remove(node.id);
+    for (const node of this.certDag.nodes.get()) {
+      if (!node.mark) {
+        this.certDag.nodes.remove(node.id);
+        continue;
+      }
+
+      // Set extra info
+      if (node.template) {
+        node.title = node.template;
+        this.certDag.nodes.update(node);
+      }
+    }
     for (const edge of this.certDag.edges.get())
       if (!edge.mark) this.certDag.edges.remove(edge.id);
 

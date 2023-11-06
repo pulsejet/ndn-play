@@ -86,7 +86,16 @@ export class DCTComponent implements OnInit, AfterViewInit {
       },
       layout: {
         randomSeed: 2,
+        hierarchical: {
+          enabled: true,
+          sortMethod: 'directed',
+          levelSeparation: 80,
+          nodeSpacing: 30,
+          treeSpacing: 80,
+          direction: 'UD',
+        },
       },
+
       edges:{
         arrows: {
           to: {

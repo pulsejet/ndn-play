@@ -26,7 +26,8 @@ export class DCTComponent implements OnInit {
 
     // Load schema from localStorage
     localforage.getItem<string>(LS.schema).then((schema) => {;
-      if (schema?.trim()) {
+      schema = schema?.trim() ?? null;
+      if (schema) {
         this.schema = schema;
       } else {
         // Sample rules files

@@ -30,6 +30,7 @@ interface ICertDagEdge extends Edge {
 export class DCTComponent implements OnInit, AfterViewInit {
   public schema = String();
   public script = String();
+  public schemaOutput = String();
 
   private certDag = {
     nodes: new DataSet<ICertDagNode>(),
@@ -96,7 +97,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
           enabled: true,
           sortMethod: 'directed',
           levelSeparation: 80,
-          nodeSpacing: 50,
+          nodeSpacing: 80,
           treeSpacing: 80,
           direction: 'UD',
         },
@@ -130,12 +131,12 @@ export class DCTComponent implements OnInit, AfterViewInit {
     this.preHookFS();
 
     try {
-      const output = await window.DCT.schemaCompile({
+      this.schemaOutput = await window.DCT.schemaCompile({
         input: 'schema.rules',
         output: 'schema.scm',
         verbose: true,
       });
-      this.parseCompilerOutput(output);
+      this.refreshVisualizer(true);
     } catch (e) {
       console.error(e);
       return false;
@@ -152,8 +153,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
     }
   }
 
-  parseCompilerOutput(output: string): void {
-    const lines = output.split('\n')
+  refreshVisualizer(stabilize: boolean = false): void {
+    const lines = this.schemaOutput.split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length);
 
@@ -181,6 +182,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
         for (let i = 0; i < chain.length; i++) {
           const cert = chain[i];
           const prev = i > 0 ? chain[i-1] : null;
+
+          // Excluded nodes
+          if (this.certDagOpts.hideChainInfo && cert === '#chainInfo') continue;
 
           // Add certificate node
           const node = this.certDag.nodes.get(cert);
@@ -244,20 +248,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
       if (!edge.mark) this.certDag.edges.remove(edge.id);
     }
 
-    this.certDagUpdate();
-    this.certDagNet.stabilize();
-    this.certDagNet.fit();
-  }
-
-  certDagUpdate() {
-    // Set options
-    const chainInfo = this.certDag.nodes.get('#chainInfo');
-    if (chainInfo) {
-      this.certDag.nodes.update({
-        id: chainInfo.id,
-        hidden: this.certDagOpts.hideChainInfo,
-        physics: !this.certDagOpts.hideChainInfo,
-      });
+    if (stabilize) {
+      this.certDagNet.stabilize();
+      this.certDagNet.fit();
     }
   }
 

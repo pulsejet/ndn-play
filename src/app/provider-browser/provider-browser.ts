@@ -7,6 +7,7 @@ import { RoutingHelper } from "./routing-helper";
 import { downloadFile, loadFileBin } from "../helper";
 import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 import { inflate as pakoInflate } from "pako";
+import { ScriptTarget, transpile } from "typescript";
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -125,11 +126,11 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public async runCode(code: string, node: INode) {
-    const target = window.ts.ScriptTarget.ES2015;
+    const target = ScriptTarget.ES2015;
     code = `const node = this; return (async () => {
       ${code}
     })()`;
-    code = window.ts.transpile(code, { target });
+    code = transpile(code, { target });
 
     try {
       await new Function(code).call(node);

@@ -3,6 +3,7 @@ import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
 import { visTlv } from '../interfaces';
+import { transpileModule } from 'typescript';
 import localforage from 'localforage';
 
 @Component({
@@ -74,12 +75,10 @@ export class VisualizerComponent implements OnInit {
     this.compiledTlvCode = this.gs.topo.tlvTypesCode;
 
     // Transpile as module and get exports
-    let code = window.ts.transpileModule(this.gs.topo.tlvTypesCode, {
-      target: window.ts.ScriptTarget.ES2015,
-    });
+    let code = transpileModule(this.gs.topo.tlvTypesCode, {}).outputText;
     code = `
       const exports = {};
-      ${code.outputText};
+      ${code};
       return exports;`;
 
     try {

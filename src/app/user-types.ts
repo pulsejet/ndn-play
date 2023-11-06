@@ -78,9 +78,7 @@ declare global {
         };
 
         // Other modules
-        monaco: any; // editor
-        ts: any; // typescript compiler
-        FS: typeof FS; // wasm filesystem
-        DCT: DCT; // DCT tools
+        FS: typeof ext.FS;
+        DCT: typeof ext.DCT;
     }
 }

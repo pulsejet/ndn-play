@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
+import { transpile, ScriptTarget } from 'typescript';
 import localforage from 'localforage';
 
 const LS = {
@@ -85,11 +86,11 @@ export class DCTComponent implements OnInit {
     // ZoneAwarePromise cannot be used with async functions
     // So we first construct an async function and transpile it
     // to ES2015 to get rid of async/await
-    const target = window.ts.ScriptTarget.ES2015;
+    const target = ScriptTarget.ES2015;
     let code = `return (async () => {
       ${this.script}
     })()`;
-    code = window.ts.transpile(code, { target });
+    code = transpile(code, { target });
 
     // Run the script
     try {

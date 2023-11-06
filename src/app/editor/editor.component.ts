@@ -4,7 +4,7 @@ import * as userTypes from '../user-types';
 
 export const monacoConfig = {
   onMonacoLoad: async () => {
-    const monaco = window.monaco;
+    const monaco = (<any>window).monaco;
 
     // Set dark theme
     monaco.editor.defineTheme('vs-light', {

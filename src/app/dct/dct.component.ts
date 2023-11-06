@@ -87,6 +87,18 @@ export class DCTComponent implements OnInit, AfterViewInit {
       layout: {
         randomSeed: 2,
       },
+      edges:{
+        arrows: {
+          to: {
+            enabled: true,
+            scaleFactor: 0.75,
+          },
+        },
+        scaling:{
+          label: true,
+        },
+        smooth: true,
+      },
     };
     this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
   }

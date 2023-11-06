@@ -93,7 +93,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
           enabled: true,
           sortMethod: 'directed',
           levelSeparation: 80,
-          nodeSpacing: 30,
+          nodeSpacing: 80,
           treeSpacing: 80,
           direction: 'UD',
         },
@@ -110,6 +110,13 @@ export class DCTComponent implements OnInit, AfterViewInit {
           label: true,
         },
         smooth: true,
+      },
+
+      physics: {
+        hierarchicalRepulsion: {
+          nodeDistance: 50,
+          avoidOverlap: 1,
+        },
       },
     };
     this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);

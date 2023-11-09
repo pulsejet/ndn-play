@@ -22,11 +22,7 @@ npm run start           # build with live refresh
 npm run build           # generate production build
 ```
 
-## Contributions
-
-Are welcome though GitHub. All files are licensed under the Apache License v2.0.
-
 ## License
 
-All code in the repository is licensed under the Apache License Version 2.0 unless otherwise noted.
+All code in the repository is licensed under the Apache License Version 2.0.
 The DCT tools are licensed under the LGPLv2.1 license. If you want a more permissive build, remove the `dct-wasm` dependency from `package.json` and references from `angular.json`.

@@ -7,6 +7,8 @@ export const COLOR_MAP: {[key: string]: string} = {
     pink: '#f8a3ff',
     lightgreen: '#a1ffc2',
     lightorange: '#ffd1a6',
+    silver: '#e3e3e3',
+    gray: '#666666',
     DEFAULT_LINK_COLOR: "#3583ea",
     DEFAULT_NODE_COLOR: '#a4b7fc',
     SELECTED_NODE_COLOR: '#4ee44e',

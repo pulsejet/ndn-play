@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
 import { transpile, ScriptTarget } from 'typescript';
-import { DataSet, Network, Node, Edge, IdType } from 'vis-network/standalone';
+import { DataSet, Network, Node, Edge, IdType, parseDOTNetwork } from 'vis-network/standalone';
 import { COLOR_MAP } from '../topo/color.map';
 import localforage from 'localforage';
 
@@ -15,11 +15,12 @@ const LS = {
 };
 
 interface ICertDagNode extends Node {
-  mark: boolean;
+  mark: number;
   template?: string;
+  hide?: boolean;
 };
 interface ICertDagEdge extends Edge {
-  mark: boolean;
+  mark: number;
   color: Exclude<Edge['color'], string>;
 };
 
@@ -40,6 +41,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
   private certDagNet!: Network;
   public certDagOpts = {
     hideChainInfo: true,
+    showHidden: false,
   };
 
   // Native Elements
@@ -132,7 +134,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     this.certDagNet.on('select', this.onSelect.bind(this));
   }
 
-  async compileSchema(): Promise<boolean> {
+  public async compileSchema(debug: boolean = false): Promise<boolean> {
     window.console.clear_play();
     this.preHookFS();
 
@@ -141,8 +143,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
         input: 'schema.rules',
         output: 'schema.scm',
         verbose: true,
+        debug: debug,
       });
-      this.refreshVisualizer(true);
     } catch (e) {
       console.error(e);
       return false;
@@ -153,97 +155,62 @@ export class DCTComponent implements OnInit, AfterViewInit {
     return true;
   }
 
-  async visualizeSchema() {
-    if (await this.compileSchema()) {
+  public async visualizeSchema() {
+    if (await this.compileSchema(true)) {
+      this.refreshVisualizer();
       this.tabs.set(this.visualizerTab)
     }
   }
 
-  refreshVisualizer(stabilize: boolean = false): void {
+  public refreshVisualizer(): void {
+    // Patterns in schemaCompile output
+    const REGEX = {
+      DAG: /digraph (\w+) \{(.*?)\}/is,
+      CHAIN: /chain \w+:(.*)/i,
+      TEMPLATE: /cert (\w+):(.*)/i,
+    };
+
+    // Get DAG from compiler output
+    let match = this.schemaOutput.match(REGEX.DAG);
+    if (!match) return;
+    this.setVisualizerDAG(parseDOTNetwork(`digraph ${match[1]} {${match[2]}}`));
+
+    // Stabilize physics
+    this.certDagNet.stabilize();
+    this.certDagNet.fit();
+
+    // Split output on lines
     const lines = this.schemaOutput.split('\n')
       .map((line) => line.trim())
       .filter((line) => line.length);
-
-    // Patterns in schemaCompile output
-    const REGEX = {
-      CHAIN: /chain \w+:(.*)/i,
-      TEMPLATE: /cert (\w+):(.*)/i,
-    }
-
-    // Mark all nodes and edges as unvisited
-    for (const node of this.certDag.nodes.get()) node.mark = false;
-    for (const edge of this.certDag.edges.get()) edge.mark = false;
 
     // Parse compiler output
     for (const line of lines) {
       // Signing chain
       let match = line.match(REGEX.CHAIN);
       if (match) {
-        const chain = match[1].trim()
+        const chain = match[1]
           .split('<=')
-          .map((item) => item.trim())
-          .reverse();
+          .map((item) => item.trim());
 
-        // Create DAG nodes and edges
-        for (let i = 0; i < chain.length; i++) {
-          const cert = chain[i];
-          const prev = i > 0 ? chain[i-1] : null;
-          const isroot = i === 0;
-          const isleaf = i === chain.length - 1;
+        // Make root node red
+        const root = chain[chain.length - 1]; // root node
+        if (this.certDag.nodes.get(root)) {
+          this.certDag.nodes.updateOnly({
+            id: root,
+            color: COLOR_MAP.red,
+            font: { color: 'white' },
+          });
+        }
 
-          // Excluded nodes
-          if (this.certDagOpts.hideChainInfo && cert === '#chainInfo') continue;
-
-          // Get node color
-          let color = COLOR_MAP.DEFAULT_NODE_COLOR;
-          if (isroot) color = COLOR_MAP.red;
-          else if (isleaf) color = COLOR_MAP.lightorange;
-
-          // Get font color
-          let fontColor = 'black';
-          if (color === COLOR_MAP.red) fontColor = 'white';
-
-          // Get shape
-          const shape = isleaf ? 'box' : 'ellipse';
-
-          // Add certificate node
-          const node: ICertDagNode = {
-            id: cert,
-            label: cert,
-            mark: true,
-            color: color,
-            font: {
-              color: fontColor,
-            },
-            shape: shape,
-          };
-
-          if (this.certDag.nodes.get(node.id!)) {
-            this.certDag.nodes.update(node);
-          } else {
-            this.certDag.nodes.add(node);
-          }
-
-          // Add signing chain edge
-          if (prev) {
-            const id = `${prev}-${cert}`;
-            const edge = this.certDag.edges.get(id);
-            if (edge) {
-              edge.mark = true;
-            } else {
-              this.certDag.edges.add({
-                id: id,
-                from: prev, to: cert,
-                mark: true,
-                color: {
-                  color: COLOR_MAP.DEFAULT_LINK_COLOR,
-                  hover: COLOR_MAP.DEFAULT_LINK_COLOR,
-                  highlight: COLOR_MAP.DEFAULT_LINK_COLOR,
-                  opacity: 1
-                },
-              });
-            }
-          }
+        // Make chain leaf nodes orange
+        const leaf = chain[0]; // leaf node
+        if (this.certDag.nodes.get(leaf)) {
+          this.certDag.nodes.updateOnly({
+            id: leaf,
+            color: COLOR_MAP.lightorange,
+            shape: 'box',
+          });
         }
         continue;
       }
@@ -252,42 +219,111 @@ export class DCTComponent implements OnInit, AfterViewInit {
       match = line.match(REGEX.TEMPLATE);
       if (match) {
         const certName = match[1].trim();
-        const template = match[2].trim();
+        const template = match[2].trim().replace(/"/g, ''); // no quotes
         const node = this.certDag.nodes.get(certName);
         if (node) {
-          // remove quotes to make it more readable
-          node.template = template.replace(/"/g, '');
+          this.certDag.nodes.update({
+            id: node.id,
+            template: template,
+            title: template,
+          });
         }
         continue;
       }
     }
+  }
 
-    // Clean up unvisited nodes and edges
-    for (const node of this.certDag.nodes.get()) {
-      if (!node.mark) {
-        this.certDag.nodes.remove(node.id);
-        continue;
-      }
+  private setVisualizerDAG(dag: { nodes: Node[], edges: Edge[] }) {
+    const mark = Math.random();
 
-      // Set extra info
-      if (node.template) {
-        this.certDag.nodes.update({
-          id: node.id,
-          title: node.template,
-        });
-      }
+    // Add new nodes
+    this.certDag.nodes.update(
+      dag.nodes.map((node: Node): ICertDagNode => {
+        // Node color from DOT
+        let color
+          = typeof node.color === 'string'
+          ? node.color
+          : typeof node.color === 'object'
+          ? node.color.background
+          : COLOR_MAP.DEFAULT_NODE_COLOR;
+        let fontColor = '#000000';
+
+        // Hide grayed out nodes by default
+        const hide = color === 'gray';
+
+        // Color substitutions
+        if (color === 'gray') {
+          color = COLOR_MAP.silver;
+          fontColor = COLOR_MAP.gray;
+        }
+
+        return {
+          ...node,
+          hide: hide,
+          mark: mark,
+          color: color,
+          font: {
+            color: fontColor,
+          },
+        }
+      }));
+
+    // Add new edges
+    this.certDag.edges.update(
+      // Edge color from DOT
+      dag.edges.map((edge: Edge): ICertDagEdge => {
+        let color
+          = typeof edge.color === 'string'
+          ? edge.color
+          : typeof edge.color === 'object'
+          ? edge.color.color
+          : COLOR_MAP.DEFAULT_LINK_COLOR;
+
+        // Color substitutions
+        if (color === 'gray') {
+          color = '#888888';
+        }
+
+        return {
+          ...edge,
+          mark: mark,
+          color: {
+            color: color,
+            hover: color,
+            highlight: color,
+            opacity: 1
+          },
+        };
+      }));
+
+    // Remove unvisited nodes and edges
+    this.certDag.nodes.remove(
+      this.certDag.nodes.get()
+        .filter((node) => node.mark !== mark));
+    this.certDag.edges.remove(
+      this.certDag.edges.get()
+        .filter((edge) => edge.mark !== mark));
+
+    // Helper to remove a node from the graph
+    const removeNode = (id: IdType) => {
+      this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
+      this.certDag.nodes.remove(id);
+    };
+
+    // Remove chainInfo if hidden
+    if (this.certDagOpts.hideChainInfo) {
+      removeNode('#chainInfo');
     }
-    for (const edge of this.certDag.edges.get()) {
-      if (!edge.mark) this.certDag.edges.remove(edge.id);
-    }
 
-    if (stabilize) {
-      this.certDagNet.stabilize();
-      this.certDagNet.fit();
+    // Remove hidden objects
+    if (!this.certDagOpts.showHidden) {
+      this.certDag.nodes.get()
+        .filter((node: ICertDagNode) => node.hide)
+        .forEach((node: ICertDagNode) => removeNode(node.id!));
     }
   }
 
-  preHookFS(): void {
+  private preHookFS(): void {
     // Convert line endings to LF. Also add a trailing newline.
     const schema = this.schema.replace(/\r\n/g, '\n') + '\n';
 
@@ -295,7 +331,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     this.wasm.writeFile('schema.rules', schema);
   }
 
-  async runScript(): Promise<void> {
+  public async runScript(): Promise<void> {
     this.preHookFS();
     window.console.clear_play();
 
@@ -319,7 +355,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     await localforage.setItem(LS.script, this.script);
   }
 
-  onSelect({ edges, nodes }: { edges: IdType[]; nodes: IdType[] }) {
+  private onSelect({ edges, nodes }: { edges: IdType[]; nodes: IdType[] }) {
     // DFS to get all nodes below/above the selected nodes
     const visitedNodes = new Set<IdType>();
     const visitedEdges = new Set<IdType>();

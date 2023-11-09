@@ -13,6 +13,10 @@
 
         <div class="actions">
             <label class="checkbox is-small">
+                <input type="checkbox" [(ngModel)]="certDagOpts.showHidden" (change)="refreshVisualizer()">
+                Show hidden objects
+            </label>
+            <label class="checkbox is-small">
                 <input type="checkbox" [(ngModel)]="certDagOpts.hideChainInfo" (change)="refreshVisualizer()">
                 Hide #chainInfo
             </label>

@@ -8,6 +8,7 @@ div.actions {
     }
 
     .checkbox {
+        display: block;
         user-select: none;
         font-size: 0.8em;
         > input {

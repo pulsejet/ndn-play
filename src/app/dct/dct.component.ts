@@ -1,13 +1,15 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
+import { untangleGraph } from '../algorithm';
 import { transpile, ScriptTarget } from 'typescript';
-import { DataSet, Network, Node, Edge, IdType, parseDOTNetwork } from 'vis-network/standalone';
+import { DataSet, Network, parseDOTNetwork } from 'vis-network/standalone';
 import { COLOR_MAP } from '../topo/color.map';
 import localforage from 'localforage';
 
 import type { TabsComponent } from '../tabs/tabs.component';
 import type { TabComponent } from '../tabs/tab.component';
+import type { Node, Edge, IdType } from 'vis-network/standalone';
 
 const LS = {
   schema: 'dct:schema',
@@ -236,6 +238,10 @@ export class DCTComponent implements OnInit, AfterViewInit {
   private setVisualizerDAG(dag: { nodes: Node[], edges: Edge[] }) {
     const mark = Math.random();
 
+    // Remove all nodes and edges
+    this.certDag.nodes.clear();
+    this.certDag.edges.clear();
+
     // Add new nodes
     this.certDag.nodes.update(
       dag.nodes.map((node: Node): ICertDagNode => {
@@ -296,14 +302,6 @@ export class DCTComponent implements OnInit, AfterViewInit {
         };
       }));
 
-    // Remove unvisited nodes and edges
-    this.certDag.nodes.remove(
-      this.certDag.nodes.get()
-        .filter((node) => node.mark !== mark));
-    this.certDag.edges.remove(
-      this.certDag.edges.get()
-        .filter((edge) => edge.mark !== mark));
-
     // Helper to remove a node from the graph
     const removeNode = (id: IdType) => {
       this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
@@ -321,6 +319,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
         .filter((node: ICertDagNode) => node.hide)
         .forEach((node: ICertDagNode) => removeNode(node.id!));
     }
+
+    // Untangle the graph to get correct sorting
+    untangleGraph(this.certDag, this.certDagNet, true);
   }
 
   private preHookFS(): void {

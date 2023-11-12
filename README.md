@@ -25,4 +25,5 @@ npm run build           # generate production build
 ## License
 
 All code in the repository is licensed under the Apache License Version 2.0.
-The DCT tools are licensed under the LGPLv2.1 license. If you want a more permissive build, remove the `dct-wasm` dependency from `package.json` and references from `angular.json`.
+
+DCT tools are licensed under the GPLv3 license. If you want a permissive build, remove the `dct-wasm` dependency from `package.json` and references from `angular.json`.

@@ -147,8 +147,9 @@ export class DCTComponent implements OnInit, AfterViewInit {
         verbose: true,
         debug: debug,
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      this.schemaOutput = e.stdout ?? String();
       return false;
     }
 
@@ -158,9 +159,13 @@ export class DCTComponent implements OnInit, AfterViewInit {
   }
 
   public async visualizeSchema() {
-    if (await this.compileSchema(true)) {
+    await this.compileSchema(true);
+
+    // Check if output contains a DAG
+    // This can be the case even if the compiler fails
+    if (this.schemaOutput.includes('digraph')) {
       this.refreshVisualizer();
-      this.tabs.set(this.visualizerTab)
+      this.tabs.set(this.visualizerTab);
     }
   }
 

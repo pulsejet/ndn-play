@@ -152,11 +152,17 @@ export class WasmService {
    */
   public async stdout(fun: WasmFunction, ...args: Parameters<WasmFunction>): Promise<string> {
     const stdout: string[] = [];
-    await fun(args[0], {
-      ...args[1] ?? {},
-      print: (line) => stdout.push(line) && window.console.log_play(line),
-    });
-    return stdout.join('\n');
+    try {
+      await fun(args[0], {
+        ...args[1] ?? {},
+        print: (line) => stdout.push(line) && window.console.log_play(line),
+      });
+
+      return stdout.join('\n');
+    } catch (e: any) {
+      e.stdout = stdout.join('\n');
+      throw e;
+    }
   }
 
   /**

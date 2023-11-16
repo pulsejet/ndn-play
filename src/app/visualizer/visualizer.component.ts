@@ -124,8 +124,19 @@ export class VisualizerComponent implements OnInit {
     let buffer: Uint8Array;
 
     if (typeof tlv == 'string') {
-      const matches = tlv.replace(/\s/g, '').match(/.{1,2}/ig);
-      buffer = new Uint8Array((matches || []).map(byte => parseInt(byte, 16)));
+      const tlvStr = tlv.replace(/\s/g, '');
+
+      // Guess if hex or base64
+      if (tlvStr.match(/^[0-9a-fA-F]+$/)) {
+        // Everything matches hex, so assume hex
+        buffer = new Uint8Array((tlv.match(/.{1,2}/ig) ?? []).map(c => parseInt(c, 16)));
+      } else if (tlvStr.match(/^[0-9a-zA-Z+/]+={0,2}$/)) {
+        // Assume base64
+        buffer = Uint8Array.from(atob(tlvStr), c => c.charCodeAt(0));
+      } else {
+        console.error('Invalid TLV string (not hex or base64)');
+        return [];
+      }
     } else if (tlv instanceof Uint8Array) {
       buffer = tlv;
     } else if (tlv instanceof ArrayBuffer) {

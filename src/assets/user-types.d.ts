@@ -1231,8 +1231,8 @@ export declare namespace ext {
     };
     const node: INode;
     /**
-     * Visualize a packet
-     * @param packet can be hex string, binary buffer or an encodable e.g. Interest
+     * Visualize a NDN TLV block or packet
+     * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
      */
     export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void;
     /**

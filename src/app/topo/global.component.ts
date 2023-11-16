@@ -77,6 +77,10 @@ import { Topology } from './topo';
                     (click)="visualizeFileTLV()">
                 Visualize TLV File
             </button>
+            <button class="button is-link is-light is-small full-width mt-1"
+                    (click)="visualizeEncodedTLV()">
+                Visualize Encoded TLV
+            </button>
         </div>
     </div>
 
@@ -173,5 +177,10 @@ export class TopoGlobalComponent {
 
   async visualizeFileTLV() {
     window.visualize(await window.loadfile());
+  }
+
+  async visualizeEncodedTLV() {
+    const str = prompt('Enter TLV to visualize (hex or base64)');
+    if (str) window.visualize(str);
   }
 }

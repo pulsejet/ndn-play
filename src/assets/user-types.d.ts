@@ -1,16 +1,14 @@
 /// <reference types="emscripten" />
 /// <reference types="node" />
+/// <reference lib="esnext.asynciterable" />
 
 import type * as asn1 from '@yoursunny/asn1';
 import assert from 'minimalistic-assert';
 import { DataSet } from './esm';
-import type { DataStore } from '@ndn/repo-api';
 import { Edge } from './esm';
-import { EventEmitter } from '@angular/core';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
-import { TypedEventTarget } from 'typescript-event-target';
 import type WsWebSocket from 'ws';
 
 /** AES block size in octets. */
@@ -126,6 +124,30 @@ declare function asDataView(a: BufferSource): DataView;
 
 /** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
 declare function asUint8Array(a: BufferSource): Uint8Array;
+
+declare type AsyncFunction = (...arguments_: any[]) => Promise<unknown>;
+
+/**
+ Unwrap the return type of a function that returns a `Promise`.
+
+ There has been [discussion](https://github.com/microsoft/TypeScript/pull/35998) about implementing this type in TypeScript.
+
+ @example
+ ```ts
+ import type {AsyncReturnType} from 'type-fest';
+ import {asyncFunction} from 'api';
+
+ // This type resolves to the unwrapped return type of `asyncFunction`.
+ type Value = AsyncReturnType<typeof asyncFunction>;
+
+ async function doSomething(value: Value) {}
+
+ asyncFunction().then(value => doSomething(value));
+ ```
+
+ @category Async
+ */
+declare type AsyncReturnType<Target extends AsyncFunction> = Awaited<ReturnType<Target>>;
 
 /** A Bloom filter. */
 declare class BloomFilter {
@@ -250,6 +272,11 @@ declare class CertStore extends StoreBase<StoredCert> {
     insert(cert: Certificate): Promise<void>;
 }
 
+declare interface Close {
+    /** Close the store. */
+    close: () => Promise<void>;
+}
+
 declare interface Closer {
     close: () => void;
 }
@@ -291,6 +318,7 @@ declare class Component {
     constructor(type?: number, value?: Uint8Array | string);
     /** Construct from TLV. */
     constructor(tlv: Uint8Array);
+    constructor(type: number, isFrom: typeof FROM, encoder: Encoder, length: number);
     /** Get URI string. */
     toString(): string;
     encodeTo(encoder: Encoder): void;
@@ -329,6 +357,15 @@ declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number)
 
 /** Console on stderr. */
 declare const console_2: Console;
+
+/** Error if n is not an integer within [0,MAX_SAFE_INTEGER] range. */
+declare function constrain(n: number, typeName: string): number;
+
+/** Error if n is not an integer within [0,max] range. */
+declare function constrain(n: number, typeName: string, max: number): number;
+
+/** Error if n is not an integer within [min,max] range. */
+declare function constrain(n: number, typeName: string, min: number, max: number): number;
 
 /**
  * Progress of Data retrieval.
@@ -662,6 +699,18 @@ declare interface DataBuffer {
     insert: (...pkts: Data[]) => Promise<void>;
 }
 
+declare namespace DataStore {
+    export {
+        Close,
+        ListNames,
+        ListData,
+        Get,
+        Find,
+        Insert,
+        Delete
+    }
+}
+
 /** Prototype of DataStore from @ndn/repo package. */
 declare interface DataStore_2 {
     find: (interest: Interest) => Promise<Data | undefined>;
@@ -798,11 +847,13 @@ declare interface Decodable<R> {
 /** TLV decoder. */
 declare class Decoder {
     private readonly input;
-    /** Determine whether end of input has been reached. */
-    get eof(): boolean;
+    constructor(input: Uint8Array);
     private readonly dv;
     private offset;
-    constructor(input: Uint8Array);
+    /** Determine whether end of input has been reached. */
+    get eof(): boolean;
+    /** Throw an error if EOF has not been reached. */
+    throwUnlessEof(): void;
     /** Read TLV structure. */
     read(): Decoder.Tlv;
     /** Read a Decodable object. */
@@ -838,6 +889,11 @@ declare namespace Decoder {
         /** Siblings after this TLV. */
         readonly after: Uint8Array;
     }
+    /**
+     * Decode a single object from Uint8Array.
+     * The input is expected to contain no junk after the object.
+     */
+    function decode<R>(input: Uint8Array, d: Decodable<R>): R;
 }
 
 /**
@@ -864,6 +920,11 @@ declare class DefaultServers {
 
 /** Make a Promise that resolves after specified duration. */
 declare const delay: <T = void>(after: number, value?: T) => Promise<T>;
+
+declare interface Delete {
+    /** Delete Data packets with given names. */
+    delete: (...names: Name[]) => Promise<void>;
+}
 
 declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
     private readonly tt;
@@ -1010,15 +1071,23 @@ declare class Endpoint {
     readonly opts: Options_2;
     readonly fw: Forwarder;
     constructor(opts?: Options_2);
-}
-
-declare interface Endpoint extends EndpointConsumer, EndpointProducer {
+    /**
+     * Retrieve a single piece of Data.
+     * @param interest Interest or Interest name.
+     */
+    consume(interest: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext;
+    /**
+     * Start a producer.
+     * @param prefix prefix registration; if undefined, prefixes may be added later.
+     * @param handler function to handle incoming Interest.
+     */
+    produce(prefix: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
 }
 
 declare namespace Endpoint {
     /** Delete default Forwarder instance (mainly for unit testing). */
     const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
-    type RouteAnnouncement = EndpointProducer.RouteAnnouncement;
+    type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
 declare namespace endpoint {
@@ -1037,30 +1106,6 @@ declare namespace endpoint {
     }
 }
 export { endpoint }
-
-/** Consumer functionality of Endpoint. */
-declare class EndpointConsumer {
-    fw: Forwarder;
-    opts: ConsumerOptions;
-    /** Consume a single piece of Data. */
-    consume(interestInput: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext;
-}
-
-/** Producer functionality of Endpoint. */
-declare class EndpointProducer {
-    fw: Forwarder;
-    opts: ProducerOptions;
-    /**
-     * Start a producer.
-     * @param prefixInput prefix registration; if undefined, prefixes may be added later.
-     * @param handler function to handle incoming Interest.
-     */
-    produce(prefixInput: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
-}
-
-declare namespace EndpointProducer {
-    type RouteAnnouncement = FwFace.RouteAnnouncement;
-}
 
 /** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
 declare class EvDecoder<T> {
@@ -1140,11 +1185,113 @@ declare namespace EvDecoder {
     type TlvObserver<T> = (target: T, topTlv?: Decoder.Tlv) => void;
 }
 
-declare type EventMap = {
-    [key: string]: (...args: any[]) => void
+/**
+ * Use in components with the `@Output` directive to emit custom events
+ * synchronously or asynchronously, and register handlers for those events
+ * by subscribing to an instance.
+ *
+ * @usageNotes
+ *
+ * Extends
+ * [RxJS `Subject`](https://rxjs.dev/api/index/class/Subject)
+ * for Angular by adding the `emit()` method.
+ *
+ * In the following example, a component defines two output properties
+ * that create event emitters. When the title is clicked, the emitter
+ * emits an open or close event to toggle the current visibility state.
+ *
+ * ```html
+ * @Component({
+ *   selector: 'zippy',
+ *   template: `
+ *   <div class="zippy">
+ *     <div (click)="toggle()">Toggle</div>
+ *     <div [hidden]="!visible">
+ *       <ng-content></ng-content>
+ *     </div>
+ *  </div>`})
+ * export class Zippy {
+ *   visible: boolean = true;
+ *   @Output() open: EventEmitter<any> = new EventEmitter();
+ *   @Output() close: EventEmitter<any> = new EventEmitter();
+ *
+ *   toggle() {
+ *     this.visible = !this.visible;
+ *     if (this.visible) {
+ *       this.open.emit(null);
+ *     } else {
+ *       this.close.emit(null);
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * Access the event object with the `$event` argument passed to the output event
+ * handler:
+ *
+ * ```html
+ * <zippy (open)="onOpen($event)" (close)="onClose($event)"></zippy>
+ * ```
+ *
+ * @see [Observables in Angular](guide/observables-in-angular)
+ * @publicApi
+ */
+declare interface EventEmitter<T> extends Subject<T> {
+    /**
+     * Creates an instance of this class that can
+     * deliver events synchronously or asynchronously.
+     *
+     * @param [isAsync=false] When true, deliver events asynchronously.
+     *
+     */
+    new (isAsync?: boolean): EventEmitter<T>;
+    /**
+     * Emits an event containing a given value.
+     * @param value The value to emit.
+     */
+    emit(value?: T): void;
+    /**
+     * Registers handlers for events emitted by this instance.
+     * @param next When supplied, a custom handler for emitted events.
+     * @param error When supplied, a custom handler for an error notification from this emitter.
+     * @param complete When supplied, a custom handler for a completion notification from this
+     *     emitter.
+     */
+    subscribe(next?: (value: T) => void, error?: (error: any) => void, complete?: () => void): Subscription_2;
+    /**
+     * Registers handlers for events emitted by this instance.
+     * @param observerOrNext When supplied, a custom handler for emitted events, or an observer
+     *     object.
+     * @param error When supplied, a custom handler for an error notification from this emitter.
+     * @param complete When supplied, a custom handler for a completion notification from this
+     *     emitter.
+     */
+    subscribe(observerOrNext?: any, error?: any, complete?: any): Subscription_2;
 }
 
+/**
+ * @publicApi
+ */
+declare const EventEmitter: {
+    new (isAsync?: boolean): EventEmitter<any>;
+    new <T>(isAsync?: boolean): EventEmitter<T>;
+    readonly prototype: EventEmitter<any>;
+};
+
+declare type EventMap = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry>;
+};
+
 declare type EventMap_2 = {
+    /** Emitted upon face is up as reported by lower layer. */
+    up: Event;
+    /** Emitted upon face is down as reported by lower layer. */
+    down: Event;
+    /** Emitted upon face is closed. */
+    close: Event;
+};
+
+declare type EventMap_3 = {
     /** Emitted before adding face. */
     faceadd: Forwarder.FaceEvent;
     /** Emitted after removing face. */
@@ -1163,16 +1310,28 @@ declare type EventMap_2 = {
     pkttx: Forwarder.PacketEvent;
 };
 
-declare type EventMap_3 = {
-    /** Emitted upon face is up as reported by lower layer. */
-    up: Event;
-    /** Emitted upon face is down as reported by lower layer. */
-    down: Event;
-    /** Emitted upon face is closed. */
-    close: Event;
+declare type EventMap_4 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry_2>;
 };
 
-declare type EventMap_4 = {
+declare type EventMap_5 = {
+    debug: CustomEvent<DebugEntry_3>;
+    state: PSyncPartialSubscriber.StateEvent;
+};
+
+declare type EventMap_6 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry_4>;
+};
+
+declare type EventMap_7 = {
+    error: CustomEvent<Error>;
+};
+
+declare type EventMap_8 = {
+    debug: CustomEvent<DebugEntry_5>;
+};
+
+declare type EventMap_9 = {
     /** Emitted upon face state change. */
     state: L3Face.StateEvent;
     /** Emitted upon state becomes UP. */
@@ -1187,37 +1346,62 @@ declare type EventMap_4 = {
     txerror: CustomEvent<L3Face.TxError>;
 };
 
-declare type Events = SyncProtocol.Events<Name> & {
-    debug: (entry: DebugEntry) => void;
-};
-
-declare type Events_2 = SyncProtocol.Events<Name> & {
-    debug: (entry: DebugEntry_2) => void;
-};
-
-declare type Events_3 = {
-    debug: (entry: DebugEntry_3) => void;
-    state: (topics: readonly PSyncPartialSubscriber.TopicInfo[]) => void;
-};
-
-declare type Events_4 = SyncProtocol.Events<Name> & {
-    debug: (entry: DebugEntry_4) => void;
-};
-
-declare type Events_5 = {
-    error: (err: Error) => void;
-};
-
-declare type Events_6 = {
-    debug: (entry: DebugEntry_5) => void;
-};
-
 /** Delete keys from a Set or Map until its size is below capacity. */
 declare function evict<K>(capacity: number, ct: evict.Container<K>): void;
 
 declare namespace evict {
-    type Container<K> = Pick<Set<K>, "delete" | "size" | "keys">;
+    type Container<K> = Pick<Set<K> & Map<K, unknown>, "delete" | "size" | "keys">;
 }
+
+/**
+ Create a type from an object type without certain keys.
+
+ We recommend setting the `requireExactProps` option to `true`.
+
+ This type is a stricter version of [`Omit`](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-5.html#the-omit-helper-type). The `Omit` type does not restrict the omitted keys to be keys present on the given type, while `Except` does. The benefits of a stricter type are avoiding typos and allowing the compiler to pick up on rename refactors automatically.
+
+ This type was proposed to the TypeScript team, which declined it, saying they prefer that libraries implement stricter versions of the built-in types ([microsoft/TypeScript#30825](https://github.com/microsoft/TypeScript/issues/30825#issuecomment-523668235)).
+
+ @example
+ ```
+ import type {Except} from 'type-fest';
+
+ type Foo = {
+ 	a: number;
+ 	b: string;
+ };
+
+ type FooWithoutA = Except<Foo, 'a'>;
+ //=> {b: string}
+
+ const fooWithoutA: FooWithoutA = {a: 1, b: '2'};
+ //=> errors: 'a' does not exist in type '{ b: string; }'
+
+ type FooWithoutB = Except<Foo, 'b', {requireExactProps: true}>;
+ //=> {a: number} & Partial<Record<"b", never>>
+
+ const fooWithoutB: FooWithoutB = {a: 1, b: '2'};
+ //=> errors at 'b': Type 'string' is not assignable to type 'undefined'.
+ ```
+
+ @category Object
+ */
+declare type Except<ObjectType, KeysType extends keyof ObjectType, Options extends ExceptOptions = {requireExactProps: false}> = {
+    	[KeyType in keyof ObjectType as Filter<KeyType, KeysType>]: ObjectType[KeyType];
+} & (Options['requireExactProps'] extends true
+	? Partial<Record<KeysType, never>>
+	: {});
+
+declare type ExceptOptions = {
+    	/**
+     	Disallow assigning non-specified properties.
+
+     	Note that any omitted properties in the resulting type will be present in autocomplete as `undefined`.
+
+     	@default false
+     	*/
+    	requireExactProps?: boolean;
+};
 
 export declare namespace ext {
     const ndnTypes: {
@@ -1384,13 +1568,47 @@ declare class Fields_2 {
 }
 
 /**
+ Filter out keys from an object.
+
+ Returns `never` if `Exclude` is strictly equal to `Key`.
+ Returns `never` if `Key` extends `Exclude`.
+ Returns `Key` otherwise.
+
+ @example
+ ```
+ type Filtered = Filter<'foo', 'foo'>;
+ //=> never
+ ```
+
+ @example
+ ```
+ type Filtered = Filter<'bar', string>;
+ //=> never
+ ```
+
+ @example
+ ```
+ type Filtered = Filter<'bar', 'foo'>;
+ //=> 'bar'
+ ```
+
+ @see {Except}
+ */
+declare type Filter<KeyType, ExcludeType> = IsEqual<KeyType, ExcludeType> extends true ? never : (KeyType extends ExcludeType ? never : KeyType);
+
+declare interface Find {
+    /** Find Data that satisfies Interest. */
+    find: (interest: Interest) => Promise<Data | undefined>;
+}
+
+/**
  * Map and flatten once.
  * This differs from flatMap in streaming-iterables, which recursively flattens the result.
  */
-declare function flatMapOnce<T, R>(f: (item: T) => Iterable<R> | AsyncIterable<R>, iterable: Iterable<T> | AsyncIterable<T>): AsyncIterable<R>;
+declare function flatMapOnce<T, R>(f: (item: T) => AnyIterable<R>, iterable: AnyIterable<T>): AsyncIterable<R>;
 
 /** Forwarding plane. */
-declare interface Forwarder extends TypedEventTarget<EventMap_2> {
+declare interface Forwarder extends TypedEventTarget<EventMap_3> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
@@ -1470,6 +1688,8 @@ declare interface ForwardingProvider {
     openTerminal?: (node: INode) => void;
 }
 
+declare const FROM: unique symbol;
+
 /**
  * Convert hexadecimal string to byte array.
  *
@@ -1486,7 +1706,7 @@ declare namespace fromHex {
 declare function fromUtf8(buf: Uint8Array): string;
 
 /** A socket or network interface associated with forwarding plane. */
-declare interface FwFace extends TypedEventTarget<EventMap_3> {
+declare interface FwFace extends TypedEventTarget<EventMap_2> {
     readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
     readonly running: boolean;
@@ -1506,7 +1726,7 @@ declare interface FwFace extends TypedEventTarget<EventMap_3> {
 }
 
 declare namespace FwFace {
-    interface Attributes extends Record<string, any> {
+    interface Attributes extends Record<string, unknown> {
         /** Short string to identify the face. */
         describe?: string;
         /** Whether face is local. Default is false. */
@@ -1521,7 +1741,7 @@ declare namespace FwFace {
         routeCapture?: boolean;
     }
     type RouteAnnouncement = boolean | number | NameLike;
-    type RxTxEventMap = Pick<EventMap_3, "up" | "down">;
+    type RxTxEventMap = Pick<EventMap_2, "up" | "down">;
     interface RxTxBase {
         readonly attributes?: Attributes;
         addEventListener?: <K extends keyof RxTxEventMap>(type: K, listener: (ev: RxTxEventMap[K]) => any, options?: AddEventListenerOptions) => void;
@@ -1554,12 +1774,13 @@ declare class FwHint {
 declare interface FwPacket<T extends L3Pkt = L3Pkt> {
     l3: T;
     token?: unknown;
+    congestionMark?: number;
     reject?: RejectInterest.Reason;
     cancel?: boolean;
 }
 
 declare namespace FwPacket {
-    function create<T extends L3Pkt>(l3: T, token?: unknown): FwPacket<T>;
+    function create<T extends L3Pkt>(l3: T, token?: unknown, congestionMark?: number): FwPacket<T>;
     /** Whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
 }
@@ -1581,6 +1802,11 @@ declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, 
 
 /** Generate a pair of signer and verifier, and save to KeyChain. */
 declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
+
+declare interface Get {
+    /** Retrieve Data by exact name. */
+    get: (name: Name) => Promise<Data | undefined>;
+}
 
 /** 32-bit hash function. */
 declare type HashFunction = (seed: number, input: Uint8Array) => number;
@@ -1756,6 +1982,28 @@ declare interface INodeExtra {
     color?: string;
 }
 
+declare interface Insert<Options extends {} = {}> {
+    /**
+     * Insert one or more Data packets.
+     *
+     * Arguments include:
+     * - an optional Options object
+     * - zero or more Data, Iterable<Data>, or AsyncIterable<Data>
+     */
+    insert: (...args: Insert.Args<Options>) => Promise<void>;
+}
+
+declare namespace Insert {
+    type Args<O extends {}> = [...(object extends O ? [O] | [] : []), ...Array<Data | AnyIterable<Data>>];
+    interface ParsedArgs<O> {
+        readonly opts?: O;
+        readonly pkts: AsyncIterable<Data>;
+        readonly singles: Data[];
+        readonly batches: Array<AnyIterable<Data>>;
+    }
+    function parseArgs<O extends {}>(args: Args<O>): ParsedArgs<O>;
+}
+
 /** Interest packet. */
 declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
@@ -1832,6 +2080,38 @@ declare interface IPty {
 
 /** Determine whether the name is a certificate name. */
 declare function isCertName(name: Name): boolean;
+
+/**
+ Returns a boolean for whether the two given types are equal.
+
+ @link https://github.com/microsoft/TypeScript/issues/27024#issuecomment-421529650
+ @link https://stackoverflow.com/questions/68961864/how-does-the-equals-work-in-typescript/68963796#68963796
+
+ Use-cases:
+ - If you want to make a conditional branch based on the result of a comparison of two types.
+
+ @example
+ ```
+ import type {IsEqual} from 'type-fest';
+
+ // This type returns a boolean for whether the given array includes the given item.
+ // `IsEqual` is used to compare the given array at position 0 and the given item and then return true if they are equal.
+ type Includes<Value extends readonly any[], Item> =
+ 	Value extends readonly [Value[0], ...infer rest]
+ 		? IsEqual<Value[0], Item> extends true
+ 			? true
+ 			: Includes<rest, Item>
+ 		: false;
+ ```
+
+ @category Type Guard
+ @category Utilities
+ */
+declare type IsEqual<A, B> =
+	(<G>() => G extends A ? 1 : 2) extends
+	(<G>() => G extends B ? 1 : 2)
+		? true
+		: false;
 
 /** Determine whether the name is a key name. */
 declare function isKeyName(name: Name): boolean;
@@ -2220,7 +2500,7 @@ declare namespace KeyStore {
 }
 
 /** Network layer face for sending and receiving L3 packets. */
-declare class L3Face extends TypedEventTarget<EventMap_4> implements FwFace.RxTx {
+declare class L3Face extends TypedEventTarget<EventMap_9> implements FwFace.RxTx {
     private transport;
     readonly attributes: L3Face.Attributes;
     readonly lp: LpService;
@@ -2286,13 +2566,23 @@ declare namespace L3Face {
      * Returns FwFace.
      */
     type CreateFaceFunc<R extends Transport | Transport[], P extends any[]> = (opts: CreateFaceOptions, ...args: P) => Promise<R extends Transport[] ? FwFace[] : FwFace>;
-    function makeCreateFace<C extends (...args: any[]) => Promise<Transport | Transport[]>>(createTransport: C): CreateFaceFunc<C extends (...args: any[]) => Promise<infer R> ? R : never, Parameters<C>>;
+    function makeCreateFace<C extends (...args: any[]) => Promise<Transport | Transport[]>>(createTransport: C): CreateFaceFunc<AsyncReturnType<C>, Parameters<C>>;
     function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
 }
 
 declare type L3Pkt = Interest | Data | Nack;
 
 declare type Len = 1 | 2 | 4 | 8;
+
+declare interface ListData {
+    /** List Data packets, optionally filtered by name prefix. */
+    listData: (prefix?: Name) => AsyncIterable<Data>;
+}
+
+declare interface ListNames {
+    /** List Data names, optionally filtered by name prefix. */
+    listNames: (prefix?: Name) => AsyncIterable<Name>;
+}
 
 /** Low level decryption function. */
 declare type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
@@ -2379,7 +2669,7 @@ declare class LpService {
     private readonly mtu;
     private readonly fragmenter;
     private readonly reassembler;
-    rx: (iterable: AsyncIterable<Decoder.Tlv>) => AsyncIterable<LpService.Packet | LpService.RxError>;
+    readonly rx: (iterable: AsyncIterable<Decoder.Tlv>) => AsyncIterable<LpService.Packet | LpService.RxError>;
     private decode;
     private decodeL3;
     tx: (iterable: AsyncIterable<LpService.Packet>) => AsyncIterable<Uint8Array | LpService.TxError>;
@@ -2389,9 +2679,7 @@ declare class LpService {
 declare namespace LpService {
     /** An object to report transport MTU. */
     interface Transport {
-        /**
-         * Return current transport MTU.
-         */
+        /** Return current transport MTU. */
         readonly mtu: number;
     }
     interface Options {
@@ -2417,6 +2705,7 @@ declare namespace LpService {
     interface Packet {
         l3: L3Pkt;
         token?: Uint8Array;
+        congestionMark?: number;
     }
     class RxError extends Error {
         readonly packet: Uint8Array;
@@ -2597,7 +2886,12 @@ declare class Name {
 }
 
 declare namespace Name {
+    /** Determine if obj is Name or Name URI. */
     function isNameLike(obj: any): obj is NameLike;
+    /**
+     * Create Name from Name or Name URI.
+     * This is more efficient than new Name(input) if input is already a Name.
+     */
     function from(input: NameLike): Name;
     /** Name compare result. */
     enum CompareResult {
@@ -2792,12 +3086,6 @@ declare namespace NNI {
     function decode(value: Uint8Array, opts: Options & {
         big: true;
     }): bigint;
-    /** Error if n exceeds [0,MAX_SAFE_INTEGER] range. */
-    function constrain(n: number, typeName: string): number;
-    /** Error if n exceeds [0,max] range. */
-    function constrain(n: number, typeName: string, max: number): number;
-    /** Error if n exceeds [min,max] range. */
-    function constrain(n: number, typeName: string, min: number, max: number): number;
 }
 
 /** Encrypter and decrypter that do nothing. */
@@ -2811,6 +3099,178 @@ declare const noopSigning: Signer & Verifier;
  * @see https://redmine.named-data.net/projects/ndn-tlv/wiki/NullSignature
  */
 declare const nullSigner: Signer;
+
+/**
+ * A representation of any set of values over any amount of time. This is the most basic building block
+ * of RxJS.
+ *
+ * @class Observable<T>
+ */
+declare class Observable<T> implements Subscribable<T> {
+    /**
+     * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
+     */
+    source: Observable<any> | undefined;
+    /**
+     * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
+     */
+    operator: Operator<any, T> | undefined;
+    /**
+     * @constructor
+     * @param {Function} subscribe the function that is called when the Observable is
+     * initially subscribed to. This function is given a Subscriber, to which new values
+     * can be `next`ed, or an `error` method can be called to raise an error, or
+     * `complete` can be called to notify of a successful completion.
+     */
+    constructor(subscribe?: (this: Observable<T>, subscriber: Subscriber_2<T>) => TeardownLogic);
+    /**
+     * Creates a new Observable by calling the Observable constructor
+     * @owner Observable
+     * @method create
+     * @param {Function} subscribe? the subscriber function to be passed to the Observable constructor
+     * @return {Observable} a new observable
+     * @nocollapse
+     * @deprecated Use `new Observable()` instead. Will be removed in v8.
+     */
+    static create: (...args: any[]) => any;
+    /**
+     * Creates a new Observable, with this Observable instance as the source, and the passed
+     * operator defined as the new observable's operator.
+     * @method lift
+     * @param operator the operator defining the operation to take on the observable
+     * @return a new observable with the Operator applied
+     * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
+     * If you have implemented an operator using `lift`, it is recommended that you create an
+     * operator by simply returning `new Observable()` directly. See "Creating new operators from
+     * scratch" section here: https://rxjs.dev/guide/operators
+     */
+    lift<R>(operator?: Operator<T, R>): Observable<R>;
+    subscribe(observerOrNext?: Partial<Observer<T>> | ((value: T) => void)): Subscription_2;
+    /** @deprecated Instead of passing separate callback arguments, use an observer argument. Signatures taking separate callback arguments will be removed in v8. Details: https://rxjs.dev/deprecations/subscribe-arguments */
+    subscribe(next?: ((value: T) => void) | null, error?: ((error: any) => void) | null, complete?: (() => void) | null): Subscription_2;
+    /**
+     * Used as a NON-CANCELLABLE means of subscribing to an observable, for use with
+     * APIs that expect promises, like `async/await`. You cannot unsubscribe from this.
+     *
+     * **WARNING**: Only use this with observables you *know* will complete. If the source
+     * observable does not complete, you will end up with a promise that is hung up, and
+     * potentially all of the state of an async function hanging out in memory. To avoid
+     * this situation, look into adding something like {@link timeout}, {@link take},
+     * {@link takeWhile}, or {@link takeUntil} amongst others.
+     *
+     * #### Example
+     *
+     * ```ts
+     * import { interval, take } from 'rxjs';
+     *
+     * const source$ = interval(1000).pipe(take(4));
+     *
+     * async function getTotal() {
+     *   let total = 0;
+     *
+     *   await source$.forEach(value => {
+     *     total += value;
+     *     console.log('observable -> ' + value);
+     *   });
+     *
+     *   return total;
+     * }
+     *
+     * getTotal().then(
+     *   total => console.log('Total: ' + total)
+     * );
+     *
+     * // Expected:
+     * // 'observable -> 0'
+     * // 'observable -> 1'
+     * // 'observable -> 2'
+     * // 'observable -> 3'
+     * // 'Total: 6'
+     * ```
+     *
+     * @param next a handler for each value emitted by the observable
+     * @return a promise that either resolves on observable completion or
+     *  rejects with the handled error
+     */
+    forEach(next: (value: T) => void): Promise<void>;
+    /**
+     * @param next a handler for each value emitted by the observable
+     * @param promiseCtor a constructor function used to instantiate the Promise
+     * @return a promise that either resolves on observable completion or
+     *  rejects with the handled error
+     * @deprecated Passing a Promise constructor will no longer be available
+     * in upcoming versions of RxJS. This is because it adds weight to the library, for very
+     * little benefit. If you need this functionality, it is recommended that you either
+     * polyfill Promise, or you create an adapter to convert the returned native promise
+     * to whatever promise implementation you wanted. Will be removed in v8.
+     */
+    forEach(next: (value: T) => void, promiseCtor: PromiseConstructorLike): Promise<void>;
+    pipe(): Observable<T>;
+    pipe<A>(op1: OperatorFunction<T, A>): Observable<A>;
+    pipe<A, B>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>): Observable<B>;
+    pipe<A, B, C>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>): Observable<C>;
+    pipe<A, B, C, D>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>): Observable<D>;
+    pipe<A, B, C, D, E>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>): Observable<E>;
+    pipe<A, B, C, D, E, F>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>, op6: OperatorFunction<E, F>): Observable<F>;
+    pipe<A, B, C, D, E, F, G>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>, op6: OperatorFunction<E, F>, op7: OperatorFunction<F, G>): Observable<G>;
+    pipe<A, B, C, D, E, F, G, H>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>, op6: OperatorFunction<E, F>, op7: OperatorFunction<F, G>, op8: OperatorFunction<G, H>): Observable<H>;
+    pipe<A, B, C, D, E, F, G, H, I>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>, op6: OperatorFunction<E, F>, op7: OperatorFunction<F, G>, op8: OperatorFunction<G, H>, op9: OperatorFunction<H, I>): Observable<I>;
+    pipe<A, B, C, D, E, F, G, H, I>(op1: OperatorFunction<T, A>, op2: OperatorFunction<A, B>, op3: OperatorFunction<B, C>, op4: OperatorFunction<C, D>, op5: OperatorFunction<D, E>, op6: OperatorFunction<E, F>, op7: OperatorFunction<F, G>, op8: OperatorFunction<G, H>, op9: OperatorFunction<H, I>, ...operations: OperatorFunction<any, any>[]): Observable<unknown>;
+    /** @deprecated Replaced with {@link firstValueFrom} and {@link lastValueFrom}. Will be removed in v8. Details: https://rxjs.dev/deprecations/to-promise */
+    toPromise(): Promise<T | undefined>;
+    /** @deprecated Replaced with {@link firstValueFrom} and {@link lastValueFrom}. Will be removed in v8. Details: https://rxjs.dev/deprecations/to-promise */
+    toPromise(PromiseCtor: typeof Promise): Promise<T | undefined>;
+    /** @deprecated Replaced with {@link firstValueFrom} and {@link lastValueFrom}. Will be removed in v8. Details: https://rxjs.dev/deprecations/to-promise */
+    toPromise(PromiseCtor: PromiseConstructorLike): Promise<T | undefined>;
+}
+
+/**
+ * An object interface that defines a set of callback functions a user can use to get
+ * notified of any set of {@link Observable}
+ * {@link guide/glossary-and-semantics#notification notification} events.
+ *
+ * For more info, please refer to {@link guide/observer this guide}.
+ */
+declare interface Observer<T> {
+    /**
+     * A callback function that gets called by the producer during the subscription when
+     * the producer "has" the `value`. It won't be called if `error` or `complete` callback
+     * functions have been called, nor after the consumer has unsubscribed.
+     *
+     * For more info, please refer to {@link guide/glossary-and-semantics#next this guide}.
+     */
+    next: (value: T) => void;
+    /**
+     * A callback function that gets called by the producer if and when it encountered a
+     * problem of any kind. The errored value will be provided through the `err` parameter.
+     * This callback can't be called more than one time, it can't be called if the
+     * `complete` callback function have been called previously, nor it can't be called if
+     * the consumer has unsubscribed.
+     *
+     * For more info, please refer to {@link guide/glossary-and-semantics#error this guide}.
+     */
+    error: (err: any) => void;
+    /**
+     * A callback function that gets called by the producer if and when it has no more
+     * values to provide (by calling `next` callback function). This means that no error
+     * has happened. This callback can't be called more than one time, it can't be called
+     * if the `error` callback function have been called previously, nor it can't be called
+     * if the consumer has unsubscribed.
+     *
+     * For more info, please refer to {@link guide/glossary-and-semantics#complete this guide}.
+     */
+    complete: () => void;
+}
+
+/***
+ * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
+ */
+declare interface Operator<T, R> {
+    call(subscriber: Subscriber_2<R>, source: any): TeardownLogic;
+}
+
+declare interface OperatorFunction<T, R> extends UnaryFunction<Observable<T>, Observable<R>> {
+}
 
 declare interface Options {
     /** If set, use/enforce specific TLV-LENGTH. */
@@ -2961,14 +3421,14 @@ declare interface ProducerOptions {
      * What name to be readvertised.
      * Ignored if prefix is undefined.
      */
-    announcement?: EndpointProducer.RouteAnnouncement;
+    announcement?: FwFace.RouteAnnouncement;
     /**
      * How many Interests to process in parallel.
-     * Default is 1.
+     * @default 1
      */
     concurrency?: number;
     /**
-     * If specified, automatically sign Data packets unless already signed.
+     * If specified, automatically sign Data packets that are not yet signed.
      * This does not apply to Data packets manually inserted to the dataBuffer.
      */
     dataSigner?: Signer;
@@ -2976,8 +3436,8 @@ declare interface ProducerOptions {
     dataBuffer?: DataBuffer;
     /**
      * Whether to add handler return value to buffer.
-     * Default is true.
      * Ignored when dataBuffer is not specified.
+     * @default true
      */
     autoBuffer?: boolean;
 }
@@ -3089,8 +3549,9 @@ declare namespace PSyncCore {
 }
 
 /** PSync - FullSync participant. */
-declare class PSyncFull extends PSyncFull_base implements SyncProtocol<Name> {
+declare class PSyncFull extends TypedEventTarget<EventMap> implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
+    private readonly maybeHaveEventListener;
     private readonly endpoint;
     readonly describe: string;
     private readonly syncPrefix;
@@ -3167,8 +3628,6 @@ declare namespace PSyncFull {
     }
 }
 
-declare const PSyncFull_base: new () => TypedEventEmitter<Events>;
-
 declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
     readonly id: Name;
@@ -3192,8 +3651,9 @@ declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
 }
 
 /** PSync - PartialSync publisher. */
-declare class PSyncPartialPublisher extends PSyncPartialPublisher_base implements SyncProtocol<Name> {
+declare class PSyncPartialPublisher extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PSyncPartialPublisher.Options);
+    private readonly maybeHaveEventListener;
     private readonly endpoint;
     readonly describe: string;
     private readonly syncPrefix;
@@ -3256,10 +3716,8 @@ declare namespace PSyncPartialPublisher {
     }
 }
 
-declare const PSyncPartialPublisher_base: new () => TypedEventEmitter<Events_2>;
-
 /** PSync - PartialSync subscriber. */
-declare class PSyncPartialSubscriber extends PSyncPartialSubscriber_base implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
+declare class PSyncPartialSubscriber extends TypedEventTarget<EventMap_5> implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncPartialSubscriber.Options);
     readonly describe: string;
     private readonly helloPrefix;
@@ -3321,17 +3779,19 @@ declare namespace PSyncPartialSubscriber {
     }
     interface TopicInfo extends PSyncCore.PrefixSeqNum {
     }
+    class StateEvent extends Event {
+        readonly topics: readonly TopicInfo[];
+        constructor(type: string, topics: readonly TopicInfo[]);
+    }
 }
-
-declare const PSyncPartialSubscriber_base: new () => TypedEventEmitter<Events_3>;
 
 /** Use zlib compression with PSync. */
 declare const PSyncZlib: PSyncCodec.Compression;
 
-declare interface PublicFields extends Omit<Fields_2, "paramsPortion" | "signedPortion"> {
+declare interface PublicFields extends Except<Fields_2, "paramsPortion" | "signedPortion"> {
 }
 
-declare interface PublicFields_2 extends Omit<Fields, "signedPortion" | "topTlv" | "topTlvDigest"> {
+declare interface PublicFields_2 extends Except<Fields, "signedPortion" | "topTlv" | "topTlvDigest"> {
 }
 
 /** Named public key. */
@@ -3438,7 +3898,7 @@ declare interface Rule {
 }
 
 /** Yield all values from an iterable but catch any error. */
-declare function safeIter<T>(iterable: AsyncIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
+declare function safeIter<T>(iterable: AnyIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
 
 /** Named secret key. */
 declare type SecretKey = Key<"secret">;
@@ -3480,9 +3940,7 @@ declare namespace SigInfo {
     /** Generate a random nonce. */
     function generateNonce(size?: number): Uint8Array;
     function Time(v?: number): CtorTag;
-    function SeqNum(v: bigint): {
-        [ctorAssign](si: SigInfo): void;
-    };
+    function SeqNum(v: bigint): CtorTag;
     type CtorArg = SigInfo | number | KeyLocator.CtorArg | CtorTag;
     const registerExtension: <R>(ext: Extension<SigInfo, R>) => void;
     const unregisterExtension: (tt: number) => void;
@@ -3724,15 +4182,128 @@ declare interface StoreProvider<T> {
 
 declare type Sub = Subscription<Name, SyncUpdate<Name>>;
 
-declare interface Subscriber<Topic = Name, Update = any, SubscribeInfo = Topic> {
+/**
+ * A Subject is a special type of Observable that allows values to be
+ * multicasted to many Observers. Subjects are like EventEmitters.
+ *
+ * Every Subject is an Observable and an Observer. You can subscribe to a
+ * Subject, and you can call next to feed values as well as error and complete.
+ */
+declare class Subject<T> extends Observable<T> implements SubscriptionLike {
+    closed: boolean;
+    private currentObservers;
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    observers: Observer<T>[];
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    isStopped: boolean;
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    hasError: boolean;
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    thrownError: any;
+    /**
+     * Creates a "subject" by basically gluing an observer to an observable.
+     *
+     * @nocollapse
+     * @deprecated Recommended you do not use. Will be removed at some point in the future. Plans for replacement still under discussion.
+     */
+    static create: (...args: any[]) => any;
+    constructor();
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    lift<R>(operator: Operator<T, R>): Observable<R>;
+    next(value: T): void;
+    error(err: any): void;
+    complete(): void;
+    unsubscribe(): void;
+    get observed(): boolean;
+    /**
+     * Creates a new Observable with this Subject as the source. You can do this
+     * to create custom Observer-side logic of the Subject and conceal it from
+     * code that uses the Observable.
+     * @return {Observable} Observable that the Subject casts to
+     */
+    asObservable(): Observable<T>;
+}
+
+/** OBSERVABLE INTERFACES */
+declare interface Subscribable<T> {
+    subscribe(observer: Partial<Observer<T>>): Unsubscribable;
+}
+
+/** A pubsub protocol subscriber. */
+declare interface Subscriber<Topic = Name, Update extends Event = SyncUpdate<Topic>, SubscribeInfo = Topic> {
     subscribe: (topic: SubscribeInfo) => Subscription<Topic, Update>;
+}
+
+/**
+ * Implements the {@link Observer} interface and extends the
+ * {@link Subscription} class. While the {@link Observer} is the public API for
+ * consuming the values of an {@link Observable}, all Observers get converted to
+ * a Subscriber, in order to provide Subscription-like capabilities such as
+ * `unsubscribe`. Subscriber is a common type in RxJS, and crucial for
+ * implementing operators, but it is rarely used as a public API.
+ *
+ * @class Subscriber<T>
+ */
+declare class Subscriber_2<T> extends Subscription_2 implements Observer<T> {
+    /**
+     * A static factory for a Subscriber, given a (potentially partial) definition
+     * of an Observer.
+     * @param next The `next` callback of an Observer.
+     * @param error The `error` callback of an
+     * Observer.
+     * @param complete The `complete` callback of an
+     * Observer.
+     * @return A Subscriber wrapping the (partially defined)
+     * Observer represented by the given arguments.
+     * @nocollapse
+     * @deprecated Do not use. Will be removed in v8. There is no replacement for this
+     * method, and there is no reason to be creating instances of `Subscriber` directly.
+     * If you have a specific use case, please file an issue.
+     */
+    static create<T>(next?: (x?: T) => void, error?: (e?: any) => void, complete?: () => void): Subscriber_2<T>;
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    protected isStopped: boolean;
+    /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
+    protected destination: Subscriber_2<any> | Observer<any>;
+    /**
+     * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
+     * There is no reason to directly create an instance of Subscriber. This type is exported for typings reasons.
+     */
+    constructor(destination?: Subscriber_2<any> | Observer<any>);
+    /**
+     * The {@link Observer} callback to receive notifications of type `next` from
+     * the Observable, with a value. The Observable may call this method 0 or more
+     * times.
+     * @param {T} [value] The `next` value.
+     * @return {void}
+     */
+    next(value?: T): void;
+    /**
+     * The {@link Observer} callback to receive notifications of type `error` from
+     * the Observable, with an attached `Error`. Notifies the Observer that
+     * the Observable has experienced an error condition.
+     * @param {any} [err] The `error` exception.
+     * @return {void}
+     */
+    error(err?: any): void;
+    /**
+     * The {@link Observer} callback to receive a valueless notification of type
+     * `complete` from the Observable. Notifies the Observer that the Observable
+     * has finished sending push-based notifications.
+     * @return {void}
+     */
+    complete(): void;
+    unsubscribe(): void;
+    protected _next(value: T): void;
+    protected _error(err: any): void;
+    protected _complete(): void;
 }
 
 /**
  * A subscription on a topic.
  * Listen to the 'update' event to receive updates on incoming publications matching the topic.
  */
-declare interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends TypedEventEmitter<Subscription.Events<Update>> {
+declare interface Subscription<Topic = Name, Update extends Event = SyncUpdate<Topic>> extends TypedEventTarget<Subscription.EventMap<Update>> {
     /** The topic. */
     readonly topic: Topic;
     /** Unsubscribe. */
@@ -3740,10 +4311,108 @@ declare interface Subscription<Topic = Name, Update = SyncUpdate<Topic>> extends
 }
 
 declare namespace Subscription {
-    type Events<Update> = {
+    type EventMap<Update extends Event> = {
         /** Emitted when a subscription update is received. */
-        update: (update: Update) => void;
+        update: Update;
     };
+}
+
+/**
+ * Represents a disposable resource, such as the execution of an Observable. A
+ * Subscription has one important method, `unsubscribe`, that takes no argument
+ * and just disposes the resource held by the subscription.
+ *
+ * Additionally, subscriptions may be grouped together through the `add()`
+ * method, which will attach a child Subscription to the current Subscription.
+ * When a Subscription is unsubscribed, all its children (and its grandchildren)
+ * will be unsubscribed as well.
+ *
+ * @class Subscription
+ */
+declare class Subscription_2 implements SubscriptionLike {
+    private initialTeardown?;
+    /** @nocollapse */
+    static EMPTY: Subscription_2;
+    /**
+     * A flag to indicate whether this Subscription has already been unsubscribed.
+     */
+    closed: boolean;
+    private _parentage;
+    /**
+     * The list of registered finalizers to execute upon unsubscription. Adding and removing from this
+     * list occurs in the {@link #add} and {@link #remove} methods.
+     */
+    private _finalizers;
+    /**
+     * @param initialTeardown A function executed first as part of the finalization
+     * process that is kicked off when {@link #unsubscribe} is called.
+     */
+    constructor(initialTeardown?: (() => void) | undefined);
+    /**
+     * Disposes the resources held by the subscription. May, for instance, cancel
+     * an ongoing Observable execution or cancel any other type of work that
+     * started when the Subscription was created.
+     * @return {void}
+     */
+    unsubscribe(): void;
+    /**
+     * Adds a finalizer to this subscription, so that finalization will be unsubscribed/called
+     * when this subscription is unsubscribed. If this subscription is already {@link #closed},
+     * because it has already been unsubscribed, then whatever finalizer is passed to it
+     * will automatically be executed (unless the finalizer itself is also a closed subscription).
+     *
+     * Closed Subscriptions cannot be added as finalizers to any subscription. Adding a closed
+     * subscription to a any subscription will result in no operation. (A noop).
+     *
+     * Adding a subscription to itself, or adding `null` or `undefined` will not perform any
+     * operation at all. (A noop).
+     *
+     * `Subscription` instances that are added to this instance will automatically remove themselves
+     * if they are unsubscribed. Functions and {@link Unsubscribable} objects that you wish to remove
+     * will need to be removed manually with {@link #remove}
+     *
+     * @param teardown The finalization logic to add to this subscription.
+     */
+    add(teardown: TeardownLogic): void;
+    /**
+     * Checks to see if a this subscription already has a particular parent.
+     * This will signal that this subscription has already been added to the parent in question.
+     * @param parent the parent to check for
+     */
+    private _hasParent;
+    /**
+     * Adds a parent to this subscription so it can be removed from the parent if it
+     * unsubscribes on it's own.
+     *
+     * NOTE: THIS ASSUMES THAT {@link _hasParent} HAS ALREADY BEEN CHECKED.
+     * @param parent The parent subscription to add
+     */
+    private _addParent;
+    /**
+     * Called on a child when it is removed via {@link #remove}.
+     * @param parent The parent to remove
+     */
+    private _removeParent;
+    /**
+     * Removes a finalizer from this subscription that was previously added with the {@link #add} method.
+     *
+     * Note that `Subscription` instances, when unsubscribed, will automatically remove themselves
+     * from every other `Subscription` they have been added to. This means that using the `remove` method
+     * is not a common thing and should be used thoughtfully.
+     *
+     * If you add the same finalizer instance of a function or an unsubscribable object to a `Subscription` instance
+     * more than once, you will need to call `remove` the same number of times to remove all instances.
+     *
+     * All finalizer instances are removed to free up memory upon unsubscription.
+     *
+     * @param teardown The finalizer to remove from this subscription
+     */
+    remove(teardown: Exclude<TeardownLogic, void>): void;
+}
+
+declare interface SubscriptionLike extends Unsubscribable {
+    unsubscribe(): void;
+    readonly closed: boolean;
 }
 
 /** SVS-PS MappingEntry element. */
@@ -3837,13 +4506,56 @@ declare namespace SvPublisher {
     }
 }
 
+/** SVS state vector. */
+declare class SvStateVector {
+    /**
+     * Constructor.
+     * @param from copy from state vector or its JSON value.
+     */
+    constructor(from?: SvStateVector | Record<string, number>);
+    private readonly m;
+    /** Get sequence number of a node. */
+    get(id: Name): number;
+    /**
+     * Set sequence number of a node.
+     * Setting to zero removes the node.
+     */
+    set(id: Name, seqNum: number): void;
+    /** Iterate over nodes and their sequence numbers. */
+    [Symbol.iterator](): IterableIterator<[id: Name, seqNum: number]>;
+    private iterOlderThan;
+    /** List nodes with older sequence number in this state vector than other. */
+    listOlderThan(other: SvStateVector): SvStateVector.DiffEntry[];
+    /** Update this state vector to have newer sequence numbers between this and other. */
+    mergeFrom(other: SvStateVector): void;
+    toJSON(): Record<string, number>;
+    /** Encode TLV-VALUE of name component. */
+    encodeTo(encoder: Encoder): void;
+    /** Encode to name component. */
+    toComponent(): Component;
+    /** Decode TLV-VALUE of name component. */
+    static decodeFrom(decoder: Decoder): SvStateVector;
+    /** Decode from name component. */
+    static fromComponent(comp: Component): SvStateVector;
+}
+
+declare namespace SvStateVector {
+    /** TLV-TYPE of name component. */
+    const NameComponentType: number;
+    interface DiffEntry {
+        id: Name;
+        loSeqNum: number;
+        hiSeqNum: number;
+    }
+}
+
 /**
  * SVS-PS subscriber.
  *
  * MappingEntry is a subclass of SvMappingEntry.
  * If it is not SvMappingEntry base class, its constructor must be specified in Options.mappingEntryType.
  */
-declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry> extends SvSubscriber_base implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<MappingEntry>> {
+declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry> extends TypedEventTarget<EventMap_7> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<MappingEntry>> {
     constructor({ endpoint, sync, retxLimit, mappingBatch, mappingEntryType, mustFilterByMapping, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
     private readonly abort;
     private readonly endpoint;
@@ -3858,6 +4570,7 @@ declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry>
     private readonly outerFetchOpts;
     private readonly outerConsumerOpts;
     private readonly mappingConsumerOpts;
+    private emitError;
     /**
      * Stop subscriber operations.
      * This does not stop the SvSync instance.
@@ -3940,30 +4653,30 @@ declare namespace SvSubscriber {
         publisher: Name;
     }
     /** Received update. */
-    interface Update {
+    class Update extends Event {
         readonly publisher: Name;
         readonly seqNum: number;
         readonly name: Name;
         readonly payload: Uint8Array;
+        constructor(publisher: Name, seqNum: number, name: Name, payload: Uint8Array);
     }
 }
 
-declare const SvSubscriber_base: new () => TypedEventEmitter<Events_5>;
-
 /** StateVectorSync participant. */
-declare class SvSync extends SvSync_base implements SyncProtocol<Name> {
-    constructor({ endpoint, describe, syncPrefix, syncInterestLifetime, steadyTimer, suppressionTimer, signer, verifier, }: SvSync.Options);
+declare class SvSync extends TypedEventTarget<EventMap_6> implements SyncProtocol<Name> {
     private readonly endpoint;
     readonly describe: string;
+    private readonly own;
     readonly syncPrefix: Name;
     private readonly syncInterestLifetime;
     private readonly steadyTimer;
     private readonly suppressionTimer;
     private readonly signer;
     private readonly verifier?;
-    private readonly producer;
-    /** Own state vector. */
-    private readonly own;
+    static create({ endpoint, describe, initialStateVector, initialize, syncPrefix, syncInterestLifetime, steadyTimer, suppressionTimer, signer, verifier, }: SvSync.Options): Promise<SvSync>;
+    private constructor();
+    private readonly maybeHaveEventListener;
+    private producer?;
     /**
      * In steady state, undefined.
      * In suppression state, aggregated state vector of incoming sync Interests.
@@ -3975,7 +4688,12 @@ declare class SvSync extends SvSync_base implements SyncProtocol<Name> {
     close(): void;
     get(id: NameLike): SyncNode<Name>;
     add(id: NameLike): SyncNode<Name>;
-    private readonly handlePublish;
+    /**
+     * Obtain a copy of own state vector.
+     * This may be used in initialStateVector to re-create an SvSync instance.
+     */
+    get currentStateVector(): SvStateVector;
+    private readonly nodeOp;
     private readonly handleSyncInterest;
     private resetTimer;
     private readonly handleTimer;
@@ -3994,6 +4712,18 @@ declare namespace SvSync {
         endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
+        /**
+         * Initial state vector.
+         * Default is empty state vector.
+         */
+        initialStateVector?: SvStateVector;
+        /**
+         * Application initialization function.
+         * During initialization, it's possible to remove SyncNode or decrease seqNum.
+         * Calling .close() has no effect.
+         * Sync protocol starts running after the returned Promise is resolved.
+         */
+        initialize?: (sync: SvSync) => Promise<void>;
         /** Sync group prefix. */
         syncPrefix: Name;
         /**
@@ -4024,8 +4754,6 @@ declare namespace SvSync {
     }
 }
 
-declare const SvSync_base: new () => TypedEventEmitter<Events_4>;
-
 /** SVS-PS MappingEntry with Timestamp element. */
 declare class SvTimedMappingEntry extends SvMappingEntry implements Extensible {
     constructor();
@@ -4041,11 +4769,12 @@ declare namespace sync {
         PSyncZlib,
         PSyncPartialPublisher,
         PSyncPartialSubscriber,
+        SvMappingEntry,
+        SvTimedMappingEntry,
+        SvStateVector,
         SvSync,
         SvPublisher,
         SvSubscriber,
-        SvMappingEntry,
-        SvTimedMappingEntry,
         makeSyncpsCompatParam,
         SyncpsPubsub,
         SyncProtocol,
@@ -4081,7 +4810,7 @@ declare interface SyncNode<ID = any> {
 }
 
 /** A sync protocol participant. */
-declare interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.Events<ID>> {
+declare interface SyncProtocol<ID = any> extends TypedEventTarget<SyncProtocol.EventMap<ID>> {
     /** Stop the protocol operation. */
     close(): void;
     /** Retrieve a node. */
@@ -4091,9 +4820,9 @@ declare interface SyncProtocol<ID = any> extends TypedEventEmitter<SyncProtocol.
 }
 
 declare namespace SyncProtocol {
-    type Events<ID> = {
+    type EventMap<ID> = {
         /** Emitted when a node is updated, i.e. has new sequence numbers. */
-        update: (update: SyncUpdate<ID>) => void;
+        update: SyncUpdate<ID>;
     };
 }
 
@@ -4120,8 +4849,9 @@ declare namespace SyncpsCodec {
 }
 
 /** syncps - pubsub service. */
-declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name, Data> {
+declare class SyncpsPubsub extends TypedEventTarget<EventMap_8> implements Subscriber<Name, CustomEvent<Data>> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
+    private readonly maybeHaveEventListener;
     private readonly endpoint;
     readonly describe: string;
     private readonly syncPrefix;
@@ -4165,7 +4895,7 @@ declare class SyncpsPubsub extends SyncpsPubsub_base implements Subscriber<Name,
      * Subscribe to a topic.
      * @param topic a name prefix.
      */
-    subscribe(topic: Name): Subscription<Name, Data>;
+    subscribe(topic: Name): Subscription<Name, CustomEvent<Data>>;
     private handleSyncInterest;
     private processSyncInterest;
     private processPendingInterests;
@@ -4276,10 +5006,8 @@ declare namespace SyncpsPubsub {
     type PublishCallback = (pub: Data, confirmed: boolean) => void;
 }
 
-declare const SyncpsPubsub_base: new () => TypedEventEmitter<Events_6>;
-
 /** A received update regarding a node. */
-declare class SyncUpdate<ID = any> {
+declare class SyncUpdate<ID = any> extends Event {
     readonly node: SyncNode<ID>;
     readonly loSeqNum: number;
     readonly hiSeqNum: number;
@@ -4289,7 +5017,7 @@ declare class SyncUpdate<ID = any> {
      * @param loSeqNum low sequence number, inclusive.
      * @param hiSeqNum high sequence number, inclusive.
      */
-    constructor(node: SyncNode<ID>, loSeqNum: number, hiSeqNum: number);
+    constructor(node: SyncNode<ID>, loSeqNum: number, hiSeqNum: number, eventType?: string);
     /** Node identifier. */
     get id(): ID;
     /** Number of new sequence numbers. */
@@ -4297,6 +5025,8 @@ declare class SyncUpdate<ID = any> {
     /** Iterate over new sequence numbers. */
     seqNums(): Iterable<number>;
 }
+
+declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;
 
 /** Timing-safe equality comparison. */
 declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
@@ -4401,7 +5131,7 @@ declare abstract class Transport {
 }
 
 declare namespace Transport {
-    interface Attributes extends Record<string, any> {
+    interface Attributes extends Record<string, unknown> {
         /**
          * Textual description.
          * Default is automatically generated from constructor name.
@@ -4467,42 +5197,73 @@ declare const TT: {
     NackReason: number;
 };
 
+declare type TypedEventListener<M, T extends keyof M> = (evt: M[T]) => void | Promise<void>;
+
+declare interface TypedEventListenerObject<M, T extends keyof M> {
+    handleEvent: (evt: M[T]) => void | Promise<void>;
+}
+
+declare type TypedEventListenerOrEventListenerObject<M, T extends keyof M> = TypedEventListener<M, T> | TypedEventListenerObject<M, T>;
+
+declare interface TypedEventTarget<M extends ValueIsEvent<M>> {
+    /** Appends an event listener for events whose type attribute value is type.
+     * The callback argument sets the callback that will be invoked when the event
+     * is dispatched.
+     *
+     * The options argument sets listener-specific options. For compatibility this
+     * can be a boolean, in which case the method behaves exactly as if the value
+     * was specified as options's capture.
+     *
+     * When set to true, options's capture prevents callback from being invoked
+     * when the event's eventPhase attribute value is BUBBLING_PHASE. When false
+     * (or not present), callback will not be invoked when event's eventPhase
+     * attribute value is CAPTURING_PHASE. Either way, callback will be invoked if
+     * event's eventPhase attribute value is AT_TARGET.
+     *
+     * When set to true, options's passive indicates that the callback will not
+     * cancel the event by invoking preventDefault(). This is used to enable
+     * performance optimizations described in § 2.8 Observing event listeners.
+     *
+     * When set to true, options's once indicates that the callback will only be
+     * invoked once after which the event listener will be removed.
+     *
+     * The event listener is appended to target's event listener list and is not
+     * appended if it has the same type, callback, and capture. */
+    addEventListener: <T extends keyof M & string>(type: T, listener: TypedEventListenerOrEventListenerObject<M, T> | null, options?: boolean | AddEventListenerOptions) => void;
+    /** Removes the event listener in target's event listener list with the same
+     * type, callback, and options. */
+    removeEventListener: <T extends keyof M & string>(type: T, callback: TypedEventListenerOrEventListenerObject<M, T> | null, options?: EventListenerOptions | boolean) => void;
+    /**
+     * Dispatches a synthetic event event to target and returns true if either
+     * event's cancelable attribute value is false or its preventDefault() method
+     * was not invoked, and false otherwise.
+     * @deprecated To ensure type safety use `dispatchTypedEvent` instead.
+     */
+    dispatchEvent: (event: Event) => boolean;
+}
+
+declare class TypedEventTarget<M extends ValueIsEvent<M>> extends EventTarget {
+    /**
+     * Dispatches a synthetic event event to target and returns true if either
+     * event's cancelable attribute value is false or its preventDefault() method
+     * was not invoked, and false otherwise.
+     */
+    dispatchTypedEvent<T extends keyof M>(_type: T, event: M[T]): boolean;
+}
+
 /**
- * Type-safe event emitter.
+ * A function type interface that describes a function that accepts one parameter `T`
+ * and returns another parameter `R`.
  *
- * Use it like this:
- *
- * ```typescript
- * type MyEvents = {
- *   error: (error: Error) => void;
- *   message: (from: string, content: string) => void;
- * }
- *
- * const myEmitter = new EventEmitter() as TypedEmitter<MyEvents>;
- *
- * myEmitter.emit("error", "x")  // <- Will catch this type error;
- * ```
+ * Usually used to describe {@link OperatorFunction} - it always takes a single
+ * parameter (the source Observable) and returns another Observable.
  */
-declare interface TypedEventEmitter<Events extends EventMap> {
-    addListener<E extends keyof Events> (event: E, listener: Events[E]): this
-    on<E extends keyof Events> (event: E, listener: Events[E]): this
-    once<E extends keyof Events> (event: E, listener: Events[E]): this
-    prependListener<E extends keyof Events> (event: E, listener: Events[E]): this
-    prependOnceListener<E extends keyof Events> (event: E, listener: Events[E]): this
+declare interface UnaryFunction<T, R> {
+    (source: T): R;
+}
 
-    off<E extends keyof Events>(event: E, listener: Events[E]): this
-    removeAllListeners<E extends keyof Events> (event?: E): this
-    removeListener<E extends keyof Events> (event: E, listener: Events[E]): this
-
-    emit<E extends keyof Events> (event: E, ...args: Parameters<Events[E]>): boolean
-    // The sloppy `eventNames()` return type is to mitigate type incompatibilities - see #5
-    eventNames (): (keyof Events | string | symbol)[]
-    rawListeners<E extends keyof Events> (event: E): Events[E][]
-    listeners<E extends keyof Events> (event: E): Events[E][]
-    listenerCount<E extends keyof Events> (event: E): number
-
-    getMaxListeners (): number
-    setMaxListeners (maxListeners: number): this
+declare interface Unsubscribable {
+    unsubscribe(): void;
 }
 
 declare type Update = SyncUpdate<Name>;
@@ -4529,6 +5290,7 @@ declare namespace util {
         KeyMultiMap,
         MultiMap,
         KeyMultiSet,
+        constrain,
         toHex,
         fromHex,
         toUtf8,
@@ -4566,6 +5328,10 @@ declare namespace ValidityPeriod {
     /** Assign ValidityPeriod onto SigInfo. */
     function set(si: SigInfo, v?: ValidityPeriod): void;
 }
+
+declare type ValueIsEvent<T> = {
+    [key in keyof T]: Event;
+};
 
 /** High level verifier, such as a named public key. */
 declare interface Verifier {

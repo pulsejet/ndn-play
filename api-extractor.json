@@ -68,14 +68,20 @@
     "@ndn/ws-transport",
     "@ndn/l3face",
     "@ndn/lp",
-    "@yoursunny/psync-bloom",
     "@ndn/endpoint",
     "@ndn/fw",
     "@ndn/util",
+    "@ndn/repo-api",
+    "@yoursunny/psync-bloom",
+    "@angular/core",
+    "rxjs",
     "vis-network",
     "typed-emitter",
     "abort-controller",
-    "event-target-shim"
+    "event-target-shim",
+    "type-fest",
+    "streaming-iterables",
+    "typescript-event-target"
   ],
 
   /**

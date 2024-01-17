@@ -99,7 +99,10 @@ export class ProviderBrowser implements ForwardingProvider {
       }
 
       // Add to topology
-      this.topo.network.setOptions({ physics: { enabled: false } });
+      this.topo.network.setOptions({
+        physics: { enabled: false },
+        edges: { smooth: false },
+      });
       this.topo.nodes.add(nodes);
       this.topo.edges.add(edges);
       this.topo.network.fit();

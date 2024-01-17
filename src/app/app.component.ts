@@ -10,7 +10,7 @@ export class AppComponent implements OnInit {
 
   constructor() {
     const url = new URL(window.location.href);
-    const params = ['minindn', 'dump', 'default'];
+    const params = ['minindn', 'dump', 'testbed', 'default'];
     if (params.some(p => url.searchParams.get(p))) {
       this.mode = "play";
     }

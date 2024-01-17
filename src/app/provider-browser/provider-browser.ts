@@ -3,11 +3,15 @@ import { ForwardingProvider } from "../forwarding-provider";
 import { IEdge, INode } from "../interfaces";
 import { NFW } from "./nfw/nfw";
 import { Topology } from "../topo/topo";
+import { COLOR_MAP } from "../topo/color.map";
 import { RoutingHelper } from "./routing-helper";
 import { downloadFile, loadFileBin } from "../helper";
 import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 import { inflate as pakoInflate } from "pako";
 import { ScriptTarget, transpile } from "typescript";
+
+const OFFICIAL_DUMP_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
+const TESTBED_JSON = 'https://wundngw.wustl.edu/ndnstatus/testbed-nodes.json';
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
@@ -37,48 +41,102 @@ export class ProviderBrowser implements ForwardingProvider {
 
     // load dump from url
     const url = new URL(window.location.href);
-    const dump = url.searchParams.get('dump');
-    if (dump) {
-      const OFFICIAL_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
-      setTimeout(() => {
-        if (dump.startsWith(OFFICIAL_PREFIX) || confirm(`Do you want to load the experiment at ${dump}`)) {
-          fetch(dump).then(e => {
-            e.arrayBuffer().then(this.loadExperimentDumpFromBin.bind(this)).catch(console.error);
-          }).catch(e => {
-            console.error(e);
-            alert('Failed to load remote experiment')
-          });
-        }
-      }, 500);
-    } else {
-      // add dummy nodes
-      this.topo.nodes.add(<any>[
-        { id: "A", label: "A" },
-        { id: "M", label: "M" },
-        { id: "E", label: "E" },
-        { id: "B", label: "B" },
-        { id: "C", label: "C" },
-
-        { id: "d1", label: "D" },
-        { id: "d2", label: "D" },
-        { id: "d3", label: "D" },
-        { id: "d4", label: "D" },
-      ]);
-
-      // add dummy edges
-      this.topo.edges.add(<any>[
-        { from: "A", to: "E" },
-        { from: "A", to: "M" },
-        { from: "M", to: "B" },
-        { from: "M", to: "C" },
-
-        { from: "E", to: "d3" },
-        { from: "d3", to: "d2" },
-        { from: "d3", to: "d1" },
-        { from: "d1", to: "d4" },
-        { from: "d4", to: "A" },
-      ]);
+    const dumpUrl = url.searchParams.get('dump');
+    if (dumpUrl) {
+      return await this.loadDumpUrl(dumpUrl);
     }
+
+    // load testbed topology
+    if (url.searchParams.get('testbed')) {
+      return await this.loadTestbedTopology();
+    }
+
+    // load default topology (fallback)
+    await this.loadDefaultTopology();
+  }
+
+  private async loadDumpUrl(url: string) {
+    if (url.startsWith(OFFICIAL_DUMP_PREFIX) || confirm(`Do you want to load the experiment at "${url}"?`)) {
+      try {
+        const res = await fetch(url);
+        const buf = await res.arrayBuffer()
+        this.loadExperimentDumpFromBin(buf)
+      } catch (e) {
+        console.error(e);
+        alert('Failed to load remote experiment, see console for errors')
+      }
+    }
+  }
+
+  private async loadTestbedTopology() {
+    try {
+      const res = await fetch(TESTBED_JSON);
+      const json = await res.json();
+
+      // No typing because these are incomplete as of now
+      const nodes: any[] = [];
+      const edges: any[] = [];
+
+      // Prevent duplicate edges
+      const seenEdges: { [key: string]: boolean } = {};
+
+      // Process testbed-node.json
+      for (const nid of Object.keys(json)) {
+        const node = json[nid];
+
+        nodes.push({
+          id: nid, label: nid,
+          x: node.position[1] * 2,
+          y: -node.position[0] * 8,
+          color: node['ndn-up'] ? undefined : COLOR_MAP['orange'],
+        });
+
+        for (const neighbor of json[nid].neighbors) {
+          if (seenEdges[`${nid}-${neighbor}`] || seenEdges[`${neighbor}-${nid}`]) continue;
+          seenEdges[`${nid}-${neighbor}`] = true;
+          edges.push({ from: nid, to: neighbor });
+        }
+      }
+
+      // Add to topology
+      this.topo.network.setOptions({ physics: { enabled: false } });
+      this.topo.nodes.add(nodes);
+      this.topo.edges.add(edges);
+      this.topo.network.fit();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to load testbed topology, see console for errors')
+    }
+  }
+
+  private async loadDefaultTopology() {
+    // add dummy nodes
+    this.topo.nodes.add(<any>[
+      { id: "A", label: "A" },
+      { id: "M", label: "M" },
+      { id: "E", label: "E" },
+      { id: "B", label: "B" },
+      { id: "C", label: "C" },
+
+      { id: "d1", label: "D" },
+      { id: "d2", label: "D" },
+      { id: "d3", label: "D" },
+      { id: "d4", label: "D" },
+    ]);
+
+    // add dummy edges
+    this.topo.edges.add(<any>[
+      { from: "A", to: "E" },
+      { from: "A", to: "M" },
+      { from: "M", to: "B" },
+      { from: "M", to: "C" },
+
+      { from: "E", to: "d3" },
+      { from: "d3", to: "d2" },
+      { from: "d3", to: "d1" },
+      { from: "d1", to: "d4" },
+      { from: "d4", to: "A" },
+    ]);
   }
 
   public initializePostNetwork = async () => {

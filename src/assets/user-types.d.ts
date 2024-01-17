@@ -3459,6 +3459,8 @@ declare class ProviderBrowser implements ForwardingProvider {
     private scheduledRouteRefresh;
     constructor();
     initialize: () => Promise<void>;
+    private loadDefaultTopology;
+    private loadDumpUrl;
     initializePostNetwork: () => Promise<void>;
     edgeUpdated: (edge?: IEdge) => Promise<void>;
     nodeUpdated: (node?: INode) => Promise<void>;

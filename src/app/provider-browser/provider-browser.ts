@@ -89,6 +89,7 @@ export class ProviderBrowser implements ForwardingProvider {
           x: node.position[1] * 2,
           y: -node.position[0] * 8,
           color: node['ndn-up'] ? undefined : COLOR_MAP['orange'],
+          title: `${node.name}\n${node.https}\n${node.prefix}`,
         });
 
         for (const neighbor of json[nid].neighbors) {
@@ -100,7 +101,17 @@ export class ProviderBrowser implements ForwardingProvider {
 
       // Add to topology
       this.topo.network.setOptions({
-        physics: { enabled: false },
+        interaction: {
+          tooltipDelay: 0,
+        },
+        physics: {
+          barnesHut: {
+            gravitationalConstant: -14,
+            springConstant: 0,
+            centralGravity: 0,
+            damping: 0.2,
+          },
+        },
         edges: { smooth: false },
       });
       this.topo.nodes.add(nodes);

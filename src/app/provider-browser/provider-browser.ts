@@ -84,14 +84,24 @@ export class ProviderBrowser implements ForwardingProvider {
       for (const nid of Object.keys(json)) {
         const node = json[nid];
 
+        // DIV to show on hover
+        const tooltip = document.createElement('DIV');
+        tooltip.innerHTML = `
+          <b>${node.name}</b><br>
+          ${node.https}<br>
+          ${node.prefix}
+        `;
+
+        // Create node
         nodes.push({
           id: nid, label: nid,
           x: node.position[1] * 2,
           y: -node.position[0] * 8,
           color: node['ndn-up'] ? undefined : COLOR_MAP['orange'],
-          title: `${node.name}\n${node.https}\n${node.prefix}`,
+          title: tooltip,
         });
 
+        // Add all edges from this node
         for (const neighbor of json[nid].neighbors) {
           if (seenEdges[`${nid}-${neighbor}`] || seenEdges[`${neighbor}-${nid}`]) continue;
           seenEdges[`${nid}-${neighbor}`] = true;

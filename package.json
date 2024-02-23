@@ -30,6 +30,7 @@
     "chroma-js": "^2.4.2",
     "dct-wasm": "^0.0.6",
     "dijkstrajs": "^1.0.3",
+    "it-pushable": "^3.2.3",
     "localforage": "^1.10.0",
     "msgpack-lite": "^0.1.26",
     "ngx-monaco-editor-v2": "^17.0.1",

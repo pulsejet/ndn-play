@@ -11,7 +11,7 @@ import { inflate as pakoInflate } from "pako";
 import { ScriptTarget, transpile } from "typescript";
 
 const OFFICIAL_DUMP_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
-const TESTBED_JSON = 'https://wundngw.wustl.edu/ndnstatus/testbed-nodes.json';
+const TESTBED_JSON = 'https://testbed-status.named-data.net/testbed-nodes.json';
 
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;

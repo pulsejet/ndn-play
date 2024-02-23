@@ -9,7 +9,19 @@ import { Edge } from './esm';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
-import type WsWebSocket from 'ws';
+import type { WebSocket as WebSocket_2 } from 'ws';
+
+declare type AddField<K extends string, T, Required extends boolean, Repeat extends boolean> = Repeat extends true ? {
+    [key in K]: T[];
+} : Required extends true ? {
+    [key in K]: T;
+} : {
+    [key in K]?: T;
+};
+
+declare type AddFlags<FlagPrefix extends string, FlagBit extends string> = {
+    [key in `${FlagPrefix}${Capitalize<FlagBit>}`]: boolean;
+};
 
 /** AES block size in octets. */
 declare const AesBlockSize = 16;
@@ -17,6 +29,7 @@ declare const AesBlockSize = 16;
 /**
  * AES-CBC encryption algorithm.
  *
+ * @remarks
  * Initialization Vectors must be 16 octets.
  * During encryption, if IV is unspecified, it is randomly generated.
  * During decryption, quality of IV is not checked.
@@ -31,14 +44,15 @@ declare namespace AESCBC {
 /**
  * AES-CTR encryption algorithm.
  *
+ * @remarks
  * Initialization Vectors must be 16 octets.
  * During encryption, if IV is unspecified, it is constructed with two parts:
- * @li a 64-bit random number, generated each time a private key instance is constructed;
- * @li a 64-bit counter starting from zero.
+ * 1. 64-bit random number, generated each time a private key instance is constructed.
+ * 2. 64-bit counter starting from zero.
  *
  * During decryption, quality of IV is not automatically checked.
- * Since the security of AES-CTR depends on having unique IVs, the application is recommended to
- * check IVs using CounterIvChecker type.
+ * Since the security of AES-CTR depends on having unique IVs, the application should check IV
+ * uniqueness with {@link CounterIvChecker}.
  */
 declare const AESCTR: AesEncryption<AESCTR.Info, AESCTR.GenParams>;
 
@@ -46,13 +60,15 @@ declare namespace AESCTR {
     interface Info {
         /**
          * Specify number of bits in IV to use as counter.
-         * This must be between 1 and 128. Default is 64.
+         * This must be between 1 and 128.
+         * @defaultValue 64
          */
         counterLength: number;
     }
     type GenParams = AesGenParams & Partial<Info>;
 }
 
+/** AES encryption algorithm. */
 declare interface AesEncryption<I, G extends AesGenParams> extends EncryptionAlgorithm<I, false, G> {
     readonly ivLength: number;
     makeAesKeyGenParams: (genParams: G) => AesKeyGenParams;
@@ -61,14 +77,15 @@ declare interface AesEncryption<I, G extends AesGenParams> extends EncryptionAlg
 /**
  * AES-GCM encryption algorithm.
  *
+ * @remarks
  * Initialization Vectors must be 12 octets.
  * During encryption, if IV is unspecified, it is constructed with two parts:
- * @li a 64-bit random number, generated each time a private key instance is constructed;
- * @li a 32-bit counter starting from zero.
+ * 1. 64-bit random number, generated each time a private key instance is constructed;
+ * 2. 32-bit counter starting from zero.
  *
  * During decryption, quality of IV is not automatically checked.
- * Since the security of AES-GCM depends on having unique IVs, the application is recommended to
- * check IVs using CounterIvChecker type.
+ * Since the security of AES-GCM depends on having unique IVs, the application should check IV
+ * uniqueness with {@link CounterIvChecker}.
  */
 declare const AESGCM: AesEncryption<{}, AESGCM.GenParams>;
 
@@ -77,18 +94,19 @@ declare namespace AESGCM {
     }
 }
 
-/** Key generation parameters. */
+/** AES key generation parameters. */
 declare interface AesGenParams {
     length?: AesKeyLength;
     /** Import raw key bits instead of generating. */
     importRaw?: Uint8Array;
 }
 
-declare type AesKeyLength = 128 | 192 | 256;
+/** AES key length option. */
+declare type AesKeyLength = (typeof AesKeyLength.Choices)[number];
 
 declare namespace AesKeyLength {
     const Default: AesKeyLength;
-    const Choices: readonly AesKeyLength[];
+    const Choices: readonly [128, 192, 256];
 }
 
 /** Print Generic, ImplicitDigest, ParamsDigest in alternate URI syntax. */
@@ -97,11 +115,12 @@ declare const AltUri: AltUriConverter;
 /**
  * Functions to print and parse names in alternate/pretty URI syntax.
  *
- * This class is constructed with a sequence of NamingConventions. Each component is matched
+ * @remarks
+ * This class is constructed with a sequence of `NamingConvention`s. Each component is matched
  * against these conventions in order, and the first matching convention can determine how to
  * print that component in an alternate URI syntax, if available.
  *
- * Other than pre-constructed 'AltUri' instances exported by this and naming convention packages,
+ * Other than pre-constructed `AltUri` instances exported by this and naming convention packages,
  * you may construct an instance with only the naming conventions you have adopted, so that a
  * component that happens to match a convention that your application did not adopt is not
  * mistakenly interpreted with that convention.
@@ -125,41 +144,17 @@ declare function asDataView(a: BufferSource): DataView;
 /** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
 declare function asUint8Array(a: BufferSource): Uint8Array;
 
-declare type AsyncFunction = (...arguments_: any[]) => Promise<unknown>;
-
-/**
- Unwrap the return type of a function that returns a `Promise`.
-
- There has been [discussion](https://github.com/microsoft/TypeScript/pull/35998) about implementing this type in TypeScript.
-
- @example
- ```ts
- import type {AsyncReturnType} from 'type-fest';
- import {asyncFunction} from 'api';
-
- // This type resolves to the unwrapped return type of `asyncFunction`.
- type Value = AsyncReturnType<typeof asyncFunction>;
-
- async function doSomething(value: Value) {}
-
- asyncFunction().then(value => doSomething(value));
- ```
-
- @category Async
- */
-declare type AsyncReturnType<Target extends AsyncFunction> = Awaited<ReturnType<Target>>;
-
 /** A Bloom filter. */
 declare class BloomFilter {
     private readonly m;
     /**
      * Construct a Bloom filter.
-     * @param p algorithm parameter.
-     * @param wire decode from serialized wire encoding.
-     * @returns a Promise that resolves to BloomFilter instance.
+     * @param p - Algorithm parameter.
+     * @param wire - Decode from serialized wire encoding.
+     * @returns Promise that resolves to BloomFilter instance.
      */
     static create(p: Parameters_2, wire?: Uint8Array): Promise<BloomFilter>;
-    /** Dispose this instance to prevent memory leak. */
+    /** @deprecated No longer needed. */
     dispose(): void;
     /** Clear the Bloom filter. */
     clear(): void;
@@ -171,8 +166,6 @@ declare class BloomFilter {
     encode(): Uint8Array;
     private constructor();
     private readonly c;
-    private disposed;
-    private throwIfDisposed;
     private readonly hashFunction;
 }
 
@@ -181,29 +174,58 @@ declare interface BloomFilter extends Readonly<Parameters_2> {
 
 /**
  * NDN Certificate v2.
+ *
+ * @remarks
  * This type is immutable.
  */
 declare class Certificate {
     readonly data: Data;
     readonly validity: ValidityPeriod;
+    /**
+     * Construct Certificate from Data packet.
+     *
+     * @throws Error
+     * Thrown if the Data packet is not a certificate.
+     */
     static fromData(data: Data): Certificate;
     private constructor();
+    /** Certificate name aka Data packet name. */
     get name(): Name;
+    /** KeyLocator name, if present. */
     get issuer(): Name | undefined;
+    /**
+     * Whether this is a self-signed certificate.
+     *
+     * @remarks
+     * A certificate is considered self-signed if its issuer key name is same as the certificate's
+     * key name, i.e. they are the same key.
+     */
     get isSelfSigned(): boolean;
-    /** Ensure certificate is within validity period. */
+    /**
+     * Ensure certificate is within validity period.
+     *
+     * @throws Error
+     * Certificate has expired as of `now`.
+     */
     checkValidity(now?: ValidityPeriod.TimestampInput): void;
     /** Public key in SubjectPublicKeyInfo (SPKI) binary format. */
     get publicKeySpki(): Uint8Array;
-    /** Import SPKI as public key. */
+    /**
+     * Import SPKI as public key.
+     * @param algoList - Algorithm list, such as {@link SigningAlgorithmListSlim}.
+     */
     importPublicKey<I, A extends CryptoAlgorithm<I>>(algoList: readonly A[]): Promise<[A, CryptoAlgorithm.PublicKey<I>]>;
 }
 
 declare namespace Certificate {
+    /** {@link Certificate.build} options. */
     interface BuildOptions {
         /** Certificate name. */
         name: Name;
-        /** Certificate packet FreshnessPeriod, default is 1 hour. */
+        /**
+         * Certificate packet FreshnessPeriod.
+         * @defaultValue 1 hour
+         */
         freshness?: number;
         /** ValidityPeriod. */
         validity: ValidityPeriod;
@@ -214,8 +236,12 @@ declare namespace Certificate {
     }
     /** Build a certificate from fields. */
     function build({ name, freshness, validity, publicKeySpki, signer, }: BuildOptions): Promise<Certificate>;
+    /** {@link Certificate.issue} options. */
     interface IssueOptions {
-        /** Certificate packet FreshnessPeriod, default is 1 hour. */
+        /**
+         * Certificate packet FreshnessPeriod.
+         * @defaultValue 1 hour
+         */
         freshness?: number;
         /** ValidityPeriod. */
         validity: ValidityPeriod;
@@ -228,10 +254,18 @@ declare namespace Certificate {
     }
     /** Create a certificated signed by issuer. */
     function issue(opts: IssueOptions): Promise<Certificate>;
+    /** {@link Certificate.selfSign} options. */
     interface SelfSignOptions {
-        /** Certificate packet FreshnessPeriod, default is 1 hour. */
+        /**
+         * Certificate packet FreshnessPeriod.
+         * @defaultValue 1 hour
+         */
         freshness?: number;
-        /** ValidityPeriod, default is maximum validity. */
+        /**
+         * ValidityPeriod
+         * @defaultValue
+         * Maximum validity.
+         */
         validity?: ValidityPeriod;
         /** Private key corresponding to public key. */
         privateKey: NamedSigner;
@@ -272,20 +306,31 @@ declare class CertStore extends StoreBase<StoredCert> {
     insert(cert: Certificate): Promise<void>;
 }
 
-declare interface Close {
-    /** Close the store. */
-    close: () => Promise<void>;
-}
-
 declare interface Closer {
     close: () => void;
 }
 
-/** A list of objects that can be closed or destroyed. */
-declare class Closers extends Array {
-    /** Close all objects in reverse order and clear the list. */
-    close: () => void;
-    /** Schedule a timeout or interval to be canceled via .close(). */
+declare namespace Closer {
+    /** Close or dispose an object. */
+    function close(c: any): Promisable<void>;
+    /** Convert a closable object to AsyncDisposable. */
+    function asAsyncDisposable(c: Closer | Disposable | AsyncDisposable): AsyncDisposable;
+}
+
+/** A list of objects that can be closed or disposed. */
+declare class Closers extends Array<Closer | Disposable | AsyncDisposable> implements Disposable {
+    /**
+     * Close all objects and clear the list.
+     *
+     * @remarks
+     * All objects added to this array are closed, in the reversed order as they appear in the array.
+     * This is a synchronous function, so that any AsyncDisposable objects in the array would have its
+     * asyncDispose method is called but not awaited.
+     * This array is cleared and can be reused.
+     */
+    readonly close: () => void;
+    [Symbol.dispose](): void;
+    /** Schedule a timeout or interval to be canceled upon close. */
     addTimeout<T extends NodeJS.Timeout | number>(t: T): T;
     /** Wait for close. */
     wait(): Promise<void>;
@@ -293,12 +338,33 @@ declare class Closers extends Array {
 
 /**
  * Name component.
+ *
+ * @remarks
  * This type is immutable.
  */
 declare class Component {
     static decodeFrom(decoder: Decoder): Component;
     /** Parse from URI representation, or return existing Component. */
     static from(input: ComponentLike): Component;
+    /**
+     * Construct from TLV-TYPE and TLV-VALUE.
+     * @param type - TLV-TYPE. Default is GenericNameComponent.
+     * @param value - TLV-VALUE. If specified as string, it's encoded as UTF-8 but not interpreted
+     *                as URI. Use `Component.from()` to interpret URI.
+     *
+     * @throws Error
+     * Thrown if `type` is not a valid name component TLV-TYPE.
+     */
+    constructor(type?: number, value?: Uint8Array | string);
+    /**
+     * Decode from TLV.
+     *
+     * @throws Error
+     * Thrown if `tlv` does not contain a complete name component TLV and nothing else.
+     */
+    constructor(tlv: Uint8Array);
+    /** @internal */
+    constructor(type: number, isFrom: typeof FROM, encoder: Encoder, length: number);
     /** Whole TLV. */
     readonly tlv: Uint8Array;
     /** TLV-TYPE. */
@@ -309,16 +375,6 @@ declare class Component {
     get length(): number;
     /** TLV-VALUE interpreted as UTF-8 string. */
     get text(): string;
-    /**
-     * Construct from TLV-TYPE and TLV-VALUE.
-     * @param type TLV-TYPE, default is GenericNameComponent.
-     * @param value TLV-VALUE; if specified as string, it's encoded as UTF-8 but not interpreted
-     *              as URI representation. Use from() to interpret URI.
-     */
-    constructor(type?: number, value?: Uint8Array | string);
-    /** Construct from TLV. */
-    constructor(tlv: Uint8Array);
-    constructor(type: number, isFrom: typeof FROM, encoder: Encoder, length: number);
     /** Get URI string. */
     toString(): string;
     encodeTo(encoder: Encoder): void;
@@ -358,18 +414,50 @@ declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number)
 /** Console on stderr. */
 declare const console_2: Console;
 
-/** Error if n is not an integer within [0,MAX_SAFE_INTEGER] range. */
+/**
+ * Ensure n is an integer within `[0,MAX_SAFE_INTEGER]` range.
+ * @param n - Input number.
+ * @param typeName - Description of the number type.
+ *
+ * @throws RangeError
+ * Thrown if n is out of valid range.
+ */
 declare function constrain(n: number, typeName: string): number;
 
-/** Error if n is not an integer within [0,max] range. */
+/**
+ * Ensure n is an integer within `[0,max]` range.
+ * @param n - Input number.
+ * @param typeName - Description of the number type.
+ * @param max - Maximum allowed value (inclusive).
+ *
+ * @throws RangeError
+ * Thrown if n is out of valid range.
+ */
 declare function constrain(n: number, typeName: string, max: number): number;
 
-/** Error if n is not an integer within [min,max] range. */
+/**
+ * Ensure n is an integer within `[min,max]` range.
+ * @param n - Input number.
+ * @param typeName - Description of the number type.
+ * @param min - Minimum allowed value (inclusive).
+ * @param max - Maximum allowed value (inclusive).
+ *
+ * @throws RangeError
+ * Thrown if n is out of valid range.
+ */
 declare function constrain(n: number, typeName: string, min: number, max: number): number;
+
+/**
+ Matches a [`class` constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes).
+
+ @category Class
+ */
+declare type Constructor<T, Arguments extends unknown[] = any[]> = new(...arguments_: Arguments) => T;
 
 /**
  * Progress of Data retrieval.
  *
+ * @remarks
  * This is a Promise that resolves with the retrieved Data and rejects upon timeout,
  * annotated with the Interest and some counters.
  */
@@ -378,29 +466,40 @@ declare interface ConsumerContext extends Promise<Data> {
     readonly nRetx: number;
 }
 
+/** {@link Endpoint.consume} options. */
 declare interface ConsumerOptions {
-    /** Description for debugging purpose. */
+    /**
+     * Description for debugging purpose.
+     * @defaultValue
+     * "consume" + Interest name.
+     */
     describe?: string;
     /** AbortSignal that allows canceling the Interest via AbortController. */
     signal?: AbortSignal;
     /**
      * Modify Interest according to specified options.
-     * Default is no modification.
+     * @defaultValue
+     * `undefined`, no modification.
      */
     modifyInterest?: Interest.Modify;
     /**
      * Retransmission policy.
-     * Default is disabling retransmission.
+     * @defaultValue
+     * `undefined`, no retransmission.
      */
     retx?: RetxPolicy;
     /**
      * Data verifier.
-     * Default is no verification.
+     * @defaultValue
+     * `undefined`, no verification.
      */
     verifier?: Verifier;
 }
 
-/** Check IVs of fixed+random+counter structure to detect duplication. */
+/**
+ * Check Initialization Vectors of fixed+random+counter structure for duplication.
+ * @see {@link CounterIvOptions} for expected IV structure.
+ */
 declare class CounterIvChecker extends IvChecker {
     constructor(opts: CounterIvChecker.Options);
     private readonly fixedMask;
@@ -422,13 +521,16 @@ declare namespace CounterIvChecker {
     interface Options extends CounterIvOptions {
         /**
          * If true, all IVs must have the same bits in the random portion.
-         * @default false
+         * @defaultValue false
          */
         requireSameRandom?: boolean;
     }
 }
 
-/** IV generator using fixed+random+counter structure. */
+/**
+ * Generate Initialization Vectors using fixed+random+counter structure.
+ * @see {@link CounterIvOptions} for expected IV structure.
+ */
 declare class CounterIvGen extends IvGen {
     constructor(opts: CounterIvGen.Options);
     private readonly ivPrefix;
@@ -446,23 +548,25 @@ declare namespace CounterIvGen {
  * Options for Initialization Vectors using fixed+random+counter structure.
  *
  * IVs following this construction method have three parts:
- * @li fixed bits, specified in options.
- * @li random bits, different for each key and in each session.
- * @li counter bits, monotonically increasing for each plaintext/ciphertext block.
+ * 1. fixed bits, specified in options.
+ * 2. random bits, different for each key and in each session.
+ * 3. counter bits, monotonically increasing for each plaintext/ciphertext block.
  */
 declare interface CounterIvOptions {
     /** IV length in octets. */
     ivLength: number;
     /**
      * Number of fixed bits.
-     * @default 0
+     * @defaultValue 0
      */
     fixedBits?: number;
     /**
      * Fixed portion.
+     *
+     * @remarks
      * Required if fixedBits is positive.
      * This may be specified as a bigint or a Uint8Array.
-     * If it's a Uint8Array, it must have fixedBits bits.
+     * If it's a Uint8Array, it must have at least fixedBits bits.
      * The least significant bits are taken.
      */
     fixed?: bigint | Uint8Array;
@@ -475,124 +579,157 @@ declare interface CounterIvOptions {
     blockSize: number;
 }
 
-/** Create a plain decrypter from crypto key. */
+/**
+ * Create a plain decrypter from crypto key.
+ * @param algo - Encryption algorithm.
+ * @param key - Private key or secret key, which must match `algo`.
+ */
 declare function createDecrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): LLDecrypt.Key;
 
-/** Create a named decrypter from crypto key. */
+/**
+ * Create a named decrypter from crypto key.
+ * @param name - Key name.
+ * @param algo - Encryption algorithm.
+ * @param key - Private key or secret key, which must match `algo`.
+ */
 declare function createDecrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedDecrypter<Asym>;
 
-/** Create a plain encrypter from crypto key. */
+/**
+ * Create a plain encrypter from crypto key.
+ * @param algo - Encryption algorithm.
+ * @param key - Public key or secret key, which must match `algo`.
+ */
 declare function createEncrypter<I>(algo: EncryptionAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): LLEncrypt.Key;
 
-/** Create a named encrypter from crypto key. */
+/**
+ * Create a named encrypter from crypto key.
+ * @param name - Key name.
+ * @param algo - Encryption algorithm.
+ * @param key - Public key or secret key, which must match `algo`.
+ */
 declare function createEncrypter<I, Asym extends boolean>(name: Name, algo: EncryptionAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedEncrypter<Asym>;
 
-/** Create a named encrypter from certificate public key. */
-declare function createEncrypter(cert: Certificate, opts?: createEncrypter.ImportCertOptions): Promise<NamedEncrypter.PublicKey>;
+/**
+ * Create a named encrypter from the public key in a certificate.
+ * @param cert - Certificate.
+ * @param opts - Certificate import options.
+ */
+declare function createEncrypter(cert: Certificate, opts?: ImportCertOptions<EncryptionAlgorithm>): Promise<NamedEncrypter.PublicKey>;
 
-declare namespace createEncrypter {
-    /** createEncrypter options when importing public key from a certificate. */
-    interface ImportCertOptions {
-        /**
-         * List of recognized algorithms.
-         * Default is EncryptionAlgorithmListSlim.
-         * Use EncryptionAlgorithmListFull for all algorithms, at the cost of larger bundle size.
-         */
-        algoList?: readonly EncryptionAlgorithm[];
-        /**
-         * Whether to check certificate ValidityPeriod.
-         * Default is true, which throws an error if current timestamp is not within ValidityPeriod.
-         */
-        checkValidity?: boolean;
-        /**
-         * Current timestamp for checking ValidityPeriod.
-         * Default is Date.now().
-         */
-        now?: ValidityPeriod.TimestampInput;
-    }
-}
-
-/** Create a plain signer from crypto key. */
+/**
+ * Create a plain signer from crypto key.
+ * @param algo - Signing algorithm.
+ * @param key - Private key or secret key, which must match `algo`.
+ */
 declare function createSigner<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PrivateSecretKey<I>): Signer;
 
-/** Create a named signer from crypto key. */
+/**
+ * Create a named signer from crypto key.
+ * @param name - Key name.
+ * @param algo - Signing algorithm.
+ * @param key - Private key or secret key, which must match `algo`.
+ */
 declare function createSigner<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PrivateSecretKey<I>): NamedSigner<Asym>;
 
-/** Create a plain verifier from crypto key. */
+/**
+ * Create a plain verifier from crypto key.
+ * @param algo - Signing algorithm.
+ * @param key - Public key or secret key, which must match `algo`.
+ */
 declare function createVerifier<I>(algo: SigningAlgorithm<I>, key: CryptoAlgorithm.PublicSecretKey<I>): Verifier;
 
-/** Create a named verifier from crypto key. */
+/**
+ * Create a named verifier from crypto key.
+ * @param name - Key name.
+ * @param algo - Signing algorithm.
+ * @param key - Public key or secret key, which must match `algo`.
+ */
 declare function createVerifier<I, Asym extends boolean>(name: Name, algo: SigningAlgorithm<I, Asym>, key: CryptoAlgorithm.PublicSecretKey<I>): NamedVerifier<Asym>;
 
-/** Create a named verifier from certificate public key. */
-declare function createVerifier(cert: Certificate, opts?: createVerifier.ImportCertOptions): Promise<NamedVerifier.PublicKey>;
-
-declare namespace createVerifier {
-    /** createVerifier options when importing public key from a certificate. */
-    interface ImportCertOptions {
-        /**
-         * List of recognized algorithms.
-         * Default is SigningAlgorithmListSlim.
-         * Use SigningAlgorithmListFull for all algorithms, at the cost of larger bundle size.
-         */
-        algoList?: readonly SigningAlgorithm[];
-        /**
-         * Whether to check certificate ValidityPeriod.
-         * Default is true, which throws an error if current timestamp is not within ValidityPeriod.
-         */
-        checkValidity?: boolean;
-        /**
-         * Current timestamp for checking ValidityPeriod.
-         * Default is Date.now().
-         */
-        now?: ValidityPeriod.TimestampInput;
-    }
-}
+/**
+ * Create a named verifier from the public key in a certificate.
+ * @param cert - Certificate.
+ * @param opts - Certificate import options.
+ */
+declare function createVerifier(cert: Certificate, opts?: ImportCertOptions<SigningAlgorithm>): Promise<NamedVerifier.PublicKey>;
 
 /** Web Crypto API. */
 declare const crypto_2: Crypto;
 
-/** WebCrypto based algorithm implementation. */
+/**
+ * WebCrypto based algorithm implementation.
+ * @typeParam I - Algorithm-specific per-key information.
+ * @typeParam Asym - Whether the algorithm is asymmetric.
+ * @typeParam G - Key generation parameters.
+ */
 declare interface CryptoAlgorithm<I = any, Asym extends boolean = any, G = any> {
     /**
      * Identifies an algorithm in storage.
+     *
+     * @remarks
      * This should be changed when the serialization format changes.
      */
     readonly uuid: string;
+    /**
+     * WebCrypto KeyUsages for generated keys.
+     * These are specified separately for private/public/secret keys.
+     */
     readonly keyUsages: If<Asym, Record<"private" | "public", readonly KeyUsage[]>, Record<"secret", readonly KeyUsage[]>, {}>;
-    /** Generate key pair or secret key. */
+    /**
+     * Generate key pair (for asymmetric algorithm) or secret key (for symmetric algorithm).
+     * @param params - Key generation parameters.
+     * @param extractable - Whether to generate as extractable WebCrypto key.
+     * @returns Generated key pair or secret key.
+     *
+     * @remarks
+     * Some algorithms allow importing an existing key pair from a serialization format such as
+     * PKCS#8 or JWK. This could be supported by passing the serialized key as part of `params`,
+     * and then importing instead of generating in this method.
+     */
     cryptoGenerate: (params: G, extractable: boolean) => Promise<If<Asym, CryptoAlgorithm.GeneratedKeyPair<I>, CryptoAlgorithm.GeneratedSecretKey<I>, never>>;
     /**
-     * Import public key from SPKI.
+     * Import public key from SubjectPublicKeyInfo.
      *
+     * @remarks
      * This should only appear on asymmetric algorithm.
      */
     importSpki?: (spki: Uint8Array, der: asn1.ElementBuffer) => Promise<CryptoAlgorithm.PublicKey<I>>;
 }
 
 declare namespace CryptoAlgorithm {
+    /** Determine whether `algo` is an asymmetric algorithm. */
     function isAsym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, true, G>;
+    /** Determine whether `algo` is a symmetric algorithm. */
     function isSym<I, G>(algo: CryptoAlgorithm<I, any, G>): algo is CryptoAlgorithm<I, false, G>;
+    /** Determine whether `algo` is a signing algorithm. */
     function isSigning<I, Asym extends boolean = any, G = any>(algo: CryptoAlgorithm<I, Asym, G>): algo is SigningAlgorithm<I, Asym, G>;
+    /** Determine whether `algo` is an encryption algorithm. */
     function isEncryption<I, Asym extends boolean = any, G = any>(algo: CryptoAlgorithm<I, Asym, G>): algo is EncryptionAlgorithm<I, Asym, G>;
+    /** Private key used by an asymmetric algorithm. */
     interface PrivateKey<I = any> {
         privateKey: CryptoKey;
         info: I;
     }
+    /** Public key used by an asymmetric algorithm. */
     interface PublicKey<I = any> {
         publicKey: CryptoKey;
         spki: Uint8Array;
         info: I;
     }
+    /** Secret key used by a symmetric algorithm. */
     interface SecretKey<I = any> {
         secretKey: CryptoKey;
         info: I;
     }
+    /** Pick {@link PrivateKey} or {@link SecretKey} based on whether the algorithm is asymmetric. */
     type PrivateSecretKey<I = any, Asym extends boolean = any> = If<Asym, PrivateKey<I>, SecretKey<I>>;
+    /** Pick {@link PublicKey} or {@link SecretKey} based on whether the algorithm is asymmetric. */
     type PublicSecretKey<I = any, Asym extends boolean = any> = If<Asym, PublicKey<I>, SecretKey<I>>;
+    /** Generated public/private key pair of an asymmetric algorithm. */
     interface GeneratedKeyPair<I = any> extends PrivateKey<I>, PublicKey<I> {
         jwkImportParams: AlgorithmIdentifier;
     }
+    /** Generated secret key of a symmetric algorithm. */
     interface GeneratedSecretKey<I = any> extends SecretKey<I> {
         jwkImportParams: AlgorithmIdentifier;
     }
@@ -600,14 +737,24 @@ declare namespace CryptoAlgorithm {
 
 /**
  * A full list of crypto algorithms.
- * This list encompasses SigningAlgorithmListFull and EncryptionAlgorithmListFull.
+ *
+ * @remarks
+ * The *full* list contains all implemented algorithms.
+ * This list encompasses {@link SigningAlgorithmListFull} and {@link EncryptionAlgorithmListFull}.
+ *
+ * This can be used in place of {@link CryptoAlgorithmListSlim} to support more algorithms,
+ * at the cost of larger bundle size. If you know exactly which algorithms are needed, you can
+ * also explicitly import them and form an array.
  */
 declare const CryptoAlgorithmListFull: readonly CryptoAlgorithm[];
 
 /**
  * A slim list of crypto algorithms.
- * This list encompasses SigningAlgorithmListSlim and EncryptionAlgorithmListSlim.
- * If you need more algorithms, explicitly import them or use CryptoAlgorithmListFull.
+ *
+ * @remarks
+ * The *slim* list contains only the most commonly used algorithms, to reduce bundle size.
+ * This list encompasses {@link SigningAlgorithmListSlim} and {@link EncryptionAlgorithmListSlim}.
+ * If you need more algorithms, explicitly import them or use {@link CryptoAlgorithmListFull}.
  */
 declare const CryptoAlgorithmListSlim: readonly CryptoAlgorithm[];
 
@@ -637,13 +784,14 @@ declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signa
     /**
      * Construct from flexible arguments.
      *
+     * @remarks
      * Arguments can include, in any order unless otherwise specified:
      * - Data to copy from
-     * - Name or name URI
-     * - Data.ContentType(v)
-     * - Data.FreshnessPeriod(v)
-     * - Data.FinalBlock (must appear after Name)
-     * - Uint8Array as Content
+     * - {@link Name} or name URI
+     * - {@link Data.ContentType}`(v)`
+     * - {@link Data.FreshnessPeriod}`(v)`
+     * - {@link Data.FinalBlock} (must appear after Name)
+     * - `Uint8Array` as Content
      */
     constructor(...args: Array<Data | Data.CtorArg>);
     readonly [FIELDS]: Fields;
@@ -659,10 +807,8 @@ declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signa
     /** Compute the full name (name plus implicit digest). */
     computeFullName(): Promise<Name>;
     /**
-     * Determine if a Data can satisfy an Interest.
-     * @param isCacheLookup if true, Data with zero FreshnessPeriod cannot satisfy Interest with MustBeFresh;
-     *                      if false, this check does not apply.
-     * @returns a Promise that will be resolved with the result.
+     * Determine if this Data can satisfy an Interest.
+     * @returns Promise that resolves with the result.
      */
     canSatisfy(interest: Interest, { isCacheLookup }?: Data.CanSatisfyOptions): Promise<boolean>;
     [LLSign.OP](sign: LLSign): Promise<void>;
@@ -681,13 +827,13 @@ declare namespace Data {
     const FinalBlock: unique symbol;
     /** Constructor argument. */
     type CtorArg = NameLike | CtorTag_3 | typeof FinalBlock | Uint8Array;
-    /** Data.canSatisfy options. */
+    /** {@link Data.canSatisfy} options. */
     interface CanSatisfyOptions {
         /**
          * Whether the Interest-Data matching is in the context of cache lookup.
-         * If true, Data with zero FreshnessPeriod cannot satisfy Interest with MustBeFresh.
-         * If false, this check does not apply.
-         * @default false
+         * If `true`, Data with zero FreshnessPeriod cannot satisfy Interest with MustBeFresh.
+         * If `false`, this check does not apply.
+         * @defaultValue false
          */
         isCacheLookup?: boolean;
     }
@@ -696,12 +842,11 @@ declare namespace Data {
 /** Outgoing Data buffer for producer. */
 declare interface DataBuffer {
     find: (interest: Interest) => Promise<Data | undefined>;
-    insert: (...pkts: Data[]) => Promise<void>;
+    insert: (...pkts: readonly Data[]) => Promise<void>;
 }
 
 declare namespace DataStore {
     export {
-        Close,
         ListNames,
         ListData,
         Get,
@@ -711,22 +856,30 @@ declare namespace DataStore {
     }
 }
 
-/** Prototype of DataStore from @ndn/repo package. */
 declare interface DataStore_2 {
     find: (interest: Interest) => Promise<Data | undefined>;
     insert: (opts: {
         expireTime?: number;
-    }, ...pkts: Data[]) => Promise<void>;
+    }, ...pkts: readonly Data[]) => Promise<void>;
 }
 
-/**
- * DataBuffer implementation based on DataStore from @ndn/repo package.
- *
- * @example
- * new DataStoreBuffer(new DataStore(memdown()))
- */
+/** DataBuffer implementation based on `DataStore` from `@ndn/repo` package. */
 declare class DataStoreBuffer implements DataBuffer {
     readonly store: DataStore_2;
+    /**
+     * Constructor.
+     * @param store - {@link \@ndn/repo!DataStore} instance.
+     *
+     * @example
+     * ```ts
+     * new DataStoreBuffer(await makeInMemoryDataStore())
+     * ```
+     *
+     * @remarks
+     * `DataStore` is declared as an interface instead of importing, in order to reduce bundle size
+     * for webapps that do not use DataBuffer. The trade-off is that, applications wanting to use
+     * DataBuffer would have to import `@ndn/repo` themselves.
+     */
     constructor(store: DataStore_2, { ttl, dataSigner, }?: DataStoreBuffer.Options);
     private readonly ttl;
     private readonly dataSigner?;
@@ -735,10 +888,18 @@ declare class DataStoreBuffer implements DataBuffer {
 }
 
 declare namespace DataStoreBuffer {
+    /** {@link DataStoreBuffer} constructor options. */
     interface Options {
-        /** Data expiration time. Default is 60000ms. 0 means infinity. */
+        /**
+         * Data expiration time in milliseconds.
+         * 0 means infinity.
+         * @defaultValue 60000
+         */
         ttl?: number;
-        /** If specified, automatically sign Data packets unless already signed. */
+        /**
+         * If specified, automatically sign Data packets unless already signed.
+         * @see {@link ProducerOptions.dataSigner}
+         */
         dataSigner?: Signer;
     }
 }
@@ -823,6 +984,15 @@ declare interface DebugEntry_3 {
 
 declare interface DebugEntry_4 {
     action: string;
+    key?: number;
+    name?: Name;
+    ownIblt: IBLT;
+    recvIblt?: IBLT;
+    content?: Name[];
+}
+
+declare interface DebugEntry_5 {
+    action: string;
     own: Record<string, number>;
     recv?: Record<string, number>;
     state: string;
@@ -831,15 +1001,14 @@ declare interface DebugEntry_4 {
     ourNewer?: number;
 }
 
-declare interface DebugEntry_5 {
-    action: string;
-    key?: number;
-    name?: Name;
-    ownIblt: IBLT;
-    recvIblt?: IBLT;
-    content?: Name[];
-}
-
+/**
+ * An object that knows how to decode itself from TLV.
+ * @typeParam R - Result type.
+ *
+ * @remarks
+ * Most commonly, `decodeFrom` is added as a static method of type R, so that the constructor
+ * of R implements this interface.
+ */
 declare interface Decodable<R> {
     decodeFrom: (decoder: Decoder) => R;
 }
@@ -852,12 +1021,27 @@ declare class Decoder {
     private offset;
     /** Determine whether end of input has been reached. */
     get eof(): boolean;
-    /** Throw an error if EOF has not been reached. */
+    /**
+     * Ensure EOF has been reached.
+     *
+     * @throws Error
+     * Thrown if EOF has not been reached.
+     */
     throwUnlessEof(): void;
-    /** Read TLV structure. */
+    /**
+     * Read the next TLV structure from input.
+     * @returns TLV structure.
+     *
+     * @throws Error
+     * Thrown if there isn't a complete TLV structure in the input.
+     */
     read(): Decoder.Tlv;
     /** Read a Decodable object. */
     decode<R>(d: Decodable<R>): R;
+    /**
+     * Read a variable-size number.
+     * @returns The number up to uint32 or `undefined` if there isn't a complete number.
+     */
     private readVarNum;
 }
 
@@ -891,7 +1075,12 @@ declare namespace Decoder {
     }
     /**
      * Decode a single object from Uint8Array.
-     * The input is expected to contain no junk after the object.
+     * @param input - Input buffer, which should contain the encoded object and nothing else.
+     * @param d - Decodable object type.
+     * @returns Decoded object.
+     *
+     * @throws Error
+     * Thrown if the input cannot be decoded as the specified object type, or there's junk leftover.
      */
     function decode<R>(input: Uint8Array, d: Decodable<R>): R;
 }
@@ -899,10 +1088,14 @@ declare namespace Decoder {
 /**
  * High level decrypter.
  *
+ * @remarks
  * This captures both the decryption key and the wire format of encrypted content.
  */
 declare interface Decrypter<T = Data> {
-    /** Decrypt a packet. The packet is modified in-place. */
+    /**
+     * Decrypt a packet.
+     * The packet is modified in-place.
+     */
     decrypt: (pkt: T) => Promise<void>;
 }
 
@@ -921,13 +1114,14 @@ declare class DefaultServers {
 /** Make a Promise that resolves after specified duration. */
 declare const delay: <T = void>(after: number, value?: T) => Promise<T>;
 
+/** DataStore interface, delete method. */
 declare interface Delete {
     /** Delete Data packets with given names. */
-    delete: (...names: Name[]) => Promise<void>;
+    delete: (...names: readonly Name[]) => Promise<void>;
 }
 
 declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
-    private readonly tt;
+    protected readonly tt: number;
     private readonly altUriPrefix;
     private readonly altUriRegex;
     constructor(tt: number, altUriPrefix: string);
@@ -954,7 +1148,10 @@ declare const ECDSA: SigningAlgorithm<ECDSA.Info, true, ECDSA.GenParams>;
 declare namespace ECDSA {
     /** Key generation parameters. */
     interface GenParams {
-        /** Pick EC curve. Default is P-256. */
+        /**
+         * EC curve.
+         * @defaultValue P-256
+         */
         curve?: EcCurve;
         /** Import PKCS#8 private key and SPKI public key instead of generating. */
         importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
@@ -977,8 +1174,17 @@ declare interface EdGenParams {
     importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
 }
 
-/** An object acceptable to Encoder.encode(). */
-declare type Encodable = Uint8Array | undefined | false | EncodableObj | EncodableTlv;
+/**
+ * An object acceptable to {@link Encoder.encode}.
+ *
+ * @remarks
+ * - `Uint8Array`: prepended as is.
+ * - `undefined` and `false`: skipped.
+ * - `EncodableObj`: `.encodeTo(encoder)` is invoked.
+ * - `EncodableTlv`: passed to {@link Encoder.prependTlv}.
+ * - `Encodable[]`: passed to {@link Encoder.prependValue}.
+ */
+declare type Encodable = Uint8Array | undefined | false | EncodableObj | EncodableTlv | readonly Encodable[];
 
 /** An object that knows how to prepend itself to an Encoder. */
 declare interface EncodableObj {
@@ -988,98 +1194,157 @@ declare interface EncodableObj {
 /**
  * An encodable TLV structure.
  *
+ * @remarks
  * First item is a number for TLV-TYPE.
- * Optional second item could be OmitEmpty to omit the TLV if TLV-VALUE is empty.
- * Subsequent items are Encodables for TLV-VALUE.
+ * Optional second item could be {@link Encoder.OmitEmpty} to omit the TLV if TLV-VALUE is empty.
+ * Subsequent items are `Encodable`s for TLV-VALUE.
  */
-declare type EncodableTlv = [number, ...Encodable[]] | [number, typeof Encoder.OmitEmpty, ...Encodable[]];
+declare type EncodableTlv = [type: number, ...Encodable[]] | [
+type: number,
+omitEmpty: typeof Encoder.OmitEmpty,
+...Encodable[]
+];
 
 /** TLV encoder that accepts objects in reverse order. */
 declare class Encoder {
+    constructor(initSize?: number);
     private buf;
     private off;
     /** Return encoding output size. */
     get size(): number;
     /** Obtain encoding output. */
     get output(): Uint8Array;
-    constructor(initSize?: number);
-    /** Obtain part of encoding output. */
-    slice(start?: number, length?: number): Uint8Array;
     /**
      * Make room to prepend an object.
-     * @param sizeofObject object size.
-     * @returns room to write object.
+     * @param sizeofObject - Object size.
+     * @returns Room to write object.
      */
     prependRoom(sizeofObject: number): Uint8Array;
     /** Prepend TLV-TYPE and TLV-LENGTH. */
     prependTypeLength(tlvType: number, tlvLength: number): void;
-    /** Prepend TLV-VALUE. */
+    /**
+     * Prepend TLV-VALUE.
+     *
+     * @remarks
+     * Elements are prepended in the reverse order, so that they would appear in the output
+     * in the same order as the parameter order.
+     */
     prependValue(...tlvValue: Encodable[]): void;
-    /** Prepend TLV structure. */
+    /**
+     * Prepend TLV structure.
+     * @see {@link EncodableTlv}
+     */
     prependTlv(tlvType: number, ...tlvValue: Encodable[]): void;
-    /** Prepend TLV structure, but skip if TLV-VALUE is empty. */
+    /**
+     * Prepend TLV structure, but skip if TLV-VALUE is empty.
+     * @see {@link EncodableTlv}
+     */
     prependTlv(tlvType: number, omitEmpty: typeof Encoder.OmitEmpty, ...tlvValue: Encodable[]): void;
-    /** Prepend an Encodable object. */
-    encode(obj: Encodable | readonly Encodable[]): void;
+    /** Prepend `Encodable`. */
+    encode(obj: Encodable): void;
     private grow;
 }
 
 declare namespace Encoder {
+    /**
+     * Indicate that TLV should be skipped if TLV-VALUE is empty.
+     * @see {@link EncodableTlv}
+     */
     const OmitEmpty: unique symbol;
     /** Encode a single object into Uint8Array. */
-    function encode(obj: Encodable | readonly Encodable[], initBufSize?: number): Uint8Array;
-    /** Extract the encoding output of an element while writing to a larger encoder. */
-    function extract(obj: Encodable | readonly Encodable[], cb: (output: Uint8Array) => void): Encodable;
+    function encode(obj: Encodable, initBufSize?: number): Uint8Array;
+    /**
+     * Extract the encoding output of an element while writing to a parent encoder.
+     * @param obj - Encodable element.
+     * @param cb - Function to receive the encoding output of `obj`.
+     * @returns Wrapped Encodable object.
+     */
+    function extract(obj: Encodable, cb: (output: Uint8Array) => void): Encodable;
 }
 
 /**
  * High level encrypter.
  *
+ * @remarks
  * This captures both the encryption key and the wire format of encrypted content.
  */
 declare interface Encrypter<T = Data> {
-    /** Encrypt a packet. The packet is modified in-place. */
+    /**
+     * Encrypt a packet.
+     * The packet is modified in-place.
+     */
     encrypt: (pkt: T) => Promise<void>;
 }
 
-/** WebCrypto based encryption algorithm implementation. */
+/**
+ * WebCrypto based encryption algorithm implementation.
+ * @typeParam I - Algorithm-specific per-key information.
+ * @typeParam Asym - Whether the algorithm is asymmetric.
+ * @typeParam G - Key generation parameters.
+ */
 declare interface EncryptionAlgorithm<I = any, Asym extends boolean = any, G = any> extends CryptoAlgorithm<I, Asym, G> {
+    /**
+     * Create a low level encryption function from public key (in asymmetric algorithm) or
+     * secret key (in symmetric algorithm).
+     */
     makeLLEncrypt: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLEncrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLEncrypt, unknown>;
+    /**
+     * Create a low level decryption function from private key (in asymmetric algorithm) or
+     * secret key (in symmetric algorithm).
+     */
     makeLLDecrypt: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLDecrypt, (key: CryptoAlgorithm.SecretKey<I>) => LLDecrypt, unknown>;
 }
 
 /**
  * A full list of encryption algorithms.
- * This list currently contains AES-CBC, AES-CTR, AES-GCM, and RSA-OAEP.
+ *
+ * @remarks
+ * The *full* list contains all implemented algorithms.
+ * This list currently contains {@link AESCBC}, {@link AESCTR}, {@link AESGCM},
+ * and {@link RSAOAEP}.
+ *
+ * This can be used in place of {@link EncryptionAlgorithmListSlim} to support more algorithms,
+ * at the cost of larger bundle size. If you know exactly which algorithms are needed, you can
+ * also explicitly import them and form an array.
  */
 declare const EncryptionAlgorithmListFull: readonly EncryptionAlgorithm[];
 
 /**
  * A slim list of encryption algorithms.
+ *
+ * @remarks
+ * The *slim* list contains only the most commonly used algorithms, to reduce bundle size.
  * This list is currently empty.
- * If you need more algorithms, explicitly import them or use EncryptionAlgorithmListFull.
+ * If you need more algorithms, explicitly import them or use {@link EncryptionAlgorithmListFull}.
  */
 declare const EncryptionAlgorithmListSlim: readonly EncryptionAlgorithm[];
 
-declare type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [EncryptionAlgorithm<I, Asym, G>, G?] : [EncryptionAlgorithm<I, Asym, G>, G];
+declare type EncryptionOptG<I, Asym extends boolean, G> = {} extends G ? [
+EncryptionAlgorithm<I, Asym, G>,
+G?
+] : [
+EncryptionAlgorithm<I, Asym, G>,
+G
+];
 
 /**
- * Endpoint is the main entry point for an application to interact with the forwarding plane.
- * It provides basic consumer and producer functionality.
+ * Endpoint provides basic consumer and producer functionality. It is the main entry point for an
+ * application to interact with the logical forwarder.
  */
 declare class Endpoint {
     readonly opts: Options_2;
-    readonly fw: Forwarder;
     constructor(opts?: Options_2);
+    /** Logical forwarder instance. */
+    readonly fw: Forwarder;
     /**
      * Retrieve a single piece of Data.
-     * @param interest Interest or Interest name.
+     * @param interest - Interest or Interest name.
      */
     consume(interest: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext;
     /**
      * Start a producer.
-     * @param prefix prefix registration; if undefined, prefixes may be added later.
-     * @param handler function to handle incoming Interest.
+     * @param prefix - Prefix registration; if `undefined`, prefixes may be added later.
+     * @param handler - Function to handle incoming Interest.
      */
     produce(prefix: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
 }
@@ -1087,13 +1352,12 @@ declare class Endpoint {
 declare namespace Endpoint {
     /** Delete default Forwarder instance (mainly for unit testing). */
     const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
+    /** Describe how to derive route announcement from name prefix in {@link Endpoint.produce}. */
     type RouteAnnouncement = FwFace.RouteAnnouncement;
 }
 
 declare namespace endpoint {
     export {
-        RetxOptions,
-        RetxPolicy,
         ConsumerContext,
         ConsumerOptions,
         DataBuffer,
@@ -1101,13 +1365,21 @@ declare namespace endpoint {
         ProducerHandler,
         ProducerOptions,
         Producer,
+        RetxOptions,
+        RetxGenerator,
+        RetxPolicy,
         Options_2 as Options,
         Endpoint
     }
 }
 export { endpoint }
 
-/** TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines. */
+declare type ErrFlags = "ERROR: can only define flags on a non-repeatable number field";
+
+/**
+ * TLV-VALUE decoder that understands Packet Format v0.3 evolvability guidelines.
+ * @typeParam T - Target type being decoded.
+ */
 declare class EvDecoder<T> {
     private readonly typeName;
     private readonly topTT;
@@ -1122,17 +1394,18 @@ declare class EvDecoder<T> {
     readonly afterObservers: Array<EvDecoder.TlvObserver<T>>;
     /**
      * Constructor.
-     * @param typeName type name, used in error messages.
-     * @param topTT if specified, check top-level TLV-TYPE to be in this list.
+     * @param typeName - type name, used in error messages.
+     * @param topTT - If specified, the top-level TLV-TYPE will be checked to be in this list.
      */
     constructor(typeName: string, topTT?: number | readonly number[]);
+    applyDefaultsToRuleOptions({ order, required, repeat, }?: EvDecoder.RuleOptions): Required<EvDecoder.RuleOptions>;
     /**
      * Add a decoding rule.
-     * @param tt TLV-TYPE to match this rule.
-     * @param cb callback or nested EvDecoder to handle element TLV.
-     * @param options additional rule options.
+     * @param tt - TLV-TYPE to match this rule.
+     * @param cb - Callback or nested EvDecoder to handle element TLV.
+     * @param opts - Additional rule options.
      */
-    add(tt: number, cb: EvDecoder.ElementDecoder<T> | EvDecoder<T>, { order, required, repeat, }?: Partial<EvDecoder.RuleOptions>): this;
+    add(tt: number, cb: EvDecoder.ElementDecoder<T> | EvDecoder<T>, opts?: Partial<EvDecoder.RuleOptions>): this;
     /** Set callback to determine whether TLV-TYPE is critical. */
     setIsCritical(cb: EvDecoder.IsCritical): this;
     /** Set callback to handle unknown elements. */
@@ -1151,25 +1424,29 @@ declare namespace EvDecoder {
     interface RuleOptions {
         /**
          * Expected order of appearance.
+         *
+         * @remarks
          * When using this option, it should be specified for all rules in a EvDecoder.
-         * Default to the order in which rules were added to EvDecoder.
+         *
+         * @defaultValue
+         * The order in which rules were added to EvDecoder.
          */
-        order: number;
+        order?: number;
         /**
          * Whether TLV element must appear at least once.
-         * Default is false.
+         * @defaultValue `false`
          */
-        required: boolean;
+        required?: boolean;
         /**
          * Whether TLV element may appear more than once.
-         * Default is false.
+         * @defaultValue `false`
          */
-        repeat: boolean;
+        repeat?: boolean;
     }
     /**
      * Invoked when a TLV element does not match any rule.
-     * 'order' denotes the order number of last recognized TLV element.
-     * Return true if this TLV element is accepted, or false to follow evolvability guidelines.
+     * @param order - Order number of the last recognized TLV element.
+     * @returns `true` if this TLV element is accepted; `false` to follow evolvability guidelines.
      */
     type UnknownElementHandler<T> = (target: T, tlv: Decoder.Tlv, order: number) => boolean;
     /**
@@ -1178,9 +1455,19 @@ declare namespace EvDecoder {
      */
     type IsCritical = (tt: number) => boolean;
     /**
+     * IsCritical callback that always returns `false`.
+     * Any unrecognized or out-of-order TLV elements would be ignored.
+     */
+    const neverCritical: IsCritical;
+    /**
+     * IsCritical callback that always returns `true`.
+     * Any unrecognized or out-of-order TLV elements would cause an error.
+     */
+    const alwaysCritical: IsCritical;
+    /**
      * Callback before or after decoding TLV-VALUE.
-     * @param target target object.
-     * @param topTlv top-level TLV element, available in EVD.decode but unavailable in EVD.decodeValue.
+     * @param target - Target object.
+     * @param topTlv - Top-level TLV element, available in EVD.decode but unavailable in EVD.decodeValue.
      */
     type TlvObserver<T> = (target: T, topTlv?: Decoder.Tlv) => void;
 }
@@ -1315,20 +1602,21 @@ declare type EventMap_4 = SyncProtocol.EventMap<Name> & {
 };
 
 declare type EventMap_5 = {
+    /** Emitted for debugging. */
     debug: CustomEvent<DebugEntry_3>;
-    state: PSyncPartialSubscriber.StateEvent;
+    state: PartialSubscriber.StateEvent;
 };
 
-declare type EventMap_6 = SyncProtocol.EventMap<Name> & {
+declare type EventMap_6 = {
     debug: CustomEvent<DebugEntry_4>;
 };
 
-declare type EventMap_7 = {
-    error: CustomEvent<Error>;
+declare type EventMap_7 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry_5>;
 };
 
 declare type EventMap_8 = {
-    debug: CustomEvent<DebugEntry_5>;
+    error: CustomEvent<Error>;
 };
 
 declare type EventMap_9 = {
@@ -1462,16 +1750,16 @@ declare namespace Extensible {
     function cloneRecord(dst: Extensible, src: Extensible): void;
     /**
      * Define simple getters and setters.
-     * @param typ Extensible subclass constructor.
-     * @param exts extensions, each key is a property name and each value is the TLV-TYPE number.
+     * @param typ - Extensible subclass constructor.
+     * @param exts - Extensions, each key is a property name and each value is the TLV-TYPE number.
      */
     function defineGettersSetters<T extends Extensible>(typ: new () => T, exts: Record<string, number>): void;
 }
 
 /**
  * An extension sub element on a parent TLV element.
- * T is the parent TLV element type.
- * R is the value type of this extension.
+ * @typeParam T - Parent TLV element type.
+ * @typeParam R - Value type of this extension.
  */
 declare interface Extension<T, R = unknown> {
     /** TLV-TYPE. */
@@ -1480,16 +1768,16 @@ declare interface Extension<T, R = unknown> {
     readonly order?: number;
     /**
      * Decode extension element.
-     * @param obj parent object.
-     * @param tlv TLV of sub element; its TLV-TYPE would be this.tt .
-     * @param accumulator previous decoded value, if extension element appears more than once.
+     * @param obj - Parent object.
+     * @param tlv - TLV of sub element; its TLV-TYPE would be `this.tt`.
+     * @param accumulator - Previous decoded value, if extension element appears more than once.
      */
     decode: (obj: T, tlv: Decoder.Tlv, accumulator?: R) => R;
     /**
      * Encode extension element.
-     * @param obj parent object.
-     * @param value decoded value.
-     * @returns encoding of sub element; its TLV-TYPE should be this.tt .
+     * @param obj - Parent object.
+     * @param value - Decoded value.
+     * @returns Encoding of sub element; its TLV-TYPE should be `this.tt`.
      */
     encode: (obj: T, value: R) => Encodable;
 }
@@ -1503,15 +1791,23 @@ declare namespace Extension {
     function clear(obj: Extensible, tt: number): void;
 }
 
+declare type ExtensionFieldType<R> = Pick<StructFieldType<R>, "encode" | "decode">;
+
+declare interface ExtensionOptions {
+    order?: number;
+}
+
 /** Registry of known extension fields of a parent TLV element. */
 declare class ExtensionRegistry<T extends Extensible> {
     private readonly table;
+    /** Add an extension. */
+    readonly register: <R>(tt: number, type: ExtensionFieldType<R>, { order }?: ExtensionOptions) => void;
     /** Add an extension. */
     readonly registerExtension: <R>(ext: Extension<T, R>) => void;
     /** Remove an extension. */
     readonly unregisterExtension: (tt: number) => void;
     /** UnknownElementCallback for EvDecoder. */
-    readonly decodeUnknown: (target: T, tlv: Decoder.Tlv, order: number) => boolean;
+    readonly decodeUnknown: EvDecoder.UnknownElementHandler<T>;
     /** Encode extension fields. */
     encode(source: T): Encodable[];
 }
@@ -1531,10 +1827,11 @@ declare class Fields {
     /** Determine whether FinalBlockId equals the last name component. */
     get isFinalBlock(): boolean;
     /**
-     * Setting to false deletes FinalBlockId.
+     * Setting to `false` deletes FinalBlockId.
+     * Setting to `true` assigns FinalBlockId to be the last name component.
      *
-     * Setting to true assigns FinalBlockId to be the last name component.
-     * It is not allowed if the name is empty.
+     * @throws Error
+     * Thrown if attempting to set `true` while the name is empty.
      */
     set isFinalBlock(v: boolean);
     content: Uint8Array;
@@ -1596,45 +1893,49 @@ declare class Fields_2 {
  */
 declare type Filter<KeyType, ExcludeType> = IsEqual<KeyType, ExcludeType> extends true ? never : (KeyType extends ExcludeType ? never : KeyType);
 
+/** DataStore interface, find method. */
 declare interface Find {
     /** Find Data that satisfies Interest. */
     find: (interest: Interest) => Promise<Data | undefined>;
 }
 
 /**
- * Map and flatten once.
- * This differs from flatMap in streaming-iterables, which recursively flattens the result.
+ * Perform flatMap on an (async) iterable, but flatten at most once.
+ * @remarks
+ * flatMap of streaming-iterables recursively flattens the result.
+ * This function flattens at most once.
  */
 declare function flatMapOnce<T, R>(f: (item: T) => AnyIterable<R>, iterable: AnyIterable<T>): AsyncIterable<R>;
 
-/** Forwarding plane. */
+/** Logical forwarder. */
 declare interface Forwarder extends TypedEventTarget<EventMap_3> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
     readonly faces: ReadonlySet<FwFace>;
-    /** Add a logical face to the forwarding plane. */
-    addFace(face: FwFace.RxTx | FwFace.RxTxDuplex, attributes?: FwFace.Attributes): FwFace;
+    /** Add a logical face to the logical forwarder. */
+    addFace: (face: FwFace.RxTx | FwFace.RxTxDuplex, attributes?: FwFace.Attributes) => FwFace;
     /**
      * Cancel timers and other I/O resources.
      * This instance should not be used after this operation.
      */
-    close(): void;
+    close: () => void;
 }
 
 declare namespace Forwarder {
+    /** {@link Forwarder.create} options. */
     interface Options {
         /** Whether to try matching Data without PIT token. */
         dataNoTokenMatch?: boolean;
     }
     const DefaultOptions: Required<Options>;
-    /** Create a new forwarding plane. */
+    /** Create a new logical forwarder. */
     function create(options?: Options): Forwarder;
-    /** Access the default forwarding plane instance. */
+    /** Access the default logical forwarder instance. */
     function getDefault(): Forwarder;
-    /** Replace the default forwarding plane instance. */
+    /** Replace the default logical forwarder instance. */
     function replaceDefault(fw?: Forwarder): void;
-    /** Delete default instance (mainly for unit testing). */
+    /** Close and delete the default logical forwarder instance (mainly for unit testing). */
     function deleteDefault(): void;
     /** Face event. */
     class FaceEvent extends Event {
@@ -1692,8 +1993,11 @@ declare const FROM: unique symbol;
 
 /**
  * Convert hexadecimal string to byte array.
+ * @param s - Input hexadecimal string (case insensitive).
  *
- * If the input is not a valid hexadecimal string, result will be incorrect.
+ * @remarks
+ * The input is expected to be valid hexadecimal string.
+ * If the input is invalid, the output would be wrong, but no error would be thrown.
  */
 declare function fromHex(s: string): Uint8Array;
 
@@ -1705,41 +2009,168 @@ declare namespace fromHex {
 /** Convert UTF-8 byte array to string. */
 declare function fromUtf8(buf: Uint8Array): string;
 
-/** A socket or network interface associated with forwarding plane. */
+/** PSync - FullSync participant. */
+declare class FullSync extends TypedEventTarget<EventMap> implements SyncProtocol<Name> {
+    constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: FullSync.Options);
+    private readonly maybeHaveEventListener;
+    private readonly endpoint;
+    readonly describe: string;
+    private readonly syncPrefix;
+    private readonly c;
+    private readonly codec;
+    private closed;
+    private readonly pFreshness;
+    private readonly pBuffer;
+    private readonly pProducer;
+    private readonly pPendings;
+    private readonly cFetcher;
+    private readonly cInterval;
+    private cTimer;
+    private cAbort?;
+    private cCurrentInterestName?;
+    private debug;
+    /** Stop the protocol operation. */
+    close(): void;
+    get(prefix: Name): SyncNode<Name> | undefined;
+    add(prefix: Name): SyncNode<Name>;
+    private handleSyncInterest;
+    private handleIncreaseSeqNum;
+    private sendSyncData;
+    private scheduleSyncInterest;
+    private sendSyncInterest;
+}
+
+declare namespace FullSync {
+    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
+    }
+    interface Options {
+        /**
+         * Algorithm parameters.
+         *
+         * @remarks
+         * They must be the same on every peer.
+         */
+        p: Parameters;
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
+        endpoint?: Endpoint;
+        /** Description for debugging purpose. */
+        describe?: string;
+        /** Sync group prefix. */
+        syncPrefix: Name;
+        /**
+         * FreshnessPeriod of sync reply Data packet.
+         * @defaultValue 1000
+         */
+        syncReplyFreshness?: number;
+        /**
+         * Signer of sync reply Data packets.
+         * @defaultValue digestSigning
+         */
+        signer?: Signer;
+        /**
+         * How many sync reply segmented objects to keep in buffer.
+         * This must be a positive integer.
+         * @defaultValue 32
+         */
+        producerBufferLimit?: number;
+        /**
+         * Sync Interest lifetime in milliseconds.
+         * @defaultValue 1000
+         */
+        syncInterestLifetime?: number;
+        /**
+         * Interval between sync Interests, randomized within the range, in milliseconds.
+         * @defaultValue `[syncInterestLifetime/2+100,syncInterestLifetime/2+500]`
+         */
+        syncInterestInterval?: IntervalRange;
+        /**
+         * Verifier of sync reply Data packets.
+         * @defaultValue no verification
+         */
+        verifier?: Verifier;
+    }
+}
+
+/** A socket or network interface associated with logical forwarder. */
 declare interface FwFace extends TypedEventTarget<EventMap_2> {
     readonly fw: Forwarder;
     readonly attributes: FwFace.Attributes;
     readonly running: boolean;
     /** Shutdown the face. */
-    close(): void;
-    toString(): string;
+    close: () => void;
+    toString: () => string;
     /** Determine if a route is present on the face. */
-    hasRoute(name: NameLike): boolean;
-    /** Add a route toward the face. */
-    addRoute(name: NameLike, announcement?: FwFace.RouteAnnouncement): void;
+    hasRoute: (name: NameLike) => boolean;
+    /**
+     * Add a route toward the face.
+     * @param name - Route name.
+     * @param announcement - Prefix announcement name or how to derive it from `name`.
+     *
+     * @remarks
+     * When the logical forwarder receives an Interest matching `name`, it may forward the Interest
+     * to this face. Unless `announcement` is set to `false`, this also invokes
+     * {@link addAnnouncement} to readvertise the name prefix to remote forwarders.
+     */
+    addRoute: (name: NameLike, announcement?: FwFace.RouteAnnouncement) => void;
     /** Remove a route toward the face. */
-    removeRoute(name: NameLike, announcement?: FwFace.RouteAnnouncement): void;
-    /** Add a prefix announcement associated with the face. */
-    addAnnouncement(name: NameLike): void;
+    removeRoute: (name: NameLike, announcement?: FwFace.RouteAnnouncement) => void;
+    /**
+     * Add a prefix announcement associated with the face.
+     * @param name - Prefix announcement name.
+     *
+     * @remarks
+     * The announcement is passed to {@link ReadvertiseDestination}s (e.g. NFD prefix registration
+     * client) on the logical forwarder, so that remote forwarders would send Interests matching
+     * the prefix to the local logical forwarder.
+     *
+     * Multiple FwFaces could make the same announcement. When the last FwFace making an announcement
+     * is closed, the announcement is withdrawn from {@link ReadvertiseDestination}s.
+     *
+     * This function has no effect if `FwFace.Attributes.advertiseFrom` is set to `false`.
+     */
+    addAnnouncement: (name: NameLike) => void;
     /** Remove a prefix announcement associated with the face. */
-    removeAnnouncement(name: NameLike): void;
+    removeAnnouncement: (name: NameLike) => void;
 }
 
 declare namespace FwFace {
+    /** Attributes of a logical forwarder face. */
     interface Attributes extends Record<string, unknown> {
         /** Short string to identify the face. */
         describe?: string;
-        /** Whether face is local. Default is false. */
+        /**
+         * Whether face is local.
+         * @defaultValue false
+         */
         local?: boolean;
-        /** Whether to readvertise registered routes. Default is true. */
+        /**
+         * Whether to allow prefix announcements.
+         * @defaultValue true
+         * @remarks
+         * If `false`, {@link FwFace.addAnnouncement} has no effect.
+         */
         advertiseFrom?: boolean;
         /**
          * Whether routes registered on this face would cause FIB to stop matching onto shorter prefixes.
-         * Default is true.
-         * More explanation in @ndn/endpoint package ProducerOptions type.
+         * @defaultValue true
+         * @see {@link \@ndn/endpoint!ProducerOptions.routeCapture}
          */
         routeCapture?: boolean;
+        [k: string]: unknown;
     }
+    /**
+     * Describe how to derive route announcement from name prefix in {@link FwFace.addRoute}.
+     *
+     * @remarks
+     * - `false`: no announcement is made.
+     * - `true`: same as route name.
+     * - number: n-component prefix of route name.
+     * - {@link Name} or string: specified name.
+     */
     type RouteAnnouncement = boolean | number | NameLike;
     type RxTxEventMap = Pick<EventMap_2, "up" | "down">;
     interface RxTxBase {
@@ -1747,14 +2178,19 @@ declare namespace FwFace {
         addEventListener?: <K extends keyof RxTxEventMap>(type: K, listener: (ev: RxTxEventMap[K]) => any, options?: AddEventListenerOptions) => void;
         removeEventListener?: <K extends keyof RxTxEventMap>(type: K, listener: (ev: RxTxEventMap[K]) => any, options?: EventListenerOptions) => void;
     }
+    /** A logical face with separate RX and TX packet streams. */
     interface RxTx extends RxTxBase {
+        /** RX packet stream received by the logical forwarder. */
         rx: AsyncIterable<FwPacket>;
+        /** Function to accept TX packet stream sent by the logical forwarder. */
         tx: (iterable: AsyncIterable<FwPacket>) => void;
     }
+    /** A logical face with duplex RX and TX packet streams. */
     interface RxTxDuplex extends RxTxBase {
         /**
-         * The transform function takes an iterable of packets sent by the forwarder,
-         * and returns an iterable of packets received by the forwarder.
+         * Duplex RX and TX streams.
+         * @param iterable - TX packet stream sent by the logical forwarder.
+         * @returns RX packet stream received by the logical forwarder.
          */
         duplex: (iterable: AsyncIterable<FwPacket>) => AsyncIterable<FwPacket>;
     }
@@ -1770,7 +2206,7 @@ declare class FwHint {
     encodeTo(encoder: Encoder): void;
 }
 
-/** A logical packet in the forwarder. */
+/** A logical packet in the logical forwarder. */
 declare interface FwPacket<T extends L3Pkt = L3Pkt> {
     l3: T;
     token?: unknown;
@@ -1781,28 +2217,54 @@ declare interface FwPacket<T extends L3Pkt = L3Pkt> {
 
 declare namespace FwPacket {
     function create<T extends L3Pkt>(l3: T, token?: unknown, congestionMark?: number): FwPacket<T>;
-    /** Whether this is a plain packet that can be sent on the wire. */
+    /** Determine whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
 }
 
-/** Generate a pair of encrypter and decrypter. */
+/**
+ * Generate a pair of encrypter and decrypter.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ * @param a - Encryption algorithm and key generation options.
+ */
 declare function generateEncryptionKey<I, Asym extends boolean, G>(name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
 
-/** Generate a pair of encrypter and decrypter, and save to KeyChain. */
+/**
+ * Generate a pair of encrypter and decrypter, and save to KeyChain.
+ * @param keyChain - Target KeyChain.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ * @param a - Encryption algorithm and key generation options.
+ */
 declare function generateEncryptionKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: EncryptionOptG<I, Asym, G>): Promise<[NamedEncrypter<Asym>, NamedDecrypter<Asym>]>;
 
-/** Generate a pair of signer and verifier with the default ECDSA signing algorithm. */
+/**
+ * Generate a pair of signer and verifier with the default ECDSA signing algorithm.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ */
 declare function generateSigningKey(name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
 
-/** Generate a pair of signer and verifier with the default ECDSA signing algorithm, and save to KeyChain. */
+/**
+ * Generate a pair of signer and verifier with the default ECDSA signing algorithm, and save to KeyChain.
+ * @param keyChain - Target KeyChain.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ */
 declare function generateSigningKey(keyChain: KeyChain, name: NameLike): Promise<[NamedSigner.PrivateKey, NamedVerifier.PublicKey]>;
 
-/** Generate a pair of signer and verifier. */
+/**
+ * Generate a pair of signer and verifier.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ * @param a - Signing algorithm and key generation options.
+ */
 declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 
-/** Generate a pair of signer and verifier, and save to KeyChain. */
+/**
+ * Generate a pair of signer and verifier, and save to KeyChain.
+ * @param keyChain - Target KeyChain.
+ * @param name - Key name (used as-is) or subject name (forming key name with random *KeyId*).
+ * @param a - Signing algorithm and key generation options.
+ */
 declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 
+/** DataStore interface, get method. */
 declare interface Get {
     /** Retrieve Data by exact name. */
     get: (name: Name) => Promise<Data | undefined>;
@@ -1839,6 +2301,7 @@ declare class IBLT {
     /**
      * Serialize the hashtable to a byte array.
      *
+     * @remarks
      * Each entry is serialized as 12 octets:
      * - count: int32
      * - keySum: uint32
@@ -1850,7 +2313,8 @@ declare class IBLT {
     serialize(): Uint8Array;
     /**
      * Deserialize from a byte array.
-     * @throws input does not match parameters.
+     * @throws Error
+     * Thrown if input does not match parameters.
      */
     deserialize(v: Uint8Array): void;
     /** Clone to another IBLT. */
@@ -1871,15 +2335,20 @@ declare namespace IBLT {
         nHash: number;
         /**
          * Hash function seed for KeyCheck field.
+         *
+         * @remarks
          * This must be greater than nHash.
          */
         checkSeed: number;
         /**
          * Number of hashtable entries.
+         *
+         * @remarks
          * This must be divisible by `nHash`.
          */
         nEntries: number;
     }
+    /** Normalized and validated parameters. */
     class PreparedParameters implements Readonly<Parameters> {
         static prepare(p: Parameters): PreparedParameters;
         private constructor();
@@ -1939,18 +2408,65 @@ declare interface IEdge extends Edge {
 
 declare type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
 
+/**
+ An if-else-like type that resolves depending on whether the given type is `never`.
+
+ @see {@link IsNever}
+
+ @example
+ ```
+ import type {IfNever} from 'type-fest';
+
+ type ShouldBeTrue = IfNever<never>;
+ //=> true
+
+ type ShouldBeBar = IfNever<'not never', 'foo', 'bar'>;
+ //=> 'bar'
+ ```
+
+ @category Type Guard
+ @category Utilities
+ */
+declare type IfNever<T, TypeIfNever = true, TypeIfNotNever = false> = (
+	IsNever<T> extends true ? TypeIfNever : TypeIfNotNever
+);
+
 declare interface ILinkExtra {
     /** Units of traffic pending on this link */
     pendingTraffic: number;
 }
 
-/** ImplicitSha256DigestComponent */
+/** ImplicitSha256DigestComponent. */
 declare const ImplicitDigest: ImplicitDigestComp;
 
 declare class ImplicitDigestComp extends DigestComp {
-    constructor();
     /** Remove ImplicitDigest if present at last component. */
     strip(name: Name): Name;
+}
+
+/** Certificate import options for {@link createVerifier} and {@link createDecrypter}. */
+declare interface ImportCertOptions<A extends CryptoAlgorithm> {
+    /**
+     * List of recognized algorithms.
+     * @defaultValue SigningAlgorithmListSlim or EncryptionAlgorithmListSlim
+     *
+     * @remarks
+     * {@link SigningAlgorithmListSlim} and {@link EncryptionAlgorithmListSlim} only contain a subset
+     * of available signing and encryption algorithms. Use {@link SigningAlgorithmListFull} and
+     * {@link EncryptionAlgorithmListFull} for all algorithms, at the cost of larger bundle size.
+     */
+    algoList?: readonly A[];
+    /**
+     * Whether to check certificate ValidityPeriod.
+     * If `true`, throws an error if `.now` is not within ValidityPeriod.
+     * @defaultValue true
+     */
+    checkValidity?: boolean;
+    /**
+     * Current timestamp for checking ValidityPeriod.
+     * @defaultValue `Date.now()`
+     */
+    now?: ValidityPeriod.TimestampInput;
 }
 
 declare interface INode extends Node_2 {
@@ -1982,10 +2498,12 @@ declare interface INodeExtra {
     color?: string;
 }
 
+/** DataStore interface, insert method. */
 declare interface Insert<Options extends {} = {}> {
     /**
      * Insert one or more Data packets.
      *
+     * @remarks
      * Arguments include:
      * - an optional Options object
      * - zero or more Data, Iterable<Data>, or AsyncIterable<Data>
@@ -1994,13 +2512,14 @@ declare interface Insert<Options extends {} = {}> {
 }
 
 declare namespace Insert {
-    type Args<O extends {}> = [...(object extends O ? [O] | [] : []), ...Array<Data | AnyIterable<Data>>];
+    type Args<O extends {}> = [...(object extends O ? [O] | [] : []), ...ReadonlyArray<Data | AnyIterable<Data>>];
     interface ParsedArgs<O> {
         readonly opts?: O;
         readonly pkts: AsyncIterable<Data>;
         readonly singles: Data[];
         readonly batches: Array<AnyIterable<Data>>;
     }
+    /** Normalize {@link Insert.insert} arguments. */
     function parseArgs<O extends {}>(args: Args<O>): ParsedArgs<O>;
 }
 
@@ -2010,15 +2529,15 @@ declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.S
      * Construct from flexible arguments.
      *
      * Arguments can include, in any order:
-     * - Interest to copy from
-     * - Name or name URI
-     * - Interest.CanBePrefix
-     * - Interest.MustBeFresh
-     * - FwHint
-     * - Interest.Nonce(v)
-     * - Interest.Lifetime(v)
-     * - Interest.HopLimit(v)
-     * - Uint8Array as AppParameters
+     * - {@link Interest} to copy from
+     * - {@link Name} or name URI
+     * - {@link Interest.CanBePrefix}
+     * - {@link Interest.MustBeFresh}
+     * - {@link FwHint}
+     * - {@link Interest.Nonce}`(v)`
+     * - {@link Interest.Lifetime}`(v)`
+     * - {@link Interest.HopLimit}`(v)`
+     * - `Uint8Array` as AppParameters
      */
     constructor(...args: Array<Interest | Interest.CtorArg>);
     readonly [FIELDS]: Fields_2;
@@ -2055,10 +2574,13 @@ declare namespace Interest {
     /** A function to modify an existing Interest. */
     type ModifyFunc = (interest: Interest) => void;
     /** Common fields to assign onto an existing Interest. */
-    type ModifyFields = Partial<Pick<Fields_2, "canBePrefix" | "mustBeFresh" | "fwHint" | "lifetime" | "hopLimit">>;
+    type ModifyFields = Partial<Pick<PublicFields, typeof modifyFields[number]>>;
     /** A structure to modify an existing Interest. */
     type Modify = ModifyFunc | ModifyFields;
-    /** Turn ModifyFields to ModifyFunc; return ModifyFunc as-is. */
+    /**
+     * Turn {@link ModifyFields} to {@link ModifyFunc}.
+     * Return {@link ModifyFunc} as-is.
+     */
     function makeModifyFunc(input?: Modify): ModifyFunc;
 }
 
@@ -2116,6 +2638,56 @@ declare type IsEqual<A, B> =
 /** Determine whether the name is a key name. */
 declare function isKeyName(name: Name): boolean;
 
+/**
+ Returns a boolean for whether the given type is `never`.
+
+ @link https://github.com/microsoft/TypeScript/issues/31751#issuecomment-498526919
+ @link https://stackoverflow.com/a/53984913/10292952
+ @link https://www.zhenghao.io/posts/ts-never
+
+ Useful in type utilities, such as checking if something does not occur.
+
+ @example
+ ```
+ import type {IsNever} from 'type-fest';
+
+ type And<A, B> =
+ 	A extends true
+ 		? B extends true
+ 			? true
+ 			: false
+ 		: false;
+
+ // https://github.com/andnp/SimplyTyped/blob/master/src/types/strings.ts
+ type AreStringsEqual<A extends string, B extends string> =
+ 	And<
+ 		IsNever<Exclude<A, B>> extends true ? true : false,
+ 		IsNever<Exclude<B, A>> extends true ? true : false
+ 	>;
+
+ type EndIfEqual<I extends string, O extends string> =
+ 	AreStringsEqual<I, O> extends true
+ 		? never
+ 		: void;
+
+ function endIfEqual<I extends string, O extends string>(input: I, output: O): EndIfEqual<I, O> {
+ 	if (input === output) {
+ 		process.exit(0);
+ 	}
+ }
+
+ endIfEqual('abc', 'abc');
+ //=> never
+
+ endIfEqual('abc', '123');
+ //=> void
+ ```
+
+ @category Type Guard
+ @category Utilities
+ */
+declare type IsNever<T> = [T] extends [never] ? true : false;
+
 /** Default issuerId. */
 declare const ISSUER_DEFAULT: Component;
 
@@ -2125,9 +2697,10 @@ declare const ISSUER_SELF: Component;
 /**
  * Initialization Vector checker.
  *
- * The .wrap() method creates an LLDecrypt.Key or LLDecrypt that checks the IV in each message
- * before and after decryption, and updates the internal state of this class. Typically, a
- * separate IvChecker instances should be used for each key.
+ * @remarks
+ * The `.wrap()` method creates an {@link LLDecrypt.Key} or {@link LLDecrypt} that checks the IV in
+ * each message before and after decryption, and updates the internal state of this class.
+ * Typically, a separate IvChecker instance should be used for each key.
  */
 declare abstract class IvChecker {
     readonly ivLength: number;
@@ -2143,12 +2716,13 @@ declare abstract class IvChecker {
 /**
  * Initialization Vector generator.
  *
- * The .wrap() method creates an LLEncrypt.Key or LLEncrypt that generates an IV for each message
- * before encryption, and updates the internal state of this class after encryption. Typically, a
- * separate IVGen instance should be used for each key.
+ * @remarks
+ * The `.wrap()` method creates an {@link LLEncrypt.Key} or {@link LLEncrypt} that generates an
+ * IV for each message before encryption, and updates the internal state of this class after
+ * encryption. Typically, a separate IVGen instance should be used for each key.
  *
- * If a message passed for encryption already has an IV associated, it would bypass this class: in
- * that case, the IV is not checked and the internal state is not updated.
+ * If a message presented for encryption already has an IV associated, it would bypass this class.
+ * In that case, the IV is not checked and the internal state is not updated.
  */
 declare abstract class IvGen {
     readonly ivLength: number;
@@ -2174,7 +2748,7 @@ declare interface Key<K extends KeyKind> {
 
 /** Storage of own private keys and certificates. */
 declare abstract class KeyChain {
-    /** Return whether insertKey function expects JsonWebKey instead of CryptoKey. */
+    /** Return whether `.insertKey()` method expects JsonWebKey instead of CryptoKey. */
     abstract readonly needJwk: boolean;
     /** List keys, filtered by name prefix. */
     abstract listKeys(prefix?: Name): Promise<Name[]>;
@@ -2182,7 +2756,7 @@ declare abstract class KeyChain {
     abstract getKeyPair(name: Name): Promise<KeyChain.KeyPair>;
     /**
      * Retrieve key by key name.
-     * @param typ "signer", "verifier", etc.
+     * @param typ - "signer", "verifier", etc.
      */
     getKey<K extends keyof KeyChain.KeyPair>(name: Name, typ: K): Promise<KeyChain.KeyPair[K]>;
     /** Insert key pair. */
@@ -2193,23 +2767,32 @@ declare abstract class KeyChain {
     abstract listCerts(prefix?: Name): Promise<Name[]>;
     /** Retrieve certificate by cert name. */
     abstract getCert(name: Name): Promise<Certificate>;
-    /** Insert certificate; key must exist. */
+    /**
+     * Insert certificate.
+     *
+     * @remarks
+     * Corresponding key must exist.
+     */
     abstract insertCert(cert: Certificate): Promise<void>;
     /** Delete certificate. */
     abstract deleteCert(name: Name): Promise<void>;
     /**
      * Create a signer from keys and certificates in the KeyChain.
-     * @param name subject name, key name, or certificate name.
+     * @param name - Subject name, key name, or certificate name.
      *
-     * @li If name is a certificate name, sign with the corresponding private key,
-     *     and use the specified certificate name as KeyLocator.
-     * @li If name is a key name, sign with the specified private key.
-     *     If a non-self-signed certificate exists for this key, use the certificate name as KeyLocator.
-     *     Otherwise, use the key name as KeyLocator.
-     * @li If name is neither certificate name nor key name, it is interpreted as a subject name.
-     *     A non-self-signed certificate of this subject name is preferred.
-     *     If such a certificate does not exist, use any key of this subject name.
-     * @li If prefixMatch is true, name can also be interpreted as a prefix of the subject name.
+     * @remarks
+     * If `name` is a certificate name, sign with the corresponding private key, and use the
+     * specified certificate name as KeyLocator.
+     *
+     * If `name` is a key name, sign with the specified private key. If a non-self-signed certificate
+     * exists for this key, use the certificate name as KeyLocator. Otherwise, use the key name as
+     * KeyLocator.
+     *
+     * If `name` is neither a certificate name nor a key name, it is interpreted as a subject name.
+     * A non-self-signed certificate of this subject name is preferred. If no such certificate
+     * exists, use any key of this subject name.
+     *
+     * If `prefixMatch` is true, `name` can also be interpreted as a prefix of the subject name.
      */
     getSigner(name: Name, { prefixMatch, fallback, useKeyNameKeyLocator }?: KeyChain.GetSignerOptions): Promise<Signer>;
     private findSignerCertName;
@@ -2217,42 +2800,52 @@ declare abstract class KeyChain {
 
 declare namespace KeyChain {
     type KeyPair<Asym extends boolean = any> = KeyStore.KeyPair<Asym>;
-    /**
-     * keyChain.getSigner() options.
-     */
+    /** {@link KeyChain.getSigner} options. */
     interface GetSignerOptions {
         /**
-         * If false, name argument must equal subject name, key name, or certificate name.
-         * If true, name argument may be a prefix of subject name.
-         * Default is false.
+         * Whether to allow prefix match between name argument and subject name.
+         * @defaultValue false
+         *
+         * @remarks
+         * If `false`, `name` argument must equal subject name, key name, or certificate name.
+         * If `true`, `name` argument may be a prefix of subject name.
          */
         prefixMatch?: boolean;
         /**
-         * If a function, it is invoked when no matching key or certificate is found, and should
-         * either return a fallback Signer or reject the promise.
-         * If a Signer, it is used when no matching key or certificate is found.
+         * Fallback when no matching or certificate is found.
+         *
+         * @remarks
+         * If this is a function, it is invoked when no matching key or certificate is found. The
+         * function should either return a fallback Signer or reject the promise.
+         *
+         * If this is a Signer, it is used when no matching key or certificate is found.
          */
         fallback?: Signer | ((name: Name, keyChain: KeyChain, err?: Error) => Promise<Signer>);
         /**
-         * If false, KeyLocator is a certificate name when a non-self-signed certificate exists.
-         * If true, KeyLocator is the key name.
-         * Default is false.
+         * Whether to prefer key name in KeyLocator.
+         * @defaultValue false
+         *
+         * @remarks
+         * If `false`, KeyLocator is a certificate name when a non-self-signed certificate exists.
+         * If `true`, KeyLocator is the key name.
          */
         useKeyNameKeyLocator?: boolean;
     }
     /**
      * Open a persistent KeyChain.
-     * @param locator in Node.js, a filesystem directory; in browser, a database name.
-     * @param algoList list of recognized algorithms. Default is CryptoAlgorithmListSlim.
-     *                 Use CryptoAlgorithmListFull for all algorithms, at the cost of larger bundle size.
+     * @param locator - Filesystem directory in Node.js; database name in browser.
+     * @param algoList - List of recognized algorithms.
+     * Default is {@link CryptoAlgorithmListSlim}. Use {@link CryptoAlgorithmListFull} for all
+     * algorithms, at the cost of larger bundle size.
      */
     function open(locator: string, algoList?: readonly CryptoAlgorithm[]): KeyChain;
     /** Open a KeyChain from given KeyStore and CertStore. */
     function open(keys: KeyStore, certs: CertStore): KeyChain;
     /**
      * Create an in-memory ephemeral KeyChain.
-     * @param algoList list of recognized algorithms.
-     *                 Use CryptoAlgorithmListFull for all algorithms, at the cost of larger bundle size.
+     * @param algoList - List of recognized algorithms.
+     * Default is {@link CryptoAlgorithmListSlim}. Use {@link CryptoAlgorithmListFull} for all
+     * algorithms, at the cost of larger bundle size.
      */
     function createTemp(algoList?: readonly CryptoAlgorithm<any, any, any>[]): KeyChain;
 }
@@ -2287,6 +2880,7 @@ declare namespace keychain {
         CounterIvGen,
         IvGen,
         RandomIvGen,
+        ImportCertOptions,
         createDecrypter,
         createEncrypter,
         generateEncryptionKey,
@@ -2306,10 +2900,38 @@ declare namespace keychain {
         EncryptionAlgorithm,
         KeyStore,
         CertStore,
-        KeyChain
+        KeyChain,
+        KeyChainSerialized
     }
 }
 export { keychain }
+
+/**
+ * KeyChain adapter that serializes function calls.
+ *
+ * @remarks
+ * Only one `s*` function would be invoked at a time. Do not invoke a non-`s*` function from
+ * within an `s*` function, otherwise it would cause a deadlock.
+ */
+declare abstract class KeyChainSerialized extends KeyChain {
+    protected readonly mutex: Mutex;
+    listKeys(prefix?: Name): Promise<Name[]>;
+    protected abstract sListKeys(prefix: Name): Promisable<Name[]>;
+    getKeyPair(name: Name): Promise<KeyChain.KeyPair>;
+    protected abstract sGetKeyPair(name: Name): Promisable<KeyChain.KeyPair>;
+    insertKey(name: Name, stored: KeyStore.StoredKey): Promise<void>;
+    protected abstract sInsertKey(name: Name, stored: KeyStore.StoredKey): Promisable<void>;
+    deleteKey(name: Name): Promise<void>;
+    protected abstract sDeleteKey(name: Name): Promisable<void>;
+    listCerts(prefix?: Name): Promise<Name[]>;
+    protected abstract sListCerts(prefix: Name): Promisable<Name[]>;
+    getCert(name: Name): Promise<Certificate>;
+    protected abstract sGetCert(name: Name): Promisable<Certificate>;
+    insertCert(cert: Certificate): Promise<void>;
+    protected abstract sInsertCert(cert: Certificate): Promisable<void>;
+    deleteCert(name: Name): Promise<void>;
+    protected abstract sDeleteCert(name: Name): Promisable<void>;
+}
 
 /** Identify kind of key. */
 declare type KeyKind = "private" | "public" | "secret";
@@ -2326,9 +2948,9 @@ declare const KeyKind: unique symbol;
 /** KeyLocator in SigInfo. */
 declare class KeyLocator {
     static decodeFrom(decoder: Decoder): KeyLocator;
+    constructor(...args: KeyLocator.CtorArg[]);
     name?: Name;
     digest?: Uint8Array;
-    constructor(...args: KeyLocator.CtorArg[]);
     encodeTo(encoder: Encoder): void;
 }
 
@@ -2337,24 +2959,24 @@ declare namespace KeyLocator {
     function isCtorArg(arg: unknown): arg is CtorArg;
     /**
      * Extract KeyLocator name.
-     * @throws KeyLocator is missing or does not have Name.
+     * @throws Error
+     * Thrown if KeyLocator is missing or does not have Name.
      */
     function mustGetName(kl?: KeyLocator): Name;
 }
 
 /**
  * Map that transforms keys.
- *
- * K: input key type.
- * V: value type.
- * I: indexable key type.
- * L: lookup key type.
+ * @typeParam K - Input key type.
+ * @typeParam V - Value type.
+ * @typeParam I - Indexable key type.
+ * @typeParam L - Lookup key type.
  */
-declare class KeyMap<K, V, I, L = K> {
+declare class KeyMap<K, V, I, L = K> implements Iterable<[key: K, value: V]> {
     private readonly keyOf;
     /**
      * Constructor.
-     * @param keyOf function to transform input key to indexable key.
+     * @param keyOf - Function to transform input key to indexable key.
      */
     constructor(keyOf: (key: K | L) => I);
     private readonly m;
@@ -2368,16 +2990,15 @@ declare class KeyMap<K, V, I, L = K> {
 
 /**
  * MultiMap that transforms keys.
- *
- * K: input key type.
- * V: value type.
- * I: indexable key type.
- * L: lookup key type.
+ * @typeParam K - Input key type.
+ * @typeParam V - Value type.
+ * @typeParam I - Indexable key type.
+ * @typeParam L - Lookup key type.
  */
-declare class KeyMultiMap<K, V, I, L = K> {
+declare class KeyMultiMap<K, V, I, L = K> implements Iterable<[key: K, value: V]> {
     /**
      * Constructor.
-     * @param keyOf function to transform input key to indexable key.
+     * @param keyOf - Function to transform input key to indexable key.
      */
     constructor(keyOf: (key: K | L) => I);
     private readonly m;
@@ -2399,7 +3020,7 @@ declare class KeyMultiMap<K, V, I, L = K> {
     /**
      * Remove a key-value pair.
      * No-op if key-value does not exist.
-     * @returns count(key) after the operation.
+     * @returns `count(key)` after the operation.
      */
     remove(key: K | L, value: V): number;
     /** Iterate over key and associated values. */
@@ -2410,15 +3031,14 @@ declare class KeyMultiMap<K, V, I, L = K> {
 
 /**
  * MultiSet that transforms keys.
- *
- * K: input key type.
- * I: indexable key type.
- * L: lookup key type.
+ * @typeParam K - Input key type.
+ * @typeParam I - Indexable key type.
+ * @typeParam L - Lookup key type.
  */
 declare class KeyMultiSet<K, I, L = K> {
     /**
      * Constructor.
-     * @param keyOf function to transform input key to indexable key.
+     * @param keyOf - Function to transform input key to indexable key.
      */
     constructor(keyOf: (key: K | L) => I);
     private readonly m;
@@ -2431,13 +3051,13 @@ declare class KeyMultiSet<K, I, L = K> {
     count(key: K | L): number;
     /**
      * Add a key.
-     * @returns number of occurrences after the operation.
+     * @returns Number of occurrences after the operation.
      */
     add(key: K): number;
     /**
      * Remove a key.
      * No-op if key does not exist.
-     * @returns number of occurrences after the operation.
+     * @returns Number of occurrences after the operation.
      */
     remove(key: K): number;
     /** Iterate over key and number of occurrences. */
@@ -2477,7 +3097,7 @@ declare namespace KeyStore {
         get decrypter(): NamedDecrypter<Asym>;
         get publicKey(): PublicKey;
     }
-    /** Stored key pair in JSON or structure clone format. */
+    /** Stored key pair in JSON or structuredClone-compatible format. */
     interface StoredKey {
         algo: string;
         info: any;
@@ -2502,25 +3122,44 @@ declare namespace KeyStore {
 /** Network layer face for sending and receiving L3 packets. */
 declare class L3Face extends TypedEventTarget<EventMap_9> implements FwFace.RxTx {
     private transport;
+    /**
+     * Constructor.
+     * @param transport - Initial transport. It may be replaced through reopen mechanism.
+     * @param attributes - Additional attributes.
+     * L3Face attributes consist of transport attributes overridden by these attributes.
+     * @param lpOptions - NDNLPv2 service options.
+     */
+    constructor(transport: Transport, attributes?: L3Face.Attributes, lpOptions?: LpService.Options);
+    /**
+     * Attributes of a network layer face.
+     *
+     * @remarks
+     * When L3Face is added to a logical forwarder, this is copied to {@link FwFace.attributes}.
+     */
     readonly attributes: L3Face.Attributes;
     readonly lp: LpService;
     readonly rx: AsyncIterable<FwPacket>;
     private readonly wireTokenPrefix;
+    /**
+     * Obtain face UP/DOWN state.
+     * @remarks
+     * Caller can get notifications about state transitions via state/up/down/close events.
+     */
     get state(): L3Face.State;
     private set state(value);
     private state_;
     private lastError?;
     private readonly rxSources;
     private reopenRetry?;
-    constructor(transport: Transport, attributes?: L3Face.Attributes, lpOptions?: LpService.Options);
     private makeRx;
     private rxTransform;
     private txTransform;
-    tx: (iterable: AsyncIterable<FwPacket>) => Promise<void>;
+    readonly tx: (iterable: AsyncIterable<FwPacket>) => Promise<void>;
     private reopenTransport;
 }
 
 declare namespace L3Face {
+    /** Face state. */
     enum State {
         UP = 0,
         DOWN = 1,
@@ -2532,41 +3171,62 @@ declare namespace L3Face {
         constructor(type: string, state: State, prev: State);
     }
     interface Attributes extends Transport.Attributes {
-        /** Whether to readvertise registered routes. */
+        /**
+         * Whether to readvertise registered routes.
+         * @defaultValue `false`.
+         * This default is set in {@link CreateFaceFunc} but could be different elsewhere.
+         * @remarks
+         * This attribute passed to {@link \@ndn/fw!FwFace.Attributes.advertiseFrom}. With the default
+         * `false` value, routes "announced" by an L3Face would not be readvertised to
+         * {@link \@ndn/fw!ReadvertiseDestination}s, so that remote forwarders would not depend on the
+         * local logical forwarder to forward Interests between L3Faces.
+         */
         advertiseFrom?: boolean;
     }
     type RxError = LpService.RxError;
     type TxError = LpService.TxError;
-    /** Options to createFace function as first parameter. */
+    /** Options to `createFace` as first parameter. */
     interface CreateFaceOptions {
         /**
          * Forwarder instance to add the face to.
-         * Default is the default Forwarder.
+         * @defaultValue `Forwarder.getDefault()`
          */
         fw?: Forwarder;
-        /** Routes to be added on the created face. Default is ["/"]. */
-        addRoutes?: NameLike[];
+        /**
+         * Routes to be added on the created face.
+         * @defaultValue `["/"]`
+         */
+        addRoutes?: readonly NameLike[];
         /**
          * L3Face attributes.
-         * l3.advertiseFrom defaults to false in createFace function.
+         *
+         * @remarks
+         * `.l3.advertiseFrom` defaults to false in createFace function.
          */
         l3?: Attributes;
         /** NDNLP service options. */
         lp?: LpService.Options;
         /**
-         * A callback to receive Transport, L3Face, and FwFace objects.
+         * A callback to receive {@link Transport}, {@link L3Face}, and {@link FwFace} objects.
+         *
+         * @remarks
          * This can be useful for reading counters or listening to events on these objects.
          */
         callback?: (transport: Transport, l3face: L3Face, fwFace: FwFace) => void;
     }
+    type CreateFaceFunc<P extends any[]> = (opts: CreateFaceOptions, ...args: P) => Promise<FwFace>;
+    type CreateFacesFunc<P extends any[]> = (opts: CreateFaceOptions, ...args: P) => Promise<FwFace[]>;
+    /** Make a function to create a FwFace from a function that creates a transport. */
+    function makeCreateFace<P extends any[]>(createTransport: (...args: P) => Promisable<Transport>): CreateFaceFunc<P>;
+    /** Make a function to create FwFaces from a function that creates transports. */
+    function makeCreateFace<P extends any[]>(createTransports: (...args: P) => Promisable<Transport[]>): CreateFacesFunc<P>;
     /**
-     * A function to create a transport then add to forwarder.
-     * First parameter is CreateFaceOptions.
-     * Subsequent parameters are passed to Transport.connect() function.
-     * Returns FwFace.
+     * Add routes to a FwFace.
+     * @param fwFace - Target FwFace.
+     * @param addRoutes - List of routes.
+     * @remarks
+     * This function is typically used for implementing {@link CreateFaceOptions.addRoutes}.
      */
-    type CreateFaceFunc<R extends Transport | Transport[], P extends any[]> = (opts: CreateFaceOptions, ...args: P) => Promise<R extends Transport[] ? FwFace[] : FwFace>;
-    function makeCreateFace<C extends (...args: any[]) => Promise<Transport | Transport[]>>(createTransport: C): CreateFaceFunc<AsyncReturnType<C>, Parameters<C>>;
     function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
 }
 
@@ -2574,11 +3234,13 @@ declare type L3Pkt = Interest | Data | Nack;
 
 declare type Len = 1 | 2 | 4 | 8;
 
+/** DataStore interface, listData method. */
 declare interface ListData {
     /** List Data packets, optionally filtered by name prefix. */
     listData: (prefix?: Name) => AsyncIterable<Data>;
 }
 
+/** DataStore interface, listNames method. */
 declare interface ListNames {
     /** List Data names, optionally filtered by name prefix. */
     listNames: (prefix?: Name) => AsyncIterable<Name>;
@@ -2629,12 +3291,14 @@ declare namespace LLEncrypt {
 
 /**
  * Low level signing function.
- * It takes a buffer of signed portion, and returns a Promise of signature value.
+ * @param input - Buffer of signed portion.
+ * @returns Promise resolves to signature value or rejects with error.
  */
 declare type LLSign = (input: Uint8Array) => Promise<Uint8Array>;
 
 declare namespace LLSign {
     const OP: unique symbol;
+    /** Target packet compatible with low level signing function. */
     interface Signable {
         [OP]: (signer: LLSign) => Promise<void>;
     }
@@ -2642,24 +3306,36 @@ declare namespace LLSign {
 
 /**
  * Low level verification function.
- * It takes a buffer of signed portion and the signature value, and returns a Promise
- * that is resolved upon good signature or rejected upon bad signature.
+ * @param input - Buffer of signed portion.
+ * @param sig - Buffer of signature value.
+ * @returns Promise resolves upon good signature or rejects upon bad signature.
  */
 declare type LLVerify = (input: Uint8Array, sig: Uint8Array) => Promise<void>;
 
 declare namespace LLVerify {
     const OP: unique symbol;
+    /** Target packet compatible with low level verification function. */
     interface Verifiable {
         [OP]: (verifier: LLVerify) => Promise<void>;
     }
 }
 
 /**
- * Name longest prefix match algorithm.
- * @param name target name.
- * @param get callback function to retrieve entry by hexadecimal name prefix.
+ * Acquire a semaphore for unlocking via Disposable.
+ * @param semaphore - Semaphore or Mutex from `wait-your-turn` package.
  */
-declare function lpm<Entry>(name: Name, get: (prefixHex: string) => Entry | undefined): Iterable<Entry>;
+declare function lock(semaphore: Pick<Semaphore, "acquire">): Promise<Disposable>;
+
+/**
+ * Perform name longest prefix match on a container of entries.
+ * @typeParam T - Entry type, which must not be `undefined`.
+ * @param name - Lookup target name.
+ * @param get - Callback function to retrieve entry by name prefix TLV-VALUE in hexadecimal format.
+ * @returns Matched entries.
+ * The first result is the longest prefix match. Subsequent results are matches on successively
+ * shorter prefixes. The caller may early-return the iterator to ignore subsequent results.
+ */
+declare function lpm<T>(name: Name, get: (prefixHex: string) => T | undefined): Iterable<T>;
 
 /** NDNLPv2 service. */
 declare class LpService {
@@ -2672,32 +3348,32 @@ declare class LpService {
     readonly rx: (iterable: AsyncIterable<Decoder.Tlv>) => AsyncIterable<LpService.Packet | LpService.RxError>;
     private decode;
     private decodeL3;
-    tx: (iterable: AsyncIterable<LpService.Packet>) => AsyncIterable<Uint8Array | LpService.TxError>;
+    readonly tx: (iterable: AsyncIterable<LpService.Packet>) => AsyncIterable<Uint8Array | LpService.TxError>;
     private encode;
 }
 
 declare namespace LpService {
-    /** An object to report transport MTU. */
+    /** An object that reports transport MTU. */
     interface Transport {
-        /** Return current transport MTU. */
+        /** Current transport MTU. */
         readonly mtu: number;
     }
     interface Options {
         /**
          * How often to send IDLE packets if nothing else was sent, in milliseconds.
-         * Set false or zero to disable keep-alive.
-         * @default 60000
+         * Set `false` or zero to disable keep-alive.
+         * @defaultValue 60000
          */
         keepAlive?: false | number;
         /**
          * Administrative MTU.
          * The lesser of this MTU and the transport's reported MTU is used for fragmentation.
-         * @default Infinity
+         * @defaultValue Infinity
          */
         mtu?: number;
         /**
          * Maximum number of partial packets kept in the reassembler.
-         * @default 16
+         * @defaultValue 16
          */
         reassemblerCapacity?: number;
     }
@@ -2720,47 +3396,74 @@ declare namespace LpService {
 
 /**
  * Create certificate name from subject name, key name, or certificate name.
- * @param name subject name, key name, or certificate name.
- * @param opts.keyId keyId component, used only if input name is subject name.
- * @param opts.issuerId keyId, used only if input name is subject name or key name.
- * @param opts.version keyId, used only if input name is subject name or key name.
+ * @param name - Subject name, key name, or certificate name.
+ *
+ * @remarks
+ * If `name` is a subject name, it's concatenated with additional components to make a certificate name:
+ * - *KeyId* component is set to `.opts.keyId`.
+ *   If unset, it defaults to the current timestamp.
+ *
+ * If `name` is a key name, it's concatenated with additional components to make a certificate name:
+ * - *KeyId* component is set to `.opts.keyId`.
+ *   If unset, it defaults to TimestampNameComponent of the current timestamp.
+ * - *IssuerId* component is set to `.opts.issuerId`.
+ *   If unset, it defaults to "NDNts".
+ * - *Version* component is set to `.opts.version`.
+ *   If unset, it defaults to VersionNameComponent of the current timestamp in milliseconds.
+ *
+ * If `name` is a certificate name, it is returned unchanged.
  */
 declare function makeCertName(name: Name, opts?: Partial<Pick<CertNameFields, "keyId" | "issuerId" | "version">>): Name;
 
 /**
  * Create key name from subject name, key name, or certificate name.
- * @param name subject name, key name, or certificate name.
- * @param opts.keyId keyId component, used only if input name is subject name.
+ * @param name - Subject name, key name, or certificate name.
+ *
+ * @remarks
+ * If `name` is a subject name, it's concatenated with additional components to make a key name:
+ * - *KeyId* component is set to `.opts.keyId`.
+ *   If unset, it defaults to TimestampNameComponent of the current timestamp.
+ *
+ * If `name` is a key name, it is returned unchanged.
+ *
+ * If `name` is a certificate name, its key name portion is returned.
  */
 declare function makeKeyName(name: Name, opts?: Partial<Pick<KeyNameFields, "keyId">>): Name;
 
 /** Create algorithm parameters to be compatible with PSync C++ library. */
-declare function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): PSyncFull.Parameters & PSyncPartialPublisher.Parameters & PSyncPartialSubscriber.Parameters;
+declare function makePSyncCompatParam({ keyToBufferLittleEndian, expectedEntries, expectedSubscriptions, ibltCompression, contentCompression, }?: makePSyncCompatParam.Options): FullSync.Parameters & PartialPublisher.Parameters & PartialSubscriber.Parameters;
 
 declare namespace makePSyncCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting uint32 key to Uint8Array.
+         * @defaultValue true
+         *
+         * @remarks
          * PSync C++ library behaves differently on big endian and little endian machines,
-         * https://github.com/named-data/PSync/blob/b60398c5fc216a1b577b9dbcf61d48a21cb409a4/PSync/detail/util.cpp#L126
+         * {@link https://github.com/named-data/PSync/blob/b60398c5fc216a1b577b9dbcf61d48a21cb409a4/PSync/detail/util.cpp#L126}
          * This must be set to match other peers.
-         * @default true
          */
         keyToBufferLittleEndian?: boolean;
         /**
          * Expected number of IBLT entries, i.e. expected number of updates in a sync cycle.
+         * @defaultValue 80
+         *
+         * @remarks
          * This is irrelevant to PartialSync consumer.
-         * @default 80
          */
         expectedEntries?: number;
         /**
          * Estimated number of subscriptions in PartialSync consumer.
-         * @default 16
+         * @defaultValue 16
          */
         expectedSubscriptions?: number;
         /**
          * Whether to use zlib compression on IBLT.
-         * Default is no compression. Use `PSyncZlib` to set zlib compression.
+         * @defaultValue no compression
+         *
+         * @remarks
+         * Use {@link PSyncZlib} to set zlib compression.
          *
          * In PSync C++ library, default for FullSync depends on whether zlib is available at compile
          * time, and default for PartialSync is no compression.
@@ -2769,7 +3472,10 @@ declare namespace makePSyncCompatParam {
         ibltCompression?: PSyncCodec.Compression;
         /**
          * Whether to use zlib compression on Data payload.
-         * Default is no compression. Use `PSyncZlib` to set zlib compression.
+         * @defaultValue no compression
+         *
+         * @remarks
+         * Use {@link PSyncZlib} to set zlib compression.
          *
          * In PSync C++ library, default for FullSync depends on whether zlib is available at compile
          * time. For PartialSync, it is always no compression.
@@ -2779,29 +3485,54 @@ declare namespace makePSyncCompatParam {
     }
 }
 
-/** Create algorithm parameters to be compatible with PSync C++ library. */
+/** Create algorithm parameters to be compatible with DNMP-v2 syncps library. */
 declare function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
 
 declare namespace makeSyncpsCompatParam {
     interface Options {
         /**
          * Whether to use little endian when converting a uint32 key to a byte array.
+         * @defaultValue true
+         *
+         * @remarks
          * ndn-ind behaves differently on big endian and little endian machines,
-         * https://github.com/operantnetworks/ndn-ind/blob/dd934a7a5106cda6ea14675554427e12df1ce18f/src/lite/util/crypto-lite.cpp#L114
+         * {@link https://github.com/operantnetworks/ndn-ind/blob/dd934a7a5106cda6ea14675554427e12df1ce18f/src/lite/util/crypto-lite.cpp#L114}
          * This must be set to match other peers.
-         * @default true
          */
         keyToBufferLittleEndian?: boolean;
         /**
          * Expected number of IBLT entries, i.e. expected number of updates in a sync cycle.
-         * @default 85
+         * @defaultValue 85
          */
         expectedEntries?: number;
     }
 }
 
+/** SVS-PS MappingEntry element. */
+declare class MappingEntry implements EncodableObj {
+    seqNum: number;
+    name: Name;
+    static decodeFrom(decoder: Decoder): MappingEntry;
+    encodeTo(encoder: Encoder): void;
+    protected encodeValueExt(): Encodable[];
+}
+
+declare namespace MappingEntry {
+    interface Constructor<M extends MappingEntry = MappingEntry> extends Decodable<M> {
+        new (): M;
+    }
+    /** Class decorator on an extensible MappingEntry subclass. */
+    function extend<M extends MappingEntry & Extensible>(ctor: new () => M, ctx?: ClassDecoratorContext): void;
+}
+
+declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
+
 /** Container that associates a key with multiple distinct values. */
 declare class MultiMap<K, V> extends KeyMultiMap<K, V, K> {
+    constructor();
+}
+
+declare class Mutex extends Semaphore {
     constructor();
 }
 
@@ -2825,19 +3556,26 @@ declare class NackHeader {
 }
 
 declare const NackReason: {
-    Congestion: number;
-    Duplicate: number;
-    NoRoute: number;
+    readonly Congestion: 50;
+    readonly Duplicate: 100;
+    readonly NoRoute: 150;
 };
 
 /**
  * Name.
+ *
+ * @remarks
  * This type is immutable.
  */
 declare class Name {
     static decodeFrom(decoder: Decoder): Name;
-    /** List of name components. */
-    readonly comps: readonly Component[];
+    /**
+     * Create Name from Name or Name URI.
+     *
+     * @remarks
+     * This is more efficient than `new Name(input)` if input is already a Name.
+     */
+    static from(input: NameLike): Name;
     /** Create empty name, or copy from other name, or parse from URI. */
     constructor(input?: NameLike);
     /** Parse from URI, with specific component parser. */
@@ -2846,6 +3584,8 @@ declare class Name {
     constructor(value: Uint8Array);
     /** Construct from components. */
     constructor(comps: readonly ComponentLike[]);
+    /** List of name components. */
+    readonly comps: readonly Component[];
     private readonly valueEncoderBufSize?;
     private value_?;
     private uri_?;
@@ -2856,24 +3596,32 @@ declare class Name {
     get value(): Uint8Array;
     /** Name TLV-VALUE hexadecimal representation, good for map keys. */
     get valueHex(): string;
-    /** Retrieve i-th component. */
+    /**
+     * Retrieve i-th component.
+     * @param i - Component index. Negative number counts from the end.
+     * @returns i-th component, or `undefined` if it does not exist.
+     */
     get(i: number): Component | undefined;
     /**
      * Retrieve i-th component.
-     * @throws i-th component does not exist.
+     * @param i - Component index. Negative number counts from the end.
+     * @returns i-th component.
+     *
+     * @throws RangeError
+     * Thrown if i-th component does not exist.
      */
     at(i: number): Component;
     /** Get URI string. */
     toString(): string;
-    /** Get sub name [begin, end). */
+    /** Get sub name `[begin,end)`. */
     slice(begin?: number, end?: number): Name;
-    /** Get prefix of n components. */
+    /** Get prefix of `n` components. */
     getPrefix(n: number): Name;
     /** Append a component from naming convention. */
     append<A>(convention: NamingConvention<A, unknown>, v: A): Name;
     /** Append suffix with one or more components. */
     append(...suffix: readonly ComponentLike[]): Name;
-    /** Return a copy of Name with a component replaced. */
+    /** Return a copy of Name with i-th component replaced with `comp`. */
     replaceAt(i: number, comp: ComponentLike): Name;
     /** Compare with other name. */
     compare(other: NameLike): Name.CompareResult;
@@ -2888,11 +3636,6 @@ declare class Name {
 declare namespace Name {
     /** Determine if obj is Name or Name URI. */
     function isNameLike(obj: any): obj is NameLike;
-    /**
-     * Create Name from Name or Name URI.
-     * This is more efficient than new Name(input) if input is already a Name.
-     */
-    function from(input: NameLike): Name;
     /** Name compare result. */
     enum CompareResult {
         /** lhs is less than, but not a prefix of rhs */
@@ -2932,6 +3675,7 @@ declare namespace NamedEncrypter {
 
 /** Named private key or secret key signer. */
 declare interface NamedSigner<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, Signer {
+    /** SigInfo.sigType number for signatures created by this signer. */
     readonly sigType: number;
     /** Create a Signer that signs with this private key but a different KeyLocator. */
     withKeyLocator: (keyLocator: KeyLocator.CtorArg) => Signer;
@@ -2946,6 +3690,7 @@ declare namespace NamedSigner {
 
 /** Named public key or secret key verifier. */
 declare interface NamedVerifier<Asym extends boolean = any> extends Key<KeyKind.PublicSecret<Asym>>, Verifier {
+    /** SigInfo.sigType number for signatures accepted by this verifier. */
     readonly sigType: number;
 }
 
@@ -2961,7 +3706,7 @@ declare type NameLike = Name | string;
 
 /**
  * Map keyed by name.
- * Lookups may accept either name or name.valueHex.
+ * Lookups may accept either name or `name.valueHex`.
  */
 declare class NameMap<V> extends KeyMap<Name, V, string, string> {
     constructor();
@@ -2969,7 +3714,7 @@ declare class NameMap<V> extends KeyMap<Name, V, string, string> {
 
 /**
  * MultiMap keyed by name.
- * Lookups may accept either name or name.valueHex.
+ * Lookups may accept either name or `name.valueHex`.
  */
 declare class NameMultiMap<V> extends KeyMultiMap<Name, V, string, string> {
     constructor();
@@ -2977,7 +3722,7 @@ declare class NameMultiMap<V> extends KeyMultiMap<Name, V, string, string> {
 
 /**
  * MultiSet keyed by name.
- * Lookups may accept either name or name.valueHex.
+ * Lookups may accept either name or `name.valueHex`.
  */
 declare class NameMultiSet extends KeyMultiSet<Name, string, string> {
     constructor();
@@ -2985,8 +3730,8 @@ declare class NameMultiSet extends KeyMultiSet<Name, string, string> {
 
 /**
  * Naming convention, which interprets a name component in a specific way.
- * @template A input type to construct component.
- * @template R output type to interpret component.
+ * @typeParam A - Input type to construct component.
+ * @typeParam R - Output type to interpret component.
  */
 declare interface NamingConvention<A, R = A> {
     /** Determine if a component follows this naming convention. */
@@ -3004,10 +3749,11 @@ declare namespace NamingConvention {
         toAltUri: (comp: Component) => string;
         /**
          * Parse from alternate URI.
-         * @returns component, or undefined if it cannot be parsed.
+         * @returns Component, or `undefined` if it cannot be parsed.
          */
         fromAltUri: (input: string) => Component | undefined;
     }
+    /** Determine whether an object implements `NamingConvention` interface. */
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
@@ -3072,10 +3818,32 @@ declare class NFW {
     getEndpoint(opts?: {}): Endpoint;
 }
 
-/** Create Encodable from non-negative integer. */
-declare function NNI(n: number | bigint, { len, unsafe, }?: Options): Encodable;
+/**
+ * Create Encodable from non-negative integer.
+ *
+ * @throws RangeError
+ * Thrown if the number may lose precision and `unsafe` option is not set.
+ */
+declare function NNI(n: number | bigint, { len, unsafe, }?: NNI.Options): Encodable;
 
 declare namespace NNI {
+    interface Options {
+        /**
+         * Encode to specific length.
+         * Enforce specific length during decoding.
+         */
+        len?: Len;
+        /**
+         * Decode to bigint instead of number.
+         * @defaultValue `false`
+         */
+        big?: boolean;
+        /**
+         * Permit large numbers that exceed MAX_SAFE_INTEGER, which may lose precision.
+         * @defaultValue `false`
+         */
+        unsafe?: boolean;
+    }
     /** Determine if len is a valid length of encoded NNI. */
     function isValidLength(len: number): boolean;
     /** Decode non-negative integer as number. */
@@ -3272,14 +4040,47 @@ declare interface Operator<T, R> {
 declare interface OperatorFunction<T, R> extends UnaryFunction<Observable<T>, Observable<R>> {
 }
 
-declare interface Options {
-    /** If set, use/enforce specific TLV-LENGTH. */
-    len?: Len;
-    /** If true, allow approximate integers. */
-    unsafe?: boolean;
+/** StructBuilder field options. */
+declare interface Options<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
+    /**
+     * Whether the field is required.
+     * If both `.required` and `.repeat` are false, the field may be set to undefined and is initialized as undefined.
+     * @defaultValue `false`
+     */
+    required?: Required;
+    /**
+     * Whether the field is repeated.
+     * If `.repeat` is true, the field is defined as an array and is initialized as an empty array.
+     * @defaultValue `false`
+     */
+    repeat?: Repeat;
+    /**
+     * Prefix of bit property names.
+     * Ignored if `.flagBits` is unspecified.
+     *
+     * @defaultValue
+     * Same as primary field name.
+     */
+    flagPrefix?: FlagPrefix;
+    /**
+     * Mapping from bit name to bit value.
+     * If specified, the field is treated as bit flags.
+     */
+    flagBits?: Record<FlagBit, number>;
 }
 
+/**
+ * {@link Endpoint} constructor options.
+ *
+ * @remarks
+ * This type includes consumer and producer options. These settings will be inherited by
+ * {@link Endpoint.consume} and {@link Endpoint.produce} unless overridden.
+ */
 declare interface Options_2 extends ConsumerOptions, ProducerOptions {
+    /**
+     * Logical forwarder instance.
+     * @defaultValue `Forwarder.getDefault()`
+     */
     fw?: Forwarder;
 }
 
@@ -3298,6 +4099,9 @@ declare namespace packet {
         NameMap,
         NameMultiMap,
         NameMultiSet,
+        StructFieldName,
+        StructFieldNameNested,
+        StructFieldComponentNested,
         LLEncrypt,
         LLDecrypt,
         Encrypter,
@@ -3348,18 +4152,174 @@ declare const ParamsDigest: ParamsDigestComp;
 declare class ParamsDigestComp extends DigestComp {
     /** ParamsDigest placeholder during Interest encoding. */
     readonly PLACEHOLDER: Component;
-    constructor();
     /** Determine if comp is a ParamsDigest placeholder. */
     isPlaceholder(comp: Component): boolean;
     /** Find ParamsDigest or placeholder in name. */
     findIn(name: Name, matchPlaceholder?: boolean): number;
 }
 
-/** Parse a certificate name into fields. */
+/**
+ * Parse a certificate name into fields.
+ * @param name - Must be a certificate name.
+ */
 declare function parseCertName(name: Name): CertNameFields;
 
-/** Parse a key name into fields. */
+/**
+ * Parse a key name into fields.
+ * @param name - Must be a key name.
+ */
 declare function parseKeyName(name: Name): KeyNameFields;
+
+/** PSync - PartialSync publisher. */
+declare class PartialPublisher extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
+    constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PartialPublisher.Options);
+    private readonly maybeHaveEventListener;
+    private readonly endpoint;
+    readonly describe: string;
+    private readonly syncPrefix;
+    private readonly c;
+    private readonly codec;
+    private closed;
+    private readonly pBuffer;
+    private readonly hFreshness;
+    private readonly hProducer;
+    private readonly sFreshness;
+    private readonly sProducer;
+    private readonly sPendings;
+    private debug;
+    /** Stop the protocol operation. */
+    close(): void;
+    get(prefix: Name): SyncNode<Name> | undefined;
+    add(prefix: Name): SyncNode<Name>;
+    private readonly handleHelloInterest;
+    private readonly handleSyncInterest;
+    private readonly handleIncreaseSeqNum;
+    private sendStateData;
+}
+
+declare namespace PartialPublisher {
+    /** Algorithm parameters. */
+    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
+    }
+    /** {@link PartialPublisher} constructor options. */
+    interface Options {
+        /**
+         * Algorithm parameters.
+         *
+         * @remarks
+         * They must match the subscriber parameters.
+         */
+        p: Parameters;
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
+        endpoint?: Endpoint;
+        /** Description for debugging purpose. */
+        describe?: string;
+        /** Sync producer prefix. */
+        syncPrefix: Name;
+        /**
+         * FreshnessPeriod of hello reply Data packet.
+         * @defaultValue 1000
+         */
+        helloReplyFreshness?: number;
+        /**
+         * FreshnessPeriod of sync reply Data packet.
+         * @defaultValue 1000
+         */
+        syncReplyFreshness?: number;
+        /**
+         * Signer of sync reply Data packets.
+         * @defaultValue digestSigning
+         */
+        signer?: Signer;
+        /**
+         * How many sync reply segmented objects to keep in buffer.
+         * This must be a positive integer.
+         * @defaultValue 32
+         */
+        producerBufferLimit?: number;
+    }
+}
+
+/** PSync - PartialSync subscriber. */
+declare class PartialSubscriber extends TypedEventTarget<EventMap_5> implements Subscriber<Name, Update, PartialSubscriber.TopicInfo> {
+    constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PartialSubscriber.Options);
+    readonly describe: string;
+    private readonly helloPrefix;
+    private readonly syncPrefix;
+    private readonly codec;
+    private readonly encodeBloom;
+    private closed;
+    private readonly subs;
+    private readonly prevSeqNums;
+    private bloom;
+    private ibltComp?;
+    private readonly cFetcher;
+    private readonly cInterval;
+    private cTimer;
+    private cAbort?;
+    private debug;
+    /** Stop the protocol operation. */
+    close(): void;
+    subscribe(topic: PartialSubscriber.TopicInfo): Sub;
+    private readonly handleRemoveTopic;
+    private scheduleInterest;
+    private readonly sendInterest;
+    private sendHelloInterest;
+    private sendSyncInterest;
+    private handleState;
+}
+
+declare namespace PartialSubscriber {
+    /** Algorithm parameters. */
+    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
+        bloom: Parameters_2;
+    }
+    /** {@link PartialSubscriber} constructor options. */
+    interface Options {
+        /**
+         * Algorithm parameters.
+         *
+         * @remarks
+         * They must match the publisher parameters.
+         */
+        p: Parameters;
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
+        endpoint?: Endpoint;
+        /** Description for debugging purpose. */
+        describe?: string;
+        /** Sync producer prefix. */
+        syncPrefix: Name;
+        /**
+         * Sync Interest lifetime in milliseconds.
+         * @defaultValue 1000
+         */
+        syncInterestLifetime?: number;
+        /**
+         * Interval between sync Interests, randomized within the range, in milliseconds.
+         * @defaultValue `[syncInterestLifetime/2+100,syncInterestLifetime/2+500]`
+         */
+        syncInterestInterval?: [min: number, max: number];
+        /**
+         * Verifier of sync reply Data packets.
+         * @defaultValue no verification
+         */
+        verifier?: Verifier;
+    }
+    interface TopicInfo extends PSyncCore.PrefixSeqNum {
+    }
+    class StateEvent extends Event {
+        readonly topics: readonly TopicInfo[];
+        constructor(type: string, topics: readonly TopicInfo[]);
+    }
+}
 
 declare const PointSizes: {
     readonly "P-256": 32;
@@ -3374,13 +4334,20 @@ declare function printTT(tlvType: number): string;
 declare type PrivateKey = Key<"private">;
 
 /** A running producer. */
-declare interface Producer {
+declare interface Producer extends Disposable {
+    /**
+     * Prefix specified in {@link Endpoint.produce} call.
+     * Additional prefixes can be added via `.face.addRoute()`.
+     */
     readonly prefix: Name | undefined;
+    /** Logical forwarder face for this producer. */
     readonly face: FwFace;
+    /** Outgoing Data buffer. */
     readonly dataBuffer?: DataBuffer;
     /**
      * Process an Interest received elsewhere.
      *
+     * @remarks
      * Use case of this function:
      * 1. Producer A dynamically creates producer B upon receiving an Interest.
      * 2. Producer A can invoke this function to let producer B generate a response.
@@ -3393,54 +4360,114 @@ declare interface Producer {
 
 /**
  * Producer handler function.
+ * @param interest - Incoming Interest.
+ * @param producer - Producer context.
  *
- * The handler can return a Data to respond to the Interest, or return `undefined` to cause a timeout.
- *
- * If Options.dataBuffer is provided, the handler can access the DataBuffer via producer.dataBuffer .
- * The handler can return a Data to respond to the Interest, which is also inserted to the DataBuffer
- * unless Options.autoBuffer is set to false. If the handler returns `undefined`, the Interest is used
- * to query the DataBuffer, and any matching Data may be sent.
+ * @remarks
+ * The handler may be invoked concurrently up to {@link ProducerOptions.concurrency} instances.
+ * The handler should return a Promise that resolves to:
+ * - Data satisfying the Interest: send Data to consumer(s).
+ *   - If Data is not signed, it is signed with {@link ProducerOptions.dataSigner}.
+ * - Data that does not satisfy the Interest or `undefined`:
+ *   - {@link ProducerOptions.dataBuffer} is unset: cause a timeout.
+ *   - {@link ProducerOptions.dataBuffer} is provided: query the DataBuffer.
  */
 declare type ProducerHandler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
 
+/** {@link Endpoint.produce} options. */
 declare interface ProducerOptions {
-    /** Description for debugging purpose. */
+    /**
+     * Description for debugging purpose.
+     * @defaultValue
+     * "produce" + prefix.
+     */
     describe?: string;
     /** AbortSignal that allows closing the producer via AbortController. */
     signal?: AbortSignal;
     /**
-     * Whether routes registered by producer would cause @ndn/fw internal FIB to stop matching toward
-     * shorter prefixes. Default is true.
+     * Whether routes registered by producer would cause `@ndn/fw` internal FIB to stop matching
+     * toward shorter prefixes.
+     * @defaultValue `true`
      *
+     * @remarks
      * If all nexthops of a FIB entry are set to non-capture, FIB lookup may continue onto nexthops
-     * on FIB entries with shorter prefixes. One use case is in @ndn/sync package, where both local
-     * and remote sync participants want to receive each other's Interests.
+     * on FIB entries with shorter prefixes. One use case is in dataset synchronization protocols,
+     * where both local and remote sync participants want to receive each other's Interests.
      */
     routeCapture?: boolean;
     /**
      * What name to be readvertised.
-     * Ignored if prefix is undefined.
+     * Ignored if prefix is `undefined`.
      */
     announcement?: FwFace.RouteAnnouncement;
     /**
      * How many Interests to process in parallel.
-     * @default 1
+     * @defaultValue 1
      */
     concurrency?: number;
     /**
      * If specified, automatically sign Data packets that are not yet signed.
-     * This does not apply to Data packets manually inserted to the dataBuffer.
+     *
+     * @remarks
+     * If the {@link ProducerHandler} returns a Data packet that is not signed (its SigType is
+     * *Null*), it is automatically signed with this signer.
+     *
+     * This option does not apply to Data packets manually inserted into `.dataBuffer`. To auto-sign
+     * those packet, specify {@link DataStoreBuffer.Options.dataSigner} in addition.
      */
     dataSigner?: Signer;
-    /** Outgoing Data buffer. */
+    /**
+     * Outgoing Data buffer.
+     *
+     * @remarks
+     * Providing an outgoing Data buffer allows the {@link ProducerHandler} to prepare multiple Data
+     * packets in response to one Interest, in which one Data satisfies the current Interest and
+     * additional Data satisfy upcoming Interest. This is useful for a producer that generates a
+     * multi-segment response triggered by a single Interest, such as a
+     * {@link https://redmine.named-data.net/projects/nfd/wiki/StatusDataset | StatusDataset}
+     * producer in NFD Management protocol.
+     *
+     * The producer can prepare the Data packets and insert them to the DataBuffer, and then return
+     * `undefined`, so that the Interest is used to query the DataBuffer and the first matching Data
+     * is sent. The producer can also return a specify Data packet to satisfy the current Interest.
+     */
     dataBuffer?: DataBuffer;
     /**
-     * Whether to add handler return value to buffer.
-     * Ignored when dataBuffer is not specified.
-     * @default true
+     * Whether to add handler return value to `.dataBuffer`.
+     * @defaultValue `true`
+     *
+     * @remarks
+     * This is only relevant when `.dataBuffer` is set. If `true`, when the {@link ProducerHandler}
+     * returns a Data packet, it is automatically inserted to the DataBuffer.
      */
     autoBuffer?: boolean;
 }
+
+/**
+ Create a type that represents either the value or the value wrapped in `PromiseLike`.
+
+ Use-cases:
+ - A function accepts a callback that may either return a value synchronously or may return a promised value.
+ - This type could be the return type of `Promise#then()`, `Promise#catch()`, and `Promise#finally()` callbacks.
+
+ Please upvote [this issue](https://github.com/microsoft/TypeScript/issues/31394) if you want to have this type as a built-in in TypeScript.
+
+ @example
+ ```
+ import type {Promisable} from 'type-fest';
+
+ async function logger(getLogEntry: () => Promisable<string>): Promise<void> {
+ 	const entry = await getLogEntry();
+ 	console.log(entry);
+ }
+
+ logger(() => 'foo');
+ logger(() => Promise.resolve('bar'));
+ ```
+
+ @category Async
+ */
+declare type Promisable<T> = T | PromiseLike<T>;
 
 declare class ProviderBrowser implements ForwardingProvider {
     readonly LOG_INTERESTS = false;
@@ -3459,8 +4486,9 @@ declare class ProviderBrowser implements ForwardingProvider {
     private scheduledRouteRefresh;
     constructor();
     initialize: () => Promise<void>;
-    private loadDefaultTopology;
     private loadDumpUrl;
+    private loadTestbedTopology;
+    private loadDefaultTopology;
     initializePostNetwork: () => Promise<void>;
     edgeUpdated: (edge?: IEdge) => Promise<void>;
     nodeUpdated: (node?: INode) => Promise<void>;
@@ -3482,7 +4510,6 @@ declare class ProviderBrowser implements ForwardingProvider {
 declare class PSyncCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: PSyncCodec.Parameters, ibltParams: IBLT.PreparedParameters);
-    readonly uselessCompsAfterIblt: Component[];
     state2buffer(state: PSyncCore.State): Uint8Array;
     buffer2state(buffer: Uint8Array): PSyncCore.State;
 }
@@ -3495,11 +4522,6 @@ declare namespace PSyncCodec {
     interface Parameters {
         /** Compression method for IBLT in name component. */
         ibltCompression: Compression;
-        /**
-         * Number of useless components between IBLT and Version.
-         * @see https://github.com/named-data/PSync/blob/b60398c5fc216a1b577b9dbcf61d48a21cb409a4/PSync/full-producer.cpp#L239
-         */
-        nUselessCompsAfterIblt: number;
         /** Compression method for State in segmented object. */
         contentCompression: Compression;
         /** Encode State to buffer (without compression). */
@@ -3550,86 +4572,6 @@ declare namespace PSyncCore {
     }
 }
 
-/** PSync - FullSync participant. */
-declare class PSyncFull extends TypedEventTarget<EventMap> implements SyncProtocol<Name> {
-    constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncFull.Options);
-    private readonly maybeHaveEventListener;
-    private readonly endpoint;
-    readonly describe: string;
-    private readonly syncPrefix;
-    private readonly c;
-    private readonly codec;
-    private closed;
-    private readonly pFreshness;
-    private readonly pBuffer;
-    private readonly pProducer;
-    private readonly pPendings;
-    private readonly cFetcher;
-    private readonly cInterval;
-    private cTimer;
-    private cAbort?;
-    private cCurrentInterestName?;
-    private debug;
-    /** Stop the protocol operation. */
-    close(): void;
-    get(prefix: Name): SyncNode<Name> | undefined;
-    add(prefix: Name): SyncNode<Name>;
-    private handleSyncInterest;
-    private handleIncreaseSeqNum;
-    private sendSyncData;
-    private scheduleSyncInterest;
-    private sendSyncInterest;
-}
-
-declare namespace PSyncFull {
-    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
-    }
-    interface Options {
-        /**
-         * Algorithm parameters.
-         * They must be the same on every peer.
-         */
-        p: Parameters;
-        /** Endpoint for communication. */
-        endpoint?: Endpoint;
-        /** Description for debugging purpose. */
-        describe?: string;
-        /** Sync group prefix. */
-        syncPrefix: Name;
-        /**
-         * FreshnessPeriod of sync reply Data packet.
-         * @default 1000
-         */
-        syncReplyFreshness?: number;
-        /**
-         * Signer of sync reply Data packets.
-         * Default is digest signing.
-         */
-        signer?: Signer;
-        /**
-         * How many sync reply segmented objects to keep in buffer.
-         * This must be positive.
-         * @default 32
-         */
-        producerBufferLimit?: number;
-        /**
-         * Sync Interest lifetime in milliseconds.
-         * @default 1000
-         */
-        syncInterestLifetime?: number;
-        /**
-         * Interval between sync Interests, randomized within the range, in milliseconds.
-         * @default [syncInterestLifetime/2+100,syncInterestLifetime/2+500]
-         */
-        syncInterestInterval?: IntervalRange;
-        /**
-         * Verifier of sync reply Data packets.
-         * Default is no verification.
-         */
-        verifier?: Verifier;
-    }
-}
-
 declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     private readonly c;
     readonly id: Name;
@@ -3642,149 +4584,14 @@ declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
     set seqNum(v: number);
     /**
      * Change sequence number, for internal use.
-     * @param v new sequence number.
-     * @param triggerEvent whether to trigger onIncreaseSeqNum callback.
+     * @param v - New sequence number.
+     * @param triggerEvent - Whether to trigger `.onIncreaseSeqNum` callback.
      */
     setSeqNum(v: number, triggerEvent?: boolean): void;
     remove(): void;
-    /** Recompute `this.k` after changing sequence number. */
+    /** Recompute `.k` after changing sequence number. */
     private updateKey;
     private detachKey;
-}
-
-/** PSync - PartialSync publisher. */
-declare class PSyncPartialPublisher extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
-    constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PSyncPartialPublisher.Options);
-    private readonly maybeHaveEventListener;
-    private readonly endpoint;
-    readonly describe: string;
-    private readonly syncPrefix;
-    private readonly c;
-    private readonly codec;
-    private closed;
-    private readonly pBuffer;
-    private readonly hFreshness;
-    private readonly hProducer;
-    private readonly sFreshness;
-    private readonly sProducer;
-    private readonly sPendings;
-    private debug;
-    /** Stop the protocol operation. */
-    close(): void;
-    get(prefix: Name): SyncNode<Name> | undefined;
-    add(prefix: Name): SyncNode<Name>;
-    private handleHelloInterest;
-    private handleSyncInterest;
-    private handleIncreaseSeqNum;
-    private sendStateData;
-}
-
-declare namespace PSyncPartialPublisher {
-    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
-    }
-    interface Options {
-        /**
-         * Algorithm parameters.
-         * They must match the subscriber parameters.
-         */
-        p: Parameters;
-        /** Endpoint for communication. */
-        endpoint?: Endpoint;
-        /** Description for debugging purpose. */
-        describe?: string;
-        /** Sync producer prefix. */
-        syncPrefix: Name;
-        /**
-         * FreshnessPeriod of hello reply Data packet.
-         * @default 1000
-         */
-        helloReplyFreshness?: number;
-        /**
-         * FreshnessPeriod of sync reply Data packet.
-         * @default 1000
-         */
-        syncReplyFreshness?: number;
-        /**
-         * Signer of sync reply Data packets.
-         * Default is digest signing.
-         */
-        signer?: Signer;
-        /**
-         * How many sync reply segmented objects to keep in buffer.
-         * This must be positive.
-         * @default 32
-         */
-        producerBufferLimit?: number;
-    }
-}
-
-/** PSync - PartialSync subscriber. */
-declare class PSyncPartialSubscriber extends TypedEventTarget<EventMap_5> implements Subscriber<Name, Update, PSyncPartialSubscriber.TopicInfo> {
-    constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PSyncPartialSubscriber.Options);
-    readonly describe: string;
-    private readonly helloPrefix;
-    private readonly syncPrefix;
-    private readonly codec;
-    private readonly encodeBloom;
-    private closed;
-    private readonly subs;
-    private readonly prevSeqNums;
-    private bloom;
-    private ibltComp?;
-    private readonly cFetcher;
-    private readonly cInterval;
-    private cTimer;
-    private cAbort?;
-    private debug;
-    /** Stop the protocol operation. */
-    close(): void;
-    subscribe(topic: PSyncPartialSubscriber.TopicInfo): Sub;
-    private handleRemoveTopic;
-    private scheduleInterest;
-    private sendInterest;
-    private sendHelloInterest;
-    private sendSyncInterest;
-    private handleState;
-}
-
-declare namespace PSyncPartialSubscriber {
-    interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
-        bloom: Parameters_2;
-    }
-    interface Options {
-        /**
-         * Algorithm parameters.
-         * They must match the publisher parameters.
-         */
-        p: Parameters;
-        /** Endpoint for communication. */
-        endpoint?: Endpoint;
-        /** Description for debugging purpose. */
-        describe?: string;
-        /** Sync producer prefix. */
-        syncPrefix: Name;
-        /**
-         * Sync Interest lifetime in milliseconds.
-         * @default 1000
-         */
-        syncInterestLifetime?: number;
-        /**
-         * Interval between sync Interests, randomized within the range, in milliseconds.
-         * @default [syncInterestLifetime/2+100,syncInterestLifetime/2+500]
-         */
-        syncInterestInterval?: [min: number, max: number];
-        /**
-         * Verifier of sync reply Data packets.
-         * Default is no verification.
-         */
-        verifier?: Verifier;
-    }
-    interface TopicInfo extends PSyncCore.PrefixSeqNum {
-    }
-    class StateEvent extends Event {
-        readonly topics: readonly TopicInfo[];
-        constructor(type: string, topics: readonly TopicInfo[]);
-    }
 }
 
 /** Use zlib compression with PSync. */
@@ -3799,6 +4606,27 @@ declare interface PublicFields_2 extends Except<Fields, "signedPortion" | "topTl
 /** Named public key. */
 declare type PublicKey = Key<"public">;
 
+/** An iterable that you can push values into. */
+declare interface Pushable<T> extends AsyncIterable<T> {
+    /** Push a value. */
+    push: (value: T) => void;
+    /** End the iterable normally. */
+    stop: () => void;
+    /** End the iterable abnormally. */
+    fail: (err: Error) => void;
+}
+
+/**
+ * Create an iterable that you can push values into.
+ * @typeParam T - Value type.
+ * @returns AsyncIterable with push method.
+ *
+ * @remarks
+ * Inspired by {@link https://www.npmjs.com/package/it-pushable | it-pushable} but implemented on
+ * top of {@link https://www.npmjs.com/package/event-iterator | event-iterator} library.
+ */
+declare function pushable<T>(): Pushable<T>;
+
 /** IV generator using all random bits. */
 declare class RandomIvGen extends IvGen {
     protected generate(): Uint8Array;
@@ -3806,11 +4634,14 @@ declare class RandomIvGen extends IvGen {
 
 /**
  * Create a random jitter generator function.
- * @param r jitter factor around 1.
- * @param x median value.
- * @returns jitter generator function.
+ * @param r - Jitter factor around 1.
+ * @param x - Median value.
+ * @returns Jitter generator function.
  *
- * randomJitter(0.1, 2) generates random values within [1.8, 2.2].
+ * @remarks
+ * Each time the returned jitter generator function is called, it returns a number within
+ * `[x*(1-r), x*(1+r)]` range. For example, `randomJitter(0.1, 2)` creates a jitter generator
+ * function that returns random values within `[1.8, 2.2]` range.
  */
 declare function randomJitter(r: number, x?: number): () => number;
 
@@ -3826,41 +4657,65 @@ declare namespace RejectInterest {
     type Reason = "cancel" | "expire";
 }
 
-/** A function to generate retx intervals. */
+/** Reorder items according to their index numbers. */
+declare class Reorder<T> {
+    private next;
+    private readonly buffer;
+    constructor(first?: number);
+    /** Return number of items in buffer. */
+    get size(): number;
+    /** Determine whether buffer is empty, i.e. all items emitted. */
+    get empty(): boolean;
+    /** Add a new item. */
+    push(index: number, obj: T): void;
+    /** Return and remove in-order items. */
+    shift(): T[];
+}
+
+/**
+ * Function to generate retransmission intervals.
+ *
+ * @remarks
+ * The generator function is invoked once for each Interest. It should generate successive retx
+ * intervals for the given Interest, based on the policy it represents. When the generator ends
+ * (no more values from the returned iterable), no more retx is allowed.
+ */
 declare type RetxGenerator = (interestLifetime: number) => Iterable<number>;
 
 /** Interest retransmission policy options. */
 declare interface RetxOptions {
     /**
      * Maximum number of retransmissions, excluding initial Interest.
-     *
-     * Default is 0, which disables retransmissions.
+     * @defaultValue
+     * `0`, which disables retransmissions
      */
     limit?: number;
     /**
      * Initial retx interval
-     *
-     * Default is 50% of InterestLifetime.
+     * @defaultValue
+     * 50% of InterestLifetime
      */
     interval?: number;
     /**
      * Randomize retx interval within [1-randomize, 1+randomize].
+     * @defaultValue `0.1`
      *
-     * Suppose this is set to 0.1, an interval of 100ms would become [90ms, 110ms].
-     * Default is 0.1.
+     * @remarks
+     * Suppose this is set to `0.1`, an interval of 100ms would become `[90ms,110ms]`.
      */
     randomize?: number;
     /**
      * Multiply retx interval by backoff factor after each retx.
+     * @defaultValue `1.0`
      *
-     * This number should be in range [1.0, 2.0].
-     * Default is 1.0.
+     * @remarks
+     * Valid range is `[1.0, 2.0]`.
      */
     backoff?: number;
     /**
      * Maximum retx interval.
-     *
-     * Default is 90% of InterestLifetime.
+     * @defaultValue
+     * 90% of InterestLifetime
      */
     max?: number;
 }
@@ -3868,8 +4723,9 @@ declare interface RetxOptions {
 /**
  * Interest retransmission policy.
  *
- * A number is interpreted as the limit.
- * Set 0 to disable retransmissions.
+ * @remarks
+ * A number is interpreted as {@link RetxOptions.limit} with other options at their defaults.
+ * Set `0` to disable retransmissions.
  */
 declare type RetxPolicy = RetxOptions | RetxGenerator | number;
 
@@ -3884,11 +4740,11 @@ declare namespace RSA {
     }
 }
 
-declare type RsaModulusLength = 2048 | 4096;
+declare type RsaModulusLength = (typeof RsaModulusLength.Choices)[number];
 
 declare namespace RsaModulusLength {
     const Default: RsaModulusLength;
-    const Choices: readonly RsaModulusLength[];
+    const Choices: readonly [2048, 4096];
 }
 
 /** RSA-OAEP encryption algorithm. */
@@ -3899,18 +4755,43 @@ declare interface Rule {
     check: (si: SigInfo, state: KeyState) => () => void;
 }
 
-/** Yield all values from an iterable but catch any error. */
+/**
+ * Yield all values from an iterable but catch any error.
+ * @param iterable - Input iterable.
+ * @param onError - Callback to receive errors thrown by the iterable.
+ * @returns Iterable that does not throw errors.
+ */
 declare function safeIter<T>(iterable: AnyIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
 
 /** Named secret key. */
 declare type SecretKey = Key<"secret">;
 
-/** SHA256 digest. */
+declare class Semaphore {
+    #private;
+    count: number;
+    constructor(count: number);
+    acquire(): Promise<() => void>;
+    use<T>(f: () => Promise<T>): Promise<T>;
+}
+
+/** Compute SHA256 digest. */
 declare function sha256(input: Uint8Array): Promise<Uint8Array>;
 
 /** SignatureInfo on Interest or Data. */
 declare class SigInfo {
     static decodeFrom(decoder: Decoder): SigInfo;
+    /**
+     * Construct from flexible arguments.
+     *
+     * Arguments can include, in any order:
+     * - {@link SigInfo} to copy from
+     * - number as SigType
+     * - {@link KeyLocator}, or Name/URI/KeyDigest to construct KeyLocator
+     * - {@link SigInfo.Nonce}`(v)`
+     * - {@link SigInfo.Time}`(v)`
+     * - {@link SigInfo.SeqNum}`(v)`
+     */
+    constructor(...args: SigInfo.CtorArg[]);
     type: number;
     keyLocator?: KeyLocator;
     nonce?: Uint8Array;
@@ -3918,33 +4799,31 @@ declare class SigInfo {
     seqNum?: bigint;
     readonly [Extensible.TAG]: ExtensionRegistry<SigInfo>;
     /**
-     * Construct from flexible arguments.
-     *
-     * Arguments can include, in any order:
-     * - SigInfo to copy from
-     * - number as SigType
-     * - KeyLocator, or Name/URI/KeyDigest to construct KeyLocator
-     * - SigInfo.Nonce(v)
-     * - SigInfo.Time(v)
-     * - SigInfo.SeqNum(v)
-     */
-    constructor(...args: SigInfo.CtorArg[]);
-    /**
      * Create an Encodable.
-     * @param tt either TT.ISigInfo or TT.DSigInfo.
+     * @param tt - Either `TT.ISigInfo` or `TT.DSigInfo`.
      */
     encodeAs(tt: number): EncodableObj;
     private encodeTo;
 }
 
 declare namespace SigInfo {
+    /** Constructor argument to set SigNonce field. */
     function Nonce(v?: Uint8Array | number): CtorTag;
     /** Generate a random nonce. */
     function generateNonce(size?: number): Uint8Array;
+    /** Constructor argument to set SigTime field. */
     function Time(v?: number): CtorTag;
+    /** Constructor argument to set SigSeqNum field. */
     function SeqNum(v: bigint): CtorTag;
+    /** Constructor argument. */
     type CtorArg = SigInfo | number | KeyLocator.CtorArg | CtorTag;
+    /** Add an extension TLV in SigInfo. */
     const registerExtension: <R>(ext: Extension<SigInfo, R>) => void;
+    const registerExtensionWithStructFieldType: <R>(tt: number, type: {
+        decode: (this: void, tlv: Decoder.Tlv) => R;
+        encode: (this: void, value: R) => Encodable;
+    }, { order }?: ExtensionOptions | undefined) => void;
+    /** Remove an extension TLV in SigInfo. */
     const unregisterExtension: (tt: number) => void;
 }
 
@@ -3956,29 +4835,40 @@ declare class SignedInterestPolicy {
     private readonly rules;
     /**
      * Constructor.
-     * @param opts options.
-     * @param rules one or more rules created from SignedInterestPolicy.Nonce(),
-     *              SignedInterestPolicy.Time(), SignedInterestPolicy.SeqNum().
+     * @param opts - Options.
+     * @param rules -
+     *  One or more rules created from {@link SignedInterestPolicy.Nonce},
+     *  {@link SignedInterestPolicy.Time}, {@link SignedInterestPolicy.SeqNum}.
      */
     constructor(opts: SignedInterestPolicy.Options, ...rules: Rule[]);
+    /**
+     * Constructor.
+     * @param rules -
+     *  One or more rules created from {@link SignedInterestPolicy.Nonce},
+     *  {@link SignedInterestPolicy.Time}, {@link SignedInterestPolicy.SeqNum}.
+     */
     constructor(...rules: Rule[]);
     /**
      * Assign SigInfo fields on an Interest before signing.
-     * @param key signing key object to associate state with; if omitted, use global state.
+     * @param key - Signing key object to associate state with; if omitted, use global state.
      */
     update(interest: Interest, key?: object): void;
     /**
      * Check SigInfo of an Interest.
-     * @returns a function to save state after the Interest has passed all verifications.
+     * @returns A function to save state after the Interest has passed all verifications.
      */
     check({ sigInfo }: Interest): () => void;
     /**
      * Wrap an Interest to update/check SigInfo during signing/verification.
+     *
+     * @remarks
      * During signing, global state is being used because signer key cannot be detected.
      */
     wrapInterest(interest: Interest): Signer.Signable & Verifier.Verifiable;
     /**
      * Wrap a Signer to update SigInfo when signing an Interest.
+     *
+     * @remarks
      * State is associated with the provided Signer.
      */
     makeSigner(inner: Signer): Signer;
@@ -3987,56 +4877,64 @@ declare class SignedInterestPolicy {
 }
 
 declare namespace SignedInterestPolicy {
+    /** Constructor options. */
     interface Options {
         /**
          * How many distinct public keys to keep track.
          * Each different KeyLocator Name or KeyDigest is tracked separately.
+         * @defaultValue 256
          *
+         * @remarks
          * Minimum is 1.
-         * @default 256
          */
         trackedKeys?: number;
     }
+    /** {@link SignedInterestPolicy.makeVerifier} options. */
     interface WrapOptions {
         /**
          * If true, non-Interest packets are passed through to the inner Verifier.
          * If false, non-Interest packets are rejected.
-         * @default true
+         * @defaultValue true
          */
         passData?: boolean;
         /**
          * If true, Interests without SigInfo are passed through to the inner Verifier.
          * If false, Interests without SigInfo are rejected.
-         * @default false
+         * @defaultValue false
          */
         passUnsignedInterest?: boolean;
     }
+    /** {@link SignedInterestPolicy.Nonce} options. */
     interface NonceOptions {
         /**
          * Length of generated SigNonce.
+         * @defaultValue 8
          *
+         * @remarks
          * Minimum is 1.
-         * @default 8
          */
         nonceLength?: number;
         /**
          * Minimum required length of SigNonce.
+         * @defaultValue 8
          *
+         * @remarks
          * Minimum is 1.
-         * @default 8
          */
         minNonceLength?: number;
         /**
          * How many distinct SigNonce values to keep track, within each public key.
+         * @defaultValue 256
          *
+         * @remarks
          * Minimum is 1.
-         * @default 256
          */
         trackedNonces?: number;
     }
     /**
      * Create a rule to assign or check SigNonce.
      *
+     * @remarks
      * This rule assigns a random SigNonce of `nonceLength` octets that does not duplicate
      * last `trackedNonces` values.
      *
@@ -4046,19 +4944,22 @@ declare namespace SignedInterestPolicy {
      * - SigNonce value duplicates any of last `trackedNonces` values.
      */
     function Nonce(opts?: NonceOptions): Rule;
+    /** {@link SignedInterestPolicy.Time} options. */
     interface TimeOptions {
         /**
          * Maximum allowed clock offset in milliseconds.
+         * @defaultValue 60000
          *
+         * @remarks
          * Minimum is 0. However, setting to 0 is inadvisable because it would require consumer and
          * producer to have precisely synchronized clocks.
-         * @default 60000
          */
         maxClockOffset?: number;
     }
     /**
      * Create a rule to assign or check SigTime.
      *
+     * @remarks
      * This rule assigns SigTime to be same as current timestamp, but may increment if it
      * duplicates the previous value.
      *
@@ -4075,21 +4976,23 @@ declare namespace SignedInterestPolicy {
      * would eventually push SigTime out of `maxClockOffset` range and cause rejections.
      */
     function Time(opts?: TimeOptions): Rule;
+    /** {@link SignedInterestPolicy.SeqNum} options. */
     interface SeqNumOptions {
         /**
          * Initial sequence number.
-         * @default 0n
+         * @defaultValue 0n
          */
         initialSeqNum?: bigint;
     }
     /**
      * Create a rule to assign or check SigSeqNum.
      *
+     * @remarks
      * This rule assigns SigSeqNum to `initialSegNum`, or increments from previous value.
      *
      * This rule rejects an Interest on any of these conditions:
-     * (1) SigSeqNum is absent.
-     * (2) SigSeqNum value is less than or equal to a previous value.
+     * - SigSeqNum is absent.
+     * - SigSeqNum value is less than or equal to a previous value.
      */
     function SeqNum(opts?: SeqNumOptions): Rule;
 }
@@ -4101,52 +5004,198 @@ declare interface Signer {
 }
 
 declare namespace Signer {
+    /** Target packet compatible with high level signer. */
     interface Signable extends PacketWithSignature, LLSign.Signable {
     }
     /**
      * Put SigInfo on packet if it does not exist.
-     * @param pkt target packet.
-     * @param sigType optionally set sigType.
-     * @param keyLocator optionally set keyLocator; false to delete KeyLocator.
+     * @param pkt - Target packet.
+     * @param sigType - Optionally set sigType.
+     * @param keyLocator - Optionally set keyLocator; `false` to delete KeyLocator.
+     * @returns Existing or modified SigInfo.
      */
     function putSigInfo(pkt: PacketWithSignature, sigType?: number, keyLocator?: KeyLocator.CtorArg | false): SigInfo;
+    /**
+     * Create a Signer that signs a packet only if it does not already have a non-Null signature.
+     * @param signer - Inner signer.
+     */
+    function onlyIfUnsigned(signer: Signer): Signer;
 }
 
-/** WebCrypto based signing algorithm implementation. */
+/**
+ * WebCrypto based signing algorithm implementation.
+ * @typeParam I - Algorithm-specific per-key information.
+ * @typeParam Asym - Whether the algorithm is asymmetric.
+ * @typeParam G - Key generation parameters.
+ */
 declare interface SigningAlgorithm<I = any, Asym extends boolean = any, G = any> extends CryptoAlgorithm<I, Asym, G> {
+    /** SigInfo.sigType number for signatures produced by this algorithm. */
     readonly sigType: number;
+    /**
+     * Create a low level signing function from private key (in asymmetric algorithm) or
+     * secret key (in symmetric algorithm).
+     */
     makeLLSign: If<Asym, (key: CryptoAlgorithm.PrivateKey<I>) => LLSign, (key: CryptoAlgorithm.SecretKey<I>) => LLSign, unknown>;
+    /**
+     * Create a low level verification function from public key (in asymmetric algorithm) or
+     * secret key (in symmetric algorithm).
+     */
     makeLLVerify: If<Asym, (key: CryptoAlgorithm.PublicKey<I>) => LLVerify, (key: CryptoAlgorithm.SecretKey<I>) => LLVerify, unknown>;
 }
 
 /**
  * A full list of signing algorithms.
- * This list currently contains ECDSA, RSA, HMAC, and Ed25519.
+ *
+ * @remarks
+ * The *full* list contains all implemented algorithms.
+ * This list currently contains {@link ECDSA}, {@link RSA}, {@link HMAC}, and {@link Ed25519}.
+ *
+ * This can be used in place of {@link SigningAlgorithmListSlim} to support more algorithms,
+ * at the cost of larger bundle size. If you know exactly which algorithms are needed, you can
+ * also explicitly import them and form an array.
  */
 declare const SigningAlgorithmListFull: readonly SigningAlgorithm[];
 
 /**
  * A slim list of signing algorithms.
- * This list currently contains ECDSA.
- * If you need more algorithms, explicitly import them or use SigningAlgorithmListFull.
+ *
+ * @remarks
+ * The *slim* list contains only the most commonly used algorithms, to reduce bundle size.
+ * This list currently contains {@link ECDSA}.
+ * If you need more algorithms, explicitly import them or use {@link SigningAlgorithmListFull}.
  */
 declare const SigningAlgorithmListSlim: readonly SigningAlgorithm[];
 
-declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [SigningAlgorithm<I, Asym, G>, G?] : [SigningAlgorithm<I, Asym, G>, G];
+declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [
+SigningAlgorithm<I, Asym, G>,
+G?
+] : [
+SigningAlgorithm<I, Asym, G>,
+G
+];
 
 declare const SigType: {
-    Sha256: number;
-    Sha256WithRsa: number;
-    Sha256WithEcdsa: number;
-    HmacWithSha256: number;
-    Ed25519: number;
-    Null: number;
+    readonly Sha256: 0;
+    readonly Sha256WithRsa: 1;
+    readonly Sha256WithEcdsa: 3;
+    readonly HmacWithSha256: 4;
+    readonly Ed25519: 5;
+    readonly Null: 200;
 };
 
-/** KV store where each key is a Name. */
+/**
+ Useful to flatten the type output to improve type hints shown in editors. And also to transform an interface into a type to aide with assignability.
+
+ @example
+ ```
+ import type {Simplify} from 'type-fest';
+
+ type PositionProps = {
+ 	top: number;
+ 	left: number;
+ };
+
+ type SizeProps = {
+ 	width: number;
+ 	height: number;
+ };
+
+ // In your editor, hovering over `Props` will show a flattened object with all the properties.
+ type Props = Simplify<PositionProps & SizeProps>;
+ ```
+
+ Sometimes it is desired to pass a value as a function argument that has a different type. At first inspection it may seem assignable, and then you discover it is not because the `value`'s type definition was defined as an interface. In the following example, `fn` requires an argument of type `Record<string, unknown>`. If the value is defined as a literal, then it is assignable. And if the `value` is defined as type using the `Simplify` utility the value is assignable.  But if the `value` is defined as an interface, it is not assignable because the interface is not sealed and elsewhere a non-string property could be added to the interface.
+
+ If the type definition must be an interface (perhaps it was defined in a third-party npm package), then the `value` can be defined as `const value: Simplify<SomeInterface> = ...`. Then `value` will be assignable to the `fn` argument.  Or the `value` can be cast as `Simplify<SomeInterface>` if you can't re-declare the `value`.
+
+ @example
+ ```
+ import type {Simplify} from 'type-fest';
+
+ interface SomeInterface {
+ 	foo: number;
+ 	bar?: string;
+ 	baz: number | undefined;
+ }
+
+ type SomeType = {
+ 	foo: number;
+ 	bar?: string;
+ 	baz: number | undefined;
+ };
+
+ const literal = {foo: 123, bar: 'hello', baz: 456};
+ const someType: SomeType = literal;
+ const someInterface: SomeInterface = literal;
+
+ function fn(object: Record<string, unknown>): void {}
+
+ fn(literal); // Good: literal object type is sealed
+ fn(someType); // Good: type is sealed
+ fn(someInterface); // Error: Index signature for type 'string' is missing in type 'someInterface'. Because `interface` can be re-opened
+ fn(someInterface as Simplify<SomeInterface>); // Good: transform an `interface` into a `type`
+ ```
+
+ @link https://github.com/microsoft/TypeScript/issues/15300
+
+ @category Object
+ */
+declare type Simplify<T> = {[KeyType in keyof T]: T[KeyType]} & {};
+
+/** SVS state vector. */
+declare class StateVector {
+    /**
+     * Constructor.
+     * @param from - Copy from state vector or its JSON value.
+     */
+    constructor(from?: StateVector | Record<string, number>);
+    private readonly m;
+    /** Get sequence number of a node. */
+    get(id: Name): number;
+    /**
+     * Set sequence number of a node.
+     *
+     * @remarks
+     * Setting to zero removes the node.
+     */
+    set(id: Name, seqNum: number): void;
+    /** Iterate over nodes and their sequence numbers. */
+    [Symbol.iterator](): IterableIterator<[id: Name, seqNum: number]>;
+    private iterOlderThan;
+    /** List nodes with older sequence number in this state vector than other. */
+    listOlderThan(other: StateVector): StateVector.DiffEntry[];
+    /** Update this state vector to have newer sequence numbers between this and other. */
+    mergeFrom(other: StateVector): void;
+    /** Serialize as JSON. */
+    toJSON(): Record<string, number>;
+    /** Encode TLV-VALUE of name component. */
+    encodeTo(encoder: Encoder): void;
+    /** Encode to name component. */
+    toComponent(): Component;
+    /** Decode TLV-VALUE of name component. */
+    static decodeFrom(decoder: Decoder): StateVector;
+    /** Decode from name component. */
+    static fromComponent(comp: Component): StateVector;
+}
+
+declare namespace StateVector {
+    /** TLV-TYPE of name component. */
+    const NameComponentType: 201;
+    interface DiffEntry {
+        id: Name;
+        loSeqNum: number;
+        hiSeqNum: number;
+    }
+}
+
+/**
+ * KV store where each key is a Name.
+ *
+ * @remarks
+ * Function calls are serialized. This does not have to be thread safe.
+ */
 declare abstract class StoreBase<T> {
     private readonly provider;
-    private readonly mutex;
     constructor(provider: StoreProvider<T>);
     get canSClone(): boolean;
     /** List item names. */
@@ -4168,18 +5217,261 @@ declare interface StoredCert {
 
 /**
  * KV store provider where each key is a string.
- * Methods are called one at a time.
+ *
+ * @remarks
+ * Function calls are serialized. This does not have to be thread safe.
  */
 declare interface StoreProvider<T> {
     /**
      * Indicate whether the store provider supports the structured clone algorithm.
-     * If false, values must be serialized as JSON.
+     * If false, values must be JSON serializable.
      */
     readonly canSClone: boolean;
-    list: () => Promise<string[]>;
-    get: (key: string) => Promise<T>;
-    insert: (key: string, value: T) => Promise<void>;
-    erase: (key: string) => Promise<void>;
+    /** List keys. */
+    list: () => Promisable<string[]>;
+    /** Retrieve value by key. */
+    get: (key: string) => Promisable<T>;
+    /** Insert key and value. */
+    insert: (key: string, value: T) => Promisable<void>;
+    /** Erase key. */
+    erase: (key: string) => Promisable<void>;
+}
+
+/**
+ * Helper to build a base class that represents a TLV structure.
+ *
+ * @remarks
+ * StructBuilder allows you to define the typing, constructor, encoder, and decoder, while writing
+ * each field only once. It is only compatible with a subset of TLV structures. Namely, the TLV
+ * structure shall contain a sequence of sub-TLV elements with distinct TLV-TYPE numbers, where
+ * each sub-TLV-TYPE may appear zero, one, or multiple times.
+ *
+ * To use StructBuilder, calling code should follow these steps:
+ * 1. Invoke `.add()` method successively to define sub-TLV elements.
+ * 2. Obtain a base class via `.baseClass()` method, which contains one field for each sub-TLV-TYPE
+ *    as defined, along with constructor, encoding, and decoding functions.
+ * 3. Declare a subclass deriving from this base class, to add more functionality.
+ * 4. Assign the subclass constructor to `.subclass` property of the builder.
+ */
+declare class StructBuilder<U extends {}> {
+    readonly typeName: string;
+    readonly topTT?: number | undefined;
+    /**
+     * Constructor.
+     * @param typeName - Type name, used in error messages.
+     * @param topTT - If specified, encode as complete TLV; otherwise, encode as TLV-VALUE only.
+     */
+    constructor(typeName: string, topTT?: number | undefined);
+    /**
+     * Subclass constructor.
+     * This must be assigned, otherwise decoding function will not work.
+     */
+    subclass?: Constructor<U, []>;
+    private readonly fields;
+    private readonly flagBits;
+    private readonly EVD;
+    /** Return field names. */
+    get keys(): string[];
+    /**
+     * Add a field.
+     * @param tt - TLV-TYPE number.
+     * @param key - Field name on the base class.
+     * @param type - Field type.
+     * @param opts - Field options.
+     * @returns StructBuilder annotated with field typing.
+     */
+    add<T, K extends string, Required extends boolean = false, Repeat extends boolean = false, FlagPrefix extends string = K, FlagBit extends string = never>(tt: number, key: ValidateOptions<T, Repeat, FlagBit, K>, type: StructFieldType<T>, opts?: Options<Required, Repeat, FlagPrefix, FlagBit>): StructBuilder<Simplify<U & AddField<K, T, Required, Repeat> & AddFlags<FlagPrefix, FlagBit>>>;
+    /** Change IsCritical on the EvDecoder. */
+    setIsCritical(cb: EvDecoder.IsCritical): this;
+    /**
+     * Obtain a base class for the TLV structure class.
+     * @typeParam S - Subclass type.
+     */
+    baseClass<S>(): (new () => Simplify<U> & EncodableObj) & Decodable<S>;
+}
+
+/**
+ * StructBuilder field type of raw bytes.
+ *
+ * @remarks
+ * The field is defined as Uint8Array.
+ * If the field is required, it is initialized as an empty Uint8Array.
+ */
+declare const StructFieldBytes: StructFieldType<Uint8Array>;
+
+/**
+ * StructBuilder field type of {@link Component}, where Component TLV is nested in an outer TLV.
+ *
+ * @remarks
+ * Data.FinalBlockId is an example where this might be used.
+ */
+declare const StructFieldComponentNested: StructFieldType<Component>;
+
+/**
+ * Declare a StructBuilder field type of non-negative integer from an enum.
+ * @param Enum - A flat (not OR'ed flags) enum type.
+ *
+ * @remarks
+ * The field is defined as a flat enum type.
+ * If the field is required, it is initialized as zero.
+ */
+declare function StructFieldEnum<E extends number>(Enum: Record<number, string>): StructFieldType<E>;
+
+/**
+ * StructBuilder field type of {@link Name}, where Name TLV is placed into the structure directly.
+ *
+ * @remarks
+ * Example ABNF structure where this can be used:
+ * ```abnf
+ *  MyType = MY-TYPE-TYPE TLV-LENGTH
+ *             OtherTLV
+ *             Name
+ *             OtherTLV
+ * ```
+ *
+ * The field is defined as `Name`.
+ * If the field is required, it is initialized as an empty Name.
+ */
+declare const StructFieldName: StructFieldType<Name>;
+
+/**
+ * StructBuilder field type of {@link Name}, where Name TLV is nested in an outer TLV.
+ *
+ * @remarks
+ * Example ABNF structure where this can be used:
+ * ```abnf
+ *  MyType = MY-TYPE-TYPE TLV-LENGTH
+ *             OtherTLV
+ *             NestedTLV
+ *             OtherTLV
+ *  NestedTLV = NESTED-TLV-TYPE TLV-LENGTH
+ *                Name
+ * ```
+ *
+ * The field is defined as `Name`.
+ * If the field is required, it is initialized as an empty Name.
+ */
+declare const StructFieldNameNested: StructFieldType<Name>;
+
+/**
+ * StructBuilder field type of non-negative integer.
+ *
+ * @remarks
+ * The field is defined as number.
+ * If the field is required, it is initialized as zero.
+ */
+declare const StructFieldNNI: StructFieldType<number>;
+
+/**
+ * StructBuilder field type of non-negative integer.
+ *
+ * @remarks
+ * The field is defined as bigint.
+ * If the field is required, it is initialized as zero.
+ */
+declare const StructFieldNNIBig: StructFieldType<bigint>;
+
+/**
+ * Infer fields of a class built by StructBuilder.
+ * @typeParam B - StructBuilder annotated with field typing.
+ */
+declare type StructFields<B extends StructBuilder<{}>> = B extends StructBuilder<infer U> ? U : never;
+
+/**
+ * StructBuilder field type of UTF-8 text.
+ *
+ * @remarks
+ * The field is defined as string.
+ * If the field is required, it is initialized as an empty string.
+ */
+declare const StructFieldText: StructFieldType<string>;
+
+/**
+ * StructBuilder field type.
+ * @typeParam T - Value type.
+ */
+declare interface StructFieldType<T> {
+    /**
+     * Create a new value of type T.
+     *
+     * @remarks
+     * Invoked by the TLV class constructor on each non-repeatable required field.
+     */
+    newValue: (this: void) => T;
+    /**
+     * Encode a value to sub-TLV element.
+     * @returns TLV-VALUE only.
+     *
+     * @remarks
+     * Invoked by TLV class `.encodeTo` method.
+     * If the field is optional and unset, this is not invoked.
+     * If the field is repeatable, this is invoked once per element.
+     */
+    encode: (this: void, value: T) => Encodable;
+    /**
+     * Decode a value from sub-TLV element.
+     *
+     * @remarks
+     * Invoked by TLV class `.decodeFrom` method.
+     * If the field is repeatable, this is invoked once per sub-TLV element.
+     */
+    decode: (this: void, tlv: Decoder.Tlv) => T;
+    /**
+     * Print a value as string representation.
+     * @defaultValue
+     * ```ts
+     * `${value}`
+     * ```
+     *
+     * @remarks
+     * Invoked by TLV class `.toString` method.
+     * If the field is optional and unset, this is not invoked.
+     * If the field is repeatable, this is invoked once per element.
+     */
+    asString?: (this: void, value: T) => string;
+}
+
+declare namespace StructFieldType {
+    /**
+     * Turn a TLV class into a field type, where the TLV directly appears as the field.
+     *
+     * @example
+     * Given this structure:
+     * ```abnf
+     * Outer = OUTER-TYPE TLV-LENGTH Inner
+     * Inner = INNER-TYPE TLV-LENGTH INNER-VALUE
+     * ```
+     *
+     * You can define the `Outer` builder:
+     * ```ts
+     * const buildOuter = new StructBuilder("Outer", TT.Outer)
+     *   .add(TT.Inner, "inner", StructFieldType.wrap(Inner));
+     * ```
+     *
+     * `Inner` type must encode itself as a TLV, and its TLV-TYPE must equal field TLV-TYPE.
+     */
+    function wrap<T extends NonNullable<Encodable>>(F: Constructor<T, []> & Decodable<T>, overrides?: Partial<StructFieldType<T>>): StructFieldType<T>;
+    /**
+     * Turn a TLV class into a field type, where the TLV is nested inside the field.
+     *
+     * @example
+     * Given this structure:
+     * ```abnf
+     * Outer = OUTER-TYPE TLV-LENGTH Middle
+     * Middle = MIDDLE-TYPE TLV-LENGTH Inner
+     * Inner = INNER-TYPE TLV-LENGTH INNER-VALUE
+     * ```
+     *
+     * You can define the `Outer` builder:
+     * ```ts
+     * const buildOuter = new StructBuilder("Outer", TT.Outer)
+     *   .add(TT.Middle, "inner", StructFieldType.nest(Inner));
+     * ```
+     *
+     * `Inner` type does not have to encode itself as a TLV. Its encoding result appears as
+     * the TLV-VALUE of the "middle" field TLV.
+     */
+    function nest<T extends NonNullable<Encodable>>(F: Constructor<T, []> & Decodable<T>, overrides?: Partial<StructFieldType<T>>): StructFieldType<T>;
 }
 
 declare type Sub = Subscription<Name, SyncUpdate<Name>>;
@@ -4303,13 +5595,14 @@ declare class Subscriber_2<T> extends Subscription_2 implements Observer<T> {
 
 /**
  * A subscription on a topic.
+ *
+ * @remarks
  * Listen to the 'update' event to receive updates on incoming publications matching the topic.
+ * Unsubscribe by disposing the subscription.
  */
-declare interface Subscription<Topic = Name, Update extends Event = SyncUpdate<Topic>> extends TypedEventTarget<Subscription.EventMap<Update>> {
+declare interface Subscription<Topic = Name, Update extends Event = SyncUpdate<Topic>> extends Disposable, TypedEventTarget<Subscription.EventMap<Update>> {
     /** The topic. */
     readonly topic: Topic;
-    /** Unsubscribe. */
-    remove(): void;
 }
 
 declare namespace Subscription {
@@ -4417,23 +5710,6 @@ declare interface SubscriptionLike extends Unsubscribable {
     readonly closed: boolean;
 }
 
-/** SVS-PS MappingEntry element. */
-declare class SvMappingEntry implements EncodableObj {
-    seqNum: number;
-    name: Name;
-    static decodeFrom(decoder: Decoder): SvMappingEntry;
-    encodeTo(encoder: Encoder): void;
-    protected encodeValueExt(): Encodable[];
-}
-
-declare namespace SvMappingEntry {
-    interface Constructor<M extends SvMappingEntry = SvMappingEntry> extends Decodable<M> {
-        new (): M;
-    }
-    /** Class decorator on an extensible MappingEntry subclass. */
-    function extend<M extends SvMappingEntry & Extensible>(ctor: new () => M): void;
-}
-
 /** SVS-PS publisher. */
 declare class SvPublisher {
     constructor({ endpoint, sync, id, store, chunkSize, innerSigner, outerSigner, mappingSigner, }: SvPublisher.Options);
@@ -4449,115 +5725,82 @@ declare class SvPublisher {
     get id(): Name;
     /**
      * Stop publisher operations.
-     * This does not stop the SvSync instance or the DataStore.
+     *
+     * @remarks
+     * This does not stop the {@link SvSync} instance or the {@link SvPublisher.DataStore}.
      */
     close(): Promise<void>;
     /**
      * Publish application data.
-     * @param name application-specified inner name.
-     * @param payload application payload.
-     * @param entry MappingEntry for subscriber-side filtering.
-     *              This is required if subscribers are expecting a certain MappingEntry subclass.
+     * @param name - Application-specified inner name.
+     * @param payload - Application payload.
+     * @param entry - MappingEntry for subscriber-side filtering.
+     * This is required if subscribers are expecting a certain MappingEntry subclass.
      * @returns seqNum.
      */
-    publish(name: NameLike, payload: Uint8Array, entry?: SvMappingEntry): Promise<number>;
+    publish(name: NameLike, payload: Uint8Array, entry?: MappingEntry): Promise<number>;
     private readonly handleOuter;
     private readonly handleMapping;
 }
 
 declare namespace SvPublisher {
+    /**
+     * Data repository used by publisher.
+     *
+     * @remarks
+     * {@link \@ndn/repo!DataStore} satisfies the requirement.
+     * Other lightweight implementations may be possible.
+     */
     type DataStore = DataStore.Get & DataStore.Find & DataStore.Insert;
     interface Options {
-        /** Endpoint for communication. */
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
         endpoint?: Endpoint;
         /**
          * SvSync instance.
          *
-         * Multiple SvSubscribers and SvPublishers may reuse the same SvSync instance. However,
-         * publications from a SvPublisher cannot reach SvSubscribers on the same SvSync instance.
+         * @remarks
+         * Multiple {@link SvSubscriber}s and {@link SvPublisher}s may reuse the same SvSync instance.
+         * However, publications from a publisher cannot reach subscribers on the same SvSync instance.
          */
         sync: SvSync;
         /** Publisher node ID. */
         id: Name;
-        /**
-         * Data repository used for this publisher.
-         * DataStore type from @ndn/repo package satisfies the requirement.
-         * Other lightweight implementations may be possible.
-         */
+        /** Data repository used for this publisher. */
         store: DataStore;
         /**
          * Segment chunk size of inner Data packet.
-         * Default is 8000.
+         * @defaultValue 8000
          */
         chunkSize?: number;
         /**
          * Inner Data signer.
-         * Default is NullSigning.
+         * @defaultValue nullSigner
          */
         innerSigner?: Signer;
         /**
          * Outer Data signer.
-         * Default is NullSigning.
+         * @defaultValue nullSigner
          */
         outerSigner?: Signer;
         /**
          * Mapping Data signer.
-         * Default is NullSigning.
+         * @defaultValue nullSigner
          */
         mappingSigner?: Signer;
     }
 }
 
-/** SVS state vector. */
-declare class SvStateVector {
-    /**
-     * Constructor.
-     * @param from copy from state vector or its JSON value.
-     */
-    constructor(from?: SvStateVector | Record<string, number>);
-    private readonly m;
-    /** Get sequence number of a node. */
-    get(id: Name): number;
-    /**
-     * Set sequence number of a node.
-     * Setting to zero removes the node.
-     */
-    set(id: Name, seqNum: number): void;
-    /** Iterate over nodes and their sequence numbers. */
-    [Symbol.iterator](): IterableIterator<[id: Name, seqNum: number]>;
-    private iterOlderThan;
-    /** List nodes with older sequence number in this state vector than other. */
-    listOlderThan(other: SvStateVector): SvStateVector.DiffEntry[];
-    /** Update this state vector to have newer sequence numbers between this and other. */
-    mergeFrom(other: SvStateVector): void;
-    toJSON(): Record<string, number>;
-    /** Encode TLV-VALUE of name component. */
-    encodeTo(encoder: Encoder): void;
-    /** Encode to name component. */
-    toComponent(): Component;
-    /** Decode TLV-VALUE of name component. */
-    static decodeFrom(decoder: Decoder): SvStateVector;
-    /** Decode from name component. */
-    static fromComponent(comp: Component): SvStateVector;
-}
-
-declare namespace SvStateVector {
-    /** TLV-TYPE of name component. */
-    const NameComponentType: number;
-    interface DiffEntry {
-        id: Name;
-        loSeqNum: number;
-        hiSeqNum: number;
-    }
-}
-
 /**
  * SVS-PS subscriber.
- *
- * MappingEntry is a subclass of SvMappingEntry.
- * If it is not SvMappingEntry base class, its constructor must be specified in Options.mappingEntryType.
+ * @typeParam ME - Subclass of MappingEntry.
+ * If it is not {@link MappingEntry} base class, its constructor must be specified in
+ * {@link SvSubscriber.Options.mappingEntryType}.
  */
-declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry> extends TypedEventTarget<EventMap_7> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<MappingEntry>> {
+declare class SvSubscriber<ME extends MappingEntry = MappingEntry> extends TypedEventTarget<EventMap_8> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<ME>> {
     constructor({ endpoint, sync, retxLimit, mappingBatch, mappingEntryType, mustFilterByMapping, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
     private readonly abort;
     private readonly endpoint;
@@ -4575,11 +5818,13 @@ declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry>
     private emitError;
     /**
      * Stop subscriber operations.
-     * This does not stop the SvSync instance.
+     *
+     * @remarks
+     * This does not stop the {@link SvSync} instance.
      */
     close(): void;
     /** Subscribe to either a topic prefix or a publisher node ID. */
-    subscribe(topic: SvSubscriber.SubscribeInfo<MappingEntry>): Subscription<Name, SvSubscriber.Update>;
+    subscribe(topic: SvSubscriber.SubscribeInfo<ME>): Subscription<Name, SvSubscriber.Update>;
     private readonly handleSyncUpdate;
     private retrieveMapping;
     private dispatchUpdate;
@@ -4589,66 +5834,74 @@ declare class SvSubscriber<MappingEntry extends SvMappingEntry = SvMappingEntry>
 
 declare namespace SvSubscriber {
     interface Options {
-        /** Endpoint for communication. */
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
         endpoint?: Endpoint;
         /**
          * SvSync instance.
-         * See notes on SvPublisher.Options regarding reuse.
+         * @see {@link SvPublisher.Options.sync} regarding reuse
          */
         sync: SvSync;
         /**
          * Retransmission limit for Data retrieval.
-         * Default is 2.
+         * @defaultValue 2
          */
         retxLimit?: number;
         /**
-         * Maximum number of MappingEntry to retrieve in a single query.
-         * Default is 10.
-         * @see https://github.com/named-data/ndn-svs/blob/e39538ed1ddd789de9a34c242af47c3ba4f3583d/ndn-svs/svspubsub.cpp#L199
+         * Maximum quantity of MappingEntries to retrieve in a single query.
+         * @defaultValue 10.
+         * @see {@link https://github.com/named-data/ndn-svs/blob/e39538ed1ddd789de9a34c242af47c3ba4f3583d/ndn-svs/svspubsub.cpp#L199}
          */
         mappingBatch?: number;
         /**
          * MappingEntry constructor.
-         * Default is MappingEntry base type.
+         * @defaultValue `MappingEntry` base type
          */
-        mappingEntryType?: SvMappingEntry.Constructor;
+        mappingEntryType?: MappingEntry.Constructor;
         /**
-         * When an update matches a SubscribePublisher, by default the MappingData is not retrieved.
-         * Since the filter functions in SubscribePrefixFilter depend on MappingEntry, they are not called, and
-         * each SubscribePrefixFilter is treated like a SubscribePrefix, which would receive the message if
-         * the topic prefix matches.
-         * Set this option to true forces the retrieval of MappingData and ensures filter functions are called.
+         * If true, force the retrieval of MappingData.
+         *
+         * @remarks
+         * When an update matches a {@link SubscribePublisher}, by default the MappingData is not
+         * retrieved. Since the filter functions in {@link SubscribePrefixFilter} depend on
+         * MappingEntry, they are not called, and each SubscribePrefixFilter is treated like a
+         * {@link SubscribePrefix}, which would receive the message if the topic prefix matches.
+         * Set this option to `true` forces the retrieval of MappingData and ensures filter functions
+         * are called.
          */
         mustFilterByMapping?: boolean;
         /**
          * Inner Data verifier.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         innerVerifier?: Verifier;
         /**
          * Outer Data verifier.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         outerVerifier?: Verifier;
         /**
          * Mapping Data verifier.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         mappingVerifier?: Verifier;
     }
     /** Subscribe parameters. */
-    type SubscribeInfo<MappingEntry extends SvMappingEntry> = SubscribePrefix | SubscribePrefixFilter<MappingEntry> | SubscribePublisher;
+    type SubscribeInfo<ME extends MappingEntry> = SubscribePrefix | SubscribePrefixFilter<ME> | SubscribePublisher;
     /** Subscribe to messages udner a name prefix. */
     type SubscribePrefix = Name;
     /** Subscribe to messages under a name prefix that passes a filter. */
-    interface SubscribePrefixFilter<MappingEntry extends SvMappingEntry> {
+    interface SubscribePrefixFilter<ME extends MappingEntry> {
         /** Topic prefix. */
         prefix: Name;
         /**
          * Filter function to determine whether to retrieve a message based on MappingEntry.
-         * See limitations in Options.mustFilterByMapping.
+         * @see {@link Options.mustFilterByMapping} for limitations on when this may not be invoked.
          */
-        filter(entry: MappingEntry): boolean;
+        filter: (entry: ME) => boolean;
     }
     /** Subscribe to messages from the specified publisher. */
     interface SubscribePublisher {
@@ -4665,7 +5918,7 @@ declare namespace SvSubscriber {
 }
 
 /** StateVectorSync participant. */
-declare class SvSync extends TypedEventTarget<EventMap_6> implements SyncProtocol<Name> {
+declare class SvSync extends TypedEventTarget<EventMap_7> implements SyncProtocol<Name> {
     private readonly endpoint;
     readonly describe: string;
     private readonly own;
@@ -4692,9 +5945,19 @@ declare class SvSync extends TypedEventTarget<EventMap_6> implements SyncProtoco
     add(id: NameLike): SyncNode<Name>;
     /**
      * Obtain a copy of own state vector.
-     * This may be used in initialStateVector to re-create an SvSync instance.
+     *
+     * @remarks
+     * This may be used as {@link SvSync.Options.initialStateVector} to re-create an SvSync instance.
      */
-    get currentStateVector(): SvStateVector;
+    get currentStateVector(): StateVector;
+    /**
+     * Multi-purpose callback passed to {@link SvSyncNode} constructor.
+     *
+     * @remarks
+     * - `nodeOp(id)`: get seqNum
+     * - `nodeOp(id, n)`: set seqNum, return new seqNum
+     * - `nodeOp(id, 0)`: delete node during initialization
+     */
     private readonly nodeOp;
     private readonly handleSyncInterest;
     private resetTimer;
@@ -4705,120 +5968,126 @@ declare class SvSync extends TypedEventTarget<EventMap_6> implements SyncProtoco
 declare namespace SvSync {
     /**
      * Timer settings.
+     *
+     * @remarks
      * ms: median interval in milliseconds.
      * jitter: ± percentage, in [0.0, 1.0) range.
      */
     type Timer = [ms: number, jitter: number];
+    /** {@link SvSync.create} options. */
     interface Options {
-        /** Endpoint for communication. */
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
         endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
         /**
          * Initial state vector.
-         * Default is empty state vector.
+         * @defaultValue empty state vector
          */
-        initialStateVector?: SvStateVector;
+        initialStateVector?: StateVector;
         /**
          * Application initialization function.
+         *
+         * @remarks
          * During initialization, it's possible to remove SyncNode or decrease seqNum.
-         * Calling .close() has no effect.
+         * Calling `sync.close()` has no effect.
+         *
          * Sync protocol starts running after the returned Promise is resolved.
          */
-        initialize?: (sync: SvSync) => Promise<void>;
+        initialize?: (sync: SvSync) => Promisable<void>;
         /** Sync group prefix. */
         syncPrefix: Name;
         /**
          * Sync Interest lifetime in milliseconds.
-         * @default 1000
+         * @defaultValue 1000
          */
         syncInterestLifetime?: number;
         /**
          * Sync Interest timer in steady state.
-         * Default is [30000ms, ±10%]
+         * @defaultValue `[30000ms, ±10%]`
          */
         steadyTimer?: Timer;
         /**
          * Sync Interest timer in suppression state.
-         * Default is [200ms, ±50%]
+         * @defaultValue `[200ms, ±50%]`
          */
         suppressionTimer?: Timer;
         /**
          * Sync Interest signer.
-         * Default is NullSigning.
+         * @defaultValue nullSigner
          */
         signer?: Signer;
         /**
          * Sync Interest verifier.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         verifier?: Verifier;
     }
 }
 
-/** SVS-PS MappingEntry with Timestamp element. */
-declare class SvTimedMappingEntry extends SvMappingEntry implements Extensible {
-    constructor();
-    readonly [Extensible.TAG]: ExtensionRegistry<Extensible>;
-    timestamp: Date | undefined;
-}
-
 declare namespace sync {
     export {
+        Subscriber,
+        Subscription,
+        SyncNode,
+        SyncProtocol,
+        SyncUpdate,
         IBLT,
         makePSyncCompatParam,
-        PSyncFull,
+        makeSyncpsCompatParam,
+        PartialPublisher as PSyncPartialPublisher,
+        PartialSubscriber as PSyncPartialSubscriber,
+        FullSync as PSyncFull,
         PSyncZlib,
-        PSyncPartialPublisher,
-        PSyncPartialSubscriber,
-        SvMappingEntry,
-        SvTimedMappingEntry,
-        SvStateVector,
-        SvSync,
+        SyncpsPubsub,
+        MappingEntry as SvMappingEntry,
+        StateVector as SvStateVector,
         SvPublisher,
         SvSubscriber,
-        makeSyncpsCompatParam,
-        SyncpsPubsub,
-        SyncProtocol,
-        SyncNode,
-        SyncUpdate,
-        Subscriber,
-        Subscription
+        SvSync,
+        TimedMappingEntry as SvTimedMappingEntry
     }
 }
 export { sync }
 
 /**
  * A sync protocol node.
+ * @typeParam ID - Node identifier type, typically number or Name.
  *
+ * @remarks
  * Each sync protocol participant may have zero or more nodes.
  */
 declare interface SyncNode<ID = any> {
-    /**
-     * Node identifier.
-     * This is typically a number or a Name.
-     */
+    /** Node identifier. */
     readonly id: ID;
     /**
      * Current sequence number.
+     *
+     * @remarks
      * It can be increased, but cannot be decreased.
      */
     seqNum: number;
     /**
      * Remove this node from participating in the sync protocol.
+     *
+     * @remarks
      * This may or may not have effect, depending on the sync protocol.
      */
-    remove(): void;
+    remove: () => void;
 }
 
 /** A sync protocol participant. */
 declare interface SyncProtocol<ID = any> extends TypedEventTarget<SyncProtocol.EventMap<ID>> {
     /** Stop the protocol operation. */
-    close(): void;
+    close: () => void;
     /** Retrieve a node. */
-    get(id: ID): SyncNode<ID> | undefined;
+    get: (id: ID) => SyncNode<ID> | undefined;
     /** Retrieve or create a node. */
-    add(id: ID): SyncNode<ID>;
+    add: (id: ID) => SyncNode<ID>;
 }
 
 declare namespace SyncProtocol {
@@ -4851,7 +6120,7 @@ declare namespace SyncpsCodec {
 }
 
 /** syncps - pubsub service. */
-declare class SyncpsPubsub extends TypedEventTarget<EventMap_8> implements Subscriber<Name, CustomEvent<Data>> {
+declare class SyncpsPubsub extends TypedEventTarget<EventMap_6> implements Subscriber<Name, CustomEvent<Data>> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly maybeHaveEventListener;
     private readonly endpoint;
@@ -4886,17 +6155,14 @@ declare class SyncpsPubsub extends TypedEventTarget<EventMap_8> implements Subsc
     close(): void;
     /**
      * Publish a packet.
-     * @param pub a Data packet. This does not need to be signed.
-     * @param cb a callback to get notified whether publication is confirmed,
-     *           i.e. its hash appears in a sync Interest from another participant.
-     * @returns a Promise that resolves when the publication is recorded.
-     *          It does not mean the publication has reached other participants.
+     * @param pub - Data packet. This does not need to be signed.
+     * @param cb - Callback to get notified whether publication is confirmed,
+     *             i.e. its hash appears in a sync Interest from another participant.
+     * @returns - Promise that resolves when the publication is recorded.
+     *            It does not mean the publication has reached other participants.
      */
     publish(pub: Data, cb?: SyncpsPubsub.PublishCallback): Promise<void>;
-    /**
-     * Subscribe to a topic.
-     * @param topic a name prefix.
-     */
+    /** Subscribe to a topic. */
     subscribe(topic: Name): Subscription<Name, CustomEvent<Data>>;
     private handleSyncInterest;
     private processSyncInterest;
@@ -4916,6 +6182,7 @@ declare namespace SyncpsPubsub {
     /**
      * Callback to determine if a publication is expired.
      *
+     * @remarks
      * The callback can return either:
      * - boolean to indicate whether the publication is expired.
      * - number, interpreted as Unix timestamp (milliseconds) of publication creation time.
@@ -4931,17 +6198,23 @@ declare namespace SyncpsPubsub {
     }
     /**
      * Callback to decide what publications to be included in a response.
-     * Argument contains unexpired publications only.
-     * It should return a priority list of publications to be included in the response.
+     * @param items - Unexpired publications.
+     * @returns A priority list of publications to be included in the response.
      */
     type FilterPubsCallback = (items: FilterPubItem[]) => FilterPubItem[];
     interface Options {
         /**
          * Algorithm parameters.
+         *
+         * @remarks
          * They must be the same on every peer.
          */
         p: Parameters;
-        /** Endpoint for communication. */
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder.
+         */
         endpoint?: Endpoint;
         /** Description for debugging purpose. */
         describe?: string;
@@ -4949,59 +6222,63 @@ declare namespace SyncpsPubsub {
         syncPrefix: Name;
         /**
          * Sync Interest lifetime in milliseconds.
-         * @default 4000
+         * @defaultValue 4000
          */
         syncInterestLifetime?: number;
         /**
          * Advisory maximum size for publications included in a sync reply Data packet.
-         * @default 1300
+         * @defaultValue 1300
          */
         syncDataPubSize?: number;
         /**
          * Signer of sync reply Data packets.
-         * Default is digest signing.
+         * @defaultValue digestSigning
          */
         syncSigner?: Signer;
         /**
          * Verifier of sync reply Data packets.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         syncVerifier?: Verifier;
         /**
          * Publication lifetime.
-         * @default 1000
+         * @defaultValue 1000
          */
         maxPubLifetime?: number;
         /**
          * Maximum clock skew, for calculating timers.
-         * @default 1000
+         * @defaultValue 1000
          */
         maxClockSkew?: number;
         /**
          * Callback to modify publication before it's signed.
-         * Default is appending a TimestampNameComponent to the name.
+         * @defaultValue appending a TimestampNameComponent to the name
          */
         modifyPublication?: ModifyPublicationCallback;
         /**
          * Callback to determine if a publication is expired.
-         * Default is interpreting the last component as TimestampNameComponent;
-         * if the last component is not a TimestampNameComponent, it is seen as expired.
+         *
+         * @defaultValue
+         * The last component is interpreted as TimestampNameComponent.
+         * If it is not a TimestampNameComponent, the publication is seen as expired.
          */
         isExpired?: IsExpiredCallback;
         /**
          * Callback to decide what publications to be included in a response.
-         * Default is: respond nothing if there's no own publication; otherwise,
-         * prioritize own publications over others, and prioritize later timestamp.
+         *
+         * @defaultValue
+         * - Respond nothing if there's no own publication.
+         * - Otherwise, prioritize own publications over others, and prioritize later timestamp.
          */
         filterPubs?: FilterPubsCallback;
         /**
          * Signer of publications.
-         * Default is digest signing.
+         * @defaultValue digestSigning
          */
         pubSigner?: Signer;
         /**
          * Verifier of publications.
-         * Default is no verification.
+         * @defaultValue no verification
          */
         pubVerifier?: Verifier;
     }
@@ -5015,20 +6292,27 @@ declare class SyncUpdate<ID = any> extends Event {
     readonly hiSeqNum: number;
     /**
      * Constructor.
-     * @param node the node.
-     * @param loSeqNum low sequence number, inclusive.
-     * @param hiSeqNum high sequence number, inclusive.
+     * @param node - The node.
+     * @param loSeqNum - Low sequence number, inclusive.
+     * @param hiSeqNum - High sequence number, inclusive.
      */
     constructor(node: SyncNode<ID>, loSeqNum: number, hiSeqNum: number, eventType?: string);
     /** Node identifier. */
     get id(): ID;
-    /** Number of new sequence numbers. */
+    /** Quantity of new sequence numbers. */
     get count(): number;
     /** Iterate over new sequence numbers. */
     seqNums(): Iterable<number>;
 }
 
 declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;
+
+/** SVS-PS MappingEntry with Timestamp element. */
+declare class TimedMappingEntry extends MappingEntry implements Extensible {
+    constructor();
+    readonly [Extensible.TAG]: ExtensionRegistry<Extensible>;
+    timestamp: Date;
+}
 
 /** Timing-safe equality comparison. */
 declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
@@ -5044,9 +6328,18 @@ declare namespace tlv {
         EvDecoder,
         Extensible,
         Extension,
+        ExtensionOptions,
         ExtensionRegistry,
         NNI,
-        printTT
+        printTT,
+        StructBuilder,
+        StructFields,
+        StructFieldEnum,
+        StructFieldType,
+        StructFieldNNI,
+        StructFieldNNIBig,
+        StructFieldText,
+        StructFieldBytes
     }
 }
 export { tlv }
@@ -5061,7 +6354,9 @@ declare namespace toHex {
 
 /**
  * Get key name from key name or certificate name.
- * @throws input name is neither key name nor certificate name.
+ *
+ * @throws Error
+ * Thrown if `name` is neither a key name nor a certificate name.
  */
 declare function toKeyName(name: Name): Name;
 
@@ -5102,329 +6397,375 @@ declare function toUtf8(s: string): Uint8Array;
 
 /**
  * Keep records on whether an event listener has been added.
- * This may allow EventTarget subclass to skip certain event generation code paths.
- * Tracking is imprecise: it does not consider 'once' and 'removeEventListener'.
- * @param target EventTarget to override.
- * @returns map from event type to whether listeners may exist.
+ * @param target - EventTarget to override.
+ * @returns Map from event type to whether listeners may exist.
+ *
+ * @remarks
+ * This may allow `EventTarget` subclass to skip certain event generation code paths.
+ * Tracking is imprecise: it does not consider `once()` and `removeEventListener()`.
  */
 declare function trackEventListener(target: EventTarget): Record<string, boolean>;
 
 /**
  * Low-level transport.
  *
+ * @remarks
  * The transport understands NDN TLV structures, but does not otherwise concern with packet format.
  */
 declare abstract class Transport {
     readonly attributes: Transport.Attributes;
-    abstract readonly rx: Transport.Rx;
-    abstract readonly tx: Transport.Tx;
+    /**
+     * Constructor.
+     * @param attributes - Attributes of the transport.
+     */
     protected constructor(attributes: Transport.Attributes);
     /**
-     * Return the transport MTU, if known.
+     * Return the transport MTU.
+     *
+     * @remarks
      * The transport should be able to send TLV structure of up to this size.
+     * If not overridden, return a conservative number.
+     *
+     * Note that this does not restrict incoming packet size.
      */
     get mtu(): number;
+    /** Iterable of incoming packets received through the transport. */
+    abstract readonly rx: Transport.RxIterable;
+    /**
+     * Function to accept outgoing packet stream.
+     * @param iterable - Iterable of outgoing packets sent through the transport.
+     * Size of each packet cannot exceed `.mtu`.
+     * @returns Promise that resolves when iterable is exhausted or rejects upon error.
+     */
+    abstract tx(iterable: Transport.TxIterable): Promise<void>;
     /**
      * Reopen the transport after it has failed.
-     * @returns the same transport or a new transport after it has been reconnected.
-     */
-    reopen(): Promise<Transport>;
-    toString(): string;
-}
-
-declare namespace Transport {
-    interface Attributes extends Record<string, unknown> {
-        /**
-         * Textual description.
-         * Default is automatically generated from constructor name.
+     * @returns The same transport or a new transport after it has been reconnected.
+     *
+     * @throws {@link \@ndn/l3face!Transport.ReopenNotSupportedError}
+         * Thrown to indicate the transport does not support reopening.
          */
-        describe?: string;
-        /**
-         * Whether the transport connects to a destination on the local machine.
-         * Default is false.
-         */
-        local?: boolean;
-        /**
-         * Whether the transport can possibly talk to multiple peers.
-         * Default is false;
-         */
-        multicast?: boolean;
+     reopen(): Promise<Transport>;
+     toString(): string;
     }
-    /** RX iterable for incoming packets. */
-    type Rx = AsyncIterable<Decoder.Tlv>;
+
+    declare namespace Transport {
+        interface Attributes extends Record<string, unknown> {
+            /**
+             * Textual description.
+             * @defaultValue
+             * Automatically generated from constructor name.
+             */
+            describe?: string;
+            /**
+             * Whether the transport connects to a destination on the local machine.
+             * @defaultValue `false`
+             */
+            local?: boolean;
+            /**
+             * Whether the transport can possibly talk to multiple peers.
+             * @defaultValue `false`
+             */
+            multicast?: boolean;
+            [k: string]: unknown;
+        }
+        /** RX packet stream. */
+        type RxIterable = AsyncIterable<Decoder.Tlv>;
+        /** TX packet stream. */
+        type TxIterable = AsyncIterable<Uint8Array>;
+        /**
+         * Error thrown by {@link Transport.reopen} to indicate that reopen operation is not supported.
+         * No further `.reopen()` should be attempted.
+         */
+        class ReopenNotSupportedError extends Error {
+            constructor();
+        }
+    }
+
+    declare const TT: {
+        readonly Name: 7;
+        readonly GenericNameComponent: 8;
+        readonly ImplicitSha256DigestComponent: 1;
+        readonly ParametersSha256DigestComponent: 2;
+        readonly Interest: 5;
+        readonly CanBePrefix: 33;
+        readonly MustBeFresh: 18;
+        readonly ForwardingHint: 30;
+        readonly Nonce: 10;
+        readonly InterestLifetime: 12;
+        readonly HopLimit: 34;
+        readonly AppParameters: 36;
+        readonly ISigInfo: 44;
+        readonly ISigValue: 46;
+        readonly Data: 6;
+        readonly MetaInfo: 20;
+        readonly ContentType: 24;
+        readonly FreshnessPeriod: 25;
+        readonly FinalBlock: 26;
+        readonly Content: 21;
+        readonly DSigInfo: 22;
+        readonly DSigValue: 23;
+        readonly SigType: 27;
+        readonly KeyLocator: 28;
+        readonly KeyDigest: 29;
+        readonly SigNonce: 38;
+        readonly SigTime: 40;
+        readonly SigSeqNum: 42;
+        readonly Nack: 800;
+        readonly NackReason: 801;
+    };
+
+    declare type TypedEventListener<M, T extends keyof M> = (evt: M[T]) => void | Promise<void>;
+
+    declare interface TypedEventListenerObject<M, T extends keyof M> {
+        handleEvent: (evt: M[T]) => void | Promise<void>;
+    }
+
+    declare type TypedEventListenerOrEventListenerObject<M, T extends keyof M> = TypedEventListener<M, T> | TypedEventListenerObject<M, T>;
+
+    declare interface TypedEventTarget<M extends ValueIsEvent<M>> {
+        /** Appends an event listener for events whose type attribute value is type.
+         * The callback argument sets the callback that will be invoked when the event
+         * is dispatched.
+         *
+         * The options argument sets listener-specific options. For compatibility this
+         * can be a boolean, in which case the method behaves exactly as if the value
+         * was specified as options's capture.
+         *
+         * When set to true, options's capture prevents callback from being invoked
+         * when the event's eventPhase attribute value is BUBBLING_PHASE. When false
+         * (or not present), callback will not be invoked when event's eventPhase
+         * attribute value is CAPTURING_PHASE. Either way, callback will be invoked if
+         * event's eventPhase attribute value is AT_TARGET.
+         *
+         * When set to true, options's passive indicates that the callback will not
+         * cancel the event by invoking preventDefault(). This is used to enable
+         * performance optimizations described in § 2.8 Observing event listeners.
+         *
+         * When set to true, options's once indicates that the callback will only be
+         * invoked once after which the event listener will be removed.
+         *
+         * The event listener is appended to target's event listener list and is not
+         * appended if it has the same type, callback, and capture. */
+        addEventListener: <T extends keyof M & string>(type: T, listener: TypedEventListenerOrEventListenerObject<M, T> | null, options?: boolean | AddEventListenerOptions) => void;
+        /** Removes the event listener in target's event listener list with the same
+         * type, callback, and options. */
+        removeEventListener: <T extends keyof M & string>(type: T, callback: TypedEventListenerOrEventListenerObject<M, T> | null, options?: EventListenerOptions | boolean) => void;
+        /**
+         * Dispatches a synthetic event event to target and returns true if either
+         * event's cancelable attribute value is false or its preventDefault() method
+         * was not invoked, and false otherwise.
+         * @deprecated To ensure type safety use `dispatchTypedEvent` instead.
+         */
+        dispatchEvent: (event: Event) => boolean;
+    }
+
+    declare class TypedEventTarget<M extends ValueIsEvent<M>> extends EventTarget {
+        /**
+         * Dispatches a synthetic event event to target and returns true if either
+         * event's cancelable attribute value is false or its preventDefault() method
+         * was not invoked, and false otherwise.
+         */
+        dispatchTypedEvent<T extends keyof M>(_type: T, event: M[T]): boolean;
+    }
+
     /**
-     * TX function for outgoing packets.
-     * @returns Promise that resolves when iterable is exhausted, and rejects upon error.
+     * A function type interface that describes a function that accepts one parameter `T`
+     * and returns another parameter `R`.
+     *
+     * Usually used to describe {@link OperatorFunction} - it always takes a single
+     * parameter (the source Observable) and returns another Observable.
      */
-    type Tx = (iterable: AsyncIterable<Uint8Array>) => Promise<void>;
-    /**
-     * Error thrown by transport.reopen() to indicate that reopen operation is not supported.
-     * No further reopen() will be attempted.
-     */
-    class ReopenNotSupportedError extends Error {
+    declare interface UnaryFunction<T, R> {
+        (source: T): R;
+    }
+
+    declare interface Unsubscribable {
+        unsubscribe(): void;
+    }
+
+    declare type Update = SyncUpdate<Name>;
+
+    declare namespace util {
+        export {
+            assert,
+            console_2 as console,
+            concatBuffers,
+            crypto_2 as crypto,
+            delay,
+            asUint8Array,
+            asDataView,
+            lock,
+            Closer,
+            Closers,
+            timingSafeEqual,
+            sha256,
+            trackEventListener,
+            CustomEvent_2 as CustomEvent,
+            pushable,
+            safeIter,
+            flatMapOnce,
+            evict,
+            Pushable,
+            KeyMap,
+            KeyMultiMap,
+            MultiMap,
+            KeyMultiSet,
+            constrain,
+            Reorder,
+            toHex,
+            fromHex,
+            toUtf8,
+            fromUtf8,
+            randomJitter
+        }
+    }
+    export { util }
+
+    declare type ValidateOptions<T, Repeat extends boolean, FlagBit extends string, R> = IfNever<FlagBit, R, Repeat extends true ? ErrFlags : T extends number ? R : ErrFlags>;
+
+    /** Certificate validity period. */
+    declare class ValidityPeriod {
+        static decodeFrom(decoder: Decoder): ValidityPeriod;
         constructor();
+        constructor(notBefore: ValidityPeriod.TimestampInput, notAfter: ValidityPeriod.TimestampInput);
+        notBefore: number;
+        notAfter: number;
+        encodeTo(encoder: Encoder): void;
+        /** Determine whether the specified timestamp is within validity period. */
+        includes(t: ValidityPeriod.TimestampInput): boolean;
+        /** Determine whether this validity period equals another. */
+        equals({ notBefore, notAfter }: ValidityPeriod): boolean;
+        /** Compute the intersection of this and other validity periods. */
+        intersect(...validityPeriods: ValidityPeriod[]): ValidityPeriod;
+        toString(): string;
     }
-}
 
-declare const TT: {
-    Name: number;
-    GenericNameComponent: number;
-    ImplicitSha256DigestComponent: number;
-    ParametersSha256DigestComponent: number;
-    Interest: number;
-    CanBePrefix: number;
-    MustBeFresh: number;
-    ForwardingHint: number;
-    Nonce: number;
-    InterestLifetime: number;
-    HopLimit: number;
-    AppParameters: number;
-    ISigInfo: number;
-    ISigValue: number;
-    Data: number;
-    MetaInfo: number;
-    ContentType: number;
-    FreshnessPeriod: number;
-    FinalBlock: number;
-    Content: number;
-    DSigInfo: number;
-    DSigValue: number;
-    SigType: number;
-    KeyLocator: number;
-    KeyDigest: number;
-    SigNonce: number;
-    SigTime: number;
-    SigSeqNum: number;
-    Nack: number;
-    NackReason: number;
-};
-
-declare type TypedEventListener<M, T extends keyof M> = (evt: M[T]) => void | Promise<void>;
-
-declare interface TypedEventListenerObject<M, T extends keyof M> {
-    handleEvent: (evt: M[T]) => void | Promise<void>;
-}
-
-declare type TypedEventListenerOrEventListenerObject<M, T extends keyof M> = TypedEventListener<M, T> | TypedEventListenerObject<M, T>;
-
-declare interface TypedEventTarget<M extends ValueIsEvent<M>> {
-    /** Appends an event listener for events whose type attribute value is type.
-     * The callback argument sets the callback that will be invoked when the event
-     * is dispatched.
-     *
-     * The options argument sets listener-specific options. For compatibility this
-     * can be a boolean, in which case the method behaves exactly as if the value
-     * was specified as options's capture.
-     *
-     * When set to true, options's capture prevents callback from being invoked
-     * when the event's eventPhase attribute value is BUBBLING_PHASE. When false
-     * (or not present), callback will not be invoked when event's eventPhase
-     * attribute value is CAPTURING_PHASE. Either way, callback will be invoked if
-     * event's eventPhase attribute value is AT_TARGET.
-     *
-     * When set to true, options's passive indicates that the callback will not
-     * cancel the event by invoking preventDefault(). This is used to enable
-     * performance optimizations described in § 2.8 Observing event listeners.
-     *
-     * When set to true, options's once indicates that the callback will only be
-     * invoked once after which the event listener will be removed.
-     *
-     * The event listener is appended to target's event listener list and is not
-     * appended if it has the same type, callback, and capture. */
-    addEventListener: <T extends keyof M & string>(type: T, listener: TypedEventListenerOrEventListenerObject<M, T> | null, options?: boolean | AddEventListenerOptions) => void;
-    /** Removes the event listener in target's event listener list with the same
-     * type, callback, and options. */
-    removeEventListener: <T extends keyof M & string>(type: T, callback: TypedEventListenerOrEventListenerObject<M, T> | null, options?: EventListenerOptions | boolean) => void;
-    /**
-     * Dispatches a synthetic event event to target and returns true if either
-     * event's cancelable attribute value is false or its preventDefault() method
-     * was not invoked, and false otherwise.
-     * @deprecated To ensure type safety use `dispatchTypedEvent` instead.
-     */
-    dispatchEvent: (event: Event) => boolean;
-}
-
-declare class TypedEventTarget<M extends ValueIsEvent<M>> extends EventTarget {
-    /**
-     * Dispatches a synthetic event event to target and returns true if either
-     * event's cancelable attribute value is false or its preventDefault() method
-     * was not invoked, and false otherwise.
-     */
-    dispatchTypedEvent<T extends keyof M>(_type: T, event: M[T]): boolean;
-}
-
-/**
- * A function type interface that describes a function that accepts one parameter `T`
- * and returns another parameter `R`.
- *
- * Usually used to describe {@link OperatorFunction} - it always takes a single
- * parameter (the source Observable) and returns another Observable.
- */
-declare interface UnaryFunction<T, R> {
-    (source: T): R;
-}
-
-declare interface Unsubscribable {
-    unsubscribe(): void;
-}
-
-declare type Update = SyncUpdate<Name>;
-
-declare namespace util {
-    export {
-        assert,
-        console_2 as console,
-        concatBuffers,
-        crypto_2 as crypto,
-        delay,
-        asUint8Array,
-        asDataView,
-        Closer,
-        Closers,
-        timingSafeEqual,
-        sha256,
-        trackEventListener,
-        CustomEvent_2 as CustomEvent,
-        safeIter,
-        flatMapOnce,
-        evict,
-        KeyMap,
-        KeyMultiMap,
-        MultiMap,
-        KeyMultiSet,
-        constrain,
-        toHex,
-        fromHex,
-        toUtf8,
-        fromUtf8,
-        randomJitter
+    declare namespace ValidityPeriod {
+        type TimestampInput = number | Date;
+        /** A very long ValidityPeriod. */
+        const MAX: ValidityPeriod;
+        /** Construct ValidityPeriod for n days from now. */
+        function daysFromNow(n: number): ValidityPeriod;
+        /** Retrieve ValidityPeriod from SigInfo. */
+        function get(si: SigInfo): ValidityPeriod | undefined;
+        /** Assign ValidityPeriod onto SigInfo. */
+        function set(si: SigInfo, v?: ValidityPeriod): void;
     }
-}
-export { util }
 
-/** Certificate validity period. */
-declare class ValidityPeriod {
-    static decodeFrom(decoder: Decoder): ValidityPeriod;
-    constructor();
-    constructor(notBefore: ValidityPeriod.TimestampInput, notAfter: ValidityPeriod.TimestampInput);
-    notBefore: number;
-    notAfter: number;
-    encodeTo(encoder: Encoder): void;
-    /** Determine whether the specified timestamp is within validity period. */
-    includes(t: ValidityPeriod.TimestampInput): boolean;
-    /** Determine whether this validity period equals another. */
-    equals({ notBefore, notAfter }: ValidityPeriod): boolean;
-    /** Compute the intersection of this and other validity periods. */
-    intersect(...validityPeriods: ValidityPeriod[]): ValidityPeriod;
-    toString(): string;
-}
+    declare type ValueIsEvent<T> = {
+        [key in keyof T]: Event;
+    };
 
-declare namespace ValidityPeriod {
-    type TimestampInput = number | Date;
-    /** A very long ValidityPeriod. */
-    const MAX: ValidityPeriod;
-    /** Construct ValidityPeriod for n days from now. */
-    function daysFromNow(n: number): ValidityPeriod;
-    /** Retrieve ValidityPeriod from SigInfo. */
-    function get(si: SigInfo): ValidityPeriod | undefined;
-    /** Assign ValidityPeriod onto SigInfo. */
-    function set(si: SigInfo, v?: ValidityPeriod): void;
-}
-
-declare type ValueIsEvent<T> = {
-    [key in keyof T]: Event;
-};
-
-/** High level verifier, such as a named public key. */
-declare interface Verifier {
-    /**
-     * Verify a packet.
-     * @returns a Promise is resolved upon good signature/policy or rejected upon bad signature/policy.
-     */
-    verify: (pkt: Verifier.Verifiable) => Promise<void>;
-}
-
-declare namespace Verifier {
-    interface Verifiable extends Readonly<PacketWithSignature>, LLVerify.Verifiable {
+    /** High level verifier, such as a named public key. */
+    declare interface Verifier {
+        /**
+         * Verify a packet.
+         * @returns Promise resolves upon good signature/policy or rejects upon bad signature/policy.
+         */
+        verify: (pkt: Verifier.Verifiable) => Promise<void>;
     }
-    /** Throw if packet does not have expected SigType. */
-    function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
-    /** Throw bad signature error if not OK. */
-    function throwOnBadSig(ok: boolean): asserts ok;
-}
 
-declare interface WasmFS {
-    isFile(mode: number): boolean;
-    isDir(mode: number): boolean;
-    isLink(mode: number): boolean;
-    mkdir(path: string, mode?: number): any;
-    mkdev(path: string, mode?: number, dev?: number): any;
-    symlink(oldpath: string, newpath: string): any;
-    rename(old_path: string, new_path: string): void;
-    rmdir(path: string): void;
-    readdir(path: string): any;
-    unlink(path: string): void;
-    stat(path: string, dontFollow?: boolean): any;
-    chmod(path: string, mode: number, dontFollow?: boolean): void;
-    readFile(path: string, opts: {
-        encoding: "binary";
-        flags?: string | undefined;
-    }): Uint8Array;
-    readFile(path: string, opts: {
-        encoding: "utf8";
-        flags?: string | undefined;
-    }): string;
-    readFile(path: string, opts?: {
-        flags?: string | undefined;
-    }): Uint8Array;
-    writeFile(path: string, data: string | ArrayBufferView, opts?: {
-        flags?: string | undefined;
-    }): void;
-    cwd(): string;
-    chdir(path: string): void;
-}
-
-declare namespace ws_transport {
-    export {
-        WsTransport
+    declare namespace Verifier {
+        /** Target packet compatible with high level verifier. */
+        interface Verifiable extends Readonly<PacketWithSignature>, LLVerify.Verifiable {
+        }
+        /**
+         * Ensure packet has the correct SigType.
+         *
+         * @throws Error
+         * Thrown if `pkt` lacks SigInfo or its SigType differs from `expectedSigType`.
+         */
+        function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
+        /** Throw bad signature error if not OK. */
+        function throwOnBadSig(ok: boolean): asserts ok;
     }
-}
-export { ws_transport }
 
-/** WebSocket transport. */
-declare class WsTransport extends Transport {
-    private readonly sock;
-    private readonly opts;
-    readonly rx: Transport.Rx;
-    private readonly highWaterMark;
-    private readonly lowWaterMark;
-    constructor(sock: WebSocket, opts: WsTransport.Options);
-    close(): void;
-    get mtu(): number;
-    readonly tx: (iterable: AsyncIterable<Uint8Array>) => Promise<void>;
-    private waitForTxBuffer;
-    reopen(): Promise<WsTransport>;
-}
-
-declare namespace WsTransport {
-    interface Options {
-        /** Connect timeout (in milliseconds). */
-        connectTimeout?: number;
-        /** AbortSignal that allows canceling connection attempt via AbortController. */
-        signal?: AbortSignal;
-        /** Buffer amount (in bytes) to start TX throttling. */
-        highWaterMark?: number;
-        /** Buffer amount (in bytes) to stop TX throttling. */
-        lowWaterMark?: number;
+    declare interface WasmFS {
+        isFile(mode: number): boolean;
+        isDir(mode: number): boolean;
+        isLink(mode: number): boolean;
+        mkdir(path: string, mode?: number): any;
+        mkdev(path: string, mode?: number, dev?: number): any;
+        symlink(oldpath: string, newpath: string): any;
+        rename(old_path: string, new_path: string): void;
+        rmdir(path: string): void;
+        readdir(path: string): any;
+        unlink(path: string): void;
+        stat(path: string, dontFollow?: boolean): any;
+        chmod(path: string, mode: number, dontFollow?: boolean): void;
+        readFile(path: string, opts: {
+            encoding: "binary";
+            flags?: string | undefined;
+        }): Uint8Array;
+        readFile(path: string, opts: {
+            encoding: "utf8";
+            flags?: string | undefined;
+        }): string;
+        readFile(path: string, opts?: {
+            flags?: string | undefined;
+        }): Uint8Array;
+        writeFile(path: string, data: string | ArrayBufferView, opts?: {
+            flags?: string | undefined;
+        }): void;
+        cwd(): string;
+        chdir(path: string): void;
     }
-    /**
-     * Create a transport and connect to remote endpoint.
-     * @param uri server URI or WebSocket object.
-     * @param opts other options.
-     */
-    function connect(uri: string | WebSocket | WsWebSocket, opts?: WsTransport.Options): Promise<WsTransport>;
-    /** Create a transport and add to forwarder. */
-    const createFace: L3Face.CreateFaceFunc<WsTransport, [uri: string | WebSocket | WsWebSocket, opts?: Options | undefined]>;
-}
 
-export { }
+    declare namespace ws_transport {
+        export {
+            WsTransport
+        }
+    }
+    export { ws_transport }
+
+    /** WebSocket transport. */
+    declare class WsTransport extends Transport {
+        private readonly sock;
+        private readonly opts;
+        /**
+         * Create a transport by connecting to WebSocket server or from existing WebSocket instance.
+         * @param uri - Server URI or existing WebSocket instance.
+         * @see {@link WsTransport.createFace}
+         */
+        static connect(uri: string | WebSocket | WebSocket_2, opts?: WsTransport.Options): Promise<WsTransport>;
+        private constructor();
+        /**
+         * Report MTU as Infinity.
+         * @see {@link https://stackoverflow.com/a/20658569}
+         */
+        get mtu(): number;
+        readonly rx: Transport.RxIterable;
+        private readonly highWaterMark;
+        private readonly lowWaterMark;
+        tx(iterable: Transport.TxIterable): Promise<void>;
+        private waitForTxBuffer;
+        close(): void;
+        /** Reopen the transport by connecting again with the same options. */
+        reopen(): Promise<WsTransport>;
+    }
+
+    declare namespace WsTransport {
+        /** {@link WsTransport.connect} options. */
+        interface Options {
+            /**
+             * Connect timeout (in milliseconds).
+             * @defaultValue 10000
+             */
+            connectTimeout?: number;
+            /**
+             * Buffer amount (in bytes) to start TX throttling.
+             * @defaultValue 1 MiB
+             */
+            highWaterMark?: number;
+            /**
+             * Buffer amount (in bytes) to stop TX throttling.
+             * @defaultValue 16 KiB
+             */
+            lowWaterMark?: number;
+        }
+        /** Create a transport and add to forwarder. */
+        const createFace: L3Face.CreateFaceFunc<[uri: string | WebSocket | WebSocket_2, opts?: Options | undefined]>;
+    }
+
+    export { }

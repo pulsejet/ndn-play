@@ -33,7 +33,7 @@
         display: inline-table; /* Prevents overflow of selection on double click */
 
         span {
-            color: gray;
+            color: purple;
             max-width: 250px;
             display: inline-block;
             vertical-align: middle;
@@ -51,6 +51,8 @@
             font-weight: bold;
         }
     }
+
+    background-color: rgba(0, 0, 0, 0.1);
 
     &.hover {
         background-color: rgba(255, 255, 0, 0.3);

@@ -66,6 +66,7 @@
     "@ndn/sync",
     "@ndn/tlv",
     "@ndn/ws-transport",
+    "@ndn/autoconfig",
     "@ndn/l3face",
     "@ndn/lp",
     "@ndn/endpoint",

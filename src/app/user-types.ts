@@ -5,15 +5,16 @@ import * as keychain from '@ndn/keychain';
 import * as util from '@ndn/util';
 import * as ws_transport from '@ndn/ws-transport';
 import * as endpoint from '@ndn/endpoint';
+import * as autoconfig from '@ndn/autoconfig';
 
-export type { packet, tlv, sync, keychain, util, ws_transport, endpoint }
+export type { packet, tlv, sync, keychain, util, ws_transport, endpoint, autoconfig }
 
 import type { ICapturedPacket, INode } from './interfaces';
 import type { DCT } from './dct/dct.interface';
 import type { WasmFS } from './wasm.service';
 
 export namespace ext {
-    export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport, endpoint };
+    export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport, endpoint, autoconfig };
     export const node: INode = <any> null;
 
     /**

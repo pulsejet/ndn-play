@@ -6,6 +6,7 @@ import type * as asn1 from '@yoursunny/asn1';
 import assert from 'minimalistic-assert';
 import { DataSet } from './esm';
 import { Edge } from './esm';
+import type { H3Transport } from '@ndn/quic-transport';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
@@ -143,6 +144,20 @@ declare function asDataView(a: BufferSource): DataView;
 
 /** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
 declare function asUint8Array(a: BufferSource): Uint8Array;
+
+declare namespace autoconfig {
+    export {
+        FchRequest,
+        FchResponse,
+        fchQuery,
+        connectToNetwork,
+        ConnectNetworkOptions,
+        connectToRouter,
+        ConnectRouterOptions,
+        ConnectRouterResult
+    }
+}
+export { autoconfig }
 
 /** A Bloom filter. */
 declare class BloomFilter {
@@ -410,6 +425,111 @@ declare interface Compression {
 
 /** Concatenate Uint8Arrays. */
 declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number): Uint8Array;
+
+/** {@link connectToNetwork} options. */
+declare interface ConnectNetworkOptions extends ConnectRouterOptions {
+    /**
+     * FCH request, or `false` to disable FCH query.
+     * @defaultValue `{ count: 4 }`
+     */
+    fch?: FchRequest | false;
+    /**
+     * Whether to try HTTP/3 before all other options.
+     * @defaultValue false
+     *
+     * @remarks
+     * Ignored if H3Transport is not enabled or supported.
+     */
+    preferH3?: boolean;
+    /**
+     * Whether to consider default IPv4 gateway as a candidate.
+     * @defaultValue true
+     *
+     * @remarks
+     * This option has no effect if IPv4 gateway cannot be determined, e.g. in browser.
+     */
+    tryDefaultGateway?: boolean;
+    /** Fallback routers, used if FCH and default gateway are both unavailable. */
+    fallback?: readonly string[];
+    /**
+     * Number of faces to keep; others are closed.
+     * Faces are ranked by shortest testConnection duration.
+     * @defaultValue 1
+     */
+    fastest?: number;
+}
+
+/** {@link connectToRouter} options. */
+declare interface ConnectRouterOptions {
+    /**
+     * Logical forwarder to attach faces to.
+     * @defaultValue `Forwarder.getDefault()`
+     */
+    fw?: Forwarder;
+    /**
+     * Use TCP instead of UDP.
+     *
+     * @remarks
+     * This is only relevant in Node.js environment.
+     */
+    preferTcp?: boolean;
+    /**
+     * Enable HTTP/3 transport.
+     *
+     * @remarks
+     * This is only relevant in browser environment.
+     *
+     * This should be set to {@link H3Transport} class instance. Having this option avoids always
+     * pulling in H3Transport code, to reduce browser bundle size in applications that do not use it.
+     */
+    H3Transport?: typeof H3Transport;
+    /** Override MTU of datagram faces. */
+    mtu?: number;
+    /** Connect timeout (in milliseconds). */
+    connectTimeout?: number;
+    /**
+     * Test face connection.
+     * @defaultValue "/localhop/nfd/rib/list"
+     *
+     * @remarks
+     * - false: skip test.
+     * - string or Name or Interest or array: express Interest(s) and wait for first Data reply.
+     *   If string ends with "/*", it's replaced with a random component.
+     * - function: execute the custom tester function.
+     */
+    testConnection?: false | TestConnectionPacket | TestConnectionPacket[] | ((face: FwFace) => Promise<unknown>);
+    /**
+     * InterestLifetime of connection test Interest packets.
+     * @defaultValue 2000
+     *
+     * @remarks
+     * Used only if testConnection is a string or Name.
+     */
+    testConnectionTimeout?: number;
+    /**
+     * Routes to be added on the created face.
+     * @defaultValue `["/"]`
+     */
+    addRoutes?: NameLike[];
+}
+
+/** {@link connectToRouter} result. */
+declare interface ConnectRouterResult {
+    /** Input router string. */
+    router: string;
+    /** Created face */
+    face: FwFace;
+    /** Execution duration of testConnection function (in milliseconds). */
+    testConnectionDuration: number;
+    /** Return value from custom testConnection function. */
+    testConnectionResult: unknown;
+}
+
+/** Connect to an NDN network. */
+declare function connectToNetwork(opts?: ConnectNetworkOptions): Promise<FwFace[]>;
+
+/** Connect to a router and test the connection. */
+declare function connectToRouter(router: string, opts?: ConnectRouterOptions): Promise<ConnectRouterResult>;
 
 /** Console on stderr. */
 declare const console_2: Console;
@@ -1700,6 +1820,7 @@ export declare namespace ext {
         util: typeof util;
         ws_transport: typeof ws_transport;
         endpoint: typeof endpoint;
+        autoconfig: typeof autoconfig;
     };
     const node: INode;
     /**
@@ -1810,6 +1931,70 @@ declare class ExtensionRegistry<T extends Extensible> {
     readonly decodeUnknown: EvDecoder.UnknownElementHandler<T>;
     /** Encode extension fields. */
     encode(source: T): Encodable[];
+}
+
+/** FCH service query. */
+declare function fchQuery(req?: FchRequest): Promise<FchResponse>;
+
+/** FCH service request. */
+declare interface FchRequest {
+    /**
+     * FCH service URI.
+     * @defaultValue https://fch.ndn.today
+     */
+    server?: string;
+    /**
+     * Transport protocol, such as "udp".
+     *
+     * @remarks
+     * Ignored if `.transports` is specified.
+     */
+    transport?: string;
+    /**
+     * Number of routers.
+     *
+     * @remarks
+     * Ignored if `transports` is a Record.
+     */
+    count?: number;
+    /**
+     * Transport protocols.
+     *
+     * @remarks
+     * If this is an array of transport protocols, the quantity of each is specified by `count`.
+     * If this is a Record, each key is a transport protocol and each value is the quantity.
+     */
+    transports?: readonly string[] | Record<string, number>;
+    /**
+     * IPv4 allowed?
+     * @defaultValue auto detect
+     */
+    ipv4?: boolean;
+    /**
+     * IPv6 allowed?
+     * @defaultValue auto detect
+     */
+    ipv6?: boolean;
+    /** Client geolocation. */
+    position?: [lon: number, lat: number];
+    /** Network authority, such as "yoursunny". */
+    network?: string;
+    /** AbortSignal that allows canceling the request via AbortController. */
+    signal?: AbortSignal;
+}
+
+/** FCH service response. */
+declare interface FchResponse {
+    readonly updated?: Date;
+    readonly routers: FchResponse.Router[];
+}
+
+declare namespace FchResponse {
+    interface Router {
+        transport: string;
+        connect: string;
+        prefix?: Name;
+    }
 }
 
 declare const FIELDS: unique symbol;
@@ -6306,6 +6491,8 @@ declare class SyncUpdate<ID = any> extends Event {
 }
 
 declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;
+
+declare type TestConnectionPacket = string | Name | Interest;
 
 /** SVS-PS MappingEntry with Timestamp element. */
 declare class TimedMappingEntry extends MappingEntry implements Extensible {

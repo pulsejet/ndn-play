@@ -80,7 +80,7 @@ export class NFW {
     private shark: Shark;
 
     constructor(
-        private readonly topo: Topology,
+        public readonly topo: Topology,
         public readonly nodeId: IdType,
     ) {
         this.provider = <ProviderBrowser>topo.provider;

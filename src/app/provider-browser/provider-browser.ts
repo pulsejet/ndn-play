@@ -99,6 +99,7 @@ export class ProviderBrowser implements ForwardingProvider {
           y: -node.position[0] * 8,
           color: node['ndn-up'] ? undefined : COLOR_MAP['orange'],
           title: tooltip,
+          prefix: node.prefix,
         });
 
         // Add all edges from this node
@@ -209,13 +210,11 @@ export class ProviderBrowser implements ForwardingProvider {
 
   public async runCode(code: string, node: INode) {
     const target = ScriptTarget.ES2015;
-    code = `const node = this; return (async () => {
-      ${code}
-    })()`;
-    code = transpile(code, { target });
+    const asyncTs = `return (async () => {\n${code}\n})()`;
+    const js = transpile(asyncTs, { target });
 
     try {
-      await new Function(code).call(node);
+      await new Function('node', js).call(null, node);
     } catch (e) {
       console.error(e);
     }

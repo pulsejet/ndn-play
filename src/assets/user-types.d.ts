@@ -10,6 +10,7 @@ import type { H3Transport } from '@ndn/quic-transport';
 import { IdType } from './esm';
 import { Network } from './esm';
 import { Node as Node_2 } from './esm';
+import * as retry from 'retry';
 import type { WebSocket as WebSocket_2 } from 'ws';
 
 declare type AddField<K extends string, T, Required extends boolean, Repeat extends boolean> = Repeat extends true ? {
@@ -185,6 +186,14 @@ declare class BloomFilter {
 }
 
 declare interface BloomFilter extends Readonly<Parameters_2> {
+}
+
+/** Request to cancel a pending Interest. */
+declare class CancelInterest implements FwPacket<Interest> {
+    l3: Interest;
+    token?: unknown;
+    constructor(l3: Interest, token?: unknown);
+    readonly cancel = true;
 }
 
 /**
@@ -1821,7 +1830,11 @@ export declare namespace ext {
         ws_transport: typeof ws_transport;
         endpoint: typeof endpoint;
         autoconfig: typeof autoconfig;
+        fw: typeof fw;
     };
+    /**
+     * The current node on which the code runs
+     */
     const node: INode;
     /**
      * Visualize a NDN TLV block or packet
@@ -2280,6 +2293,20 @@ declare namespace FullSync {
     }
 }
 
+declare namespace fw {
+    export {
+        FwPacket,
+        CancelInterest,
+        RejectInterest,
+        FwFace,
+        Forwarder,
+        ReadvertiseDestination,
+        TapFace,
+        FwTracer
+    }
+}
+export { fw }
+
 /** A socket or network interface associated with logical forwarder. */
 declare interface FwFace extends TypedEventTarget<EventMap_2> {
     readonly fw: Forwarder;
@@ -2404,6 +2431,62 @@ declare namespace FwPacket {
     function create<T extends L3Pkt>(l3: T, token?: unknown, congestionMark?: number): FwPacket<T>;
     /** Determine whether this is a plain packet that can be sent on the wire. */
     function isEncodable({ reject, cancel }: FwPacket): boolean;
+}
+
+/** Print trace logs from {@link Forwarder} events. */
+declare class FwTracer {
+    static enable(opts?: FwTracer.Options): FwTracer;
+    private readonly output;
+    private readonly fw;
+    private constructor();
+    disable(): void;
+    private readonly faceadd;
+    private readonly facerm;
+    private readonly prefixadd;
+    private readonly prefixrm;
+    private readonly annadd;
+    private readonly annrm;
+    private readonly pktrx;
+    private readonly pkttx;
+    private pkt;
+}
+
+declare namespace FwTracer {
+    interface Output {
+        log: (str: string) => void;
+    }
+    interface Options {
+        /**
+         * Where to write log entries.
+         * @defaultValue `console`
+         */
+        output?: Output;
+        /**
+         * Logical Forwarder instance.
+         * @defaultValue `Forwarder.getDefault()`
+         */
+        fw?: Forwarder;
+        /**
+         * Whether to log face creations and deletions.
+         * @defaultValue true
+         */
+        face?: boolean;
+        /**
+         * Whether to log prefix registrations.
+         * @defaultValue true
+         */
+        prefix?: boolean;
+        /**
+         * Whether to log prefix announcements.
+         * @defaultValue true
+         */
+        ann?: boolean;
+        /**
+         * Whether to log packets.
+         * @defaultValue true
+         */
+        pkt?: boolean;
+    }
 }
 
 /**
@@ -3943,7 +4026,7 @@ declare namespace NamingConvention {
 }
 
 declare class NFW {
-    private readonly topo;
+    readonly topo: Topology;
     readonly nodeId: IdType;
     /** NDNts forwarder */
     fw: Forwarder;
@@ -4829,6 +4912,58 @@ declare class RandomIvGen extends IvGen {
  * function that returns random values within `[1.8, 2.2]` range.
  */
 declare function randomJitter(r: number, x?: number): () => number;
+
+/**
+ * A destination of prefix advertisement.
+ *
+ * @remarks
+ * Generally, a prefix advertised to a destination would cause Interests matching the prefix
+ * to come to the local logical forwarder, aka prefix registration.
+ */
+declare abstract class ReadvertiseDestination<State extends {} = {}> {
+    private readonly retryOptions;
+    private readvertise?;
+    protected readonly table: NameMap<ReadvertiseDestination.Record<State>>;
+    protected readonly queue: Pushable<Name>;
+    protected closed: boolean;
+    constructor(retryOptions?: ReadvertiseDestination.RetryOptions);
+    /** Enable and attach to a forwarder. */
+    enable(fw: Forwarder): void;
+    /**
+     * Disable and detach from forwarder.
+     *
+     * @remarks
+     * Once detached, this instance is no longer usable.
+     */
+    disable(): void;
+    /** Set a prefix to be advertised. */
+    advertise(name: Name): void;
+    /** Set a prefix to be withdrawn. */
+    withdraw(name: Name): void;
+    protected restart(name: Name, record: ReadvertiseDestination.Record<State>): void;
+    private process;
+    /** Create per-prefix state. */
+    protected makeState(name: Name): State;
+    /** Advertise a prefix once. */
+    protected abstract doAdvertise(name: Name, state: State): Promise<void>;
+    /** Withdraw a prefix once. */
+    protected abstract doWithdraw(name: Name, state: State): Promise<void>;
+}
+
+declare namespace ReadvertiseDestination {
+    type RetryOptions = retry.OperationOptions;
+    enum Status {
+        ADVERTISING = 0,
+        ADVERTISED = 1,
+        WITHDRAWING = 2,
+        WITHDRAWN = 3
+    }
+    interface Record<State> {
+        status: Status;
+        retry?: retry.RetryOperation;
+        state: State;
+    }
+}
 
 /** Indicate an Interest has been rejected. */
 declare class RejectInterest implements FwPacket<Interest> {
@@ -6488,6 +6623,38 @@ declare class SyncUpdate<ID = any> extends Event {
     get count(): number;
     /** Iterate over new sequence numbers. */
     seqNums(): Iterable<number>;
+}
+
+/**
+ * Create a secondary face by tapping on a primary face.
+ *
+ * @remarks
+ * TapFace is useful for sending in-band management commands to a specific neighbor, after being
+ * added to a temporary secondary Forwarder. The TapFace shares the same transport as the primary
+ * face, but allows independent FIB and PIT settings. The primary Forwarder will see RX packets,
+ * but does not see TX packets.
+ */
+declare class TapFace implements FwFace.RxTx {
+    readonly face: FwFace;
+    constructor(face: FwFace);
+    get attributes(): {
+        describe: string;
+        local?: boolean | undefined;
+        advertiseFrom?: boolean | undefined;
+        routeCapture?: boolean | undefined;
+    };
+    private readonly ctrl;
+    readonly rx: Pushable<FwPacket<Interest | Data | Nack>>;
+    tx(iterable: AsyncIterable<FwPacket>): Promise<void>;
+}
+
+declare namespace TapFace {
+    /**
+     * Create a new {@link Forwarder} and add a {@link TapFace}.
+     * @param face - FwFace on the existing forwarder.
+     * @returns FwFace on a new forwarder. The forwarder may be retrieved in `.fw` property.
+     */
+    function create(face: FwFace): FwFace;
 }
 
 declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;

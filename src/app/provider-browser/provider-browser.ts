@@ -62,7 +62,7 @@ export class ProviderBrowser implements ForwardingProvider {
     const script = url.searchParams.get('script');
     if (script) {
       const script_node = url.searchParams.get('script_node');
-      await this.loadScriptUrl(script, script_node);
+      this.loadScriptUrl(script, script_node); // non-blocking
     }
   }
 

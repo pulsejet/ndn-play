@@ -39,20 +39,31 @@ export class ProviderBrowser implements ForwardingProvider {
     // Initialize new nodes
     this.topo.nodes.on('add', this.ensureInitialized.bind(this));
 
-    // load dump from url
+    // Register global functions
+    window.$run = this.$run;
+
+    // Get URL parameters
     const url = new URL(window.location.href);
+
+    // topology
     const dumpUrl = url.searchParams.get('dump');
     if (dumpUrl) {
-      return await this.loadDumpUrl(dumpUrl);
+      // load dump from url
+      await this.loadDumpUrl(dumpUrl);
+    } else if (url.searchParams.get('testbed')) {
+      // testbed topology
+      await this.loadTestbedTopology();
+    } else {
+      // default topology (fallback)
+      await this.loadDefaultTopology();
     }
 
-    // load testbed topology
-    if (url.searchParams.get('testbed')) {
-      return await this.loadTestbedTopology();
+    // execute script from URL
+    const script = url.searchParams.get('script');
+    if (script) {
+      const script_node = url.searchParams.get('script_node');
+      await this.loadScriptUrl(script, script_node);
     }
-
-    // load default topology (fallback)
-    await this.loadDefaultTopology();
   }
 
   private async loadDumpUrl(url: string) {
@@ -164,6 +175,24 @@ export class ProviderBrowser implements ForwardingProvider {
     ]);
   }
 
+  private async loadScriptUrl(url: string, node: string | null) {
+    if (confirm(`Do you want to execute the script at "${url}"?`)) {
+      try {
+        const res = await fetch(url);
+        const code = await res.text();
+
+        // get a node to run the script on
+        const node_ = this.topo.getNode(node ?? '') ?? this.topo.nodes.get()[0];
+
+        // execute the script
+        await this.runCode(code, node_);
+      } catch (e) {
+        console.error(e);
+        alert('Failed to execute remote script, see console for errors')
+      }
+    }
+  }
+
   public initializePostNetwork = async () => {
     // Routing
     const computeFun = this.scheduleRouteRefresh.bind(this);
@@ -212,9 +241,16 @@ export class ProviderBrowser implements ForwardingProvider {
     const target = ScriptTarget.ES2015;
     const asyncTs = `return (async () => {\n${code}\n})()`;
     const js = transpile(asyncTs, { target });
+    return this.$run(new Function('node', js) as any, node);
+  }
+
+  public $run: typeof window.$run = async (fun, node) => {
+    const node_ = this.topo.getNode(node);
+    if (!node_)
+      throw new Error(`Node not found: ${node}`);
 
     try {
-      await new Function('node', js).call(null, node);
+      return await fun.call(null, node_);
     } catch (e) {
       console.error(e);
     }

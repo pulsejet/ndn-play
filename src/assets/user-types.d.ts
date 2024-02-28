@@ -1837,6 +1837,12 @@ export declare namespace ext {
      */
     const node: INode;
     /**
+     * Run a function in the context of a specified node
+     * @param callback Function to be run
+     * @param node Node on which the function will be run
+     */
+    const $run: (callback: (node: INode) => Promise<void>, node: string | INode) => Promise<void>;
+    /**
      * Visualize a NDN TLV block or packet
      * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
      */
@@ -4757,6 +4763,7 @@ declare class ProviderBrowser implements ForwardingProvider {
     private loadDumpUrl;
     private loadTestbedTopology;
     private loadDefaultTopology;
+    private loadScriptUrl;
     initializePostNetwork: () => Promise<void>;
     edgeUpdated: (edge?: IEdge) => Promise<void>;
     nodeUpdated: (node?: INode) => Promise<void>;
@@ -4764,6 +4771,7 @@ declare class ProviderBrowser implements ForwardingProvider {
     sendPingInterest(from: INode, to: INode): void;
     sendInterest(name: string, node: INode): void;
     runCode(code: string, node: INode): Promise<void>;
+    $run: typeof window.$run;
     /** Schedule a refresh of static routes */
     scheduleRouteRefresh: () => void;
     /** Compute static routes */
@@ -6741,6 +6749,8 @@ declare class Topology {
     private ensureInitialized;
     updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra): void;
     updateEdgeColor(edge: IEdge): void;
+    /** Get a node by ID or label */
+    getNode(id: string | INode): INode | null;
 }
 
 /** Get subject name from subject name, key name, or certificate name. */

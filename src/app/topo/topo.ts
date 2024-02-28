@@ -211,4 +211,13 @@ export class Topology {
                               (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
     this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: color };
   }
+
+  /** Get a node by ID or label */
+  getNode(id: string | INode): INode | null {
+    if (typeof id !== 'string') return id;
+
+    // try to find the node by ID or label
+    return this.nodes.get(id)
+        ?? (this.nodes.get().find((n) => n.label === id) || null);
+  }
 }

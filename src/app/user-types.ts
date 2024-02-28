@@ -23,6 +23,14 @@ export namespace ext {
     export const node: INode = <any> null;
 
     /**
+     * Run a function in the context of a specified node
+     * @param callback Function to be run
+     * @param node Node on which the function will be run
+     */
+    export const $run: (callback: (node: INode) => Promise<void>,
+                        node: string | INode) => Promise<void> = <any> null;
+
+    /**
      * Visualize a NDN TLV block or packet
      * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
      */
@@ -73,6 +81,7 @@ declare global {
         setGlobalCaptureFilter: typeof ext.setGlobalCaptureFilter;
         loadfile: typeof ext.loadfile;
         downloadfile: typeof ext.downloadfile;
+        $run: typeof ext.$run;
 
         // Augment console methods
         console: Console & {

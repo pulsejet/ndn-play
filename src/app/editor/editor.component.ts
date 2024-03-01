@@ -1,3 +1,5 @@
+/// <reference types="monaco-editor/monaco.d.ts" />
+
 import { Component, EventEmitter, Input, Output, SimpleChange } from '@angular/core';
 import * as user from "../user-types";
 import versecLang from './versec.lang';
@@ -5,8 +7,6 @@ import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
 export const monacoConfig: NgxMonacoEditorConfig = {
   onMonacoLoad: async () => {
-    const monaco = (<any>window).monaco;
-
     // Set dark theme
     monaco.editor.defineTheme('vs-light', {
       base: 'vs',
@@ -89,7 +89,11 @@ export const monacoConfig: NgxMonacoEditorConfig = {
   ]
 })
 export class EditorComponent {
-  editorOptions = {theme: 'vs-light', language: 'typescript', automaticLayout: true};
+  public editorOptions = {
+    theme: 'vs-light',
+    language: 'typescript',
+    automaticLayout: true,
+  };
 
   @Input() public code: string = '';
   @Output() public codeChange = new EventEmitter<string>();

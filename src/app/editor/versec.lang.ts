@@ -1,4 +1,6 @@
-export default {
+/// <reference types="monaco-editor/monaco.d.ts" />
+
+const versec: monaco.languages.IMonarchLanguage = {
   operators: [":", "<="],
   symbols: /[=><!~?:&|+\-*\/\^%]+/,
   escapes:
@@ -57,3 +59,5 @@ export default {
     ],
   },
 };
+
+export default versec;

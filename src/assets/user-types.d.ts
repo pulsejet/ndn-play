@@ -1820,65 +1820,6 @@ declare type ExceptOptions = {
     	requireExactProps?: boolean;
 };
 
-export declare namespace ext {
-    const ndnTypes: {
-        packet: typeof packet;
-        tlv: typeof tlv;
-        sync: typeof sync;
-        keychain: typeof keychain;
-        util: typeof util;
-        ws_transport: typeof ws_transport;
-        endpoint: typeof endpoint;
-        autoconfig: typeof autoconfig;
-        fw: typeof fw;
-    };
-    /**
-     * The current node on which the code runs
-     */
-    const node: INode;
-    /**
-     * Run a function in the context of a specified node
-     * @param callback Function to be run
-     * @param node Node on which the function will be run
-     */
-    const $run: (callback: (node: INode) => Promise<void>, node: string | INode) => Promise<void>;
-    /**
-     * Visualize a NDN TLV block or packet
-     * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
-     */
-    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void;
-    /**
-     * Filter packets to be captured
-     * @param filter filter: function to check if captured packet should be stored
-     */
-    export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void;
-    /**
-     * Load a local file from the user's computer
-     */
-    export function loadfile(): Promise<ArrayBuffer>;
-    /**
-     * Download a file to user's computer
-     * @param bin Buffer to be downloaded
-     * @param type MIME type of the file to be downloaded
-     * @param name Name of the file to be downloaded
-     * @param deflate Compress the buffer using pako DEFLATE
-     */
-    export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
-    /**
-     * The WebAssembly filesystem.
-     * @details Allows access to the virtual filesystem.
-     * Note: this module exists only after the first call
-     * to a WASM module has been done and the filesystem has been
-     * initialized. The /data directory is the working directory
-     * and is the only directory that is shared across all modules.
-     */
-    const FS: WasmFS;
-    /**
-     * The DCT tools module.
-     */
-    const DCT: DCT;
-}
-
 /** An TLV element that allows extension sub element. */
 declare interface Extensible {
     readonly [Extensible.TAG]: ExtensionRegistry<any>;
@@ -2542,6 +2483,54 @@ declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyCha
 declare interface Get {
     /** Retrieve Data by exact name. */
     get: (name: Name) => Promise<Data | undefined>;
+}
+
+export declare namespace globals {
+    /**
+     * The current node on which the code runs
+     */
+    const node: INode;
+    /**
+     * Run a function in the context of a specified node
+     * @param callback Function to be run
+     * @param node Node on which the function will be run
+     */
+    const $run: (callback: (node: INode) => Promise<void>, node: string | INode) => Promise<void>;
+    /**
+     * Visualize a NDN TLV block or packet
+     * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
+     */
+    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void;
+    /**
+     * Filter packets to be captured
+     * @param filter filter: function to check if captured packet should be stored
+     */
+    export function setGlobalCaptureFilter(filter: (packet: ICapturedPacket) => boolean): void;
+    /**
+     * Load a local file from the user's computer
+     */
+    export function loadfile(): Promise<ArrayBuffer>;
+    /**
+     * Download a file to user's computer
+     * @param bin Buffer to be downloaded
+     * @param type MIME type of the file to be downloaded
+     * @param name Name of the file to be downloaded
+     * @param deflate Compress the buffer using pako DEFLATE
+     */
+    export function downloadfile(bin: Uint8Array, type: string, name: string, deflate?: boolean): void;
+    /**
+     * The WebAssembly filesystem.
+     * @details Allows access to the virtual filesystem.
+     * Note: this module exists only after the first call
+     * to a WASM module has been done and the filesystem has been
+     * initialized. The /data directory is the working directory
+     * and is the only directory that is shared across all modules.
+     */
+    const FS: WasmFS;
+    /**
+     * The DCT tools module.
+     */
+    const DCT: DCT;
 }
 
 /** 32-bit hash function. */
@@ -3800,6 +3789,18 @@ declare namespace MappingEntry {
 }
 
 declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
+
+export declare const modules: {
+    '@ndn/packet': string;
+    '@ndn/tlv': string;
+    '@ndn/sync': string;
+    '@ndn/keychain': string;
+    '@ndn/util': string;
+    '@ndn/ws-transport': string;
+    '@ndn/endpoint': string;
+    '@ndn/autoconfig': string;
+    '@ndn/fw': string;
+};
 
 /** Container that associates a key with multiple distinct values. */
 declare class MultiMap<K, V> extends KeyMultiMap<K, V, K> {

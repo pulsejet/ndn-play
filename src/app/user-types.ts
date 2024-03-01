@@ -8,15 +8,32 @@ import * as endpoint from '@ndn/endpoint';
 import * as autoconfig from '@ndn/autoconfig';
 import * as fw from '@ndn/fw';
 
-export type { packet, tlv, sync, keychain, util, ws_transport, endpoint, autoconfig, fw }
-
 import type { ICapturedPacket, INode } from './interfaces';
-import type { DCT } from './dct/dct.interface';
+import type { DCT as DCT_t } from './dct/dct.interface';
 import type { WasmFS } from './wasm.service';
 
-export namespace ext {
-    export const ndnTypes = { packet, tlv, sync, keychain, util, ws_transport, endpoint, autoconfig, fw };
+// Re-export all types here. The names in the modules object
+// are used to declare the modules in the monaco editor, and
+// must match the library name and export name exactly.
+export type {
+    packet, tlv, sync, keychain, util,
+    ws_transport, endpoint, autoconfig, fw,
+};
 
+// the names in modul
+export const modules = {
+    '@ndn/packet': ['packet', packet],
+    '@ndn/tlv': ['tlv', tlv],
+    '@ndn/sync': ['sync', sync],
+    '@ndn/keychain': ['keychain', keychain],
+    '@ndn/util': ['util', util],
+    '@ndn/ws-transport': ['ws_transport', ws_transport],
+    '@ndn/endpoint': ['endpoint', endpoint],
+    '@ndn/autoconfig': ['autoconfig', autoconfig],
+    '@ndn/fw': ['fw', fw],
+};
+
+export namespace globals {
     /**
      * The current node on which the code runs
      */
@@ -69,19 +86,18 @@ export namespace ext {
     /**
      * The DCT tools module.
      */
-    export const DCT: DCT = <any>null;
+    export const DCT: DCT_t = <any>null;
 }
 
 // These types are visible at NDN-Play compile time on the Window object
 declare global {
     interface Window {
         // NDN-Play extensions
-        ndn: typeof ext.ndnTypes;
-        visualize: typeof ext.visualize;
-        setGlobalCaptureFilter: typeof ext.setGlobalCaptureFilter;
-        loadfile: typeof ext.loadfile;
-        downloadfile: typeof ext.downloadfile;
-        $run: typeof ext.$run;
+        $run: typeof globals.$run;
+        visualize: typeof globals.visualize;
+        setGlobalCaptureFilter: typeof globals.setGlobalCaptureFilter;
+        loadfile: typeof globals.loadfile;
+        downloadfile: typeof globals.downloadfile;
 
         // Augment console methods
         console: Console & {
@@ -93,7 +109,7 @@ declare global {
         };
 
         // Other modules
-        FS: typeof ext.FS;
-        DCT: typeof ext.DCT;
+        FS: typeof globals.FS;
+        DCT: typeof globals.DCT;
     }
 }

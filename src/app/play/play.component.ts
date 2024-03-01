@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
 import { ICapturedPacket, INode } from '../interfaces';
-import { ext as ndnUserTypes } from '../user-types';
 import type { PtyComponent } from '../pty/pty.component';
 
 @Component({
@@ -28,7 +27,6 @@ export class PlayComponent implements OnInit, AfterViewInit {
   constructor(public gs: GlobalService) {}
 
   ngOnInit() {
-    window.ndn = ndnUserTypes.ndnTypes;
     window.visualize = (p) => this.visualizedTlv = p;
     window.setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
   }

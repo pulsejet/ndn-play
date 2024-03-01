@@ -13,12 +13,12 @@
             </app-tab>
             <app-tab name="TLV Types">
                 <div class="main-tab">
-                    <app-editor [(code)]="gs.topo.tlvTypesCode" language="javascript"></app-editor>
+                    <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
                 </div>
             </app-tab>
             <app-tab name="Editor" *ngIf="gs.topo.selectedNode">
                 <div class="main-tab">
-                    <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit" language="javascript"></app-editor>
+                    <app-editor [(code)]="gs.topo.selectedNode.extra.codeEdit" language="typescript"></app-editor>
                 </div>
             </app-tab>
             <app-tab name="DCT">

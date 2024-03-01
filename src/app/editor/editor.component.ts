@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output, SimpleChange } from '@angular/core';
+import { Component, EventEmitter, Input, Output, SimpleChange } from '@angular/core';
+import * as user from "../user-types";
 import versecLang from './versec.lang';
-import { ext as extUserTypes } from '../user-types';
 import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
 export const monacoConfig: NgxMonacoEditorConfig = {
@@ -17,19 +17,8 @@ export const monacoConfig: NgxMonacoEditorConfig = {
       colors: {}
     });
 
-    /** Inject library from HTTP */
-    const injectLib = async (url: string, namespace: string, constExports: string[]) => {
-      const res = await fetch(url);
-      const libSource = await res.text();
-      monaco.languages.typescript.javascriptDefaults.addExtraLib(`
-        declare namespace ${namespace} { ${libSource} }
-        const { ${constExports.join(',') } } = ${namespace}.ext;
-      `,
-      url);
-    }
-
     // diagnostic options
-    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: false,
       noSyntaxValidation: false,
       diagnosticCodesToIgnore: [
@@ -38,13 +27,43 @@ export const monacoConfig: NgxMonacoEditorConfig = {
     });
 
     // compiler options
-    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-      target: monaco.languages.typescript.ScriptTarget.ES2015,
-      allowNonTsExtensions: true
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+      target: monaco.languages.typescript.ScriptTarget.ES2020,
+      allowNonTsExtensions: true,
     });
 
-    // add user types to typescript
-    await injectLib('/assets/user-types.d.ts', 'ndn', Object.keys(extUserTypes));
+    // fetch user types for typescript
+    const res = await fetch('/assets/user-types.d.ts');
+    const library = await res.text();
+
+    // declare individual modules
+    const declarations = Object.keys(user.modules).map((module) => {
+      const m = module as keyof typeof user.modules;
+      const export_ = user.modules[m][0];
+      return `declare module "${m}" {
+        import { ${export_} } from "ndn";
+        export = ${export_};
+      }`
+    });
+
+    // inject all modules
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+        `declare module "ndn" {
+          ${library}
+        }
+        ${declarations.join('\n')}`,
+        'ndn.d.ts');
+
+    // declare global constants
+    const globals = Object.keys(user.globals).map((name) =>
+      `declare const ${name}: typeof globals.${name};`);
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      `export declare global {
+        import { globals } from "ndn";
+        ${globals.join('\n')}
+      }`,
+      'globals.d.ts'
+    )
 
     // add versec language
     monaco.languages.register({ id: 'versec' });
@@ -70,12 +89,12 @@ export const monacoConfig: NgxMonacoEditorConfig = {
   ]
 })
 export class EditorComponent {
-  editorOptions = {theme: 'vs-light', language: 'javascript', automaticLayout: true};
+  editorOptions = {theme: 'vs-light', language: 'typescript', automaticLayout: true};
 
   @Input() public code: string = '';
   @Output() public codeChange = new EventEmitter<string>();
 
-  @Input() public language = 'javascript';
+  @Input() public language = 'typescript';
 
   constructor() { }
 

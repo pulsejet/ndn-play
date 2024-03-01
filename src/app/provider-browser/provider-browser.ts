@@ -8,7 +8,8 @@ import { RoutingHelper } from "./routing-helper";
 import { downloadFile, loadFileBin } from "../helper";
 import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 import { inflate as pakoInflate } from "pako";
-import { ScriptTarget, transpile } from "typescript";
+import { ModuleKind, ScriptTarget, transpile } from "typescript";
+import { modules as UserModules } from "../user-types";
 
 const OFFICIAL_DUMP_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
 const TESTBED_JSON = 'https://testbed-status.named-data.net/testbed-nodes.json';
@@ -238,10 +239,24 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public async runCode(code: string, node: INode) {
-    const target = ScriptTarget.ES2015;
-    const asyncTs = `return (async () => {\n${code}\n})()`;
-    const js = transpile(asyncTs, { target });
-    return this.$run(new Function('node', js) as any, node);
+    const target = ScriptTarget.ES2020;
+    const module = ModuleKind.CommonJS;
+
+    const asyncJs = transpile(code, { target, module });
+    const js = `return (async () => {\n${asyncJs}\n})()`;
+
+    return this.$run(async (node) => {
+      // we provide a custom require function to resolve modules
+      // only modules from UserModules are allowed
+      return new Function('node', 'exports', 'require', js)(node, {}, (module: string) => {
+        // resolve exported modules
+        if (module in UserModules) {
+          const m = module as keyof typeof UserModules;
+          return UserModules[m][1];
+        }
+        throw new Error(`Module not found: ${module}`)
+      });
+     }, node);
   }
 
   public $run: typeof window.$run = async (fun, node) => {

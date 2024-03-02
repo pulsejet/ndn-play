@@ -1,4 +1,4 @@
-import { Endpoint } from "@ndn/endpoint";
+import { Endpoint, Options as EndpointOptions } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 import { KeyChain } from "@ndn/keychain";
@@ -13,7 +13,7 @@ import { Shark } from "./shark";
 import { DefaultServers } from "./servers";
 
 import type { IdType } from 'vis-network/standalone';
-import type { IFibEntry, INode, INodeExtra, IFwPacket, IFwFace } from "../../interfaces";
+import type { IFibEntry, INodeExtra, IFwPacket, IFwFace } from "../../interfaces";
 
 export class NFW {
     /** NDNts forwarder */
@@ -64,7 +64,7 @@ export class NFW {
     }} = {};
 
     /** Aggregate of sent interests */
-    private pit: {[token: string]: {
+    private pit: {[token: number]: {
         count: number;
         timer: number;
     }} = {};
@@ -424,24 +424,16 @@ export class NFW {
     }
 
     public strsFIB() {
-        const text = [];
+        return this.fib.map((entry) => {
+            const nexthops = entry.routes.map((route) =>
+                `face=${this.topo.nodes.get(route.hop)?.label} (cost=${route.cost})`);
 
-        for (const entry of this.fib) {
-            const nexthops = [];
-            for (const route of entry.routes) {
-                nexthops.push(`face=${this.topo.nodes.get(<IdType>route.hop)?.label} (cost=${route.cost})`);
-            }
-
-            text.push(`${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`);
-        }
-
-        return text;
+            return `${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`;
+        });
     }
 
-    public getEndpoint(opts?: { }) {
-        return new Endpoint({
-            fw: this.fw,
-        });
+    public getEndpoint(opts?: EndpointOptions) {
+        return new Endpoint({ fw: this.fw, ...opts });
     }
 }
 

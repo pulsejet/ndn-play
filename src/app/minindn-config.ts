@@ -71,8 +71,8 @@ export function load(topo: Topology, confStr: string): boolean {
     topo.nodes.clear();
     topo.edges.clear();
 
-    topo.nodes.add(<any>readNodes);
-    topo.edges.add(<any>readLinks);
+    topo.nodes.add(readNodes as INode[]);
+    topo.edges.add(readLinks as IEdge[]);
 
     topo.network.stabilize();
     topo.network.fit();

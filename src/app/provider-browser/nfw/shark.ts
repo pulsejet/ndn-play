@@ -1,10 +1,11 @@
-import { FwFace, FwPacket } from "@ndn/fw";
 import { AltUri, Data, Interest } from "@ndn/packet";
 import { Topology } from "src/app/topo/topo";
 import { NFW } from "./nfw";
-import { ICapturedPacket, INodeExtra } from "../../interfaces";
 import { Encoder } from '@ndn/tlv';
-import { IdType } from 'vis-network/standalone';
+
+import type { FwPacket } from "@ndn/fw";
+import type { IdType } from 'vis-network/standalone';
+import type { ICapturedPacket, IFwFace, IFwPacket, INodeExtra } from "../../interfaces";
 
 export class Shark {
     private nodeId!: IdType;
@@ -17,10 +18,10 @@ export class Shark {
 
     public nodeUpdated() {
         this.nodeId = this.nfw.nodeId;
-        this.nodeExtra = this.nfw.node().extra!;
+        this.nodeExtra = this.nfw.node.extra;
     }
 
-    public capturePacket(face: FwFace, pkt: FwPacket, event: "tx" | "rx") {
+    public capturePacket(face: IFwFace, pkt: FwPacket, event: "tx" | "rx") {
         // Confirm we are capturing
         if (!this.nfw.capture && !this.topo.captureAll) return;
 
@@ -42,9 +43,8 @@ export class Shark {
 
         // Get hops
         // If hops field doesn't exist then it is a local face (SCK)
-        const thisHop = <string>this.nodeId!;
-        let otherHop: string = (<any>face).hops?.[this.nodeId] || (<any>pkt).hop;
-        otherHop = otherHop ? otherHop! : 'SCK';
+        const thisHop = this.nodeId!;
+        const otherHop = (face.hops?.[this.nodeId] || (<IFwPacket>pkt).hop) || 'SCK';
         const fromHop = event == 'rx' ? otherHop : thisHop;
         const toHop = event == 'rx' ? thisHop : otherHop;
 
@@ -66,9 +66,8 @@ export class Shark {
         ];
 
         // Check if we want to capture this packet
-        if (!this.topo.globalCaptureFilter(pack)) {
+        if (!this.topo.globalCaptureFilter(pack))
             return;
-        }
         this.nodeExtra.capturedPackets.push(pack);
     }
 }

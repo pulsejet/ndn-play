@@ -148,7 +148,7 @@ export class ProviderBrowser implements ForwardingProvider {
 
   private async loadDefaultTopology() {
     // add dummy nodes
-    this.topo.nodes.add(<any>[
+    this.topo.nodes.add(<INode[]>[
       { id: "A", label: "A" },
       { id: "M", label: "M" },
       { id: "E", label: "E" },
@@ -162,7 +162,7 @@ export class ProviderBrowser implements ForwardingProvider {
     ]);
 
     // add dummy edges
-    this.topo.edges.add(<any>[
+    this.topo.edges.add(<IEdge[]>[
       { from: "A", to: "E" },
       { from: "A", to: "M" },
       { from: "M", to: "B" },
@@ -292,10 +292,10 @@ export class ProviderBrowser implements ForwardingProvider {
       const node = this.topo.nodes.get(nodeId);
       if (!node) continue;
 
-      node.nfw!.fib = fibs[nodeId].map((e: any) => {
+      node.nfw!.fib = fibs[nodeId].map((entry) => {
         return {
-          ...e,
-          prefix: new Name(e.prefix),
+          ...entry,
+          prefix: new Name(entry.prefix),
         };
       });
 

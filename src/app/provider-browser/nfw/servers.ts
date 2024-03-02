@@ -23,7 +23,7 @@ export class DefaultServers {
         this.pingServer?.close();
 
         // Start new server
-        const label = this.nfw.node().label;
+        const label = this.nfw.node.label;
         this.pingServer = new Endpoint({ fw: this.nfw.fw }).produce(`/ndn/${label}/ping`, async (interest) => {
             const data = new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
             this.nfw.securityOptions?.signer.sign(data);
@@ -36,7 +36,7 @@ export class DefaultServers {
         this.certServer?.close();
 
         // Start new server
-        const label = this.nfw.node().label;
+        const label = this.nfw.node.label;
         this.certServer = new Endpoint({ fw: this.nfw.fw }).produce(`/ndn/${label}/cert`, async (interest) => {
             try {
                 const certName = (await this.nfw.securityOptions?.keyChain.listCerts(interest.name))?.[0];

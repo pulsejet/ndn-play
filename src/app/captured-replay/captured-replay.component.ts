@@ -107,13 +107,6 @@ export class CapturedReplayComponent implements OnInit {
       return;
     }
 
-    // Data types to show
-    const showTypes = [] as string[];
-    Object.keys(this.showTypes).forEach(key => {
-      if ((<any>this.showTypes)[key]) showTypes.push(key);
-    });
-
-
     // Process traffic of each node
     this.gs.topo.nodes.forEach((node) => {
       if (!node.extra.capturedPackets) return;
@@ -176,8 +169,8 @@ export class CapturedReplayComponent implements OnInit {
       {
         const pack = node.extra.capturedPackets[cw];
 
-        const pType = pack[4].toLocaleLowerCase();
-        if (showTypes.includes(pType) && this.gs.topo.globalCaptureFilter(pack)) {
+        const pType = pack[4].toLocaleLowerCase() as 'interest' | 'data' | 'nack';
+        if (this.showTypes[pType] && this.gs.topo.globalCaptureFilter(pack)) {
           pack[0] |= CAPTURED_FLAG_REPLAYING;
           node.extra.pendingTraffic += pack[3];
 

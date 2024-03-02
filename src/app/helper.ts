@@ -41,8 +41,8 @@ export function loadFileBin(): Promise<ArrayBuffer> {
         const input = document.createElement('input');
         input.type = 'file';
         input.onchange = (e) => {
-            if ((<any>e)?.target?.files?.[0]) {
-                const file = (<any>e).target.files[0];
+            const file = input.files?.[0];
+            if (file) {
                 var reader = new FileReader();
                 reader.readAsArrayBuffer(file);
                 reader.onload = (readerEvent) => {

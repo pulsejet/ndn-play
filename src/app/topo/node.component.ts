@@ -88,8 +88,8 @@ import { Topology } from './topo';
 })
 export class TopoNodeComponent implements OnInit {
 
-  @Input() public node: INode = <any>undefined;
-  @Input() public topo: Topology = <any>undefined;
+  @Input({ required: true }) public node!: INode;
+  @Input({ required: true }) public topo!: Topology;
 
   constructor(public gs: GlobalService) { }
 

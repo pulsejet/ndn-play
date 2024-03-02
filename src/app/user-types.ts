@@ -44,8 +44,7 @@ export namespace globals {
      * @param callback Function to be run
      * @param node Node on which the function will be run
      */
-    export const $run: (callback: (node: INode) => Promise<void>,
-                        node: string | INode) => Promise<void> = <any> null;
+    export function $run(callback: (node: INode) => Promise<void>, node: string | INode): Promise<void> { return <any>null };
 
     /**
      * Visualize a NDN TLV block or packet
@@ -62,7 +61,7 @@ export namespace globals {
     /**
      * Load a local file from the user's computer
      */
-    export function loadfile(): Promise<ArrayBuffer> { return null as any; }
+    export function loadfile(): Promise<ArrayBuffer> { return <any>null; }
 
     /**
      * Download a file to user's computer

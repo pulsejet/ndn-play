@@ -16,8 +16,8 @@ export class Topology {
   public imported?: 'MININDN' | 'BROWSER';
 
   // Animation color busiest
-  public busiestNode?: INode;
-  public busiestLink?: IEdge;
+  public busiestNode?: INode | null;
+  public busiestLink?: IEdge | null;
 
   // Selected objects
   public selectedNode?: INode;
@@ -183,7 +183,7 @@ export class Topology {
 
     // Check busiest node
     if (nodeExtra.pendingTraffic > (this.busiestNode?.extra.pendingTraffic || 0)) {
-      this.busiestNode = <any>this.nodes.get(nodeId);
+      this.busiestNode = this.nodes.get(nodeId);
     }
 
     let color = nodeExtra.color || COLOR_MAP.DEFAULT_NODE_COLOR

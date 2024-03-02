@@ -1,6 +1,8 @@
-import { EventEmitter } from '@angular/core';
-import { Node, Edge } from 'vis-network/standalone';
-import { NFW } from './provider-browser/nfw/nfw';
+import type { EventEmitter } from '@angular/core';
+import type { Node, Edge, IdType } from 'vis-network/standalone';
+import type { NFW } from './provider-browser/nfw/nfw';
+import type { Name } from '@ndn/packet';
+import type { FwFace, FwPacket } from '@ndn/fw';
 
 export const CAPTURED_FLAG_REPLAYING = 1;
 
@@ -18,9 +20,9 @@ export type ICapturedPacket = [
     /** NDN name of packet */
     name: string,
     /** Originating node */
-    from: string | undefined,
+    from: IdType | undefined,
     /** Destination node */
-    to?: string | undefined,
+    to?: IdType | undefined,
     /** Contents of the packet for visualization */
     p?: Uint8Array | undefined,
 ];
@@ -104,4 +106,29 @@ export interface IPty {
     resized: EventEmitter<{ rows: number; cols: number; }>,
     focus?: EventEmitter<void>,
     initBuf?: Uint8Array,
-  }
+};
+
+export interface IFibEntryRoutes {
+    /** Next Hop */
+    hop: IdType;
+    /** Cost */
+    cost: number;
+}
+export interface IFibEntry<PfxT = Name> {
+    /** Name prefix */
+    prefix: PfxT;
+    /** Routes to other nodes */
+    routes: IFibEntryRoutes[];
+}
+
+export interface IFwPacket extends FwPacket {
+    /** Next hop for the packet forarding */
+    hop?: IdType;
+    /** Coerce token to be number */
+    token?: number;
+};
+
+export interface IFwFace extends FwFace {
+    /** Which nodes does this face connect */
+    hops?: Record<IdType, IdType>;
+}

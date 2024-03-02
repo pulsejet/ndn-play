@@ -11,7 +11,7 @@ import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild 
   ]
 })
 export class TabComponent implements OnInit {
-  @ViewChild('tabTemplate', { read: TemplateRef }) public template!: TemplateRef<any>;
+  @ViewChild('tabTemplate', { read: TemplateRef }) public template!: TemplateRef<HTMLElement>;
   @Output() public select = new EventEmitter<void>();
   @Input() public name!: string;
 

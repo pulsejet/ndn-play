@@ -14,8 +14,8 @@
                 [class.selected]="gs.topo.selectedPacket == packet"
                 (click)="setSelected(packet)"
                 (focus)="setSelected(packet)"
-                (keydown.arrowup)="$any($event).srcElement.previousElementSibling?.focus()"
-                (keydown.arrowdown)="$any($event).srcElement.nextElementSibling?.focus()"
+                (keydown.arrowup)="$any($event.srcElement).previousElementSibling?.focus()"
+                (keydown.arrowdown)="$any($event.srcElement).nextElementSibling?.focus()"
                 (dblclick)="packetClick.emit(packet)"
                 (keydown.enter)="packetClick.emit(packet)"
                 [tabIndex]="0">

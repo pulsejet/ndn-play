@@ -152,7 +152,7 @@ export class TopoGlobalComponent {
   public showMnConfig = false;
 
   /** Global Topology */
-  @Input() public topo: Topology = <any>undefined;
+  @Input({ required: true }) public topo!: Topology;
 
   constructor() { }
 

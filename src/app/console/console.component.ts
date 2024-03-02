@@ -32,7 +32,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     // Initialize console logging
-    const c = (<any>console);
+    const c = window.console as any;
     const initConsole = (type: string) => {
       if (!c[type]) {
         c[type] = (...args: any[]) => { };

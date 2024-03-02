@@ -20,7 +20,7 @@ import { Topology } from './topo';
 })
 export class TopoSidebarComponent implements OnInit {
 
-  @Input() public topo: Topology = <any>undefined;
+  @Input({ required: true }) public topo!: Topology;
 
   constructor() { }
 

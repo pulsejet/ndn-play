@@ -1,7 +1,11 @@
-import { Network, IdType } from 'vis-network/standalone';
+import type { Network, IdType } from 'vis-network/standalone';
 import { ForwardingProvider } from '../forwarding-provider';
 import { Topology } from '../topo/topo';
 import * as dijkstra from 'dijkstrajs';
+import type { IFibEntry, IFibEntryRoutes } from '../interfaces';
+
+type Graph = Record<IdType, Record<IdType, number>>;
+type Routes = Record<IdType, Record<IdType, IdType[][]>>;
 
 class _CalculateRoutes {
     private network: Network;
@@ -13,8 +17,13 @@ class _CalculateRoutes {
         this.network = <Network>this.topo.network;
     }
 
-    dijkstra(graph: any) {
-        const routes: any = {};
+    /**
+     * Calculate paths between all pairs of nodes
+     * @param graph List of nodes and their neighbors with the cost
+     * @returns List of nodes and paths to every other node
+     */
+    dijkstra(graph: Graph) {
+        const routes: Routes = {};
         for (const node in graph) {
             routes[node] = {};
             const preds = dijkstra.single_source_shortest_paths(graph, node);
@@ -25,7 +34,7 @@ class _CalculateRoutes {
         return routes;
     }
 
-    dijkstraAll(graph: any) {
+    dijkstraAll(graph: Graph) {
         const routes = this.dijkstra(graph);
 
         for (const node in graph) {
@@ -68,7 +77,7 @@ class _CalculateRoutes {
         return latency >= 0 ? latency : this.provider.defaultLatency;
     }
 
-    getRouteLatency(route: string[]) {
+    getRouteLatency(route: IdType[]) {
         let latency = 0;
         for (let i = 1; i < route.length; i++) {
             latency += this.getLatency(route[i], route[i-1]);
@@ -77,7 +86,7 @@ class _CalculateRoutes {
     }
 
     getRoutes(nFaces: number) {
-        const graph: any = {};
+        const graph: Graph = {};
         for (const node of this.topo.nodes.getIds()) {
             graph[node] = {};
             for (const cn of this.network.getConnectedNodes(node)) {
@@ -95,8 +104,8 @@ class _CalculateRoutes {
 
 export class RoutingHelper {
     private routeObject: _CalculateRoutes;
-    private namePrefixes: any = {};
-    private routes: any = {};
+    private namePrefixes: Record<IdType, string[]> = {};
+    private routes: Routes = {};
 
     constructor(
         private topo: Topology,
@@ -107,7 +116,7 @@ export class RoutingHelper {
 
     addOrigin(nodes: IdType[], prefix: string) {
         for (const node of nodes) {
-            if (!Object.keys(this.namePrefixes).includes(node.toString()))
+            if (!this.namePrefixes[node])
                 this.namePrefixes[node] = [];
             this.namePrefixes[node].push(prefix);
         }
@@ -119,7 +128,7 @@ export class RoutingHelper {
 
     calculateNPossibleRoutes(nFaces=0) {
         this.routes = this.routeObject.getRoutes(nFaces)
-        const fib: any = {};
+        const fib: Record<IdType, IFibEntry<string>[]> = {};
 
         for (const node of this.topo.nodes.getIds()) {
             fib[node] = [];
@@ -128,11 +137,11 @@ export class RoutingHelper {
                 const destNode = this.topo.nodes.get(dest);
                 if (!destNode) continue;
 
-                const prefixes = []
+                const prefixes: string[] = []
                 prefixes.push(...(this.namePrefixes[dest] || []));
                 prefixes.push(...(destNode.extra.producedPrefixes) || []);
 
-                const routes = [];
+                const routes: IFibEntryRoutes[] = [];
                 for (const route of this.routes[node][dest]) {
                     routes.push({
                         hop: route[1],
@@ -141,10 +150,10 @@ export class RoutingHelper {
                 }
 
                 for (const prefix of prefixes) {
-                    const entry = fib[node].find((e: any) => e.prefix == prefix);
+                    const entry = fib[node].find((e) => e.prefix == prefix);
                     if (entry) {
                         for (const route of routes) {
-                            const hopEntry = entry.routes.find((e: any) => e.hop == route.hop);
+                            const hopEntry = entry.routes.find((e) => e.hop == route.hop);
                             if (hopEntry) {
                                 hopEntry.cost = Math.min(hopEntry.cost, route.cost);
                             } else {
@@ -152,7 +161,10 @@ export class RoutingHelper {
                             }
                         }
                     } else {
-                        fib[node].push({ prefix, routes: JSON.parse(JSON.stringify(routes)) });
+                        fib[node].push({
+                            prefix,
+                            routes: structuredClone(routes),
+                        });
                     }
                 }
             }

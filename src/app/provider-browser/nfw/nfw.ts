@@ -1,20 +1,19 @@
-import { INode, INodeExtra } from "../../interfaces";
-import { IdType } from 'vis-network/standalone';
-
 import { Endpoint } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
-
 import { KeyChain } from "@ndn/keychain";
+import { ForwarderImpl } from "@ndn/fw/lib/forwarder";
+import { pushable, Pushable } from "it-pushable";
 
 import { ContentStore } from "./cs";
 import { Topology } from "../../topo/topo";
 import { ProviderBrowser } from "../provider-browser";
 
-import { ForwarderImpl } from "@ndn/fw/lib/forwarder";
-import { pushable, Pushable } from "it-pushable";
 import { Shark } from "./shark";
 import { DefaultServers } from "./servers";
+
+import type { IdType } from 'vis-network/standalone';
+import type { IFibEntry, INode, INodeExtra, IFwPacket, IFwFace } from "../../interfaces";
 
 export class NFW {
     /** NDNts forwarder */
@@ -38,7 +37,7 @@ export class NFW {
     };
 
     /** Forwarding table */
-    public fib: any[] = [];
+    public fib: IFibEntry[] = [];
 
     /** Enable packet capture */
     public capture = false;
@@ -88,7 +87,7 @@ export class NFW {
         this.shark = new Shark(this, this.topo);
 
         // Set extra
-        this.nodeExtra = this.node().extra;
+        this.nodeExtra = this.node.extra;
 
         this.fw.addEventListener("pktrx", ({face, packet}) => {
             // Not useful stuff
@@ -99,7 +98,7 @@ export class NFW {
 
             // Put on NFW
             if (packet.l3 instanceof Interest) {
-                this.expressInterest(<any>packet);
+                this.expressInterest(packet as FwPacket<Interest>);
             } else if (packet.l3 instanceof Data) {
                 this.cs.push(packet.l3);
             }
@@ -137,8 +136,8 @@ export class NFW {
         this.nodeUpdated();
     }
 
-    public node() {
-        return this.topo.nodes.get(this.nodeId) as any as INode;
+    get node() {
+        return this.topo.nodes.get(this.nodeId)!;
     }
 
     public nodeUpdated() {
@@ -187,13 +186,21 @@ export class NFW {
         return false;
     }
 
-    private longestMatch(table: any[], name: Name, identifier='prefix') {
-        let match = undefined;
+    private longestMatch<T, K extends keyof T>(table: T[], name: Name, identifier: K) {
+        let match: T | undefined;
+        let matchName: Name | undefined;
 
         for (const entry of table) {
-            if (entry[identifier].isPrefixOf(name)) {
-                if ((match?.[identifier].length || -1) < entry[identifier].length) {
+            const entryName = entry[identifier];
+            if (!(entryName instanceof Name)) {
+                console.error("[BUG] longestMatch(): entryName is not a name", entryName);
+                continue;
+            }
+
+            if (entryName.isPrefixOf(name)) {
+                if ((matchName?.length || -1) < entryName.length) {
                     match = entry;
+                    matchName = entryName;
                 }
             }
         }
@@ -201,13 +208,19 @@ export class NFW {
         return match;
     }
 
-    private allMatches(table: any[], name: Name, identifier='prefix') {
-        let matches: any[] = [];
+    private allMatches<T, K extends keyof T>(table: T[], name: Name, identifier: K)
+    {
+        let matches: T[] = [];
 
         for (const entry of table) {
-            if (entry[identifier].isPrefixOf(name)) {
-                matches.push(entry);
+            const entryName = entry[identifier];
+            if (!(entryName instanceof Name)) {
+                console.error("[BUG] allMatches(): entryName is not a name", entryName);
+                continue;
             }
+
+            if (entryName.isPrefixOf(name))
+                matches.push(entry);
         }
 
         return matches;
@@ -217,7 +230,7 @@ export class NFW {
         const interest = pkt.l3;
 
         if (this.provider.LOG_INTERESTS) {
-            console.log(this.node().label, AltUri.ofName(interest.name).substr(0, 20));
+            console.log(this.node.label, AltUri.ofName(interest.name).substr(0, 20));
         }
 
         // Aggregate
@@ -235,7 +248,7 @@ export class NFW {
         }
 
         // Get forwarding strategy
-        const strategy = this.longestMatch(this.strategies, interest.name)?.strategy;
+        const strategy = this.longestMatch(this.strategies, interest.name, 'prefix')?.strategy;
 
         // Check if interest has a local face
         if (strategy !== 'multicast' && this.checkPrefixRegistrationMatches(interest)) return;
@@ -245,12 +258,15 @@ export class NFW {
         this.updateColors();
 
         // Get longest prefix match
-        const fibMatches = (strategy == 'multicast' ?
-            this.allMatches(this.fib, interest.name) : [this.longestMatch(this.fib, interest.name)]).filter(m => m);
+        const fibMatches =
+            (strategy == 'multicast'
+                ? this.allMatches(this.fib, interest.name, 'prefix')
+                : [this.longestMatch(this.fib, interest.name, 'prefix')]
+            ).filter(<T>(m?: T): m is T => !!m);
 
         // Make sure the next hop is not the previous one
-        const prevHop = (<any>pkt).hop;
-        const allNextHops = fibMatches.map(m => m.routes?.filter((r: any) => r.hop !== prevHop)).flat(1);
+        const prevHop = (<IFwPacket>pkt).hop;
+        const allNextHops = fibMatches.map(m => m.routes?.filter((r) => r.hop !== prevHop)).flat(1);
 
         // Drop packet if not matching
         // TODO: NACK
@@ -265,12 +281,10 @@ export class NFW {
 
         // Strategies
         if (strategy == 'best-route') {
-            const nextHop = allNextHops.reduce(function(res: any, obj: any) {
-                return (obj.cost < res.cost) ? obj : res;
-            }).hop;
+            const nextHop = allNextHops.reduce((res, obj) => (obj.cost < res.cost) ? obj : res).hop;
             nextHops.push(nextHop);
         } else if (strategy == 'multicast') {
-            nextHops.push(...allNextHops.map((h: any) => h.hop));
+            nextHops.push(...allNextHops.map((h) => h.hop));
         } else {
             throw new Error('Unknown strategy ' + strategy);
         }
@@ -304,7 +318,7 @@ export class NFW {
             this.nodeExtra.pendingTraffic++;
 
             // Forward to next NFW
-            const nextNFW = this.topo.nodes.get(<IdType>nextHop)?.nfw;
+            const nextNFW = this.topo.nodes.get(nextHop)?.nfw;
             if (!nextNFW) continue;
 
             // Sent one
@@ -319,17 +333,16 @@ export class NFW {
                     // Cheat cause we're not really a network
                     // Put the nonce in the DNL of the _next_ NFW,
                     // so it refuses any duplicate interests later
-                    if (nextNFW.dnl.includes(<number>interest.nonce)) {
+                    if (nextNFW.dnl.includes(interest.nonce ?? NaN)) {
                         return;
                     } else {
-                        nextNFW.dnl.push(<number>interest.nonce);
-                        if (this.dnl.length > 1500) {
+                        nextNFW.dnl.push(interest.nonce ?? NaN);
+                        if (this.dnl.length > 1500)
                             this.dnl.splice(0, 500);
-                        }
                     }
 
                     const newPkt = FwPacket.create(interest, upstreamToken);
-                    (<any>newPkt).hop = this.nodeId;
+                    (<IFwPacket>newPkt).hop = this.nodeId;
 
                     const connection = this.getConnection(nextNFW);
                     connection.tx.push(newPkt);
@@ -365,24 +378,24 @@ export class NFW {
 
                             if (revSuccess) {
                                 // Get and get rid of token
-                                const t = <any>rpkt.token;
+                                const t = (<IFwPacket>rpkt).token;
                                 rpkt.token = undefined;
 
                                 // Remove PIT entry
                                 const clear = () => {
-                                    if (!this.pit[t]) return;
+                                    if (t === undefined || !this.pit[t]) return;
                                     clearTimeout(this.pit[t].timer);
                                     delete this.pit[t];
                                 };
 
                                 if (rpkt.l3 instanceof Data) {
-                                    (<any>rpkt).hop = nextNFW.nodeId;
+                                    (<IFwPacket>rpkt).hop = nextNFW.nodeId;
                                     nextNFW.getConnection(this).tx.push(rpkt);
 
                                     // Remove PIT entry
                                     clear();
                                 } else if (rpkt instanceof RejectInterest) {
-                                    if (!this.pit[t]) return;
+                                    if (t === undefined || !this.pit[t]) return;
 
                                     this.pit[t].count--;
 
@@ -399,9 +412,11 @@ export class NFW {
                     }
                 },
             });
-            (<any>face).hops = {};
-            (<any>face).hops[this.nodeId] = nextHop,
-            (<any>face).hops[nextHop] = this.nodeId,
+
+            (face as IFwFace).hops = {
+                [this.nodeId]: nextHop,
+                [nextHop]: this.nodeId,
+            };
             this.connections[nextHop] = { face, tx };
         }
 

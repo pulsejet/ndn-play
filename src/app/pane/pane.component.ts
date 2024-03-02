@@ -7,15 +7,15 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Outp
 })
 export class PaneComponent implements OnInit, AfterViewInit {
 
-  @Input() public pane1!: TemplateRef<any>;
-  @Input() public pane2!: TemplateRef<any>;
+  @Input() public pane1!: TemplateRef<HTMLDivElement>;
+  @Input() public pane2!: TemplateRef<HTMLDivElement>;
   @Input() public vertical = false;
   @Input() public basis = '25%';
 
   @Output() public resize = new EventEmitter<void>();
 
-  @ViewChild('pane1e') pane1e?: ElementRef;
-  @ViewChild('resizer') resizer?: ElementRef;
+  @ViewChild('pane1e') pane1e?: ElementRef<HTMLDivElement>;
+  @ViewChild('resizer') resizer?: ElementRef<HTMLDivElement>;
 
   private paneIsmdwn = 0;
 

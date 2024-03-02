@@ -8,9 +8,9 @@ import { Topology } from './topo';
     <div>
         <h2 class="is-size-5 mb-3">
             Link
-            {{ $any(topo.nodes.get($any(edge.from))).label }}
+            {{ topo.nodes.get(edge.from!)?.label }}
             &#8212;
-            {{ $any(topo.nodes.get($any(edge.to))).label }}
+            {{ topo.nodes.get(edge.to!)!.label }}
         </h2>
 
         <div class="field">
@@ -39,8 +39,8 @@ import { Topology } from './topo';
 })
 export class TopoEdgeComponent implements OnInit {
 
-  @Input() public edge: IEdge = <any>undefined;
-  @Input() public topo: Topology = <any>undefined;
+  @Input({ required: true }) public edge!: IEdge;
+  @Input({ required: true }) public topo!: Topology;
 
   constructor() { }
 

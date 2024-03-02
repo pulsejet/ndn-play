@@ -6,6 +6,7 @@ import type * as asn1 from '@yoursunny/asn1';
 import assert from 'minimalistic-assert';
 import { DataSet } from './esm';
 import { Edge } from './esm';
+import { FullItem } from 'vis-data/declarations/data-interface';
 import type { H3Transport } from '@ndn/quic-transport';
 import { IdType } from './esm';
 import { Network } from './esm';
@@ -2495,7 +2496,7 @@ export declare namespace globals {
      * @param callback Function to be run
      * @param node Node on which the function will be run
      */
-    const $run: (callback: (node: INode) => Promise<void>, node: string | INode) => Promise<void>;
+    export function $run(callback: (node: INode) => Promise<void>, node: string | INode): Promise<void>;
     /**
      * Visualize a NDN TLV block or packet
      * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
@@ -2653,9 +2654,9 @@ type: string,
 /** NDN name of packet */
 name: string,
 /** Originating node */
-from: string | undefined,
+from: IdType | undefined,
 /** Destination node */
-to?: string | undefined,
+to?: IdType | undefined,
 /** Contents of the packet for visualization */
 p?: Uint8Array | undefined
 ];
@@ -2670,6 +2671,20 @@ declare interface IEdge extends Edge {
 }
 
 declare type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
+
+declare interface IFibEntry<PfxT = Name> {
+    /** Name prefix */
+    prefix: PfxT;
+    /** Routes to other nodes */
+    routes: IFibEntryRoutes[];
+}
+
+declare interface IFibEntryRoutes {
+    /** Next Hop */
+    hop: IdType;
+    /** Cost */
+    cost: number;
+}
 
 /**
  An if-else-like type that resolves depending on whether the given type is `never`.
@@ -3791,15 +3806,15 @@ declare namespace MappingEntry {
 declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
 
 export declare const modules: {
-    '@ndn/packet': string;
-    '@ndn/tlv': string;
-    '@ndn/sync': string;
-    '@ndn/keychain': string;
-    '@ndn/util': string;
-    '@ndn/ws-transport': string;
-    '@ndn/endpoint': string;
-    '@ndn/autoconfig': string;
-    '@ndn/fw': string;
+    '@ndn/packet': (string | typeof packet)[];
+    '@ndn/tlv': (string | typeof tlv)[];
+    '@ndn/sync': (string | typeof sync)[];
+    '@ndn/keychain': (string | typeof keychain)[];
+    '@ndn/util': (string | typeof util)[];
+    '@ndn/ws-transport': (string | typeof ws_transport)[];
+    '@ndn/endpoint': (string | typeof endpoint)[];
+    '@ndn/autoconfig': (string | typeof autoconfig)[];
+    '@ndn/fw': (string | typeof fw)[];
 };
 
 /** Container that associates a key with multiple distinct values. */
@@ -4053,7 +4068,7 @@ declare class NFW {
         keyChain: KeyChain;
     };
     /** Forwarding table */
-    fib: any[];
+    fib: IFibEntry[];
     /** Enable packet capture */
     capture: boolean;
     /** Content Store */
@@ -4078,7 +4093,7 @@ declare class NFW {
     /** Packet capture */
     private shark;
     constructor(topo: Topology, nodeId: IdType);
-    node(): INode;
+    get node(): FullItem<INode, "id">;
     nodeUpdated(): void;
     /** Update color of current node */
     updateColors(): void;
@@ -6729,8 +6744,8 @@ declare class Topology {
     readonly edges: DataSet<IEdge, "id">;
     network: Network;
     imported?: 'MININDN' | 'BROWSER';
-    busiestNode?: INode;
-    busiestLink?: IEdge;
+    busiestNode?: INode | null;
+    busiestLink?: IEdge | null;
     selectedNode?: INode;
     selectedEdge?: IEdge;
     selectedPacket?: ICapturedPacket;

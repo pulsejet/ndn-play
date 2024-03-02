@@ -58,7 +58,7 @@ import { TabComponent } from './tab.component';
 })
 export class TabsComponent implements OnInit, AfterContentInit   {
 
-  @ContentChildren(TabComponent) children!: QueryList<TabComponent>;
+  @ContentChildren(TabComponent) public children!: QueryList<TabComponent>;
   private prevChildren: TabComponent[] = [];
   public selection?: TabComponent;
   public initialized = false;

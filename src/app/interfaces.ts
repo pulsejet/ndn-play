@@ -3,8 +3,11 @@ import type { Node, Edge, IdType } from 'vis-network/standalone';
 import type { NFW } from './provider-browser/nfw/nfw';
 import type { Name } from '@ndn/packet';
 import type { FwFace, FwPacket } from '@ndn/fw';
+import type { Encodable } from '@ndn/tlv';
 
 export const CAPTURED_FLAG_REPLAYING = 1;
+
+export type TlvType = string | ArrayBuffer | Encodable | Uint8Array;
 
 export type ICapturedPacket = [
     /** Internal flags */
@@ -20,11 +23,11 @@ export type ICapturedPacket = [
     /** NDN name of packet */
     name: string,
     /** Originating node */
-    from: IdType | undefined,
+    from?: IdType,
     /** Destination node */
-    to?: IdType | undefined,
+    to?: IdType,
     /** Contents of the packet for visualization */
-    p?: Uint8Array | undefined,
+    p?: Uint8Array,
 ];
 
 export interface INodeExtra {

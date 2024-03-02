@@ -51,18 +51,16 @@ export interface WasmFS {
   chdir(path: string): void;
 };
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class WasmService {
   /** Proxy filesystem for all modules */
   public FS: null | typeof FS = null;
   /** Working directory for virtual filesystem */
-  public readonly cwd = '/data';
+  public cwd = '/data';
   /** List of loaded modules (scripts) */
-  private loaded = new Set<WasmExportName>();
+  private readonly loaded = new Set<WasmExportName>();
   /** Files in queue to be updated in the filesystem */
-  private files: Record<string, string | Uint8Array> = {};
+  private readonly files = new Map<string, string | Uint8Array>();
 
   /**
    * Load and get a WASM module.
@@ -176,7 +174,7 @@ export class WasmService {
       this.FS.writeFile(path, data);
     } else {
       // Queue the file for when the filesystem is initialized
-      this.files[path] = data;
+      this.files.set(path, data);
     }
   }
 
@@ -206,10 +204,9 @@ export class WasmService {
     module.FS.chdir(this.cwd);
 
     // Write files to virtual filesystem
-    for (const file in this.files) {
-      module.FS.writeFile(file, this.files[file]);
-      delete this.files[file];
-    }
+    for (const [path, file] of this.files.entries())
+      module.FS.writeFile(path, file);
+    this.files.clear();
   }
 
   /**

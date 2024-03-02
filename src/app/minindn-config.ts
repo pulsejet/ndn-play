@@ -49,7 +49,7 @@ export function load(topo: Topology, confStr: string): boolean {
             readNodes.push({
                 id: nodeId,
                 label: nodeId,
-                isSwitch: (mode == 3) || undefined,
+                isSwitch: (<number>mode == 3) || undefined,
             });
         }
 

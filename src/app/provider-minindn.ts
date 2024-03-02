@@ -40,8 +40,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public initialized = false;
 
   // Animation updates
-  public pendingUpdatesNodes: { [id: string]: Partial<INode>; } = {};
-  public pendingUpdatesEdges: { [id: string]: Partial<IEdge>; } = {};
+  public readonly pendingUpdatesNodes: { [id: string]: Partial<INode>; } = {};
+  public readonly pendingUpdatesEdges: { [id: string]: Partial<IEdge>; } = {};
 
   // Global parameters
   public defaultLatency = 10;
@@ -49,7 +49,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
   public needPosition = false;
 
   // Websocket connection
-  public ws!: WebSocketSubject<any>;
+  private ws!: WebSocketSubject<any>;
 
   // Dump of data
   public dump?: {
@@ -58,7 +58,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
     positions?: any;
   };
 
-  constructor(private wsUrl: string) { }
+  constructor(private readonly wsUrl: string) { }
 
   /** Initializer called by topo object */
   public initialize = async () => {
@@ -105,15 +105,15 @@ export class ProviderMiniNDN implements ForwardingProvider {
     });
   };
 
-  private wsFun = (fun: string, ...args: any[]) => {
-    const pack = {} as any;
-    pack[MSG_KEY_FUN] = fun;
-    pack[MSG_KEY_ARGS] = args;
-    // console.debug('SEND', pack);
-    this.ws.next(pack);
+  private wsFun = (fun: string, ...args: unknown[]) => {
+    // console.debug('SEND', fun, args);
+    this.ws.next({
+      [MSG_KEY_FUN]: fun,
+      [MSG_KEY_ARGS]: args
+    });
   };
 
-  private wsMessageCallback = async (msg: any) => {
+  private wsMessageCallback = async (msg: Record<string, any>) => {
     // console.debug('RECV', msg);
 
     switch (msg[MSG_KEY_FUN]) {
@@ -275,9 +275,7 @@ export class ProviderMiniNDN implements ForwardingProvider {
     });
   };
 
-  public nodeUpdated = async (node?: INode) => {
-
-  };
+  public nodeUpdated = async (node?: INode) => {};
 
   public onNetworkClick = async () => {
     this.refreshFib();
@@ -296,11 +294,8 @@ export class ProviderMiniNDN implements ForwardingProvider {
 
   private openTerminalInternal(id: string, name: string, init: Uint8Array) {
     // check if same id exists
-    for (let t of this.topo.activePtys) {
-      if (t.id == id) {
-        return;
-      }
-    }
+    for (let t of this.topo.activePtys)
+      if (t.id == id) return;
 
     // create new terminal
     const write = new EventEmitter<Uint8Array>();

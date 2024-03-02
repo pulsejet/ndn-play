@@ -2,11 +2,10 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { AltUri, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
-import { visTlv } from '../interfaces';
 import { transpileModule } from 'typescript';
 import localforage from 'localforage';
 
-type TlvType = Parameters<typeof window.visualize>[0];
+import type { TlvType, visTlv } from '../interfaces';
 
 @Component({
   selector: 'app-visualizer',
@@ -16,9 +15,9 @@ type TlvType = Parameters<typeof window.visualize>[0];
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: TlvType;
   @Input() public guessBox?: boolean = true;
-  @Output() public change = new EventEmitter<TlvType>();
+  @Output() public readonly change = new EventEmitter<TlvType>();
 
-  @ViewChild('outer') outer?: ElementRef;
+  @ViewChild('outer') public outer?: ElementRef;
   private resizeObserver?: ResizeObserver;
 
   public visualizedTlv?: visTlv[];
@@ -27,7 +26,7 @@ export class VisualizerComponent implements OnInit {
   private tlvTypes?: Record<string, any>;
   private compiledTlvCode: string = '';
 
-  constructor(private gs: GlobalService) { }
+  constructor(private readonly gs: GlobalService) { }
 
   ngOnInit(): void {
     fetch('/assets/tlv-types.ts').then((res) => res.text()).then(async (code) => {

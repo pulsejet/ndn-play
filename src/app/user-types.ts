@@ -8,7 +8,7 @@ import * as endpoint from '@ndn/endpoint';
 import * as autoconfig from '@ndn/autoconfig';
 import * as fw from '@ndn/fw';
 
-import type { ICapturedPacket, INode } from './interfaces';
+import type { ICapturedPacket, INode, TlvType } from './interfaces';
 import type { DCT as DCT_t } from './dct/dct.interface';
 import type { WasmFS } from './wasm.service';
 
@@ -50,7 +50,7 @@ export namespace globals {
      * Visualize a NDN TLV block or packet
      * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void {};
+    export function visualize(packet: TlvType): void {};
 
     /**
      * Filter packets to be captured

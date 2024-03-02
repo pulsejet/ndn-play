@@ -1,16 +1,20 @@
 import { Data, Interest } from "@ndn/packet";
 import { ProviderBrowser } from "../provider-browser";
 
-export class ContentStore {
-    private cs: { recv: number; data: Data}[] = [];
+type CsEntry = { recv: number; data: Data};
 
-    constructor(private provider: ProviderBrowser) {}
+export class ContentStore {
+    private cs: CsEntry[] = [];
+
+    constructor(
+        private readonly provider: ProviderBrowser,
+    ) {}
 
     public push(data: Data): void {
         if (!data.freshnessPeriod) return;
 
         // CS object
-        const obj = {
+        const obj: CsEntry = {
             recv: (new Date()).getTime(),
             data: data,
         };
@@ -30,10 +34,9 @@ export class ContentStore {
     }
 
     public get(interest: Interest): Data | undefined {
-        const entry = this.cs.find(e => {
-            return interest.name.isPrefixOf(e.data.name) &&
-                   e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime();
-        });
-        return entry?.data;
+        return this.cs.find(e =>
+            interest.name.isPrefixOf(e.data.name) &&
+                e.recv + (e.data.freshnessPeriod || 0) > (new Date()).getTime()
+        )?.data;
     }
 }

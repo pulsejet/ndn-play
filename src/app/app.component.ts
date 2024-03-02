@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.html',
 })
-export class AppComponent implements OnInit {
+export class AppComponent {
   title = 'ndn-play';
   public mode: "home" | "play" | "visualize" = "home";
 
@@ -18,9 +18,6 @@ export class AppComponent implements OnInit {
     if (url.searchParams.get('visualize')) {
       this.mode = "visualize";
     }
-  }
-
-  ngOnInit() {
   }
 
   public getVisualizeTlv(): string {

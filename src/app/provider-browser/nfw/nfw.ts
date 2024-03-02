@@ -17,14 +17,14 @@ import type { IFibEntry, INodeExtra, IFwPacket, IFwFace } from "../../interfaces
 
 export class NFW {
     /** NDNts forwarder */
-    public fw = Forwarder.create();
+    public readonly fw = Forwarder.create();
     /** Local face for content store etc */
-    public localFace: FwFace;
+    public readonly localFace: FwFace;
     /** Push channel to local face */
     private localFaceTx = pushable<FwPacket>({objectMode: true});
 
     /** Browser Forwarding Provider */
-    public provider: ProviderBrowser;
+    public readonly provider: ProviderBrowser;
 
     /** Security options */
     public securityOptions?: {
@@ -37,46 +37,49 @@ export class NFW {
     };
 
     /** Forwarding table */
-    public fib: IFibEntry[] = [];
-
-    /** Enable packet capture */
-    public capture = false;
+    public readonly fib: IFibEntry[] = [];
 
     /** Content Store */
-    private cs: ContentStore;
+    private readonly cs: ContentStore;
 
     /** Dead Nonce List */
-    private dnl: number[] = [];
+    private readonly dnl: number[] = [];
 
     /** Routing strategies */
-    public readonly strategies = [
+    public readonly strategies: {
+        prefix: Name,
+        strategy: 'best-route' | 'multicast',
+    }[] = [
         { prefix: new Name('/'), strategy: 'best-route' },
         { prefix: new Name('/ndn/multicast'), strategy: 'multicast' },
     ];
 
     /** Default servers */
-    public defualtServers = new DefaultServers(this);
+    public readonly defualtServers = new DefaultServers(this);
 
-    /** Connections to other NFWs */
-    private connections: { [nodeId: string]: {
+    /** Connections to other NFWs; node => data */
+    private readonly connections = new Map<IdType, {
         face: FwFace,
         tx: Pushable<FwPacket>,
-    }} = {};
+    }>();
 
-    /** Aggregate of sent interests */
-    private pit: {[token: number]: {
-        count: number;
-        timer: number;
-    }} = {};
+    /** Aggregate of sent interests; token => entry */
+    private readonly pit = new Map<number, {
+        count: number,
+        timer: number,
+    }>();
 
     /** Announcements current */
-    private announcements: Name[] = [];
+    private readonly announcements: Name[] = [];
 
     /** Extra parameters of node */
-    private nodeExtra: INodeExtra;
+    private readonly nodeExtra: INodeExtra;
 
     /** Packet capture */
-    private shark: Shark;
+    private readonly shark: Shark;
+
+    /** Enable packet capture */
+    public capture = false;
 
     constructor(
         public readonly topo: Topology,
@@ -140,6 +143,7 @@ export class NFW {
         return this.topo.nodes.get(this.nodeId)!;
     }
 
+    /** Callback whenever the node is updated */
     public nodeUpdated() {
         this.defualtServers.restart();
         this.shark.nodeUpdated();
@@ -148,6 +152,12 @@ export class NFW {
     /** Update color of current node */
     public updateColors() {
         this.topo.updateNodeColor(this.nodeId, this.nodeExtra);
+    }
+
+    /** Update the forwarding table */
+    public setFib(fib: IFibEntry[]) {
+        this.fib.splice(0, this.fib.length, ...fib);
+        this.node.extra.fibStr = this.strsFIB().join('\n');
     }
 
     /** Add traffic to link */
@@ -296,14 +306,14 @@ export class NFW {
         const sentHops: IdType[] = [];
 
         // Token when sending to others
-        const upstreamToken = Math.round(Math.random()*1000000000);
-        this.pit[upstreamToken] = {
+        const upstreamToken = Math.round(Math.random() * 1000000000);
+        this.pit.set(upstreamToken, {
             count: 0,
             timer: window.setTimeout(() => {
-                this.localFaceTx.push(new RejectInterest("expire", interest))
-                delete this.pit[upstreamToken]
+                this.localFaceTx.push(new RejectInterest("expire", interest));
+                this.pit.delete(upstreamToken);
             }, interest.lifetime || 4000),
-        };
+        });
 
         // Make sure nonce exists (huh)
         interest.nonce ||= Interest.generateNonce();
@@ -322,7 +332,7 @@ export class NFW {
             if (!nextNFW) continue;
 
             // Sent one
-            this.pit[upstreamToken].count++;
+            this.pit.get(upstreamToken)!.count++;
 
             // Add traffic to link
             this.addLinkTraffic(nextHop, (success) => {
@@ -341,8 +351,8 @@ export class NFW {
                             this.dnl.splice(0, 500);
                     }
 
-                    const newPkt = FwPacket.create(interest, upstreamToken);
-                    (<IFwPacket>newPkt).hop = this.nodeId;
+                    const newPkt = FwPacket.create(interest, upstreamToken) as IFwPacket;
+                    newPkt.hop = this.nodeId;
 
                     const connection = this.getConnection(nextNFW);
                     connection.tx.push(newPkt);
@@ -355,11 +365,11 @@ export class NFW {
     private getConnection(nextNFW: NFW) {
         const nextHop = nextNFW.nodeId;
 
-        if (!this.connections[nextHop]?.face.running) {
+        if (!this.connections.get(nextHop)?.face.running) {
             const tx = pushable<FwPacket>({
                 objectMode: true,
             });
-            const face = nextNFW.fw.addFace({
+            const face: IFwFace = nextNFW.fw.addFace({
                 rx: tx,
                 tx: async (iterable) => {
                     for await (const rpkt of iterable) {
@@ -383,9 +393,10 @@ export class NFW {
 
                                 // Remove PIT entry
                                 const clear = () => {
-                                    if (t === undefined || !this.pit[t]) return;
-                                    clearTimeout(this.pit[t].timer);
-                                    delete this.pit[t];
+                                    const entry = this.pit.get(t ?? NaN);
+                                    if (!entry) return;
+                                    clearTimeout(entry.timer);
+                                    this.pit.delete(t!);
                                 };
 
                                 if (rpkt.l3 instanceof Data) {
@@ -395,12 +406,13 @@ export class NFW {
                                     // Remove PIT entry
                                     clear();
                                 } else if (rpkt instanceof RejectInterest) {
-                                    if (t === undefined || !this.pit[t]) return;
+                                    const entry = this.pit.get(t ?? NaN);
+                                    if (!entry) return;
 
-                                    this.pit[t].count--;
+                                    entry.count--;
 
-                                    if (this.pit[t].count > 0) {
-                                        this.pit[t].count--;
+                                    if (entry.count > 0) {
+                                        entry.count--;
                                     } else {
                                         // Reject the PIT entry
                                         nextNFW.getConnection(this).tx.push(rpkt);
@@ -413,14 +425,15 @@ export class NFW {
                 },
             });
 
-            (face as IFwFace).hops = {
+            face.hops = {
                 [this.nodeId]: nextHop,
                 [nextHop]: this.nodeId,
             };
-            this.connections[nextHop] = { face, tx };
+
+            this.connections.set(nextHop, { face, tx });
         }
 
-        return this.connections[nextHop];
+        return this.connections.get(nextHop)!;
     }
 
     public strsFIB() {

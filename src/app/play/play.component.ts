@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
-import { ICapturedPacket, INode } from '../interfaces';
+import type { ICapturedPacket, INode, TlvType } from '../interfaces';
 import type { PtyComponent } from '../pty/pty.component';
 
 @Component({
@@ -9,26 +9,28 @@ import type { PtyComponent } from '../pty/pty.component';
   styleUrls: ['play.component.scss']
 })
 export class PlayComponent implements OnInit, AfterViewInit {
-
-  title = 'ndn-play';
+  public readonly title = 'ndn-play';
 
   /** Currently visualized tlv */
-  public visualizedTlv: any;
+  public visualizedTlv: TlvType;
 
   /** Notification of pane size change */
-  public paneResizeEmitter = new EventEmitter<void>;
+  public readonly paneResizeEmitter = new EventEmitter<void>;
 
   /** Active pty tab */
   public activePtyTab?: PtyComponent;
 
   // Native Elements
-  @ViewChild('topoContainer') topoContainer!: ElementRef;
+  @ViewChild('topoContainer') public topoContainer!: ElementRef;
 
-  constructor(public gs: GlobalService) {}
+  constructor(public readonly gs: GlobalService) {}
 
   ngOnInit() {
     window.visualize = (p) => this.visualizedTlv = p;
-    window.setGlobalCaptureFilter = this.setGlobalCaptureFilter.bind(this);
+    window.setGlobalCaptureFilter = (fun) => {
+      console.assert(fun instanceof Function, 'Argument must be a function');
+      this.gs.topo.globalCaptureFilter = fun;
+    };
   }
 
   ngAfterViewInit() {
@@ -47,15 +49,6 @@ export class PlayComponent implements OnInit, AfterViewInit {
     }
     this.activePtyTab = pty;
     this.activePtyTab.active = true;
-  }
-
-  setGlobalCaptureFilter(f: any) {
-    if (f instanceof Function) {
-      this.gs.topo.globalCaptureFilter = f;
-      console.log('Global filter function set successfully');
-    } else {
-      console.error('Argument must be a function');
-    }
   }
 
   setVisualized(p: ICapturedPacket, node: INode) {

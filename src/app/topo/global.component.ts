@@ -145,7 +145,7 @@ import { Topology } from './topo';
 })
 export class TopoGlobalComponent {
 
-  public miniNDN = miniNDN;
+  public readonly miniNDN = miniNDN;
 
   public runExpDebounce = false;
   public showExpDump = false;

@@ -25,8 +25,8 @@ export class ProviderBrowser implements ForwardingProvider {
   public topo!: Topology;
 
   // Animation updates
-  public pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
-  public pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
+  public readonly pendingUpdatesNodes: { [id: string]: Partial<INode> } = {};
+  public readonly pendingUpdatesEdges: { [id: string]: Partial<IEdge> } = {};
 
   // Global defaults
   public defaultLatency = 10;
@@ -86,17 +86,29 @@ export class ProviderBrowser implements ForwardingProvider {
   private async loadTestbedTopology() {
     try {
       const res = await fetch(TESTBED_JSON);
-      const json = await res.json();
+      const json: Record<string, {
+        "ws-tls": boolean;
+        "fch-enabled": boolean;
+        "ndn-up": boolean;
+        neighbors: string[];
+        name: string;
+        ip_addresses: string[];
+        backbone: boolean;
+        site: string;
+        prefix: string;
+        https: string;
+        position: [number, number];
+        shortname: string;
+      }> = await res.json();
 
-      // No typing because these are incomplete as of now
-      const nodes: any[] = [];
-      const edges: any[] = [];
+      const nodes: Partial<INode & { prefix: string }>[] = [];
+      const edges: Partial<IEdge>[] = [];
 
       // Prevent duplicate edges
-      const seenEdges: { [key: string]: boolean } = {};
+      const seenEdges= new Set<string>();
 
       // Process testbed-node.json
-      for (const nid of Object.keys(json)) {
+      for (const nid in json) {
         const node = json[nid];
 
         // DIV to show on hover
@@ -119,8 +131,8 @@ export class ProviderBrowser implements ForwardingProvider {
 
         // Add all edges from this node
         for (const neighbor of json[nid].neighbors) {
-          if (seenEdges[`${nid}-${neighbor}`] || seenEdges[`${neighbor}-${nid}`]) continue;
-          seenEdges[`${nid}-${neighbor}`] = true;
+          if (seenEdges.has(`${nid}-${neighbor}`) || seenEdges.has(`${neighbor}-${nid}`)) continue;
+          seenEdges.add(`${nid}-${neighbor}`);
           edges.push({ from: nid, to: neighbor });
         }
       }
@@ -140,8 +152,8 @@ export class ProviderBrowser implements ForwardingProvider {
         },
         edges: { smooth: false },
       });
-      this.topo.nodes.add(nodes);
-      this.topo.edges.add(edges);
+      this.topo.nodes.add(<INode[]>nodes);
+      this.topo.edges.add(<IEdge[]>edges);
       this.topo.network.fit();
     } catch (e) {
       console.error(e);
@@ -211,17 +223,13 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public nodeUpdated = async (node?: INode) => {
-    if (node) {
-      node.nfw!.nodeUpdated();
-    }
+    node?.nfw?.nodeUpdated();
   }
 
-  public onNetworkClick = async () => {
-
-  }
+  public onNetworkClick = async () => {}
 
   public sendPingInterest(from: INode, to: INode) {
-    const label = to?.label;
+    const label = to.label;
     const name = `/ndn/${label}/ping/${new Date().getTime()}`;
     const interest = new Interest(name, Interest.Lifetime(3000))
 
@@ -288,20 +296,14 @@ export class ProviderBrowser implements ForwardingProvider {
     if (!this.topo || this.topo.imported == 'MININDN') return;
 
     console.warn('Computing routes');
-    const rh = new RoutingHelper(this.topo, this);
-    const fibs = rh.calculateNPossibleRoutes();
-    for (const nodeId in fibs) {
-      const node = this.topo.nodes.get(nodeId);
-      if (!node) continue;
+    const fibs = new RoutingHelper(this.topo, this).calculateNPossibleRoutes();
 
-      node.nfw!.fib = fibs[nodeId].map((entry) => {
-        return {
+    for (const [nodeId, fib] of Object.entries(fibs)) {
+      this.topo.nodes.get(nodeId)?.nfw
+        ?.setFib(fib.map((entry) => ({
           ...entry,
           prefix: new Name(entry.prefix),
-        };
-      });
-
-      node.extra.fibStr = node.nfw!.strsFIB().join('\n');
+        })));
     }
   }
 

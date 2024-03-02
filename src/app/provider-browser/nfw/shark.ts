@@ -11,9 +11,11 @@ export class Shark {
     private nodeId!: IdType;
     private nodeExtra!: INodeExtra;
 
-    constructor(private nfw: NFW, private topo: Topology)
-    {
-        this.nodeUpdated()
+    constructor(
+        private readonly nfw: NFW,
+        private readonly topo: Topology,
+    ) {
+        this.nodeUpdated();
     }
 
     public nodeUpdated() {

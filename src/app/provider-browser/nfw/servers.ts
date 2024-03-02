@@ -10,8 +10,9 @@ export class DefaultServers {
     /** Server for certificates */
     private certServer?: Producer;
 
-    constructor(private nfw: NFW) {
-    }
+    constructor(
+        private readonly nfw: NFW,
+    ) {}
 
     public restart() {
         this.setupPingServer();

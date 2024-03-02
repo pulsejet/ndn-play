@@ -34,12 +34,12 @@ export class Topology {
   public globalCaptureFilter: (packet: ICapturedPacket) => boolean = () => true;
 
   // Active terminals
-  public activePtys: IPty[] = [];
+  public readonly activePtys: IPty[] = [];
 
   // TLV types code
   public tlvTypesCode: string = '';
 
-  constructor(public provider: ForwardingProvider) {
+  constructor(public readonly provider: ForwardingProvider) {
     // Pass back to provider
     this.provider.topo = this;
 

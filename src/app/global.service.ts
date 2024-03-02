@@ -5,17 +5,15 @@ import { ProviderMiniNDN } from './provider-minindn';
 import { ProviderNull } from './provider-null';
 import { Topology } from './topo/topo';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class GlobalService {
   // Topology
-  public topo: Topology;
+  public readonly topo: Topology;
 
   // Scroll positions
   public capturedListScrollOffset: number = 0;
   // Observable for replay window change
-  public replayWindowChanges = new Subject<{ cw: number, cwf: number }>();
+  public readonly replayWindowChanges = new Subject<{ cw: number, cwf: number }>();
   // Auto scroll capture on replay
   public autoScrollCaptureReplay = true;
 

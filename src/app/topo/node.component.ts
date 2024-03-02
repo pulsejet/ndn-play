@@ -91,7 +91,7 @@ export class TopoNodeComponent implements OnInit {
   @Input({ required: true }) public node!: INode;
   @Input({ required: true }) public topo!: Topology;
 
-  constructor(public gs: GlobalService) { }
+  constructor(public readonly gs: GlobalService) { }
 
   ngOnInit(): void {
   }
@@ -108,6 +108,6 @@ export class TopoNodeComponent implements OnInit {
     const id = this.topo.network.getNodeAt(params.pointer.DOM);
     if (!id) return;
 
-    this.topo.provider.sendPingInterest?.(<INode>this.topo.nodes.get(id), this.topo.selectedNode!);
+    this.topo.provider.sendPingInterest?.(this.topo.nodes.get(id)!, this.topo.selectedNode!);
   };
 }

@@ -8,14 +8,10 @@ type Graph = Record<IdType, Record<IdType, number>>;
 type Routes = Record<IdType, Record<IdType, IdType[][]>>;
 
 class _CalculateRoutes {
-    private network: Network;
-
     constructor(
-        private topo: Topology,
-        private provider: ForwardingProvider,
-    ) {
-        this.network = <Network>this.topo.network;
-    }
+        private readonly topo: Topology,
+        private readonly provider: ForwardingProvider,
+    ) {}
 
     /**
      * Calculate paths between all pairs of nodes
@@ -38,7 +34,7 @@ class _CalculateRoutes {
         const routes = this.dijkstra(graph);
 
         for (const node in graph) {
-            const newGraph = JSON.parse(JSON.stringify(graph));
+            const newGraph = structuredClone(graph);
             delete newGraph[node];
             for (const n in newGraph) {
                 delete newGraph[n][node];
@@ -70,7 +66,8 @@ class _CalculateRoutes {
     }
 
     getLatency(n1: IdType, n2: IdType) {
-        const edge = this.topo.edges.get(this.network.getConnectedEdges(n1)).find(e => e.from === n2 || e.to === n2);
+        const edge = this.topo.edges.get(this.topo.network.getConnectedEdges(n1))
+            .find(e => e.from === n2 || e.to === n2);
         if (!edge) return 0;
 
         const latency = edge.latency || 0;
@@ -89,8 +86,8 @@ class _CalculateRoutes {
         const graph: Graph = {};
         for (const node of this.topo.nodes.getIds()) {
             graph[node] = {};
-            for (const cn of this.network.getConnectedNodes(node)) {
-                const nid = <IdType>cn;
+            for (const cn of this.topo.network.getConnectedNodes(node)) {
+                const nid = cn as IdType;
                 graph[node][nid] = this.getLatency(node, nid);
             }
         }
@@ -103,13 +100,12 @@ class _CalculateRoutes {
 }
 
 export class RoutingHelper {
-    private routeObject: _CalculateRoutes;
-    private namePrefixes: Record<IdType, string[]> = {};
-    private routes: Routes = {};
+    private readonly routeObject: _CalculateRoutes;
+    private readonly namePrefixes: Record<IdType, string[]> = {};
 
     constructor(
-        private topo: Topology,
-        provider: ForwardingProvider,
+        private readonly topo: Topology,
+        readonly provider: ForwardingProvider,
     ) {
         this.routeObject = new _CalculateRoutes(topo, provider);
     }
@@ -127,13 +123,13 @@ export class RoutingHelper {
     }
 
     calculateNPossibleRoutes(nFaces=0) {
-        this.routes = this.routeObject.getRoutes(nFaces)
+        const routes = this.routeObject.getRoutes(nFaces)
         const fib: Record<IdType, IFibEntry<string>[]> = {};
 
         for (const node of this.topo.nodes.getIds()) {
             fib[node] = [];
 
-            for (const dest in this.routes[node]) {
+            for (const dest in routes[node]) {
                 const destNode = this.topo.nodes.get(dest);
                 if (!destNode) continue;
 
@@ -141,9 +137,9 @@ export class RoutingHelper {
                 prefixes.push(...(this.namePrefixes[dest] || []));
                 prefixes.push(...(destNode.extra.producedPrefixes) || []);
 
-                const routes: IFibEntryRoutes[] = [];
-                for (const route of this.routes[node][dest]) {
-                    routes.push({
+                const entryRoutes: IFibEntryRoutes[] = [];
+                for (const route of routes[node][dest]) {
+                    entryRoutes.push({
                         hop: route[1],
                         cost: this.routeObject.getRouteLatency(route),
                     });
@@ -152,18 +148,18 @@ export class RoutingHelper {
                 for (const prefix of prefixes) {
                     const entry = fib[node].find((e) => e.prefix == prefix);
                     if (entry) {
-                        for (const route of routes) {
+                        for (const route of entryRoutes) {
                             const hopEntry = entry.routes.find((e) => e.hop == route.hop);
                             if (hopEntry) {
                                 hopEntry.cost = Math.min(hopEntry.cost, route.cost);
                             } else {
-                                entry.routes.push(JSON.parse(JSON.stringify(route)));
+                                entry.routes.push(structuredClone(route));
                             }
                         }
                     } else {
                         fib[node].push({
-                            prefix,
-                            routes: structuredClone(routes),
+                            prefix: prefix,
+                            routes: structuredClone(entryRoutes),
                         });
                     }
                 }

@@ -1230,7 +1230,7 @@ declare interface Decrypter<T = Data> {
 }
 
 declare class DefaultServers {
-    private nfw;
+    private readonly nfw;
     /** Server for ping */
     private pingServer?;
     /** Server for certificates */
@@ -2501,7 +2501,7 @@ export declare namespace globals {
      * Visualize a NDN TLV block or packet
      * @param packet can be hex or base64 string, binary buffer or an encodable e.g. Interest
      */
-    export function visualize(packet: string | Uint8Array | ArrayBuffer | tlv.Encodable | undefined): void;
+    export function visualize(packet: TlvType): void;
     /**
      * Filter packets to be captured
      * @param filter filter: function to check if captured packet should be stored
@@ -2654,11 +2654,11 @@ type: string,
 /** NDN name of packet */
 name: string,
 /** Originating node */
-from: IdType | undefined,
+from?: IdType,
 /** Destination node */
-to?: IdType | undefined,
+to?: IdType,
 /** Contents of the packet for visualization */
-p?: Uint8Array | undefined
+p?: Uint8Array
 ];
 
 declare interface IEdge extends Edge {
@@ -4051,13 +4051,13 @@ declare class NFW {
     readonly topo: Topology;
     readonly nodeId: IdType;
     /** NDNts forwarder */
-    fw: Forwarder;
+    readonly fw: Forwarder;
     /** Local face for content store etc */
-    localFace: FwFace;
+    readonly localFace: FwFace;
     /** Push channel to local face */
     private localFaceTx;
     /** Browser Forwarding Provider */
-    provider: ProviderBrowser;
+    readonly provider: ProviderBrowser;
     /** Security options */
     securityOptions?: {
         /** Signer object */
@@ -4068,35 +4068,38 @@ declare class NFW {
         keyChain: KeyChain;
     };
     /** Forwarding table */
-    fib: IFibEntry[];
-    /** Enable packet capture */
-    capture: boolean;
+    readonly fib: IFibEntry[];
     /** Content Store */
-    private cs;
+    private readonly cs;
     /** Dead Nonce List */
-    private dnl;
+    private readonly dnl;
     /** Routing strategies */
     readonly strategies: {
         prefix: Name;
-        strategy: string;
+        strategy: 'best-route' | 'multicast';
     }[];
     /** Default servers */
-    defualtServers: DefaultServers;
-    /** Connections to other NFWs */
-    private connections;
-    /** Aggregate of sent interests */
-    private pit;
+    readonly defualtServers: DefaultServers;
+    /** Connections to other NFWs; node => data */
+    private readonly connections;
+    /** Aggregate of sent interests; token => entry */
+    private readonly pit;
     /** Announcements current */
-    private announcements;
+    private readonly announcements;
     /** Extra parameters of node */
-    private nodeExtra;
+    private readonly nodeExtra;
     /** Packet capture */
-    private shark;
+    private readonly shark;
+    /** Enable packet capture */
+    capture: boolean;
     constructor(topo: Topology, nodeId: IdType);
     get node(): FullItem<INode, "id">;
+    /** Callback whenever the node is updated */
     nodeUpdated(): void;
     /** Update color of current node */
     updateColors(): void;
+    /** Update the forwarding table */
+    setFib(fib: IFibEntry[]): void;
     /** Add traffic to link */
     private addLinkTraffic;
     private checkPrefixRegistrationMatches;
@@ -4105,7 +4108,7 @@ declare class NFW {
     private expressInterest;
     private getConnection;
     strsFIB(): string[];
-    getEndpoint(opts?: {}): Endpoint;
+    getEndpoint(opts?: Options_2): Endpoint;
 }
 
 /**
@@ -4763,10 +4766,10 @@ declare class ProviderBrowser implements ForwardingProvider {
     readonly LOG_INTERESTS = false;
     readonly BROWSER = 1;
     topo: Topology;
-    pendingUpdatesNodes: {
+    readonly pendingUpdatesNodes: {
         [id: string]: Partial<INode>;
     };
-    pendingUpdatesEdges: {
+    readonly pendingUpdatesEdges: {
         [id: string]: Partial<IEdge>;
     };
     defaultLatency: number;
@@ -6722,6 +6725,8 @@ declare namespace tlv {
 }
 export { tlv }
 
+declare type TlvType = string | ArrayBuffer | Encodable | Uint8Array;
+
 /** Convert byte array to upper-case hexadecimal string. */
 declare function toHex(buf: Uint8Array): string;
 
@@ -6739,7 +6744,7 @@ declare namespace toHex {
 declare function toKeyName(name: Name): Name;
 
 declare class Topology {
-    provider: ForwardingProvider;
+    readonly provider: ForwardingProvider;
     readonly nodes: DataSet<INode, "id">;
     readonly edges: DataSet<IEdge, "id">;
     network: Network;
@@ -6752,7 +6757,7 @@ declare class Topology {
     captureAll: boolean;
     pendingClickEvent?: (params: any) => void;
     globalCaptureFilter: (packet: ICapturedPacket) => boolean;
-    activePtys: IPty[];
+    readonly activePtys: IPty[];
     tlvTypesCode: string;
     constructor(provider: ForwardingProvider);
     /** Initialize the network */

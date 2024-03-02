@@ -19,10 +19,10 @@ import { IPty } from '../interfaces';
   ]
 })
 export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('pty') pty_e!: ElementRef;
+  @ViewChild('pty') public pty_e!: ElementRef<HTMLDivElement>;
   @Input() public pty?: IPty;
   @Input() public resizeEmitter?: EventEmitter<void>;
-  @Output() public focus = new EventEmitter<void>();
+  @Output() public readonly focus = new EventEmitter<void>();
 
   /** Call on console resize */
   public doResize?: () => void;

@@ -12,7 +12,7 @@ import { Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild 
 })
 export class TabComponent implements OnInit {
   @ViewChild('tabTemplate', { read: TemplateRef }) public template!: TemplateRef<HTMLElement>;
-  @Output() public select = new EventEmitter<void>();
+  @Output() public readonly select = new EventEmitter<void>();
   @Input() public name!: string;
 
   constructor() { }

@@ -89,14 +89,14 @@ export const monacoConfig: NgxMonacoEditorConfig = {
   ]
 })
 export class EditorComponent {
-  public editorOptions = {
+  public readonly editorOptions = {
     theme: 'vs-light',
     language: 'typescript',
     automaticLayout: true,
   };
 
   @Input() public code: string = '';
-  @Output() public codeChange = new EventEmitter<string>();
+  @Output() public readonly codeChange = new EventEmitter<string>();
 
   @Input() public language = 'typescript';
 

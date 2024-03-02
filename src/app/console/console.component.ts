@@ -16,10 +16,10 @@ import { FitAddon } from 'xterm-addon-fit';
   `]
 })
 export class ConsoleComponent implements OnInit, AfterViewInit {
-  @ViewChild('console') console!: ElementRef;
+  @ViewChild('console') public console!: ElementRef;
 
   // Console logs
-  public consoleLog = new EventEmitter<{ type: string, msg: string; }>();
+  public readonly consoleLog = new EventEmitter<{ type: string, msg: string; }>();
 
   /** Call on console resize */
   @Input() resizeEmitter!: EventEmitter<void>;

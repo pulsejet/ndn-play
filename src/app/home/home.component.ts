@@ -18,7 +18,7 @@ interface Project {
 })
 export class HomeComponent implements OnInit {
 
-  public projects: Project[] = []
+  public readonly projects: Project[] = []
 
   constructor() {
     this.projects.push({
@@ -43,10 +43,7 @@ export class HomeComponent implements OnInit {
     try {
       const res = await fetch(PROJECT_LIST)
       const json = await res.text();
-      this.projects = [
-        ...this.projects,
-        ...JSON.parse(json),
-      ];
+      this.projects.push(...JSON.parse(json))
     } catch (e) {
       console.error(e);
     }

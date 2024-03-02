@@ -36,23 +36,23 @@ export class DCTComponent implements OnInit, AfterViewInit {
   public script = String();
   public schemaOutput = String();
 
-  private certDag = {
+  private readonly certDag = {
     nodes: new DataSet<ICertDagNode>(),
     edges: new DataSet<ICertDagEdge>(),
   };
   private certDagNet!: Network;
-  public certDagOpts = {
+  public readonly certDagOpts = {
     hideChainInfo: true,
     showHidden: false,
   };
 
   // Native Elements
-  @ViewChild('tabs') tabs!: TabsComponent;
-  @ViewChild('visualizerTab') visualizerTab!: TabComponent;
-  @ViewChild('dagContainer') dagContainer!: ElementRef;
+  @ViewChild('tabs') public tabs!: TabsComponent;
+  @ViewChild('visualizerTab') public visualizerTab!: TabComponent;
+  @ViewChild('dagContainer') public dagContainer!: ElementRef<HTMLDivElement>;
 
   constructor(
-    private wasm: WasmService,
+    private readonly wasm: WasmService,
   ) { }
 
   ngOnInit(): void {

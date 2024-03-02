@@ -13,12 +13,12 @@ import { Subscription } from 'rxjs';
 })
 export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   public AltUri = AltUri;
-  private redrawInterval = 0;
   public packets: ICapturedPacket[] = [];
+  private redrawInterval = 0;
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
-  @Output() public packetClick = new EventEmitter<ICapturedPacket>()
+  @Output() public readonly packetClick = new EventEmitter<ICapturedPacket>()
 
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 
@@ -27,7 +27,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   private resizeSub?: Subscription;
 
   constructor(
-    public gs: GlobalService,
+    public readonly gs: GlobalService,
   ) { }
 
   ngOnInit(): void {

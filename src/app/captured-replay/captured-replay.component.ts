@@ -23,14 +23,14 @@ export class CapturedReplayComponent implements OnInit {
   public transferTime: number = 100;
 
   /** Types of data to visualize */
-  public showTypes = {
+  public readonly showTypes = {
     interest: true,
     data: true,
     nack: false,
   }
 
   constructor(
-    public gs: GlobalService,
+    public readonly gs: GlobalService,
   ) { }
 
   ngOnInit(): void {

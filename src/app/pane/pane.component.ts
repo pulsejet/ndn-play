@@ -1,29 +1,25 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-pane',
   templateUrl: 'pane.component.html',
   styleUrls: ['pane.component.scss']
 })
-export class PaneComponent implements OnInit, AfterViewInit {
+export class PaneComponent implements AfterViewInit {
 
   @Input() public pane1!: TemplateRef<HTMLDivElement>;
   @Input() public pane2!: TemplateRef<HTMLDivElement>;
   @Input() public vertical = false;
   @Input() public basis = '25%';
 
-  @Output() public resize = new EventEmitter<void>();
+  @Output() public readonly resize = new EventEmitter<void>();
 
-  @ViewChild('pane1e') pane1e?: ElementRef<HTMLDivElement>;
-  @ViewChild('resizer') resizer?: ElementRef<HTMLDivElement>;
+  @ViewChild('pane1e') public pane1e?: ElementRef<HTMLDivElement>;
+  @ViewChild('resizer') public resizer?: ElementRef<HTMLDivElement>;
 
   private paneIsmdwn = 0;
 
   constructor() { }
-
-  ngOnInit(): void {
-
-  }
 
   ngAfterViewInit() {
     if (this.pane1e) {

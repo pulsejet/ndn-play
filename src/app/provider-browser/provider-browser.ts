@@ -14,6 +14,9 @@ import { modules as UserModules } from "../user-types";
 const OFFICIAL_DUMP_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
 const TESTBED_JSON = 'https://testbed-status.named-data.net/testbed-nodes.json';
 
+// get a reference to the async function constructor without getting transpiled
+const AsyncFunction: Function = Function('return async function(){}.constructor')();
+
 export class ProviderBrowser implements ForwardingProvider {
   public readonly LOG_INTERESTS = false;
   public readonly BROWSER = 1;
@@ -239,16 +242,15 @@ export class ProviderBrowser implements ForwardingProvider {
   }
 
   public async runCode(code: string, node: INode) {
-    const target = ScriptTarget.ES2020;
-    const module = ModuleKind.CommonJS;
-
-    const asyncJs = transpile(code, { target, module });
-    const js = `return (async () => {\n${asyncJs}\n})()`;
+    const js = transpile(code, {
+      target: ScriptTarget.ES2020,
+      module: ModuleKind.CommonJS,
+    });
 
     return this.$run(async (node) => {
       // we provide a custom require function to resolve modules
       // only modules from UserModules are allowed
-      return new Function('node', 'exports', 'require', js)(node, {}, (module: string) => {
+      return AsyncFunction('node', 'exports', 'require', js)(node, new Object, (module: string) => {
         // resolve exported modules
         if (module in UserModules) {
           const m = module as keyof typeof UserModules;

@@ -38,9 +38,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
 
-        &.time { min-width: 120px; }
-        &.src-dist { min-width: 150px; }
-        &.length { min-width: 50px; }
+        &.time { width: 120px; }
+        &.src-dist { min-width: 150px; width: 200px; }
+        &.length { width: 50px; }
+        &.name { max-width: 100px; }
     }
 
     div.buttons {

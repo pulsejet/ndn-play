@@ -5,7 +5,7 @@
         <tr>
             <th>Timestamp</th>
             <th>Type</th>
-            <th>Length</th>
+            <th>Len</th>
             <th>Name</th>
 
             <div class="buttons">
@@ -36,7 +36,7 @@
                     {{ packet[3] }}
                 </td>
                 <td class="name" [title]="packet[5]">
-                    {{ ellipsis(packet[5]) }}
+                    {{ packet[5] }}
                 </td>
             </tr>
         </ng-container>

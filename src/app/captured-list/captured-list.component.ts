@@ -107,11 +107,6 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.packetSelect.emit(packet);
   }
 
-  public ellipsis(s: string) {
-    const MAX_LEN = 80;
-    return (s.length > MAX_LEN) ? s.substr(0, MAX_LEN) + ' ...' : s;
-  }
-
   public clear() {
     // This will not work with non-browser providers
     this.node.extra.capturedPackets = [];

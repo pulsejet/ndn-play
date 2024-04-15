@@ -27,21 +27,21 @@
              (click)="tlv.expand = true; $event.stopPropagation()"
              (mouseover)="tlv.hover = true; $event.stopPropagation()"
              (mouseout)="tlv.hover = undefined">
-            <span class="type" [title]="tlv.t" (click)="tlv.human = !tlv.human">
+            <span class="type" [title]="tlv.t" (click)="onClick(tlv)">
                 {{ tlv.tts }}
             </span>
             <span class="length">
                 {{ tlv.l }}
             </span>
-            <span class="value" *ngIf="tlv.v.length == 0 && tlv.vl.length > 0"
+            <span class="value" *ngIf="(tlv.v.length == 0 || tlv.nonest) && tlv.vl.length > 0"
                   [class.expand]="tlv.expand"
                   [class.human]="tlv.human">
-                <span> {{ tlv.human ? tlv.hs : (tlv.vs ? tlv.vs : tlv.vl.length + 'B') }} </span>
+                <span> {{ tlv.human ? tlv.hs : (tlv.vs || (tlv.vl.length + 'B')) }} </span>
             </span>
 
             <!-- Nested TLV -->
             <ng-container
-                *ngIf="tlv.v.length > 0"
+                *ngIf="tlv.v.length > 0 && !tlv.nonest"
                 [ngTemplateOutlet]="visTlvA"
                 [ngTemplateOutletContext]="{tlvs: tlv.v}">
             </ng-container>

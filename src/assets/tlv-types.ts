@@ -133,6 +133,7 @@ export const BLOB_KeyDigest = 1;
 // TLV will be treated and displayed as plain text by default.
 // =============================================================
 
+export const TEXT_Name = 1;
 export const TEXT_GenericNameComponent = 1;
 export const TEXT_NotBefore = 1;
 export const TEXT_NotAfter = 1;

@@ -19,6 +19,7 @@
     padding: 1px 2px;
     margin: 1px;
     max-width: 100%;
+    user-select: none;
 
     .type {
         color: red;
@@ -39,6 +40,7 @@
             vertical-align: middle;
             text-overflow: ellipsis;
             overflow: hidden;
+            user-select: all;
         }
 
         &.expand span {

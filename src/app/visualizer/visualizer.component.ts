@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { AltUri, Component as NameComponent } from "@ndn/packet";
+import { AltUri, Name, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
 import { transpileModule } from 'typescript';
@@ -181,6 +181,11 @@ export class VisualizerComponent implements OnInit {
 
         // Creative visualization
         switch (obj.t) {
+          case (0x07): { // Name
+            obj.hs = AltUri.ofName(new Decoder(t.tlv).decode(Name));
+            break;
+          }
+
           case (0x08): { // GenericNameComponent
             obj.hs = AltUri.ofComponent(new Decoder(t.tlv).decode(NameComponent));
             break;
@@ -219,5 +224,21 @@ export class VisualizerComponent implements OnInit {
     }
 
     return arr;
+  }
+
+  public onClick(tlv: visTlv) {
+    // Special handling if the TLV has children
+    if (tlv.v.length > 0) {
+      // If the TLV has a human representation,
+      // then toggle children view mode
+      if (tlv.human) {
+        tlv.nonest = !tlv.nonest;
+      }
+
+      return;
+    }
+
+    // Toggle human-readable view
+    tlv.human = !tlv.human
   }
 }

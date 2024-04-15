@@ -98,6 +98,8 @@ export interface visTlv {
     expand?: boolean;
     /** Showing human readable / ascii content */
     human?: boolean;
+    /** Show raw content instead of nested TLVs */
+    nonest?: boolean;
 };
 
 /** Connected Pty */

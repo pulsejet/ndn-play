@@ -1,0 +1,13 @@
+{
+  "name": "NDN-Play Devtools",
+  "version": "1.0",
+  "description": "Debugging tools for NDN web applications.",
+  "devtools_page": "devtools.html",
+  "manifest_version": 3,
+  "permissions": [
+    "debugger"
+  ],
+  "icons": {
+    "256": "logo.png"
+  }
+}

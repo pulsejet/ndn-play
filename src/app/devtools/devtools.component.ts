@@ -40,9 +40,9 @@ export class DevtoolsComponent implements AfterViewInit {
     // Set listener for packets from outer window
     window.addEventListener('message', (e) => {
       if (e.data.type === 'recv-packet') {
-        this.pushPacket(e.data.packet, false);
+        this.pushPacket(e.data.packet, e.data.timestamp, false);
       } else if (e.data.type === 'send-packet') {
-        this.pushPacket(e.data.packet, true);
+        this.pushPacket(e.data.packet,  e.data.timestamp, true);
       }
     }, false);
 
@@ -58,10 +58,8 @@ export class DevtoolsComponent implements AfterViewInit {
     this.visualizedTlv = p[8] ?? undefined;
   }
 
-  pushPacket(base64: string, outgoing: boolean) {
+  pushPacket(base64: string, timestamp: number, outgoing: boolean) {
     const packet = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
-    const src = outgoing ? '↑ OUT' : '↓ IN';
-    let type = String(), name = String();
 
     // Decode L2 or L3 packet
     let wire = packet;
@@ -88,14 +86,15 @@ export class DevtoolsComponent implements AfterViewInit {
     // No L3 packet could be decoded
     if (!l3) return;
 
-    // get attributes
-    type = l3.constructor.name;
-    name = AltUri.ofName(l3.name);
-
     this.node.extra.capturedPackets.push([
-      0, 0, performance.now(),
-      packet.length, type, name,
-      src, undefined, packet,
+      0, 0, // unused flags
+      timestamp || performance.now(), // timestamp
+      packet.length, // length
+      l3.constructor.name, // type
+      AltUri.ofName(l3.name), // name
+      outgoing ? '↑ OUT' : '↓ IN', // source
+      undefined, // destination
+      packet, // buffer
     ]);
   }
 

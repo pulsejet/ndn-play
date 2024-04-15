@@ -171,17 +171,17 @@ export enum NNI_ContentType {
 // These types are provided as an example for custom TLVs.
 // =============================================================
 
-// export enum TLV_SVS {
-//     StateVector = 201,
-//     StateVectorEntry = 202,
-//     SvSeqNo = 204,
-//     MappingData = 205,
-//     MappingEntry = 206,
-// }
-// export const T_IN_StateVector = [TLV_V3.Name];
-// export const T_IN_StateVectorEntry = [TLV_SVS.StateVector];
-// export const T_IN_SvSeqNo = [TLV_SVS.StateVectorEntry];
-// export const NNI_SvSeqNo = 1;
+export enum TLV_SVS {
+    StateVector = 201,
+    StateVectorEntry = 202,
+    SvSeqNo = 204,
+    MappingData = 205,
+    MappingEntry = 206,
+}
+export const T_IN_StateVector = [TLV_V3.Name];
+export const T_IN_StateVectorEntry = [TLV_SVS.StateVector];
+export const T_IN_SvSeqNo = [TLV_SVS.StateVectorEntry];
+export const NNI_SvSeqNo = 1;
 
 // =============================================================
 // CUSTOM TLV TYPES

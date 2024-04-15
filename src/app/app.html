@@ -5,6 +5,9 @@
     <!-- NDN Play main interface -->
     <app-play *ngSwitchCase="'play'"></app-play>
 
+    <!-- Developer tools interface -->
+    <app-devtools *ngSwitchCase="'devtools'"></app-devtools>
+
     <!-- Visualize a single packet -->
     <app-visualizer *ngSwitchCase="'visualize'"
         [tlv]="getVisualizeTlv()"

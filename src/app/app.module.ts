@@ -18,6 +18,7 @@ import { TabComponent } from './tabs/tab.component';
 import { ConsoleComponent } from './console/console.component';
 import { CapturedReplayComponent } from './captured-replay/captured-replay.component';
 import { PlayComponent } from './play/play.component';
+import { DevtoolsComponent } from './devtools/devtools.component';
 import { HomeComponent } from './home/home.component';
 import { PtyComponent } from './pty/pty.component';
 import { DCTComponent } from './dct/dct.component';
@@ -38,6 +39,7 @@ import { DCTComponent } from './dct/dct.component';
     ConsoleComponent,
     CapturedReplayComponent,
     PlayComponent,
+    DevtoolsComponent,
     HomeComponent,
     PtyComponent,
     DCTComponent,

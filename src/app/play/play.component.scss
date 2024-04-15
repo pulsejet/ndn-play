@@ -2,22 +2,12 @@
     height: 50px;
 }
 
-.main-tab {
-    height: 100%; width: 100%;
-    background-color: var(--bg-color);
-}
-
 #sidebar {
     padding: 1em;
     width: 100%;
     overflow: auto;
     overflow-y: scroll;
     scrollbar-width: thin;
-}
-
-.tab-container {
-    height: 100%;
-    width: 100%;
 }
 
 .console {
@@ -27,7 +17,6 @@
     overflow: hidden;
 }
 
-.tab-full {
-    height: 100%;
-    overflow-y: auto;
+.capture-tab {
+    height: calc(100% - 0.5rem);
 }

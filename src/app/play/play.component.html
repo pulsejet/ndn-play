@@ -57,7 +57,7 @@
 
 
             <app-tab name="TLV Visualizer" #lowerVisTab>
-                <div class="p-2 tab-full">
+                <div class="p-2 tab-full-height">
                     <app-visualizer [tlv]="visualizedTlv"
                                     (change)="lowerTabs.set(lowerVisTab)"
                     ></app-visualizer>
@@ -65,7 +65,7 @@
             </app-tab>
 
             <app-tab name="Packet Capture" *ngIf="gs.topo.selectedNode && !gs.topo.selectedNode.isSwitch" #captureTab>
-                <div class="m-1 mr-0" style="height: calc(100% - 0.5rem);">
+                <div class="capture-tab m-1 mr-0">
                     <app-captured-list *ngIf="lowerTabs.selection == captureTab"
                         [node]="gs.topo.selectedNode"
                         [provider]="gs.topo.provider"
@@ -76,7 +76,7 @@
             </app-tab>
 
             <app-tab name="Traffic Replay" #replayTab>
-                <div class="p-2 tab-full">
+                <div class="p-2 tab-full-height">
                     <app-captured-replay></app-captured-replay>
                 </div>
             </app-tab>

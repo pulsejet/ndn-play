@@ -283,7 +283,7 @@ export class ProviderBrowser implements ForwardingProvider {
 
   /** Schedule a refresh of static routes */
   public scheduleRouteRefresh = () => {
-    if (this.scheduledRouteRefresh) return;
+    if (this.scheduledRouteRefresh || !this.topo.network) return;
 
     this.scheduledRouteRefresh = window.setTimeout(() => {
       this.computeRoutes();
@@ -333,7 +333,7 @@ export class ProviderBrowser implements ForwardingProvider {
       exporter: 'BROWSER',
       nodes: nodes,
       edges: this.topo.edges.get(),
-      positions: this.topo.network.getPositions(),
+      positions: this.topo.network?.getPositions(),
     });
     downloadFile(dump, 'BIN', 'experiment.bin', true);
   }

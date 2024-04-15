@@ -24,13 +24,29 @@ body, html {
     background-color: #ddd;
 }
 
-.full-width {
-    width: 100%;
-}
-
 /** Reset bulma styles for code editor (monaco) */
 .code-editor {
     .title, .title:not(:last-child)  {
         all: unset;
     }
+}
+
+/** Global utilities **/
+.full-width {
+    width: 100%;
+}
+
+.main-tab {
+    height: 100%; width: 100%;
+    background-color: var(--bg-color);
+}
+
+.tab-container {
+    height: 100%;
+    width: 100%;
+}
+
+.tab-full-height {
+    height: 100%;
+    overflow-y: auto;
 }

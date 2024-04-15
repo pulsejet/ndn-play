@@ -1,0 +1,45 @@
+<ng-template #mainUpperPane>
+    <app-tabs class="tab-container" #mainTabs>
+        <app-tab name="Packet Capture" #captureTab>
+            <div class="capture-tab m-1 mr-0">
+                <app-captured-list
+                    [node]="node"
+                    [provider]="gs.topo.provider"
+                    (packetSelect)="setVisualized($event, node)"
+                    [resizeEmitter]="paneResizeEmitter">
+                ></app-captured-list>
+            </div>
+        </app-tab>
+
+        <app-tab name="TLV Types">
+            <div class="main-tab">
+                <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
+            </div>
+        </app-tab>
+
+        <app-tab name="Tools" #lowerVisTab>
+            <button class="button is-link m-1" (click)="dump()">
+                Generate Experiment Dump
+            </button>
+        </app-tab>
+    </app-tabs>
+</ng-template>
+
+<ng-template #mainLowerPane>
+    <app-tabs class="tab-container main-lower" #lowerTabs>
+        <app-tab name="TLV Visualizer" #lowerVisTab>
+            <div class="p-2 tab-full-height">
+                <app-visualizer [tlv]="visualizedTlv"
+                                (change)="lowerTabs.set(lowerVisTab)"
+                ></app-visualizer>
+            </div>
+        </app-tab>
+    </app-tabs>
+</ng-template>
+
+<div class="full-width">
+    <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
+                [vertical]="true" basis="50%"
+                (resize)="paneResized()">
+    </app-pane>
+</div>

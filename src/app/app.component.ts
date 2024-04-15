@@ -6,13 +6,19 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'ndn-play';
-  public mode: "home" | "play" | "visualize" = "home";
+
+  /** Mode of entire application */
+  public mode: "home" | "play" | "visualize" | "devtools" = "home";
 
   constructor() {
     const url = new URL(window.location.href);
     const params = ['minindn', 'dump', 'testbed', 'default'];
     if (params.some(p => url.searchParams.get(p))) {
       this.mode = "play";
+    }
+
+    if (url.searchParams.get('devtools')) {
+      this.mode = "devtools";
     }
 
     if (url.searchParams.get('visualize')) {

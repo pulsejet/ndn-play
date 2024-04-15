@@ -19,6 +19,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
   @Output() public readonly packetClick = new EventEmitter<ICapturedPacket>()
+  @Output() public readonly packetSelect = new EventEmitter<ICapturedPacket>()
 
   @ViewChild(CdkVirtualScrollViewport) viewPort!: CdkVirtualScrollViewport;
 
@@ -103,6 +104,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public setSelected(packet: ICapturedPacket) {
     this.gs.topo.selectedPacket = packet;
+    this.packetSelect.emit(packet);
   }
 
   public ellipsis(s: string) {
@@ -110,4 +112,8 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
     return (s.length > MAX_LEN) ? s.substr(0, MAX_LEN) + ' ...' : s;
   }
 
+  public clear() {
+    // This will not work with non-browser providers
+    this.node.extra.capturedPackets = [];
+  }
 }

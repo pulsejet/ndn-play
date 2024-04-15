@@ -135,6 +135,7 @@ export const BLOB_KeyDigest = 1;
 
 export const TEXT_Name = 1;
 export const TEXT_GenericNameComponent = 1;
+export const TEXT_KeywordNameComponent = 1;
 export const TEXT_NotBefore = 1;
 export const TEXT_NotAfter = 1;
 
@@ -147,6 +148,11 @@ export const NNI_FreshnessPeriod = 1;
 export const NNI_InterestLifetime = 1;
 export const NNI_SignatureTime = 1;
 export const NNI_SignatureSeqNum = 1;
+export const NNI_SegmentNameComponent = 1;
+export const NNI_ByteOffsetNameComponent = 1;
+export const NNI_VersionNameComponent = 1;
+export const NNI_TimestampNameComponent = 1;
+export const NNI_SequenceNumNameComponent = 1;
 
 export enum NNI_SignatureType {
     DigestSha256             = 0,

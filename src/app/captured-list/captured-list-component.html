@@ -23,19 +23,19 @@
                 (dblclick)="packetClick.emit(packet)"
                 (keydown.enter)="packetClick.emit(packet)"
                 [tabIndex]="0">
-                <td>
+                <td class="time">
                     {{ round(packet[2]) }} ms
                 </td>
-                <td>
+                <td class="src-dist">
                     {{ packet[4] }}
                     <ng-container *ngIf="packet[6]">
                         [{{ getNodeLabel(packet[6]) }}<ng-container *ngIf="packet[7]"> &#8594; {{ getNodeLabel(packet[7]) }}</ng-container>]
                     </ng-container>
                 </td>
-                <td>
+                <td class="length">
                     {{ packet[3] }}
                 </td>
-                <td [title]="packet[5]">
+                <td class="name" [title]="packet[5]">
                     {{ ellipsis(packet[5]) }}
                 </td>
             </tr>

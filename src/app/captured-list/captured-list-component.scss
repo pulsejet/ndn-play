@@ -33,6 +33,16 @@
         border-bottom: 1px solid white;
     }
 
+    td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &.time { min-width: 120px; }
+        &.src-dist { min-width: 150px; }
+        &.length { min-width: 50px; }
+    }
+
     div.buttons {
         user-select: none;
         position: absolute;

@@ -47,6 +47,7 @@
         &.expand span {
             max-width: none;
             word-break: break-all;
+            white-space: normal;
         }
 
         &.human span {

@@ -60,6 +60,7 @@ export class DevtoolsComponent implements AfterViewInit {
 
   pushPacket(base64: string, timestamp: number, outgoing: boolean) {
     const packet = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
+    let l3Type: "Interest" | "Data" | "Nack" | "Unknown" = "Unknown";
 
     // Decode L2 or L3 packet
     let wire = packet;
@@ -77,9 +78,11 @@ export class DevtoolsComponent implements AfterViewInit {
     switch (wire[0]) {
       case 5:
         l3 = Interest.decodeFrom(decoder);
+        l3Type = "Interest";
         break;
       case 6:
         l3 = Data.decodeFrom(decoder);
+        l3Type = "Data";
         break;
     }
 
@@ -90,7 +93,7 @@ export class DevtoolsComponent implements AfterViewInit {
       0, 0, // unused flags
       timestamp || performance.now(), // timestamp
       packet.length, // length
-      l3.constructor.name, // type
+      l3Type, // type
       AltUri.ofName(l3.name), // name
       outgoing ? '↑ OUT' : '↓ IN', // source
       undefined, // destination

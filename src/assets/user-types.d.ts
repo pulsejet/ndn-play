@@ -10,7 +10,7 @@ import { FullItem } from 'vis-data/declarations/data-interface';
 import type { H3Transport } from '@ndn/quic-transport';
 import { IdType } from './esm';
 import { Network } from './esm';
-import { Node as Node_2 } from './esm';
+import { Node as Node_3 } from './esm';
 import * as retry from 'retry';
 import type { WebSocket as WebSocket_2 } from 'ws';
 
@@ -112,6 +112,30 @@ declare namespace AesKeyLength {
     const Choices: readonly [128, 192, 256];
 }
 
+/** Alternate expressions or expression in parens node. */
+declare class Alt extends Expr {
+    choices: Expr[];
+    constructor(choices?: Expr[]);
+    protected exprParens(parent: Expr): boolean;
+    protected exprToTokens(): Iterable<T.Token>;
+}
+
+/**
+ * Specify several alternate patterns in "OR" relation.
+ *
+ * @remarks
+ * When matching a name, the first successful match is returned.
+ *
+ * When building a name, the first choice that does not have missing variable is returned.
+ */
+declare class AlternatePattern extends Pattern {
+    readonly choices: Pattern[];
+    constructor(choices?: Pattern[]);
+    simplify(): Pattern;
+    protected matchState(state: MatchState): Iterable<MatchState>;
+    protected buildState(state: BuildState): Iterable<BuildState>;
+}
+
 /** Print Generic, ImplicitDigest, ParamsDigest in alternate URI syntax. */
 declare const AltUri: AltUriConverter;
 
@@ -141,8 +165,33 @@ declare class AltUriConverter {
     readonly parseName: (input: string) => Name;
 }
 
+declare const And: new () => Operator;
+
+declare const ArrowL: new () => Operator;
+
 /** Convert ArrayBuffer or ArrayBufferView to DataView. */
 declare function asDataView(a: BufferSource): DataView;
+
+declare namespace ast {
+    export {
+        parse,
+        Node_2 as Node,
+        Expr,
+        ComponentLit_2 as ComponentLit,
+        Ident_2 as Ident,
+        Call,
+        Alt,
+        Name_2 as Name,
+        Constrained,
+        ComponentConstraintEq,
+        ComponentConstraintTerm,
+        ComponentConstraint,
+        ComponentConstraintRel,
+        SigningConstraint,
+        Stmt,
+        Schema
+    }
+}
 
 /** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
 declare function asUint8Array(a: BufferSource): Uint8Array;
@@ -189,12 +238,214 @@ declare class BloomFilter {
 declare interface BloomFilter extends Readonly<Parameters_2> {
 }
 
+/** Tokens enclosed in braces. */
+declare class Brace extends Nested {
+    constructor(left: T.Operator, mid?: Unit[]);
+}
+
+declare const BraceL: new () => Operator;
+
+declare const BraceR: new () => Operator;
+
+/**
+ * A bridge passes packets between two logical forwarders.
+ * Disposing the bridge severs the link.
+ */
+declare interface Bridge extends Disposable {
+    readonly fwA: Forwarder;
+    readonly fwB: Forwarder;
+    /** Face on fwA linking to fwB. */
+    readonly faceA: FwFace;
+    /** Face on fwB linking to fwA. */
+    readonly faceB: FwFace;
+    /** Change fw* and face* property names. */
+    rename: <A extends string, B extends string>(A: A, B: B) => Bridge.Renamed<A, B>;
+}
+
+declare namespace Bridge {
+    /**
+     * Function to relay packets between two logical forwarders.
+     * @param it - stream of packet buffers received from peer side.
+     * @returns stream of packet buffers injected into our side.
+     */
+    type RelayFunc = (it: AsyncIterable<Uint8Array>) => AsyncIterable<Uint8Array>;
+    /** Options to relay packets with loss, delay, and jitter. */
+    interface RelayOptions {
+        /**
+         * Packet loss rate between 0.0 (no loss) and 1.0 (100% loss).
+         * @defaultValue 0
+         */
+        loss?: number;
+        /**
+         * Median delay in milliseconds.
+         * @defaultValue 1
+         */
+        delay?: number;
+        /**
+         * Jitter around median delay.
+         * @defaultValue 0
+         * @see {@link \@ndn/util!randomJitter}
+         */
+        jitter?: number;
+    }
+    type Relay = RelayFunc | RelayOptions;
+    /** {@link create} options. */
+    interface CreateOptions {
+        /** Description for debugging purpose. */
+        bridgeName?: string;
+        /**
+         * Forwarder A.
+         * @defaultValue `Forwarder.create(.fwOpts)`
+         * @remarks
+         * Disposing the bridge closes auto-created Forwarder but not passed-in Forwarder.
+         */
+        fwA?: Forwarder;
+        /**
+         * Forwarder B.
+         * @defaultValue `Forwarder.create(.fwOpts)`
+         * @remarks
+         * Disposing the bridge closes auto-created Forwarder but not passed-in Forwarder.
+         */
+        fwB?: Forwarder;
+        /**
+         * Options for creating Forwarder instances via {@link Forwarder.create}.
+         * @remarks
+         * Ignored if both `.fwA` and `.fwB` are specified.
+         */
+        fwOpts?: Forwarder.Options;
+        /**
+         * Relay options for packets from forwarder A to forwarder B.
+         * @defaultValue instant delivery
+         */
+        relayAB?: Relay;
+        /**
+         * Relay options for packets from forwarder B to forwarder A.
+         * @defaultValue instant delivery
+         */
+        relayBA?: Relay;
+        /**
+         * Routes from forwarder A to forwarder B.
+         * @defaultValue `["/"]`
+         */
+        routesAB?: readonly NameLike[];
+        /**
+         * Routes from forwarder B to forwarder A.
+         * @defaultValue `["/"]`
+         */
+        routesBA?: readonly NameLike[];
+    }
+    /** Create a bridge that passes packets between two logical forwarders. */
+    function create({ bridgeName, fwA, fwB, fwOpts, relayAB, relayBA, routesAB, routesBA, }?: CreateOptions): Bridge;
+    type Renamed<A extends string, B extends string> = Except<Bridge, "fwA" | "fwB" | "faceA" | "faceB"> & {
+        [k in `fw${A | B}`]: Forwarder;
+    } & {
+        [k in `face${A | B}`]: FwFace;
+    };
+    /** {@link star} options, where each edge/leaf can have different options. */
+    type StarEdgeOptions = Except<CreateOptions, "fwA">;
+    /** {@link star} options, where every edge/leaf has the same options. */
+    type StarOptions = Except<StarEdgeOptions, "fwB"> & {
+        /** Number of leaf nodes. */
+        leaves: number;
+    };
+    /**
+     * Create a star topology made with bridges.
+     * @param opts - Per-leaf options.
+     * @param fwA - Center logical forwarder node.
+     *
+     * @remarks
+     * The star topology consists of `fwA` as the center node, and `fwB`s from each of `opts` as
+     * leaf nodes. A-to-B goes toward the leaf; B-to-A goes toward the center.
+     */
+    function star(opts: StarOptions | readonly StarEdgeOptions[], fwA?: Forwarder): Bridge[];
+}
+
+/** Context of constructing a name. */
+declare class BuildState {
+    readonly name: Name;
+    readonly vars: Map<string, Name>;
+    constructor(name: Name, vars: Map<string, Name>);
+    append(...comps: Component[]): BuildState;
+}
+
+/** Internal function call node. */
+declare class Call extends Expr {
+    func: string;
+    args: Expr[];
+    constructor(func: string, args?: Expr[]);
+    protected exprParens(): boolean;
+    protected exprToTokens(): Generator<T.Token, void, undefined>;
+}
+
 /** Request to cancel a pending Interest. */
 declare class CancelInterest implements FwPacket<Interest> {
     l3: Interest;
     token?: unknown;
     constructor(l3: Interest, token?: unknown);
     readonly cancel = true;
+}
+
+/** Fetch certificates from network. */
+declare class CertFetcher implements CertSource {
+    constructor(opts: CertFetcher.Options);
+    private readonly endpoint;
+    private readonly consumerOpts;
+    private readonly cache;
+    /**
+     * Fetch certificates from network by certificate name or key name.
+     * Upon successful retrieval, yields the certificate.
+     * Upon unsuccessful retrieval, ends the iterable without yielding.
+     * Retrieval result is cached for a period of time.
+     */
+    findCerts(keyLocator: Name): AsyncIterable<Certificate>;
+}
+
+declare namespace CertFetcher {
+    interface CacheOptions {
+        /**
+         * Cache lifetime for successful retrieval, in milliseconds.
+         * @defaultValue 1 hour
+         *
+         * @remarks
+         * During this period, return the same certificate instead of re-fetching.
+         */
+        positiveTtl?: number;
+        /**
+         * Cache lifetime for unsuccessful retrieval, in milliseconds.
+         * @defaultValue 10 seconds
+         *
+         * @remarks
+         * During this period, report the certificate as un-retrievable instead of re-fetching.
+         */
+        negativeTtl?: number;
+        /**
+         * Cache cleanup interval, in milliseconds.
+         * @defaultValue 5 minutes
+         *
+         * @remarks
+         * This determines how often expired cache entries are deleted.
+         */
+        cacheCleanupInterval?: number;
+    }
+    interface Options extends CacheOptions {
+        /**
+         * Endpoint for communication.
+         * @defaultValue
+         * Endpoint on default logical forwarder with up to 2 retransmissions.
+         *
+         * @remarks
+         * {@link CertFetcher}s on the same Endpoint share the same cache instance.
+         * Cache options are determined when it's first created.
+         */
+        endpoint?: Endpoint;
+        /** InterestLifetime for certificate retrieval. */
+        interestLifetime?: number;
+        /**
+         * RetxPolicy for certificate retrieval.
+         * @deprecated Pass to `.endpoint` constructor.
+         */
+        retx?: RetxPolicy;
+    }
 }
 
 /**
@@ -307,6 +558,23 @@ declare interface CertNameFields extends KeyNameFields {
     keyName: Name;
 }
 
+/**
+ * Match or construct a KeyLocator or certificate name.
+ *
+ * @remarks
+ * To match a KeyLocator or certificate name, use a {@link ConcatPattern} that contains
+ * patterns to match the subject name, followed by a {@link CertNamePattern} at last.
+ * The captured variable contains the whole KeyLocator or certificate name that can
+ * be further recognized by {@link CertNaming.parseKeyName} and {@link CertNaming.parseCertName}.
+ *
+ * Using the same {@link ConcatPattern}, the constructed name would be the subject name.
+ * It can be passed to {@link \@ndn/keychain!KeyChain.getSigner} to find a key/certificate.
+ */
+declare class CertNamePattern extends Pattern {
+    protected matchState(state: MatchState): Iterable<MatchState>;
+    protected buildState(state: BuildState): Iterable<BuildState>;
+}
+
 declare namespace CertNaming {
     export {
         toSubjectName,
@@ -322,6 +590,48 @@ declare namespace CertNaming {
         ISSUER_SELF,
         KeyNameFields,
         CertNameFields
+    }
+}
+
+/** A place to find certificates. */
+declare interface CertSource {
+    /**
+     * Find certificates by KeyLocator name.
+     * @param keyLocator - Certificate name or key name.
+     * @returns Matched certificate(s).
+     */
+    findCerts: (keyLocator: Name) => AsyncIterable<Certificate>;
+}
+
+/** Find certificates from multiple sources. */
+declare class CertSources implements CertSource {
+    readonly trustAnchors: TrustAnchorContainer;
+    private readonly fetcher?;
+    private readonly keyChainSource?;
+    private readonly list;
+    constructor(opts: CertSources.Options);
+    /**
+     * Find certificates by certificate name or key name.
+     *
+     * @remarks
+     * Searching from sources in this order:
+     * - trust anchors
+     * - local KeyChain
+     * - network retrieval
+     * After finding one or more certificates in a source, subsequent sources are skipped.
+     */
+    findCerts(keyLocator: Name): AsyncIterable<Certificate>;
+    isTrustAnchor(cert: Certificate): boolean;
+}
+
+declare namespace CertSources {
+    interface Options extends CertFetcher.Options {
+        /** Trust anchor certificates. */
+        trustAnchors?: TrustAnchorContainer | Certificate[];
+        /** Local KeyChain. */
+        keyChain?: KeyChain;
+        /** If true, disable CertFetcher. */
+        offline?: boolean;
     }
 }
 
@@ -360,6 +670,12 @@ declare class Closers extends Array<Closer | Disposable | AsyncDisposable> imple
     /** Wait for close. */
     wait(): Promise<void>;
 }
+
+declare const Colon: new () => Operator;
+
+declare const Comma: new () => Operator;
+
+declare function compile(schema: ast.Schema): TrustSchemaPolicy;
 
 /**
  * Name component.
@@ -425,8 +741,54 @@ declare namespace Component {
     }
 }
 
+/** Component constraint node. */
+declare class ComponentConstraint extends ComponentConstraintEq {
+    terms: ComponentConstraintTerm[];
+    constructor(terms?: ComponentConstraintTerm[]);
+    protected componentConstraintToTokens(): Generator<T.Token, void, undefined>;
+}
+
+/** Component constraint equation. */
+declare abstract class ComponentConstraintEq extends Node_2 {
+    toTokens(): Iterable<T.Token>;
+    protected static componentConstraintToTokens(node: ComponentConstraintEq, parentOp: string): Iterable<T.Token>;
+    protected abstract componentConstraintToTokens(parentOp: string): Iterable<T.Token>;
+}
+
+/** Component constraint And/Or relation node. */
+declare class ComponentConstraintRel extends ComponentConstraintEq {
+    left: ComponentConstraintEq;
+    op: T.Operator;
+    right: ComponentConstraintEq;
+    constructor(left: ComponentConstraintEq, op: T.Operator, right: ComponentConstraintEq);
+    protected componentConstraintToTokens(parentOp: string): Generator<T.Token, void, undefined>;
+}
+
+/** Component constraint term node. */
+declare class ComponentConstraintTerm extends Node_2 {
+    tag: Ident_2;
+    expr: Expr;
+    constructor(tag: Ident_2, expr: Expr);
+    toTokens(): Generator<T.Token, void, undefined>;
+}
+
 /** Name component or component URI. */
 declare type ComponentLike = Component | string;
+
+/** Name component literal token. */
+declare class ComponentLit extends Token {
+    readonly comp: Component;
+    constructor(comp: Component);
+    toString(): string;
+}
+
+/** Name component literal node. */
+declare class ComponentLit_2 extends Expr {
+    comp: Component;
+    constructor(comp: Component);
+    protected exprParens(): boolean;
+    protected exprToTokens(): Generator<T.ComponentLit, void, unknown>;
+}
 
 declare interface Compression {
     compress: (input: Uint8Array) => Uint8Array;
@@ -435,6 +797,15 @@ declare interface Compression {
 
 /** Concatenate Uint8Arrays. */
 declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number): Uint8Array;
+
+/** Concatenate several patterns. */
+declare class ConcatPattern extends Pattern {
+    readonly parts: Pattern[];
+    constructor(parts?: Pattern[]);
+    simplify(): Pattern;
+    protected matchState(state: MatchState, partIndex?: number): Iterable<MatchState>;
+    protected buildState(state: BuildState, partIndex?: number): Iterable<BuildState>;
+}
 
 /** {@link connectToNetwork} options. */
 declare interface ConnectNetworkOptions extends ConnectRouterOptions {
@@ -544,6 +915,14 @@ declare function connectToRouter(router: string, opts?: ConnectRouterOptions): P
 /** Console on stderr. */
 declare const console_2: Console;
 
+/** Match or construct a constant name portion. */
+declare class ConstPattern extends Pattern {
+    constructor(name: NameLike);
+    readonly name: Name;
+    protected matchState(state: MatchState): Iterable<MatchState>;
+    protected buildState(state: BuildState): Iterable<BuildState>;
+}
+
 /**
  * Ensure n is an integer within `[0,MAX_SAFE_INTEGER]` range.
  * @param n - Input number.
@@ -576,6 +955,15 @@ declare function constrain(n: number, typeName: string, max: number): number;
  * Thrown if n is out of valid range.
  */
 declare function constrain(n: number, typeName: string, min: number, max: number): number;
+
+/** Constrained expression node. */
+declare class Constrained extends Expr {
+    name: Name_2 | Ident_2;
+    componentConstraint: ComponentConstraintEq;
+    constructor(name: Name_2 | Ident_2, componentConstraint: ComponentConstraintEq);
+    protected exprParens(): boolean;
+    protected exprToTokens(): Iterable<T.Token>;
+}
 
 /**
  Matches a [`class` constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes).
@@ -624,6 +1012,10 @@ declare interface ConsumerOptions {
      * `undefined`, no verification.
      */
     verifier?: Verifier;
+}
+
+declare interface Context {
+    packet: TrustSchemaPolicy.Match[];
 }
 
 /**
@@ -899,11 +1291,11 @@ declare interface CtorTag {
 }
 
 declare interface CtorTag_2 {
-    [ctorAssign_2]: (f: Fields_2) => void;
+    [ctorAssign_2]: (f: Fields) => void;
 }
 
 declare interface CtorTag_3 {
-    [ctorAssign_3]: (f: Fields) => void;
+    [ctorAssign_3]: (f: Fields_2) => void;
 }
 
 /** CustomEvent object. */
@@ -924,7 +1316,7 @@ declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signa
      * - `Uint8Array` as Content
      */
     constructor(...args: Array<Data | Data.CtorArg>);
-    readonly [FIELDS]: Fields;
+    readonly [FIELDS]: Fields_2;
     static decodeFrom(decoder: Decoder): Data;
     encodeTo(encoder: Encoder): void;
     private encodeSignedPortion;
@@ -975,7 +1367,14 @@ declare interface DataBuffer {
     insert: (...pkts: readonly Data[]) => Promise<void>;
 }
 
-declare namespace DataStore {
+declare interface DataStore {
+    find: (interest: Interest) => Promise<Data | undefined>;
+    insert: (opts: {
+        expireTime?: number;
+    }, ...pkts: readonly Data[]) => Promise<void>;
+}
+
+declare namespace DataStore_2 {
     export {
         ListNames,
         ListData,
@@ -986,16 +1385,9 @@ declare namespace DataStore {
     }
 }
 
-declare interface DataStore_2 {
-    find: (interest: Interest) => Promise<Data | undefined>;
-    insert: (opts: {
-        expireTime?: number;
-    }, ...pkts: readonly Data[]) => Promise<void>;
-}
-
 /** DataBuffer implementation based on `DataStore` from `@ndn/repo` package. */
 declare class DataStoreBuffer implements DataBuffer {
-    readonly store: DataStore_2;
+    readonly store: DataStore;
     /**
      * Constructor.
      * @param store - {@link \@ndn/repo!DataStore} instance.
@@ -1010,7 +1402,7 @@ declare class DataStoreBuffer implements DataBuffer {
      * for webapps that do not use DataBuffer. The trade-off is that, applications wanting to use
      * DataBuffer would have to import `@ndn/repo` themselves.
      */
-    constructor(store: DataStore_2, { ttl, dataSigner, }?: DataStoreBuffer.Options);
+    constructor(store: DataStore, { ttl, dataSigner, }?: DataStoreBuffer.Options);
     private readonly ttl;
     private readonly dataSigner?;
     find(interest: Interest): Promise<Data | undefined>;
@@ -1462,8 +1854,8 @@ G
  * application to interact with the logical forwarder.
  */
 declare class Endpoint {
-    readonly opts: Options_2;
-    constructor(opts?: Options_2);
+    readonly opts: Options;
+    constructor(opts?: Options);
     /** Logical forwarder instance. */
     readonly fw: Forwarder;
     /**
@@ -1498,7 +1890,7 @@ declare namespace endpoint {
         RetxOptions,
         RetxGenerator,
         RetxPolicy,
-        Options_2 as Options,
+        Options,
         Endpoint
     }
 }
@@ -1695,20 +2087,7 @@ declare const EventEmitter: {
     readonly prototype: EventEmitter<any>;
 };
 
-declare type EventMap = SyncProtocol.EventMap<Name> & {
-    debug: CustomEvent<DebugEntry>;
-};
-
-declare type EventMap_2 = {
-    /** Emitted upon face is up as reported by lower layer. */
-    up: Event;
-    /** Emitted upon face is down as reported by lower layer. */
-    down: Event;
-    /** Emitted upon face is closed. */
-    close: Event;
-};
-
-declare type EventMap_3 = {
+declare type EventMap = {
     /** Emitted before adding face. */
     faceadd: Forwarder.FaceEvent;
     /** Emitted after removing face. */
@@ -1727,29 +2106,16 @@ declare type EventMap_3 = {
     pkttx: Forwarder.PacketEvent;
 };
 
-declare type EventMap_4 = SyncProtocol.EventMap<Name> & {
-    debug: CustomEvent<DebugEntry_2>;
+declare type EventMap_2 = {
+    /** Emitted upon face is up as reported by lower layer. */
+    up: Event;
+    /** Emitted upon face is down as reported by lower layer. */
+    down: Event;
+    /** Emitted upon face is closed. */
+    close: Event;
 };
 
-declare type EventMap_5 = {
-    /** Emitted for debugging. */
-    debug: CustomEvent<DebugEntry_3>;
-    state: PartialSubscriber.StateEvent;
-};
-
-declare type EventMap_6 = {
-    debug: CustomEvent<DebugEntry_4>;
-};
-
-declare type EventMap_7 = SyncProtocol.EventMap<Name> & {
-    debug: CustomEvent<DebugEntry_5>;
-};
-
-declare type EventMap_8 = {
-    error: CustomEvent<Error>;
-};
-
-declare type EventMap_9 = {
+declare type EventMap_3 = {
     /** Emitted upon face state change. */
     state: L3Face.StateEvent;
     /** Emitted upon state becomes UP. */
@@ -1762,6 +2128,32 @@ declare type EventMap_9 = {
     rxerror: CustomEvent<L3Face.RxError>;
     /** Emitted upon TX preparation error. */
     txerror: CustomEvent<L3Face.TxError>;
+};
+
+declare type EventMap_4 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry>;
+};
+
+declare type EventMap_5 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry_2>;
+};
+
+declare type EventMap_6 = {
+    /** Emitted for debugging. */
+    debug: CustomEvent<DebugEntry_3>;
+    state: PartialSubscriber.StateEvent;
+};
+
+declare type EventMap_7 = {
+    debug: CustomEvent<DebugEntry_4>;
+};
+
+declare type EventMap_8 = SyncProtocol.EventMap<Name> & {
+    debug: CustomEvent<DebugEntry_5>;
+};
+
+declare type EventMap_9 = {
+    error: CustomEvent<Error>;
 };
 
 /** Delete keys from a Set or Map until its size is below capacity. */
@@ -1820,6 +2212,14 @@ declare type ExceptOptions = {
      	*/
     	requireExactProps?: boolean;
 };
+
+/** Expression node. */
+declare abstract class Expr extends Node_2 {
+    toTokens(): Generator<T.Token, void, undefined>;
+    protected static exprToTokens(node: Expr, parent?: Expr): Generator<T.Token, void, undefined>;
+    protected abstract exprParens(parent: Expr): boolean;
+    protected abstract exprToTokens(): Iterable<T.Token>;
+}
 
 /** An TLV element that allows extension sub element. */
 declare interface Extensible {
@@ -1961,6 +2361,28 @@ declare namespace FchResponse {
 declare const FIELDS: unique symbol;
 
 declare class Fields {
+    constructor(...args: Array<Interest | Interest.CtorArg>);
+    name: Name;
+    canBePrefix: boolean;
+    mustBeFresh: boolean;
+    fwHint?: FwHint;
+    get nonce(): number | undefined;
+    set nonce(v: number | undefined);
+    private nonce_;
+    get lifetime(): number;
+    set lifetime(v: number);
+    private lifetime_;
+    get hopLimit(): number;
+    set hopLimit(v: number);
+    private hopLimit_;
+    appParameters?: Uint8Array;
+    sigInfo?: SigInfo;
+    sigValue: Uint8Array;
+    paramsPortion?: Uint8Array;
+    signedPortion?: Uint8Array;
+}
+
+declare class Fields_2 {
     constructor(...args: Array<Data | Data.CtorArg>);
     name: Name;
     get contentType(): number;
@@ -1986,28 +2408,6 @@ declare class Fields {
     signedPortion?: Uint8Array;
     topTlv?: Uint8Array;
     topTlvDigest?: Uint8Array;
-}
-
-declare class Fields_2 {
-    constructor(...args: Array<Interest | Interest.CtorArg>);
-    name: Name;
-    canBePrefix: boolean;
-    mustBeFresh: boolean;
-    fwHint?: FwHint;
-    get nonce(): number | undefined;
-    set nonce(v: number | undefined);
-    private nonce_;
-    get lifetime(): number;
-    set lifetime(v: number);
-    private lifetime_;
-    get hopLimit(): number;
-    set hopLimit(v: number);
-    private hopLimit_;
-    appParameters?: Uint8Array;
-    sigInfo?: SigInfo;
-    sigValue: Uint8Array;
-    paramsPortion?: Uint8Array;
-    signedPortion?: Uint8Array;
 }
 
 /**
@@ -2054,7 +2454,7 @@ declare interface Find {
 declare function flatMapOnce<T, R>(f: (item: T) => AnyIterable<R>, iterable: AnyIterable<T>): AsyncIterable<R>;
 
 /** Logical forwarder. */
-declare interface Forwarder extends TypedEventTarget<EventMap_3> {
+declare interface Forwarder extends TypedEventTarget<EventMap> {
     /** Node names, used in forwarding hint processing. */
     readonly nodeNames: Name[];
     /** Logical faces. */
@@ -2135,6 +2535,18 @@ declare interface ForwardingProvider {
     openTerminal?: (node: INode) => void;
 }
 
+/** NDNLPv2 fragmenter. */
+declare class Fragmenter {
+    private readonly seqNumGen;
+    /**
+     * Fragment a packet.
+     * @param full - LpPacket contains full L3 packet and LpHeaders.
+     * @param mtu - Transport MTU.
+     * @returns LpPacket fragments, or empty array if fragmentation fails.
+     */
+    fragment(full: LpPacket, mtu: number): LpPacket[];
+}
+
 declare const FROM: unique symbol;
 
 /**
@@ -2156,7 +2568,7 @@ declare namespace fromHex {
 declare function fromUtf8(buf: Uint8Array): string;
 
 /** PSync - FullSync participant. */
-declare class FullSync extends TypedEventTarget<EventMap> implements SyncProtocol<Name> {
+declare class FullSync extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: FullSync.Options);
     private readonly maybeHaveEventListener;
     private readonly endpoint;
@@ -2537,6 +2949,26 @@ export declare namespace globals {
 /** 32-bit hash function. */
 declare type HashFunction = (seed: number, input: Uint8Array) => number;
 
+/** Sign packets according to hierarchical trust model. */
+declare class HierarchicalSigner extends PolicySigner implements Signer {
+    private readonly keyChain;
+    constructor(keyChain: KeyChain);
+    /**
+     * Locate an existing signer among available certificates in the KeyChain.
+     *
+     * @remarks
+     * The certificate's subject name shall be a prefix of the packet name.
+     * Longer certificate names are preferred.
+     */
+    findSigner(name: Name): Promise<Signer>;
+}
+
+/** Verify packets according to hierarchical trust model. */
+declare class HierarchicalVerifier extends PolicyVerifier {
+    protected checkKeyLocatorPolicy({ name }: Verifier.Verifiable, klName: Name): void;
+    protected checkCertPolicy({ name }: Verifier.Verifiable, { name: certName }: Certificate): void;
+}
+
 /** HmacWithSha256 signing algorithm. */
 declare const HMAC: SigningAlgorithm<{}, false, HMAC.GenParams>;
 
@@ -2661,6 +3093,24 @@ to?: IdType,
 p?: Uint8Array
 ];
 
+/** Identifier token. */
+declare class Ident extends Token {
+    readonly id: string;
+    constructor(id: string);
+    toString(): string;
+}
+
+/** Identifier node. */
+declare class Ident_2 extends Expr {
+    id: string;
+    /** Determine whether identifier could be a runtime variable name. */
+    static isRuntime(id: string): boolean;
+    static fromToken(token: N.Unit): Ident_2;
+    constructor(id: string);
+    protected exprParens(): boolean;
+    protected exprToTokens(): Generator<T.Ident, void, unknown>;
+}
+
 declare interface IEdge extends Edge {
     /** Latency in milliseconds */
     latency: number;
@@ -2747,7 +3197,7 @@ declare interface ImportCertOptions<A extends CryptoAlgorithm> {
     now?: ValidityPeriod.TimestampInput;
 }
 
-declare interface INode extends Node_2 {
+declare interface INode extends Node_3 {
     nfw?: NFW;
     /** Extra data object */
     extra: INodeExtra;
@@ -2818,7 +3268,7 @@ declare class Interest implements LLSign.Signable, LLVerify.Verifiable, Signer.S
      * - `Uint8Array` as AppParameters
      */
     constructor(...args: Array<Interest | Interest.CtorArg>);
-    readonly [FIELDS]: Fields_2;
+    readonly [FIELDS]: Fields;
     static decodeFrom(decoder: Decoder): Interest;
     encodeTo(encoder: Encoder): void;
     private encodeParamsPortion;
@@ -3184,6 +3634,14 @@ declare namespace keychain {
 }
 export { keychain }
 
+/** Find certificates in KeyChain. */
+declare class KeyChainCertSource implements CertSource {
+    private readonly keyChain;
+    constructor(keyChain: KeyChain);
+    /** Find certificates by certificate name or key name. */
+    findCerts(keyLocator: Name): AsyncIterable<Certificate>;
+}
+
 /**
  * KeyChain adapter that serializes function calls.
  *
@@ -3398,7 +3856,7 @@ declare namespace KeyStore {
 }
 
 /** Network layer face for sending and receiving L3 packets. */
-declare class L3Face extends TypedEventTarget<EventMap_9> implements FwFace.RxTx {
+declare class L3Face extends TypedEventTarget<EventMap_3> implements FwFace.RxTx {
     private transport;
     /**
      * Constructor.
@@ -3508,6 +3966,19 @@ declare namespace L3Face {
     function processAddRoutes(fwFace: FwFace, addRoutes?: readonly NameLike[]): void;
 }
 
+declare namespace l3face {
+    export {
+        Bridge,
+        L3Face,
+        rxFromPacketIterable,
+        rxFromStream,
+        txToStream,
+        StreamTransport,
+        Transport
+    }
+}
+export { l3face }
+
 declare type L3Pkt = Interest | Data | Nack;
 
 declare type Len = 1 | 2 | 4 | 8;
@@ -3598,11 +4069,33 @@ declare namespace LLVerify {
     }
 }
 
+/** Load policy from VerSec syntax. */
+declare function load(input: string): TrustSchemaPolicy;
+
 /**
  * Acquire a semaphore for unlocking via Disposable.
  * @param semaphore - Semaphore or Mutex from `wait-your-turn` package.
  */
 declare function lock(semaphore: Pick<Semaphore, "acquire">): Promise<Disposable>;
+
+declare namespace lp {
+    export {
+        TT,
+        Fragmenter,
+        LpPacket,
+        LpL3,
+        Reassembler,
+        LpService
+    }
+}
+export { lp }
+
+/** L3 fields in {@link LpPacket}. */
+declare interface LpL3 {
+    pitToken?: Uint8Array;
+    nack?: NackHeader;
+    congestionMark?: number;
+}
 
 /**
  * Perform name longest prefix match on a container of entries.
@@ -3614,6 +4107,52 @@ declare function lock(semaphore: Pick<Semaphore, "acquire">): Promise<Disposable
  * shorter prefixes. The caller may early-return the iterator to ignore subsequent results.
  */
 declare function lpm<T>(name: Name, get: (prefixHex: string) => T | undefined): Iterable<T>;
+
+/** NDNLPv2 packet. */
+declare class LpPacket {
+    static decodeFrom(decoder: Decoder): LpPacket;
+    fragSeqNum?: bigint;
+    fragIndex: number;
+    fragCount: number;
+    /**
+     * L3 payload.
+     *
+     * @remarks
+     * This field may contain either a whole L3 packet or fragment of one.
+     * This is also known as *fragment* in other libraries.
+     */
+    payload?: Uint8Array;
+    /**
+     * Extract L3 fields only.
+     *
+     * @remarks
+     * They may be copied to another LpPacket via `Object.assign()`.
+     */
+    get l3(): LpL3;
+    /**
+     * Prepend LpPacket to encoder.
+     *
+     * @throws Error
+     * Thrown if fragmentation headers violate invariants:
+     * - `.fragIndex >= .fragCount`
+     * - `.fragSeqNum` is unset but `.fragCount > 1`
+     */
+    encodeTo(encoder: Encoder): void;
+    private encodeFragHeaders;
+    /**
+     * Determine whether any L3 header is present.
+     * @see {@link LpL3}
+     */
+    hasL3Headers(): boolean;
+    /**
+     * Encode L3 headers.
+     * @see {@link LpL3}
+     */
+    encodeL3Headers(): Encodable[];
+}
+
+declare interface LpPacket extends LpL3 {
+}
 
 /** NDNLPv2 service. */
 declare class LpService {
@@ -3803,18 +4342,47 @@ declare namespace MappingEntry {
     function extend<M extends MappingEntry & Extensible>(ctor: new () => M, ctx?: ClassDecoratorContext): void;
 }
 
+/** Context of matching a name. */
+declare class MatchState {
+    readonly name: Name;
+    readonly pos: number;
+    readonly vars: Vars;
+    /**
+     * Constructor.
+     * @param name - Input name.
+     * @param pos - Position of first unconsumed component.
+     * @param vars - Recognized variables.
+     */
+    constructor(name: Name, pos?: number, vars?: Vars);
+    /** Length of unconsumed name. */
+    get tailLength(): number;
+    /** Get first i components of unconsumed name. */
+    tail(i?: number): Name;
+    /** Whether the input name has been accepted by pattern. */
+    get accepted(): boolean;
+    /**
+     * Clone the state while consuming part of the name.
+     * @param incrementPos - How many components are consumed.
+     * @param varsL - Updated variables.
+     */
+    extend(incrementPos: number, ...varsL: Array<Iterable<readonly [string, Name]>>): MatchState;
+}
+
 declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
 
 export declare const modules: {
-    '@ndn/packet': (string | typeof packet)[];
-    '@ndn/tlv': (string | typeof tlv)[];
-    '@ndn/sync': (string | typeof sync)[];
+    '@ndn/autoconfig': (string | typeof autoconfig)[];
+    '@ndn/endpoint': (string | typeof endpoint)[];
+    '@ndn/fw': (string | typeof fw)[];
     '@ndn/keychain': (string | typeof keychain)[];
+    '@ndn/l3face': (string | typeof l3face)[];
+    '@ndn/lp': (string | typeof lp)[];
+    '@ndn/packet': (string | typeof packet)[];
+    '@ndn/sync': (string | typeof sync)[];
+    '@ndn/tlv': (string | typeof tlv)[];
+    '@ndn/trust-schema': (string | typeof trust_schema)[];
     '@ndn/util': (string | typeof util)[];
     '@ndn/ws-transport': (string | typeof ws_transport)[];
-    '@ndn/endpoint': (string | typeof endpoint)[];
-    '@ndn/autoconfig': (string | typeof autoconfig)[];
-    '@ndn/fw': (string | typeof fw)[];
 };
 
 /** Container that associates a key with multiple distinct values. */
@@ -3824,6 +4392,18 @@ declare class MultiMap<K, V> extends KeyMultiMap<K, V, K> {
 
 declare class Mutex extends Semaphore {
     constructor();
+}
+
+declare namespace N {
+    export {
+        scan_2 as scan,
+        split,
+        unParen,
+        toTokens,
+        Unit,
+        Paren,
+        Brace
+    }
 }
 
 /** Nack packet. */
@@ -3941,6 +4521,14 @@ declare namespace Name {
     }
 }
 
+/** Name node. */
+declare class Name_2 extends Expr {
+    comps: Expr[];
+    constructor(comps?: Expr[]);
+    protected exprParens(parent: Expr): boolean;
+    protected exprToTokens(): Iterable<T.Token>;
+}
+
 /** Named private key or secret key decrypter. */
 declare interface NamedDecrypter<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, LLDecrypt.Key {
 }
@@ -4047,6 +4635,13 @@ declare namespace NamingConvention {
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
+declare class Nested {
+    readonly left: T.Operator;
+    readonly mid: Unit[];
+    right: T.Operator;
+    protected constructor(left: T.Operator, mid: Unit[], right: T.Operator);
+}
+
 declare class NFW {
     readonly topo: Topology;
     readonly nodeId: IdType;
@@ -4108,7 +4703,7 @@ declare class NFW {
     private expressInterest;
     private getConnection;
     strsFIB(): string[];
-    getEndpoint(opts?: Options_2): Endpoint;
+    getEndpoint(opts?: Options): Endpoint;
 }
 
 /**
@@ -4149,6 +4744,11 @@ declare namespace NNI {
     }): bigint;
 }
 
+/** AST node. */
+declare abstract class Node_2 {
+    abstract toTokens(): Iterable<T.Token>;
+}
+
 /** Encrypter and decrypter that do nothing. */
 declare const noopEncryption: Encrypter<any> & Decrypter<any>;
 
@@ -4175,7 +4775,7 @@ declare class Observable<T> implements Subscribable<T> {
     /**
      * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
      */
-    operator: Operator<any, T> | undefined;
+    operator: Operator_2<any, T> | undefined;
     /**
      * @constructor
      * @param {Function} subscribe the function that is called when the Observable is
@@ -4205,7 +4805,7 @@ declare class Observable<T> implements Subscribable<T> {
      * operator by simply returning `new Observable()` directly. See "Creating new operators from
      * scratch" section here: https://rxjs.dev/guide/operators
      */
-    lift<R>(operator?: Operator<T, R>): Observable<R>;
+    lift<R>(operator?: Operator_2<T, R>): Observable<R>;
     subscribe(observerOrNext?: Partial<Observer<T>> | ((value: T) => void)): Subscription_2;
     /** @deprecated Instead of passing separate callback arguments, use an observer argument. Signatures taking separate callback arguments will be removed in v8. Details: https://rxjs.dev/deprecations/subscribe-arguments */
     subscribe(next?: ((value: T) => void) | null, error?: ((error: any) => void) | null, complete?: (() => void) | null): Subscription_2;
@@ -4323,18 +4923,43 @@ declare interface Observer<T> {
     complete: () => void;
 }
 
+/** Operator token. */
+declare abstract class Operator extends Token {
+    /** Operator short string. */
+    abstract get operator(): string;
+    /** Operator nesting level. */
+    abstract get nest(): number;
+    /** If true, when this token appears at end of line, a comma should be inserted. */
+    abstract get autoCommaAfter(): boolean;
+}
+
 /***
  * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
  */
-declare interface Operator<T, R> {
+declare interface Operator_2<T, R> {
     call(subscriber: Subscriber_2<R>, source: any): TeardownLogic;
 }
 
 declare interface OperatorFunction<T, R> extends UnaryFunction<Observable<T>, Observable<R>> {
 }
 
+/**
+ * {@link Endpoint} constructor options.
+ *
+ * @remarks
+ * This type includes consumer and producer options. These settings will be inherited by
+ * {@link Endpoint.consume} and {@link Endpoint.produce} unless overridden.
+ */
+declare interface Options extends ConsumerOptions, ProducerOptions {
+    /**
+     * Logical forwarder instance.
+     * @defaultValue `Forwarder.getDefault()`
+     */
+    fw?: Forwarder;
+}
+
 /** StructBuilder field options. */
-declare interface Options<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
+declare interface Options_2<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
     /**
      * Whether the field is required.
      * If both `.required` and `.repeat` are false, the field may be set to undefined and is initialized as undefined.
@@ -4362,20 +4987,7 @@ declare interface Options<Required extends boolean, Repeat extends boolean, Flag
     flagBits?: Record<FlagBit, number>;
 }
 
-/**
- * {@link Endpoint} constructor options.
- *
- * @remarks
- * This type includes consumer and producer options. These settings will be inherited by
- * {@link Endpoint.consume} and {@link Endpoint.produce} unless overridden.
- */
-declare interface Options_2 extends ConsumerOptions, ProducerOptions {
-    /**
-     * Logical forwarder instance.
-     * @defaultValue `Forwarder.getDefault()`
-     */
-    fw?: Forwarder;
-}
+declare const Or: new () => Operator;
 
 declare namespace packet {
     export {
@@ -4408,7 +5020,7 @@ declare namespace packet {
         noopSigning,
         digestSigning,
         nullSigner,
-        TT,
+        TT_2 as TT,
         SigType,
         NackReason,
         Data,
@@ -4451,6 +5063,18 @@ declare class ParamsDigestComp extends DigestComp {
     findIn(name: Name, matchPlaceholder?: boolean): number;
 }
 
+/** Tokens enclosed in parens. */
+declare class Paren extends Nested {
+    constructor(left: T.Operator, mid?: Unit[]);
+}
+
+declare const ParenL: new () => Operator;
+
+declare const ParenR: new () => Operator;
+
+/** Parse a schema. */
+declare function parse(tokens: Iterable<T.Token>): Schema;
+
 /**
  * Parse a certificate name into fields.
  * @param name - Must be a certificate name.
@@ -4464,7 +5088,7 @@ declare function parseCertName(name: Name): CertNameFields;
 declare function parseKeyName(name: Name): KeyNameFields;
 
 /** PSync - PartialSync publisher. */
-declare class PartialPublisher extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
+declare class PartialPublisher extends TypedEventTarget<EventMap_5> implements SyncProtocol<Name> {
     constructor({ p, endpoint, describe, syncPrefix, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PartialPublisher.Options);
     private readonly maybeHaveEventListener;
     private readonly endpoint;
@@ -4538,7 +5162,7 @@ declare namespace PartialPublisher {
 }
 
 /** PSync - PartialSync subscriber. */
-declare class PartialSubscriber extends TypedEventTarget<EventMap_5> implements Subscriber<Name, Update, PartialSubscriber.TopicInfo> {
+declare class PartialSubscriber extends TypedEventTarget<EventMap_6> implements Subscriber<Name, Update, PartialSubscriber.TopicInfo> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncInterestInterval, verifier, }: PartialSubscriber.Options);
     readonly describe: string;
     private readonly helloPrefix;
@@ -4614,11 +5238,137 @@ declare namespace PartialSubscriber {
     }
 }
 
+/** Structure of a name. */
+declare abstract class Pattern {
+    /** Convert to a simpler pattern if possible. */
+    simplify(): Pattern;
+    /**
+     * Determine whether a name matches the structure of this pattern.
+     * @param name - Input name.
+     * @returns - Iterable of extracted fields in possible interpretations.
+     */
+    match(name: Name): Iterable<Vars>;
+    protected static matchState(p: Pattern, state: MatchState): Iterable<MatchState>;
+    /**
+     * Recognize part of the input name.
+     * @returns Iterable of potential matches.
+     */
+    protected abstract matchState(state: MatchState): Iterable<MatchState>;
+    /**
+     * Build names following the structure of this pattern.
+     * @param varsL - Sets of variables to be replaced into the name.
+     * @returns Iterable of possible names.
+     */
+    build(...varsL: VarsLike[]): Iterable<Name>;
+    /**
+     * Build part of an output name.
+     * @returns Iterable of potential constructions.
+     */
+    protected static buildState(p: Pattern, state: BuildState): Iterable<BuildState>;
+    protected abstract buildState(state: BuildState): Iterable<BuildState>;
+}
+
+declare namespace pattern {
+    export {
+        Vars,
+        VarsLike,
+        Pattern,
+        ConstPattern,
+        VariablePattern,
+        CertNamePattern,
+        ConcatPattern,
+        AlternatePattern
+    }
+}
+
 declare const PointSizes: {
     readonly "P-256": 32;
     readonly "P-384": 48;
     readonly "P-521": 66;
 };
+
+/** Policy based signer. */
+declare abstract class PolicySigner implements Signer {
+    /** Sign a packet. */
+    sign(pkt: Signer.Signable): Promise<void>;
+    /** Locate an existing signer. */
+    abstract findSigner(name: Name): Promise<Signer>;
+}
+
+/** Policy based verifier. */
+declare abstract class PolicyVerifier<Context = unknown> implements Verifier {
+    protected readonly certSources: CertSources;
+    private readonly algoList;
+    constructor(opts: PolicyVerifier.Options);
+    /** Verify a packet. */
+    verify(pkt: Verifier.Verifiable, now?: number): Promise<void>;
+    /**
+     * Check policy on KeyLocator name, before certificate retrieval.
+     * @param pkt - Packet carrying KeyLocator.
+     * @param klName - KeyLocator name.
+     * @returns arbitrary value to be passed to {@link PolicyVerifier.checkCertPolicy}.
+     *
+     * @throws Error
+     * Thrown if policy is violated.
+     */
+    protected abstract checkKeyLocatorPolicy(pkt: Verifier.Verifiable, klName: Name): Context;
+    /**
+     * Check policy on certificate name.
+     * @param pkt - Packet carrying KeyLocator that triggered certificate retrieval.
+     * @param cert - Retrieved certificate.
+     * @param ctx - Return value of {@link PolicyVerifier.checkKeyLocatorPolicy}.
+     *
+     * @throws Error
+     * Thrown if policy is violated.
+     */
+    protected abstract checkCertPolicy(pkt: Verifier.Verifiable, cert: Certificate, ctx: Context): void;
+    private cryptoVerifyUncached;
+    private readonly cryptoVerifyCache;
+    private cryptoVerifyCached;
+}
+
+declare namespace PolicyVerifier {
+    interface Options extends CertSources.Options {
+        /**
+         * List of recognized algorithms in certificates.
+         * @defaultValue SigningAlgorithmListSlim
+         */
+        algoList?: readonly SigningAlgorithm[];
+    }
+}
+
+/** Position in schema document. */
+declare class Position {
+    /**
+     * Constructor
+     * @param line - 0-based line number.
+     * @param column - 0-based column number.
+     */
+    constructor(line?: number, column?: number);
+    /** 1-based line number, if known. */
+    readonly line?: number;
+    /** 1-based column number, if known. */
+    readonly column?: number;
+    toString(): string;
+}
+
+declare namespace Position {
+    const UNKNOWN: Position;
+    interface WithPosition {
+        position?: Position;
+    }
+    /** Extract first valid position from a sequence. */
+    function from(input?: WithPosition | Iterable<WithPosition>): Position;
+}
+
+/** Serialize a token stream. */
+declare function print_2(tokens: Iterable<Token>): string;
+
+/** Print policy to VerSec syntax. */
+declare function print_3(policy: TrustSchemaPolicy): string;
+
+/** Print policy as ECMAScript module. */
+declare function printESM(policy: TrustSchemaPolicy): string;
 
 /** Pretty-print TLV-TYPE number. */
 declare function printTT(tlvType: number): string;
@@ -4892,10 +5642,10 @@ declare class PSyncNode implements SyncNode<Name>, PSyncCore.PrefixSeqNum {
 /** Use zlib compression with PSync. */
 declare const PSyncZlib: PSyncCodec.Compression;
 
-declare interface PublicFields extends Except<Fields_2, "paramsPortion" | "signedPortion"> {
+declare interface PublicFields extends Except<Fields, "paramsPortion" | "signedPortion"> {
 }
 
-declare interface PublicFields_2 extends Except<Fields, "signedPortion" | "topTlv" | "topTlvDigest"> {
+declare interface PublicFields_2 extends Except<Fields_2, "signedPortion" | "topTlv" | "topTlvDigest"> {
 }
 
 /** Named public key. */
@@ -4990,6 +5740,20 @@ declare namespace ReadvertiseDestination {
         retry?: retry.RetryOperation;
         state: State;
     }
+}
+
+/** NDNLPv2 reassembler. */
+declare class Reassembler {
+    private readonly capacity;
+    constructor(capacity: number);
+    private readonly partials;
+    /**
+     * Process a fragment.
+     * @returns Fully reassembled packet, or undefined if packet is not yet complete.
+     */
+    accept(fragment: LpPacket): LpPacket | undefined;
+    private getPartial;
+    private putPartial;
 }
 
 /** Indicate an Interest has been rejected. */
@@ -5103,12 +5867,39 @@ declare interface Rule {
 }
 
 /**
+ * Decode TLVs from datagrams.
+ * @param iterable - RX datagram stream, such as a UDP socket.
+ * @returns RX packet stream.
+ */
+declare function rxFromPacketIterable(iterable: AsyncIterable<Uint8Array>): Transport.RxIterable;
+
+/**
+ * Extract TLVs from continuous byte stream.
+ * @param conn - RX byte stream, such as a TCP socket.
+ * @returns RX packet stream.
+ */
+declare function rxFromStream(conn: NodeJS.ReadableStream): Transport.RxIterable;
+
+/**
  * Yield all values from an iterable but catch any error.
  * @param iterable - Input iterable.
  * @param onError - Callback to receive errors thrown by the iterable.
  * @returns Iterable that does not throw errors.
  */
 declare function safeIter<T>(iterable: AnyIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
+
+/** Tokenize a schema document. */
+declare function scan(doc: string): Iterable<Token>;
+
+/** Scan tokens into a sequences of units on the same nesting level. */
+declare function scan_2(tokens: Iterable<T.Token>): Unit[];
+
+/** Schema document node. */
+declare class Schema extends Node_2 {
+    stmts: Stmt[];
+    constructor(stmts?: Stmt[]);
+    toTokens(): Generator<T.Token, void, undefined>;
+}
 
 /** Named secret key. */
 declare type SecretKey = Key<"secret">;
@@ -5413,6 +6204,13 @@ declare const SigningAlgorithmListFull: readonly SigningAlgorithm[];
  */
 declare const SigningAlgorithmListSlim: readonly SigningAlgorithm[];
 
+/** Signing constraint node. */
+declare class SigningConstraint extends Node_2 {
+    signers: Ident_2[];
+    constructor(signers?: Ident_2[]);
+    toTokens(): Generator<T.Token, void, undefined>;
+}
+
 declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [
 SigningAlgorithm<I, Asym, G>,
 G?
@@ -5489,6 +6287,17 @@ declare const SigType: {
  */
 declare type Simplify<T> = {[KeyType in keyof T]: T[KeyType]} & {};
 
+declare const Slash: new () => Operator;
+
+/**
+ * Split by operator.
+ * @param sep - Separator operator type.
+ * @param sequence - A sequence of units.
+ * @param skipEmpty - Of true, empty sub sequences are skipped.
+ * @returns Sub sequences.
+ */
+declare function split(sep: typeof T.Operator, sequence: readonly Unit[], skipEmpty?: boolean): Unit[][];
+
 /** SVS state vector. */
 declare class StateVector {
     /**
@@ -5533,6 +6342,15 @@ declare namespace StateVector {
         loSeqNum: number;
         hiSeqNum: number;
     }
+}
+
+/** Statement node. */
+declare class Stmt extends Node_2 {
+    ident: Ident_2;
+    definition: Expr | undefined;
+    signingChain: SigningConstraint[];
+    constructor(ident: Ident_2, definition?: Expr | undefined, signingChain?: SigningConstraint[]);
+    toTokens(): Generator<T.Token, void, undefined>;
 }
 
 /**
@@ -5584,6 +6402,16 @@ declare interface StoreProvider<T> {
     erase: (key: string) => Promisable<void>;
 }
 
+/** Node.js stream-based transport. */
+declare class StreamTransport<T extends NodeJS.ReadWriteStream = NodeJS.ReadWriteStream> extends Transport {
+    protected readonly conn: T;
+    constructor(conn: T, attrs?: Record<string, unknown>);
+    /** Report MTU as Infinity. */
+    get mtu(): number;
+    readonly rx: Transport.RxIterable;
+    tx(iterable: Transport.TxIterable): Promise<void>;
+}
+
 /**
  * Helper to build a base class that represents a TLV structure.
  *
@@ -5627,7 +6455,7 @@ declare class StructBuilder<U extends {}> {
      * @param opts - Field options.
      * @returns StructBuilder annotated with field typing.
      */
-    add<T, K extends string, Required extends boolean = false, Repeat extends boolean = false, FlagPrefix extends string = K, FlagBit extends string = never>(tt: number, key: ValidateOptions<T, Repeat, FlagBit, K>, type: StructFieldType<T>, opts?: Options<Required, Repeat, FlagPrefix, FlagBit>): StructBuilder<Simplify<U & AddField<K, T, Required, Repeat> & AddFlags<FlagPrefix, FlagBit>>>;
+    add<T, K extends string, Required extends boolean = false, Repeat extends boolean = false, FlagPrefix extends string = K, FlagBit extends string = never>(tt: number, key: ValidateOptions<T, Repeat, FlagBit, K>, type: StructFieldType<T>, opts?: Options_2<Required, Repeat, FlagPrefix, FlagBit>): StructBuilder<Simplify<U & AddField<K, T, Required, Repeat> & AddFlags<FlagPrefix, FlagBit>>>;
     /** Change IsCritical on the EvDecoder. */
     setIsCritical(cb: EvDecoder.IsCritical): this;
     /**
@@ -5850,7 +6678,7 @@ declare class Subject<T> extends Observable<T> implements SubscriptionLike {
     static create: (...args: any[]) => any;
     constructor();
     /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
-    lift<R>(operator: Operator<T, R>): Observable<R>;
+    lift<R>(operator: Operator_2<T, R>): Observable<R>;
     next(value: T): void;
     error(err: any): void;
     complete(): void;
@@ -6098,7 +6926,7 @@ declare namespace SvPublisher {
      * {@link \@ndn/repo!DataStore} satisfies the requirement.
      * Other lightweight implementations may be possible.
      */
-    type DataStore = DataStore.Get & DataStore.Find & DataStore.Insert;
+    type DataStore = DataStore_2.Get & DataStore_2.Find & DataStore_2.Insert;
     interface Options {
         /**
          * Endpoint for communication.
@@ -6147,7 +6975,7 @@ declare namespace SvPublisher {
  * If it is not {@link MappingEntry} base class, its constructor must be specified in
  * {@link SvSubscriber.Options.mappingEntryType}.
  */
-declare class SvSubscriber<ME extends MappingEntry = MappingEntry> extends TypedEventTarget<EventMap_8> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<ME>> {
+declare class SvSubscriber<ME extends MappingEntry = MappingEntry> extends TypedEventTarget<EventMap_9> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<ME>> {
     constructor({ endpoint, sync, retxLimit, mappingBatch, mappingEntryType, mustFilterByMapping, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
     private readonly abort;
     private readonly endpoint;
@@ -6265,7 +7093,7 @@ declare namespace SvSubscriber {
 }
 
 /** StateVectorSync participant. */
-declare class SvSync extends TypedEventTarget<EventMap_7> implements SyncProtocol<Name> {
+declare class SvSync extends TypedEventTarget<EventMap_8> implements SyncProtocol<Name> {
     private readonly endpoint;
     readonly describe: string;
     private readonly own;
@@ -6467,7 +7295,7 @@ declare namespace SyncpsCodec {
 }
 
 /** syncps - pubsub service. */
-declare class SyncpsPubsub extends TypedEventTarget<EventMap_6> implements Subscriber<Name, CustomEvent<Data>> {
+declare class SyncpsPubsub extends TypedEventTarget<EventMap_7> implements Subscriber<Name, CustomEvent<Data>> {
     constructor({ p, endpoint, describe, syncPrefix, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly maybeHaveEventListener;
     private readonly endpoint;
@@ -6652,6 +7480,28 @@ declare class SyncUpdate<ID = any> extends Event {
     seqNums(): Iterable<number>;
 }
 
+declare namespace T {
+    export {
+        scan,
+        print_2 as print,
+        Position,
+        Token,
+        Operator,
+        Comma,
+        Colon,
+        And,
+        Or,
+        ArrowL,
+        Slash,
+        ParenL,
+        ParenR,
+        BraceL,
+        BraceR,
+        Ident,
+        ComponentLit
+    }
+}
+
 /**
  * Create a secondary face by tapping on a primary face.
  *
@@ -6735,6 +7585,14 @@ declare namespace toHex {
     const TABLE: Readonly<Record<number, string>>;
 }
 
+/** Token in schema document. */
+declare abstract class Token {
+    /** Token position. */
+    position: Position;
+    /** String representation of the token. */
+    abstract toString(): string;
+}
+
 /**
  * Get key name from key name or certificate name.
  *
@@ -6776,6 +7634,9 @@ declare class Topology {
 
 /** Get subject name from subject name, key name, or certificate name. */
 declare function toSubjectName(name: Name): Name;
+
+/** Flatten sequence to tokens. */
+declare function toTokens(...sequence: readonly Unit[]): Iterable<T.Token>;
 
 /** Convert string to UTF-8 byte array. */
 declare function toUtf8(s: string): Uint8Array;
@@ -6867,7 +7728,122 @@ declare abstract class Transport {
         }
     }
 
+    declare namespace trust_schema {
+        export {
+            CertSources,
+            CertFetcher,
+            KeyChainCertSource,
+            TrustAnchorContainer,
+            CertSource,
+            HierarchicalSigner,
+            HierarchicalVerifier,
+            pattern,
+            versec,
+            versec as versec2021,
+            TrustSchemaPolicy,
+            printESM,
+            TrustSchema,
+            TrustSchemaSigner,
+            TrustSchemaVerifier
+        }
+    }
+    export { trust_schema }
+
+    /** A container of trust anchors. */
+    declare class TrustAnchorContainer implements CertSource {
+        private readonly byCertName;
+        private readonly byKeyName;
+        /**
+         * Constructor.
+         * @param certs - Trust anchors.
+         */
+        constructor(certs?: readonly Certificate[]);
+        /** Add a certificate as a trust anchor. */
+        add(cert: Certificate): void;
+        /** Remove a trust anchor. */
+        remove(cert: Certificate): void;
+        /** Determine if a certificate has been added as a trust anchor. */
+        has(cert: Certificate): boolean;
+        /** Find trust anchors by certificate name or key name. */
+        findCerts(keyLocator: Name): AsyncIterable<Certificate>;
+    }
+
+    /** A trust schema. */
+    declare class TrustSchema {
+        readonly policy: TrustSchemaPolicy;
+        readonly trustAnchors: Certificate[];
+        constructor(policy: TrustSchemaPolicy, trustAnchors: Certificate[]);
+    }
+
+    /** Policy in a trust schema. */
+    declare class TrustSchemaPolicy {
+        private readonly patterns;
+        private readonly rules;
+        listPatterns(): Iterable<[id: string, pattern: Pattern]>;
+        getPattern(id: string): Pattern;
+        getPattern(id: string, optional: true): Pattern | undefined;
+        addPattern(id: string, pattern: Pattern): void;
+        listRules(): Iterable<[packetId: string, signerId: string]>;
+        hasRule(packetId: string, signerId: string): boolean;
+        addRule(packetId: string, signerId: string): void;
+        match(name: TrustSchemaPolicy.MatchInput): TrustSchemaPolicy.Match[];
+        canSign(packet: TrustSchemaPolicy.MatchInput, signer: TrustSchemaPolicy.MatchInput): boolean;
+        buildSignerNames(packet: TrustSchemaPolicy.MatchInput, vars?: VarsLike): Iterable<Name>;
+    }
+
+    declare namespace TrustSchemaPolicy {
+        interface Match {
+            id: string;
+            vars: Vars;
+        }
+        type MatchInput = Name | Match[];
+    }
+
+    /** Sign packets according to a trust schema. */
+    declare class TrustSchemaSigner extends PolicySigner implements Signer {
+        private readonly keyChain;
+        private readonly policy;
+        constructor({ keyChain, schema }: TrustSchemaSigner.Options);
+        findSigner(name: Name): Promise<Signer>;
+    }
+
+    declare namespace TrustSchemaSigner {
+        interface Options {
+            /** KeyChain to find certificates. */
+            keyChain: KeyChain;
+            /** Trust schema to guide policy. */
+            schema: TrustSchema;
+        }
+    }
+
+    /** Verify packets according to a trust schema. */
+    declare class TrustSchemaVerifier extends PolicyVerifier<Context> {
+        private readonly policy;
+        constructor(opts: TrustSchemaVerifier.Options);
+        protected checkKeyLocatorPolicy({ name }: Verifier.Verifiable, klName: Name): Context;
+        protected checkCertPolicy({ name }: Verifier.Verifiable, { name: certName }: Certificate, { packet }: Context): void;
+    }
+
+    declare namespace TrustSchemaVerifier {
+        interface Options extends Except<PolicyVerifier.Options, "trustAnchors"> {
+            /** The trust schema. */
+            schema: TrustSchema;
+        }
+    }
+
     declare const TT: {
+        readonly LpPacket: 100;
+        readonly LpPayload: 80;
+        readonly LpSeqNum: 81;
+        readonly FragIndex: 82;
+        readonly FragCount: 83;
+        readonly PitToken: 98;
+        readonly Nack: 800;
+        readonly NackReason: 801;
+        readonly CongestionMark: 832;
+    };
+
+    declare const TT_2: {
         readonly Name: 7;
         readonly GenericNameComponent: 8;
         readonly ImplicitSha256DigestComponent: 1;
@@ -6899,6 +7875,16 @@ declare abstract class Transport {
         readonly Nack: 800;
         readonly NackReason: 801;
     };
+
+    /**
+     * Pipe encoded packets to output stream.
+     * @param conn - TX output stream, such as a TCP socket.
+     * @param iterable - TX packet stream.
+     *
+     * @remarks
+     * `conn` will be closed/destroyed upon reaching the end of packet stream.
+     */
+    declare function txToStream(conn: NodeJS.WritableStream, iterable: Transport.TxIterable): Promise<void>;
 
     declare type TypedEventListener<M, T extends keyof M> = (evt: M[T]) => void | Promise<void>;
 
@@ -6964,6 +7950,12 @@ declare abstract class Transport {
     declare interface UnaryFunction<T, R> {
         (source: T): R;
     }
+
+    /** A unit on the same nesting level. */
+    declare type Unit = T.Token | Paren | Brace;
+
+    /** Strip outer parens. */
+    declare function unParen(units: readonly Unit[]): readonly Unit[];
 
     declare interface Unsubscribable {
         unsubscribe(): void;
@@ -7042,6 +8034,86 @@ declare abstract class Transport {
         [key in keyof T]: Event;
     };
 
+    /**
+     * Match or construct a variable name portion.
+     *
+     * @remarks
+     * When matching a name, this pattern extracts a number of name components, and saves the sub-name
+     * in variables object in {@link VariablePattern.match} return value.
+     *
+     * When building a name, this pattern succeeds if the variable is present in
+     * {@link VariablePattern.build} function argument.
+     */
+    declare class VariablePattern extends Pattern {
+        readonly id: string;
+        /**
+         * Constructor
+         * @param id - Variable name.
+         */
+        constructor(id: string, { minComps, maxComps, inner, filter, }?: VariablePattern.Options);
+        readonly minComps: number;
+        readonly maxComps: number;
+        readonly inner?: Pattern;
+        readonly filter?: VariablePattern.Filter;
+        private innerMatch;
+        private filtersAccept;
+        protected matchState(state: MatchState): Iterable<MatchState>;
+        protected buildState(state: BuildState): Iterable<BuildState>;
+    }
+
+    declare namespace VariablePattern {
+        interface Options {
+            /**
+             * Minimum number of components.
+             * @defaultValue 1
+             */
+            minComps?: number;
+            /**
+             * Maximum number of components.
+             * @defaultValue 1
+             */
+            maxComps?: number;
+            /**
+             * An overlay pattern that the name part must satisfy.
+             *
+             * @remarks
+             * Setting this option effectively makes this variable an alias of the inner pattern.
+             *
+             * When building a name, if the variable of this pattern is present in
+             * {@link VariablePattern.build} function argument, it is checked that the inner pattern
+             * matches the name and its interpretation is consistent with other variables that are present.
+             * Otherwise, the inner pattern is used to build the name.
+             */
+            inner?: Pattern;
+            /** Filter that the name part must satisfy. */
+            filter?: Filter;
+        }
+        /** Function to determine whether a name part is acceptable. */
+        interface Filter {
+            accept: (name: Name, vars: Vars) => boolean;
+        }
+        /** Create a filter that accepts a name component if it satisfies a convention. */
+        class ConventionFilter implements Filter {
+            readonly convention: NamingConvention<any>;
+            constructor(convention: NamingConvention<any>);
+            accept(name: Name): boolean;
+        }
+    }
+
+    declare type Vars = ReadonlyMap<string, Name>;
+
+    declare namespace Vars {
+        /** Check if lhs and rhs are consistent, i.e. have no key with different values. */
+        function consistent(lhs: Vars, rhs: Vars): boolean;
+    }
+
+    declare type VarsLike = Vars | Readonly<Record<string, NameLike>>;
+
+    declare namespace VarsLike {
+        /** Convert VarsLike to an iterable that may be passed to Map constructor to create Vars. */
+        function toIterable(vars: VarsLike): Iterable<[string, NameLike]>;
+    }
+
     /** High level verifier, such as a named public key. */
     declare interface Verifier {
         /**
@@ -7064,6 +8136,18 @@ declare abstract class Transport {
         function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
         /** Throw bad signature error if not OK. */
         function throwOnBadSig(ok: boolean): asserts ok;
+    }
+
+    declare namespace versec {
+        export {
+            ast,
+            compile,
+            load,
+            N as filter,
+            N as nest,
+            print_3 as print,
+            T as token
+        }
     }
 
     declare interface WasmFS {

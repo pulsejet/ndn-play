@@ -1,12 +1,15 @@
-import * as packet from '@ndn/packet';
-import * as tlv from "@ndn/tlv";
-import * as sync from '@ndn/sync';
+import * as autoconfig from '@ndn/autoconfig';
+import * as endpoint from '@ndn/endpoint';
+import * as fw from '@ndn/fw';
 import * as keychain from '@ndn/keychain';
+import * as l3face from '@ndn/l3face';
+import * as lp from '@ndn/lp';
+import * as packet from '@ndn/packet';
+import * as sync from '@ndn/sync';
+import * as tlv from "@ndn/tlv";
+import * as trust_schema from '@ndn/trust-schema';
 import * as util from '@ndn/util';
 import * as ws_transport from '@ndn/ws-transport';
-import * as endpoint from '@ndn/endpoint';
-import * as autoconfig from '@ndn/autoconfig';
-import * as fw from '@ndn/fw';
 
 import type { ICapturedPacket, INode, TlvType } from './interfaces';
 import type { DCT as DCT_t } from './dct/dct.interface';
@@ -16,21 +19,34 @@ import type { WasmFS } from './wasm.service';
 // are used to declare the modules in the monaco editor, and
 // must match the library name and export name exactly.
 export type {
-    packet, tlv, sync, keychain, util,
-    ws_transport, endpoint, autoconfig, fw,
+    autoconfig,
+    endpoint,
+    fw,
+    keychain,
+    l3face,
+    lp,
+    packet,
+    sync,
+    tlv,
+    trust_schema,
+    util,
+    ws_transport,
 };
 
 // the names in modul
 export const modules = {
-    '@ndn/packet': ['packet', packet],
-    '@ndn/tlv': ['tlv', tlv],
-    '@ndn/sync': ['sync', sync],
+    '@ndn/autoconfig': ['autoconfig', autoconfig],
+    '@ndn/endpoint': ['endpoint', endpoint],
+    '@ndn/fw': ['fw', fw],
     '@ndn/keychain': ['keychain', keychain],
+    '@ndn/l3face': ['l3face', l3face],
+    '@ndn/lp': ['lp', lp],
+    '@ndn/packet': ['packet', packet],
+    '@ndn/sync': ['sync', sync],
+    '@ndn/tlv': ['tlv', tlv],
+    '@ndn/trust-schema': ['trust_schema', trust_schema],
     '@ndn/util': ['util', util],
     '@ndn/ws-transport': ['ws_transport', ws_transport],
-    '@ndn/endpoint': ['endpoint', endpoint],
-    '@ndn/autoconfig': ['autoconfig', autoconfig],
-    '@ndn/fw': ['fw', fw],
 };
 
 export namespace globals {

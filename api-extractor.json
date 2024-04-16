@@ -17,6 +17,7 @@
     "@ndn/svs",
     "@ndn/psync",
     "@ndn/sync-api",
+    "@ndn/trust-schema",
     "@yoursunny/psync-bloom",
     "wait-your-turn",
     "@angular/core",

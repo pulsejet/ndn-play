@@ -95,7 +95,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public redraw() {
-    this.packets = [...this.node.extra.capturedPackets];
+    this.packets = this.node.extra.capturedPackets.slice();
   }
 
   public round(a: number) {

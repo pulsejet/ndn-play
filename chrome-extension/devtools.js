@@ -81,11 +81,16 @@ chrome.devtools.panels.create("NDN-Play", "logo.png", "play.html", function (pan
       } catch (e) {
         alert('Error attaching debugger');
         console.error(e);
+        return;
       }
 
       // detach debugger when panel is closed
       window.addEventListener('beforeunload', async () => {
-        await chrome.debugger.detach({ tabId });
+        try {
+          await chrome.debugger.detach({ tabId });
+        } catch (e) {
+          // ignore
+        }
       });
     });
   });

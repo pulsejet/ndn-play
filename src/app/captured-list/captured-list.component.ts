@@ -1,6 +1,5 @@
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { AltUri } from '@ndn/packet';
 import { ForwardingProvider } from '../forwarding-provider';
 import { ICapturedPacket, INode } from '../interfaces';
 import { GlobalService } from '../global.service';
@@ -12,9 +11,14 @@ import { Subscription } from 'rxjs';
   styleUrls: ['captured-list-component.scss']
 })
 export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
-  public AltUri = AltUri;
-  public packets: ICapturedPacket[] = [];
+  /** Filtering by regex */
+  public nameFilter = String();
+  public filteredPackets: ICapturedPacket[] = [];
+  public lastKnownLength: number = NaN;
+
+  /** Timers for UI redraws */
   private redrawInterval = 0;
+  private filterDebounce = 0;
 
   @Input() public node!: INode;
   @Input() public provider!: ForwardingProvider;
@@ -27,9 +31,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() public resizeEmitter?: EventEmitter<void>;
   private resizeSub?: Subscription;
 
-  constructor(
-    public readonly gs: GlobalService,
-  ) { }
+  constructor(public readonly gs: GlobalService) { }
 
   ngOnInit(): void {
     // Subscribe to resizes
@@ -45,7 +47,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
       i++;
 
       // Redraw every 100ms
-      if (this.node.extra.capturedPackets.length != this.packets.length) {
+      if (this.node.extra.capturedPackets.length != this.lastKnownLength) {
         this.redraw();
 
         // Seems like we are receiving packets. Reset the counter to prevent
@@ -63,6 +65,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.resizeSub?.unsubscribe();
     clearInterval(this.redrawInterval);
+    clearTimeout(this.filterDebounce);
   }
 
   ngAfterViewInit(): void {
@@ -95,7 +98,25 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public redraw() {
-    this.packets = this.node.extra.capturedPackets.slice();
+    // Apply filter with no debounce
+    this.refilter(false);
+
+    // Store the last known length
+    this.lastKnownLength = this.node.extra.capturedPackets.length;
+  }
+
+  public refilter(debounce = true) {
+    if (debounce) {
+      clearTimeout(this.filterDebounce);
+      this.filterDebounce = window.setTimeout(() => this.refilter(false), 200);
+      return;
+    }
+
+    const filter = new RegExp(this.nameFilter);
+    this.filteredPackets = this.node.extra.capturedPackets.filter((p) => {
+      if (!this.nameFilter) return true;
+      return filter.test(p[5]);
+    });
   }
 
   public round(a: number) {

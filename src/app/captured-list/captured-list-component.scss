@@ -1,3 +1,36 @@
+.outer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+
+    .top-bar {
+        display: flex;
+        flex-direction: row;
+
+        input.filter {
+            height: 2em;
+            font-size: 0.7rem;
+            flex: 1;
+        }
+
+        div.buttons {
+            height: 1em;
+            font-size: 0.9em;
+            padding: 0 2px;
+            user-select: none;
+
+            > div {
+                cursor: pointer;
+            }
+        }
+    }
+
+    .inner {
+        flex: 1;
+    }
+}
+
 .packets {
     width: 100%;
     font-family: monospace;
@@ -20,7 +53,7 @@
         color: white;
     }
 
-    tr {
+    tr:has(td) {
         cursor: pointer;
     }
 
@@ -42,16 +75,6 @@
         &.src-dist { min-width: 150px; width: 200px; }
         &.length { width: 50px; }
         &.name { max-width: 100px; }
-    }
-
-    div.buttons {
-        user-select: none;
-        position: absolute;
-        top: 0;
-        right: 0;
-        > div {
-            cursor: pointer;
-        }
     }
 }
 

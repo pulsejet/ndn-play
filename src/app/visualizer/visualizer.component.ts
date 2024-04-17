@@ -74,15 +74,14 @@ export class VisualizerComponent implements OnInit {
     this.compiledTlvCode = this.gs.topo.tlvTypesCode;
 
     // Transpile as module and get exports
-    let code = transpileModule(this.gs.topo.tlvTypesCode, {}).outputText;
-    code = `
-      const exports = {};
-      ${code};
-      return exports;`;
+    const code = [
+      'const exports = {};',
+      transpileModule(this.gs.topo.tlvTypesCode, {}).outputText,
+      'return exports;',
+    ].join(';\n');
 
     try {
-      const fun = new Function(code);
-      this.tlvTypes = fun.call(null);
+      this.tlvTypes = new Function(code).call(null);
       console.warn('Compiled TLV types');
     } catch (e) {
       console.error('Failed to compile TLV types');

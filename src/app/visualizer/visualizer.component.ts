@@ -28,24 +28,22 @@ export class VisualizerComponent implements OnInit {
 
   constructor(private readonly gs: GlobalService) { }
 
-  ngOnInit(): void {
-    fetch('/assets/tlv-types.ts').then((res) => res.text()).then(async (code) => {
-      this.gs.topo.tlvTypesCode = code.trim();
+  async ngOnInit() {
+    const res = await fetch('/assets/tlv-types.ts')
+    const code = await res.text();
+    this.gs.topo.tlvTypesCode = code.trim();
 
-      // Load custom TLV types from local storage
-      const customTlvTypes = await localforage.getItem<string>('customTlvTypes');
-      if (customTlvTypes) {
-        this.gs.topo.tlvTypesCode += customTlvTypes;
-      }
+    // Load custom TLV types from local storage
+    const customTlvTypes = await localforage.getItem<string>('customTlvTypes');
+    if (customTlvTypes) {
+      this.gs.topo.tlvTypesCode += customTlvTypes;
+    }
 
-      // Compile TLV types
-      this.compileTlvTypes();
+    // Compile TLV types
+    this.compileTlvTypes();
 
-      // Check if TLV types specified
-      this.ngOnChanges();
-    }).catch((err) => {
-      console.error(err);
-    });
+    // Check if TLV types specified
+    this.ngOnChanges();
   }
 
   ngOnChanges() {

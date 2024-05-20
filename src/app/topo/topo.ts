@@ -144,7 +144,7 @@ export class Topology {
         this.edges.update({
           id: edge.id,
           init: true,
-          color: COLOR_MAP.DEFAULT_LINK_COLOR,
+          color: this.getEdgeColor(edge),
           width: 2,
         });
       }
@@ -213,25 +213,27 @@ export class Topology {
   }
 
   public updateEdgeColor(edge: IEdge) {
+    this.provider.pendingUpdatesEdges[edge.id!] = {
+      id: edge.id,
+      color: this.getEdgeColor(edge),
+    };
+  }
+
+  private getEdgeColor(edge: IEdge) {
     // Link is broken
-    if (edge.loss >= 100) {
-      this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: COLOR_MAP.BROKEN_LINK_COLOR };
-      return;
-    }
+    if (edge.loss >= 100) return COLOR_MAP.BROKEN_LINK_COLOR;
 
     // No traffic
-    if (edge.extra.pendingTraffic === 0) {
-      this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: COLOR_MAP.DEFAULT_LINK_COLOR };
-      return;
-    }
+    if ((edge.extra?.pendingTraffic ?? 0) === 0) return COLOR_MAP.DEFAULT_LINK_COLOR;
 
     // Check busiest link
     if (edge.extra.pendingTraffic > (this.busiestLink?.extra.pendingTraffic || 0)) {
       this.busiestLink = edge;
     }
-    const color = chroma.scale([COLOR_MAP.ACTIVE_NODE_COLOR, 'red'])
-                              (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
-    this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: color };
+
+    // Linear scale
+    return chroma.scale([COLOR_MAP.ACTIVE_NODE_COLOR, 'red'])
+                        (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
   }
 
   /** Get a node by ID or label */

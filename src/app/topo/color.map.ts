@@ -10,6 +10,7 @@ export const COLOR_MAP: {[key: string]: string} = {
     silver: '#e3e3e3',
     gray: '#666666',
     DEFAULT_LINK_COLOR: "#3583ea",
+    BROKEN_LINK_COLOR: '#cccccc',
     DEFAULT_NODE_COLOR: '#a4b7fc',
     SELECTED_NODE_COLOR: '#4ee44e',
     ACTIVE_NODE_COLOR: '#ffcccb',

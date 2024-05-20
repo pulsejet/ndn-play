@@ -24,18 +24,26 @@ import { Topology } from './topo';
         </div>
 
         <div class="field">
-            <label class="label is-small">Loss (%)</label>
+            <label class="label is-small">
+              <span>Loss (%)</span>
+              <span class="label-btn" *ngIf="edge.loss < 100" (click)="setLoss(100)">❤️</span>
+              <span class="label-btn" *ngIf="edge.loss >= 100"  (click)="setLoss(0)">💔</span>
+            </label>
             <div class="control">
                 <input class="input is-small" type="number" placeholder="0"
                         [(ngModel)]="edge.loss"
-                        (input)="topo.edges.update(edge); topo.provider.edgeUpdated(edge)">
+                        (input)="setLoss()">
             </div>
             <p class="help is-small">Negative for default loss</p>
         </div>
     </div>
   `,
-  styles: [
-  ]
+  styles: [`
+    .label-btn {
+      float: right;
+      cursor: pointer;
+    }
+  `]
 })
 export class TopoEdgeComponent implements OnInit {
 
@@ -47,4 +55,10 @@ export class TopoEdgeComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  setLoss(loss?: number): void {
+    if (loss !== undefined) this.edge.loss = loss;
+    this.topo.edges.update(this.edge);
+    this.topo.provider.edgeUpdated(this.edge);
+    this.topo.updateEdgeColor(this.edge);
+  }
 }

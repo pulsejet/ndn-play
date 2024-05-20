@@ -197,9 +197,15 @@ export class Topology {
   }
 
   public updateEdgeColor(edge: IEdge) {
+    // Link is broken
+    if (edge.loss >= 100) {
+      this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: COLOR_MAP.BROKEN_LINK_COLOR };
+      return;
+    }
+
     // No traffic
     if (edge.extra.pendingTraffic === 0) {
-      this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: COLOR_MAP.DEFAULT_LINK_COLOR };
+      this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: COLOR_MAP.DEFAULT_LINK_COLOR };
       return;
     }
 
@@ -209,7 +215,7 @@ export class Topology {
     }
     const color = chroma.scale([COLOR_MAP.ACTIVE_NODE_COLOR, 'red'])
                               (edge.extra.pendingTraffic / (this.busiestLink?.extra.pendingTraffic || 0) + 5).toString();
-    this.provider.pendingUpdatesEdges[<IdType>edge.id] = { id: edge.id, color: color };
+    this.provider.pendingUpdatesEdges[edge.id!] = { id: edge.id, color: color };
   }
 
   /** Get a node by ID or label */

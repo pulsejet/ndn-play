@@ -1,3 +1,7 @@
+.hero-body > * {
+    color: white !important;
+}
+
 .vert-middle {
     vertical-align: middle;
 }
@@ -7,6 +11,7 @@
     width: 100%;
     display: inline-block;
     object-fit: contain;
+    max-height: 160px;
 }
 
 .outer {

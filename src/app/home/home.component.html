@@ -1,11 +1,7 @@
 <section class="hero is-danger">
   <div class="hero-body">
-    <p class="title">
-      NDN Play
-    </p>
-    <p class="subtitle">
-      Named Data Networking Simulator
-    </p>
+    <p class="title has-text-weight-medium mb-1">NDN Play</p>
+    <p class="subtitle">Named Data Networking Simulator</p>
   </div>
 </section>
 
@@ -22,8 +18,8 @@
 
           <div class="column">
             <div class="container is-fullwidth is-inline-block vert-middle ml-3">
-              <h1 class="title is-4">{{ p.title }}</h1>
-              <h2 class="subtitle is-5">{{ p.subtitle }}</h2>
+              <h1 class="title is-4 has-text-weight-medium mb-1">{{ p.title }}</h1>
+              <h2 class="subtitle is-5 mb-5">{{ p.subtitle }}</h2>
               <div *ngIf="p.text" style="white-space: pre-wrap;" class="mb-1"
                   [innerHTML]="p.text">
               </div>

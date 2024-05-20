@@ -37,7 +37,7 @@
       "link": "https://named-data.net/wp-content/uploads/2019/01/li2018sync-intro.pdf"
     },
     {
-      "title": "Testbed",
+      "title": "Testbed Connection",
       "subtitle": "Connecting to NDN testbed with NDNts",
       "img": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/testbed.png",
       "dump": "https://raw.githubusercontent.com/pulsejet/ndn-play/master/templates/testbed.bin",

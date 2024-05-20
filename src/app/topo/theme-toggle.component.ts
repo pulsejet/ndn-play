@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { isDark } from './color.map';
 
 const LS_KEY_DARK = 'force-dark';
 
@@ -55,11 +56,12 @@ export class ThemeToggleComponent implements OnInit {
     } else {
       // let media query handle it
     }
+
+    isDark(); // force update cache
   }
 
   toggle(): void {
-    const isDark = getComputedStyle(document.documentElement).getPropertyValue('--is-dark') === '1';
-    this.setLsDark(!isDark);
+    this.setLsDark(!isDark());
     this.forceTheme();
   }
 

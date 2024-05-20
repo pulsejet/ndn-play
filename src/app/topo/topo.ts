@@ -140,10 +140,18 @@ export class Topology {
   private ensureInitialized() {
     // Initilize edges
     for (const edge of this.edges.get()) {
+      if (!edge.init) {
+        this.edges.update({
+          id: edge.id,
+          init: true,
+          color: COLOR_MAP.DEFAULT_LINK_COLOR,
+          width: 2,
+        });
+      }
+
       if (!edge.extra) {
         this.edges.update({
           id: edge.id,
-          color: COLOR_MAP.DEFAULT_LINK_COLOR,
           latency: edge.latency ?? -1,
           loss: edge.loss ?? -1,
           extra: {
@@ -155,22 +163,30 @@ export class Topology {
 
     // Initialize nodes
     for (const node of this.nodes.get()) {
-      if (!node.extra) {
-        const id = node.id;
-        const shape = node.isSwitch ? 'box' : 'ellipse';
+      let color = node.color?.toString();
+      color = color ? (COLOR_MAP[color] || color) : COLOR_MAP.DEFAULT_NODE_COLOR;
 
-        let color = node.color?.toString();
-        color = color ? (COLOR_MAP[color] || color) : COLOR_MAP.DEFAULT_NODE_COLOR;
-
-        const extra = {
-          producedPrefixes: [],
-          pendingTraffic: 0,
-          codeEdit: '',
-          capturedPackets: [],
+      if (!node.init) {
+        this.nodes.update({
+          id: node.id,
+          init: true,
+          shape: node.isSwitch ? 'box' : 'ellipse',
           color: color,
-        };
+          font: { size: 15 },
+        });
+      }
 
-        this.nodes.update({ id, color, shape, extra });
+      if (!node.extra) {
+        this.nodes.update({
+          id: node.id,
+          extra: {
+            producedPrefixes: [],
+            pendingTraffic: 0,
+            codeEdit: '',
+            capturedPackets: [],
+            color: color,
+          }
+        });
       }
     }
   }

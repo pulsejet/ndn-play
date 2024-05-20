@@ -326,13 +326,20 @@ export class ProviderBrowser implements ForwardingProvider {
     const nodes = this.topo.nodes.get().map((n) => {
       const copy = {... n};
       copy.nfw = undefined;
+      copy.init = undefined;
+      return copy;
+    });
+
+    const edges = this.topo.edges.get().map((e) => {
+      const copy = {... e};
+      copy.init = undefined;
       return copy;
     });
 
     const dump = msgpackEncode({
       exporter: 'BROWSER',
       nodes: nodes,
-      edges: this.topo.edges.get(),
+      edges: edges,
       positions: this.topo.network?.getPositions(),
     });
     downloadFile(dump, 'BIN', 'experiment.bin', true);

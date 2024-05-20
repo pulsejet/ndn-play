@@ -50,6 +50,8 @@ export interface INodeExtra {
 }
 
 export interface INode extends Node {
+    /** Initialized flag */
+    init?: boolean;
     /* Not a forwarder -- definitely */
     nfw?: NFW;
     /** Extra data object */
@@ -66,6 +68,8 @@ export interface ILinkExtra {
 }
 
 export interface IEdge extends Edge {
+    /** Initialized flag */
+    init?: boolean;
     /** Latency in milliseconds */
     latency: number;
     /** Loss in percentage */

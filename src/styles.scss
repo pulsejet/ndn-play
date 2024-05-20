@@ -40,13 +40,12 @@
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme=light]) {
         @include dark-theme;
     }
 }
 
-[data-theme=dark],
-.theme-dark {
+:root[data-theme=dark] {
     @include dark-theme;
 }
 

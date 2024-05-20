@@ -13,6 +13,7 @@ import { TopoNodeComponent } from './topo/node.component';
 import { TopoEdgeComponent } from './topo/edge.component';
 import { TopoGlobalComponent } from './topo/global.component';
 import { TopoSidebarComponent } from './topo/sidebar.component';
+import { ThemeToggleComponent } from './topo/theme-toggle.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { TabComponent } from './tabs/tab.component';
 import { ConsoleComponent } from './console/console.component';
@@ -34,6 +35,7 @@ import { DCTComponent } from './dct/dct.component';
     TopoEdgeComponent,
     TopoGlobalComponent,
     TopoSidebarComponent,
+    ThemeToggleComponent,
     TabsComponent,
     TabComponent,
     ConsoleComponent,

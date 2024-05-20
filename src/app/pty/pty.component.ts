@@ -47,16 +47,19 @@ export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // CSS variables are not available
+    const cvar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name);
+
     // Terminal
     const term = new Terminal({
       theme: {
-        background: 'white',
-        foreground: 'black',
-        selectionBackground: 'rgba(0, 0, 0, 0.1)',
-        cursor: '#555'
+        background: cvar('--bg-color'),
+        foreground: cvar('--bulma-text-strong'),
+        selectionBackground: cvar('--console-selection-color'),
+        cursor: '#555',
       },
-      fontSize: 14,
       fontFamily: 'Consolas, Ubuntu Mono, courier-new, courier, monospace',
+      fontSize: 14,
       convertEol: true,
       cursorBlink: true,
     });

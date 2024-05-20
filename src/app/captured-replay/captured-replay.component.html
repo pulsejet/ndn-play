@@ -4,18 +4,18 @@
             <div class="field">
                 <label class="label is-small"> Controls </label>
 
-                <button class="button is-link is-light is-small mr-1"
+                <button class="button is-link is-soft is-small mr-1"
                         *ngIf="gs.topo.provider.fetchCapturedPackets"
                         (click)="fetchAllPackets()">
                     Refresh PCAP
                 </button>
 
-                <button class="button is-link is-light is-small" title="Rewind"
+                <button class="button is-link is-soft is-small" title="Rewind"
                         (click)="replay()">
                     &#8634;
                 </button>
 
-                <button class="button is-link is-light is-small ml-1" title="Play / Stop (Ctrl + M)"
+                <button class="button is-link is-soft is-small ml-1" title="Play / Stop (Ctrl + M)"
                         (click)="startStop()">
                     <ng-container *ngIf="handle; else playb">
                         &#9632;

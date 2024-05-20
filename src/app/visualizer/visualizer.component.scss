@@ -1,19 +1,15 @@
 .outer {
     font-family: monospace;
-    font-size: 0.9em;
+    font-size: 0.9rem;
 }
 
 .guess-box {
     margin: 2px;
-    font-size: 0.95em;
-
-    * {
-        vertical-align: middle;
-    }
+    font-size: 0.9em;
 }
 
 .tlv {
-    border: 2px solid black;
+    border: var(--vis-tlv-border);
     display: inline-block;
     box-sizing: border-box;
     padding: 1px 2px;
@@ -22,19 +18,19 @@
     user-select: none;
 
     .type {
-        color: red;
+        color: var(--vis-red);
         cursor: pointer;
     }
 
     .length {
-        color: blue;
+        color: var(--vis-blue);
     }
 
     .value {
         display: inline-table; /* Prevents overflow of selection on double click */
 
         span {
-            color: gray;
+            color: var(--vis-gray);
             max-width: 250px;
             display: inline-block;
             vertical-align: middle;
@@ -51,12 +47,12 @@
         }
 
         &.human span {
-            color: green;
+            color: var(--vis-green);
             font-weight: bold;
         }
     }
 
     &.hover {
-        background-color: rgba(255, 255, 0, 0.3);
+        background-color: var(--vis-hover);
     }
 }

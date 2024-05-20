@@ -25,7 +25,7 @@ import { Topology } from './topo';
                         value="/ndn/multicast/test/$time">
 
                 <div class="control">
-                    <button class="button is-link is-light is-small"
+                    <button class="button is-link is-soft is-small"
                             (click)="selExpressInterest(expressInput.value)">
                         Send
                     </button>
@@ -35,7 +35,7 @@ import { Topology } from './topo';
 
         <ng-container *ngIf="topo.provider.sendPingInterest">
             <div class="field">
-                <button class="button is-link full-width is-light is-small full-width"
+                <button class="button is-link full-width is-soft is-small full-width"
                         [disabled]="topo.pendingClickEvent == sendPingClick"
                         (click)="topo.pendingClickEvent = sendPingClick">
                     Ping Node
@@ -45,12 +45,12 @@ import { Topology } from './topo';
 
         <div class="field">
             <label class="label is-small">Execute Function:</label>
-            <button class="button is-success is-light is-small full-width mb-1"
+            <button class="button is-success is-soft is-small full-width mb-1"
                     *ngIf="topo.provider.runCode"
                     (click)="runCode(node.extra.codeEdit);">
                 Run
             </button>
-            <button class="button is-danger is-light is-small full-width mb-1"
+            <button class="button is-danger is-soft is-small full-width mb-1"
                     *ngIf="gs.topo.provider.openTerminal"
                     (click)="gs.topo.provider.openTerminal(node);">
                 Open Terminal
@@ -72,7 +72,7 @@ import { Topology } from './topo';
         <div>
             <label class="label is-small">
                 Forwarder Status:
-                <button class="button is-link is-light"
+                <button class="button is-link is-soft"
                         style="font-size: 0.5rem "
                         *ngIf="topo.provider.refreshFib"
                         (click)="topo.provider.refreshFib()">

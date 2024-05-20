@@ -35,14 +35,13 @@
 .packets {
     width: 100%;
     font-family: monospace;
-    font-size: 0.8em;
 
     .Interest {
-        background-color: #ccffcc;
+        background-color: var(--cap-interest-color);
     }
 
     .Data {
-        background-color: #ffcccc;
+        background-color: var(--cap-data-color);
     }
 
     .active {
@@ -50,7 +49,7 @@
     }
 
     .selected {
-        background-color: blueviolet;
+        background-color: var(--cap-selection-color);
         color: white;
     }
 
@@ -64,7 +63,7 @@
 
     td, th {
         padding: 1px 2px;
-        border-bottom: 1px solid white;
+        border-bottom: 1px solid var(--bg-color);
     }
 
     td {

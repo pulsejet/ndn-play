@@ -1,8 +1,53 @@
-@import 'bulma/bulma.sass';
+@import 'bulma/bulma.scss';
 @import 'xterm/css/xterm.css';
 
 :root {
     --bg-color: white;
+    --scrollbar-color: #ddd;
+    --is-dark: 0;
+
+    --console-selection-color: rgba(0, 0, 0, 0.1);
+
+    --cap-interest-color: #ccffcc;
+    --cap-data-color: #ffcccc;
+    --cap-selection-color: blueviolet;
+
+    --vis-tlv-border: 2px solid black;
+    --vis-red: red;
+    --vis-blue: blue;
+    --vis-green: green;
+    --vis-gray: gray;
+    --vis-hover: rgba(255, 255, 0, 0.3);
+}
+
+@mixin dark-theme {
+    --bg-color: #111;
+    --scrollbar-color: #333;
+    --is-dark: 1;
+
+    --console-selection-color: rgba(255, 255, 255, 0.1);
+
+    --cap-interest-color: #003300;
+    --cap-data-color: #330000;
+    --cap-selection-color: rebeccapurple;
+
+    --vis-tlv-border: 1px solid #aaa;
+    --vis-red: darkorange;
+    --vis-blue: deepskyblue;
+    --vis-green: limegreen;
+    --vis-gray: darkgray;
+    --vis-hover: rgba(255, 0, 255, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        @include dark-theme;
+    }
+}
+
+[data-theme=dark],
+.theme-dark {
+    @include dark-theme;
 }
 
 body, html {
@@ -17,11 +62,16 @@ body, html {
     height: 5px;
 }
 *::-webkit-scrollbar-track {
-    background: #ffffff;
-  }
-
+    background: var(--bg-color);
+}
 *::-webkit-scrollbar-thumb {
-    background-color: #ddd;
+    background-color: var(--scrollbar-color);
+}
+
+// Only for firefox, use sparingly
+pre, .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-color) var(--bg-color);
 }
 
 /** Reset bulma styles for code editor (monaco) */
@@ -49,4 +99,47 @@ body, html {
 .tab-full-height {
     height: 100%;
     overflow-y: auto;
+}
+
+/** Compat with bulma 0.9 */
+.field {
+    margin-bottom: 0.75rem;
+}
+.button {
+    --bulma-button-weight: var(--bulma-weight-normal) !important;
+}
+
+// VisJS manipulation controls styles
+.vis-button {
+    filter: invert(var(--is-dark));
+}
+.vis-manipulation {
+    background: var(--bg-color) !important;
+    border: none !important;
+
+    .vis-separator-line {
+        display: none;
+    }
+}
+
+// Checkbox styling (why doesn't bulma do this?)
+input[type="checkbox"] {
+    appearance: none;
+    outline: none;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-right: 2px;
+
+    // size and positioning
+    padding: 0.4em;
+    transform: translateY(0.1em);
+    vertical-align: top;
+
+    &:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+    }
 }

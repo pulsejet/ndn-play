@@ -7,12 +7,20 @@ import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
 export const monacoConfig: NgxMonacoEditorConfig = {
   onMonacoLoad: async () => {
-    // Set dark theme
-    monaco.editor.defineTheme('vs-light', {
+    monaco.editor.defineTheme('custom-light', {
       base: 'vs',
       inherit: true,
       rules: [
         { token: "function.versec", foreground: "666600" },
+      ],
+      colors: {}
+    });
+
+    monaco.editor.defineTheme('custom-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: "function.versec", foreground: "ffa500" },
       ],
       colors: {}
     });
@@ -90,7 +98,7 @@ export const monacoConfig: NgxMonacoEditorConfig = {
 })
 export class EditorComponent {
   public readonly editorOptions = {
-    theme: 'vs-light',
+    theme: this.isDark() ? 'custom-dark' : 'custom-light',
     language: 'typescript',
     automaticLayout: true,
   };
@@ -106,5 +114,9 @@ export class EditorComponent {
     if (changes.language) {
       this.editorOptions.language = this.language;
     }
+  }
+
+  isDark() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--is-dark') === '1';
   }
 }

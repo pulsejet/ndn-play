@@ -3,8 +3,8 @@
         <app-editor [(code)]="schema" language="versec"></app-editor>
 
         <div class="actions">
-            <button class="button is-link is-light is-small mt-1" (click)="compileSchema()">Compile</button>
-            <button class="button is-link is-light is-small mt-1" (click)="visualizeSchema()">Visualize</button>
+            <button class="button is-link is-soft is-small mt-1" (click)="compileSchema()">Compile</button>
+            <button class="button is-link is-soft is-small mt-1" (click)="visualizeSchema()">Visualize</button>
         </div>
     </app-tab>
 
@@ -27,7 +27,7 @@
         <app-editor [(code)]="script" language="typescript"></app-editor>
 
         <div class="actions">
-            <button class="button is-danger is-light is-small mt-1" (click)="runScript()">Run</button>
+            <button class="button is-danger is-soft is-small mt-1" (click)="runScript()">Run</button>
         </div>
     </app-tab>
 </app-tabs>

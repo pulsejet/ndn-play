@@ -9,7 +9,7 @@ import { Topology } from './topo';
         <h2 class="is-size-5">Global Operations</h2>
         <br/>
         <div class="field" *ngIf="$any(topo.provider).BROWSER">
-            <button class="button is-link full-width is-light is-small full-width"
+            <button class="button is-link full-width is-soft is-small full-width"
                     (click)="$any(topo.provider).scheduleRouteRefresh()">Compute Routes</button>
         </div>
 
@@ -55,7 +55,7 @@ import { Topology } from './topo';
 
         <div class="field" *ngIf="$any(topo.provider).BROWSER">
             <label class="label is-small">Experiment:</label>
-            <button class="button is-success is-light is-small full-width"
+            <button class="button is-success is-soft is-small full-width"
                     [disabled]="runExpDebounce"
                     *ngIf="topo.provider.runCode"
                     (click)="runExperiment();">
@@ -65,19 +65,19 @@ import { Topology } from './topo';
 
         <div class="field">
             <label class="label is-small">Import / Export:</label>
-            <button class="button is-danger is-light is-small full-width mt-1"
+            <button class="button is-danger is-soft is-small full-width mt-1"
                     (click)="showExpDump = true">
                 Experiment Dump
             </button>
-            <button class="button is-link is-light is-small full-width mt-1"
+            <button class="button is-link is-soft is-small full-width mt-1"
                     (click)="showMnConfig = true; mnConf.value = miniNDN.generate(topo)">
                 MiniNDN Config
             </button>
-            <button class="button is-link is-light is-small full-width mt-1"
+            <button class="button is-link is-soft is-small full-width mt-1"
                     (click)="visualizeFileTLV()">
                 Visualize TLV File
             </button>
-            <button class="button is-link is-light is-small full-width mt-1"
+            <button class="button is-link is-soft is-small full-width mt-1"
                     (click)="visualizeEncodedTLV()">
                 Visualize Encoded TLV
             </button>
@@ -100,12 +100,12 @@ import { Topology } from './topo';
                 JS console tab.
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-danger"
+                <button class="button is-danger is-soft mr-2"
                         *ngIf="topo.provider.loadExperimentDump"
                         (click)="importExpDump()">
                     Import
                 </button>
-                <button class="button is-link"
+                <button class="button is-link is-soft mr-2"
                         *ngIf="topo.provider.downloadExperimentDump"
                         (click)="exportExpDump()">
                     Export
@@ -130,7 +130,7 @@ import { Topology } from './topo';
                         style="white-space: nowrap"></textarea>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-danger"
+                <button class="button is-danger is-soft mr-2"
                         [disabled]="!$any(topo.provider).BROWSER"
                         (click)="miniNDN.load(this.topo, mnConf.value) && (showMnConfig = false)">
                   Import

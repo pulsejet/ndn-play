@@ -88,12 +88,15 @@ export class ConsoleComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    // CSS variables are not available
+    const cvar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name);
+
     // Terminal
     var term = new Terminal({
       theme: {
-        background: 'white',
-        foreground: 'black',
-        selectionBackground: 'rgba(0, 0, 0, 0.1)',
+        background: cvar('--bg-color'),
+        foreground: cvar('--bulma-text-strong'),
+        selectionBackground: cvar('--console-selection-color'),
       },
       fontFamily: 'Consolas, Ubuntu Mono, courier-new, courier, monospace',
       fontSize: 14,

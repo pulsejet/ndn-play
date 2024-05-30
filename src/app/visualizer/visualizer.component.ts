@@ -118,7 +118,7 @@ export class VisualizerComponent implements OnInit {
     for (const key in this.tlvTypes) {
       if (key.startsWith('TLV_') && this.tlvTypes[key][type]) {
         const text = this.tlvTypes[key][type] as string;
-        return isValidParent(text) ? text : undefined;
+        if (isValidParent(text)) return text;
       }
     }
     return undefined;

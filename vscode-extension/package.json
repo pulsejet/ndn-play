@@ -1,5 +1,6 @@
 {
   "name": "ndn-play-vscode",
+  "publisher": "pulsejet",
   "displayName": "NDN Play",
   "description": "NDN-Play Debugging Tools",
   "version": "0.0.1",

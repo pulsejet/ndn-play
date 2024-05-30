@@ -16,7 +16,7 @@
         </div>
     </ng-container>
 
-    <ng-container *ngIf="!visualizedTlv">
+    <ng-container *ngIf="!visualizedTlv && warnEmpty">
         No TLV Selected <br/>
         Call <span class="has-text-danger">visualize(tlv)</span> to visualize a TLV block <br/>
         Input may be an encodable, wire byte array or hex string

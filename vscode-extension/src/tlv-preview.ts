@@ -50,6 +50,7 @@ export class TlvPreview extends Disposable {
         const watcher = this._register(
             vscode.workspace.createFileSystemWatcher(resource.fsPath)
         );
+
         this._register(
             watcher.onDidChange((e) => {
                 if (e.toString() === this.resource.toString()) {
@@ -57,6 +58,7 @@ export class TlvPreview extends Disposable {
                 }
             })
         );
+
         this._register(
             watcher.onDidDelete((e) => {
                 if (e.toString() === this.resource.toString()) {
@@ -65,6 +67,14 @@ export class TlvPreview extends Disposable {
             })
         );
 
+        this._register(this.webviewEditor.webview.onDidReceiveMessage((e) => {
+            switch (e.type) {
+                case "ready":
+                    this.refresh();
+                    break;
+            }
+        }));
+
         getPlayHtml({
             root: this.extensionRoot,
             webview: this.webviewEditor.webview,
@@ -72,7 +82,7 @@ export class TlvPreview extends Disposable {
         }).then((html) => {
             this.webviewEditor.webview.html = html;
             this.update();
-            this.refresh();
+            setTimeout(() => this.refresh(), 3000);
         })
     }
 

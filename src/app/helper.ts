@@ -63,6 +63,17 @@ export function loadFileBin(): Promise<ArrayBuffer> {
     });
 }
 
+/**
+ * Post an object to parent window or vscode
+ * @param object to send to paent
+ */
+export function postToParent(object: any) {
+    window.parent?.postMessage(object, '*');
+
+    const vscode = (<any>globalThis).acquireVsCodeApi?.();
+    vscode.postMessage(object);
+}
+
 // Expose globally
 window.downloadfile = downloadFile;
 window.loadfile = loadFileBin;

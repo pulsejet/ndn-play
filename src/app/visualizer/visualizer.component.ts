@@ -15,6 +15,7 @@ import type { TlvType, visTlv } from '../interfaces';
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: TlvType;
   @Input() public guessBox?: boolean = true;
+  @Input() public warnEmpty?: boolean = true;
   @Output() public readonly change = new EventEmitter<TlvType>();
 
   @ViewChild('outer') public outer?: ElementRef;

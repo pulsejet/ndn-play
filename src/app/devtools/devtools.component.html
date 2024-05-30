@@ -26,6 +26,7 @@
                 <app-visualizer #visualizer
                                 [tlv]="visualizedTlv"
                                 (change)="lowerTabs.set(lowerVisTab)"
+                                [warnEmpty]="mode !== MODES.TLV"
                 ></app-visualizer>
             </div>
         </app-tab>

@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
+import { postToParent } from './helper';
 
 @Component({
   selector: 'app-root',
   templateUrl: 'app.html',
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   title = 'ndn-play';
 
   /** Mode of entire application */
@@ -24,6 +25,10 @@ export class AppComponent {
     if (url.searchParams.get('visualize')) {
       this.mode = "visualize";
     }
+  }
+
+  ngAfterViewInit(): void {
+    postToParent({ type: 'ready' });
   }
 
   public getVisualizeTlv(): string {

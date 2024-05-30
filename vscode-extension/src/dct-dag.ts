@@ -32,9 +32,17 @@ export class DctDagViewProvider extends Disposable implements vscode.WebviewView
         }).then((html) => {
             if (this._view) {
                 this._view.webview.html = html;
-                this.refreshWithDelay();
+                setTimeout(() => this.refresh(), 3000);
             }
         })
+
+        this._register(this._view?.webview.onDidReceiveMessage((e) => {
+            switch (e.type) {
+                case "ready":
+                    this.refresh();
+                    break;
+            }
+        }));
 
         this._register(this._view.onDidDispose(() => {
             this._view = undefined;

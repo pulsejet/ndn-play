@@ -2,6 +2,7 @@
   "name": "ndn-play-vscode",
   "publisher": "pulsejet",
   "displayName": "NDN Play",
+  "icon": "images/logo.png",
   "description": "NDN-Play Debugging Tools",
   "version": "0.0.1",
   "repository": "https://github.com/pulsejet/ndn-play",

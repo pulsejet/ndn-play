@@ -24,7 +24,7 @@ export async function getPlayHtml(opts: {
     const theme = isdark ? 'dark' : 'light'
 
     const extraHeader = `
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${cspSource}; script-src 'unsafe-inline' 'unsafe-eval' ${cspSource}; style-src 'unsafe-inline' ${cspSource}; img-src blob: data: ${cspSource};">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${cspSource}; script-src 'unsafe-inline' 'unsafe-eval' ${cspSource}; style-src 'unsafe-inline' ${cspSource}; img-src blob: data: ${cspSource}; font-src blob: data: ${cspSource};">
 
         <script>
             const url = new URL(window.location.href);

@@ -45,6 +45,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     hideChainInfo: true,
     showHidden: false,
   };
+  public compileError: boolean = false;
 
   // Only show DAG visualizer
   @Input() public dagOnly: boolean = false;
@@ -171,13 +172,16 @@ export class DCTComponent implements OnInit, AfterViewInit {
   }
 
   public async visualizeSchema() {
-    await this.compileSchema(true);
+    this.compileError = !(await this.compileSchema(true));
 
     // Check if output contains a DAG
     // This can be the case even if the compiler fails
     if (this.schemaOutput.includes('digraph')) {
       this.refreshVisualizer();
       this.tabs?.set(this.visualizerTab!);
+    } else {
+      this.certDag.nodes.clear();
+      this.certDag.edges.clear();
     }
   }
 
@@ -321,8 +325,10 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
     // Helper to remove a node from the graph
     const removeNode = (id: IdType) => {
-      this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
-      this.certDag.nodes.remove(id);
+      try {
+        this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
+        this.certDag.nodes.remove(id);
+      } catch (_) { }
     };
 
     // Remove chainInfo if hidden

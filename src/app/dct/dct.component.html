@@ -1,5 +1,6 @@
 <ng-template #visContent>
     <div #dagContainer class="dag"></div>
+    <div *ngIf="compileError" class="dag-error">Compilation failed with non-zero status code</div>
 
     <div class="actions">
         <label class="checkbox is-small">

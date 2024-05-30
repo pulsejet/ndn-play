@@ -6,7 +6,7 @@ Features:
 1. Visualization for `.tlv` and `.bundle` extensions.
 2. DCT schema visualization ([VerSec](https://marketplace.visualstudio.com/items?itemName=pulsejet.versec-language) extension is recommended)
 
-![Schema Visualization](https://raw.githubusercontent.com/pulsejet/ndn-play/main/vscode-extension/images/dag.ss.png)
+![Schema Visualization](https://raw.githubusercontent.com/pulsejet/ndn-play/master/vscode-extension/images/dag.ss.png)
 
 ## Building & Development
 

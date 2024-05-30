@@ -25,6 +25,9 @@
     --vis-green: green;
     --vis-gray: gray;
     --vis-hover: rgba(255, 255, 0, 0.3);
+
+    --vis-tooltip-bg: #f5f4ed;
+    --vis-tooltip-border: 1px solid black;
 }
 
 @mixin dark-theme {
@@ -44,6 +47,9 @@
     --vis-green: limegreen;
     --vis-gray: darkgray;
     --vis-hover: rgba(0, 0, 255, 0.3);
+
+    --vis-tooltip-bg: var(--scrollbar-color);
+    --vis-tooltip-border: 1px solid #333;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -154,4 +160,11 @@ input[type="checkbox"] {
         border-color: #007bff;
         color: white;
     }
+}
+
+// vis.js network overrides
+div.vis-tooltip {
+    background-color: var(--vis-tooltip-bg) !important;
+    border: var(--vis-tooltip-border) !important;
+    color: var(--bulma-text-strong) !important;
 }

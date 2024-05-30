@@ -23,7 +23,7 @@ export const COLOR_MAP: {[key: string]: string} = {
     get lightgreen() { return '#a1ffc2'; },
     get lightorange() { return '#ffd1a6'; },
     get silver() { return '#e3e3e3'; },
-    get gray() { return '#666666'; },
+    get gray() { return '#888888'; },
 
     get DEFAULT_LINK_COLOR() { return dark ? '#303F9F' : '#8C9EFF'; },
     get BROKEN_LINK_COLOR() { return dark ? '#444444' : '#cccccc'; },
@@ -35,4 +35,5 @@ export const COLOR_MAP: {[key: string]: string} = {
 
     get NODE_RED() { return dark ? '#B71C1C' : '#e44e6c'; },
     get NODE_ORANGE() { return dark ? '#E65100' : '#ffd1a6' },
+    get NODE_SILVER() { return dark ? '#2e2e2e' : '#e3e3e3' },
 };

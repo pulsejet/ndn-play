@@ -280,7 +280,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
         // Color substitutions
         if (color === 'gray') {
-          color = COLOR_MAP.silver;
+          color = COLOR_MAP.NODE_SILVER;
           fontColor = COLOR_MAP.gray;
         }
 

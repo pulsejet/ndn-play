@@ -3,6 +3,7 @@
   "displayName": "NDN Play",
   "description": "NDN-Play Debugging Tools",
   "version": "0.0.1",
+  "repository": "https://github.com/pulsejet/ndn-play",
   "engines": {
     "vscode": "^1.89.0"
   },

@@ -71,7 +71,7 @@ export function postToParent(object: any) {
     window.parent?.postMessage(object, '*');
 
     const vscode = (<any>globalThis).acquireVsCodeApi?.();
-    vscode.postMessage(object);
+    vscode?.postMessage(object);
 }
 
 // Expose globally

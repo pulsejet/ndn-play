@@ -41,7 +41,7 @@ export const monacoConfig: NgxMonacoEditorConfig = {
     });
 
     // fetch user types for typescript
-    const res = await fetch('/assets/user-types.d.ts');
+    const res = await fetch('assets/user-types.d.ts');
     const library = await res.text();
 
     // declare individual modules

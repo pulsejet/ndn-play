@@ -11,12 +11,6 @@
             </div>
         </app-tab>
 
-        <app-tab name="TLV Types">
-            <div class="main-tab">
-                <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
-            </div>
-        </app-tab>
-
         <app-tab name="Tools" #lowerVisTab>
             <button class="button is-link m-1" (click)="dump()">
                 Generate Experiment Dump
@@ -27,18 +21,26 @@
 
 <ng-template #mainLowerPane>
     <app-tabs class="tab-container main-lower" #lowerTabs>
-        <app-tab name="TLV Visualizer" #lowerVisTab>
+        <app-tab name="TLV Visualizer" #lowerVisTab (select)="visualizer.checkTypes()">
             <div class="p-2 tab-full-height">
-                <app-visualizer [tlv]="visualizedTlv"
+                <app-visualizer #visualizer
+                                [tlv]="visualizedTlv"
                                 (change)="lowerTabs.set(lowerVisTab)"
                 ></app-visualizer>
+            </div>
+        </app-tab>
+
+        <app-tab name="TLV Types" (select)="loadMonaco = true">
+            <div class="main-tab" *ngIf="loadMonaco">
+                <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
             </div>
         </app-tab>
     </app-tabs>
 </ng-template>
 
-<div class="full-width">
-    <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
+<div class="full-width full-vh">
+    <app-pane *ngIf="showCapturePanel; else mainLowerPane"
+                [pane1]="mainUpperPane" [pane2]="mainLowerPane"
                 [vertical]="true" basis="50%"
                 (resize)="paneResized()">
     </app-pane>

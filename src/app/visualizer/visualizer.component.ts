@@ -29,7 +29,7 @@ export class VisualizerComponent implements OnInit {
   constructor(private readonly gs: GlobalService) { }
 
   async ngOnInit() {
-    const res = await fetch('/assets/tlv-types.ts')
+    const res = await fetch('assets/tlv-types.ts')
     const code = await res.text();
     this.gs.topo.tlvTypesCode = code.trim();
 
@@ -43,14 +43,24 @@ export class VisualizerComponent implements OnInit {
     this.compileTlvTypes();
 
     // Check if TLV types specified
-    this.ngOnChanges();
+    this.refresh();
   }
 
   ngOnChanges() {
+    this.refresh();
+  }
+
+  refresh() {
     if (this.tlv) {
       this.visualizedTlv = this.visualize(this.tlv);
     } else {
       this.visualizedTlv = undefined;
+    }
+  }
+
+  checkTypes() {
+    if (this.compiledTlvCode !== this.gs.topo.tlvTypesCode) {
+      this.refresh();
     }
   }
 

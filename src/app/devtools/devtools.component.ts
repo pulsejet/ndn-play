@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnInit } from '@angular/core';
 import { GlobalService } from '../global.service';
 
 import { Decoder } from '@ndn/tlv';
@@ -7,12 +7,18 @@ import { AltUri, Data, Interest } from '@ndn/packet';
 
 import type { ICapturedPacket, INode, TlvType } from '../interfaces';
 
+const PostMsg = {
+  ReceivePacket: 'recv-packet',
+  SendPacket: 'send-packet',
+  Visualize: 'visualize',
+}
+
 @Component({
   selector: 'app-devtools',
   templateUrl: 'devtools.component.html',
   styleUrls: ['devtools.component.scss']
 })
-export class DevtoolsComponent implements AfterViewInit {
+export class DevtoolsComponent implements OnInit, AfterViewInit {
   /** Currently visualized tlv */
   public visualizedTlv: TlvType;
 
@@ -21,6 +27,12 @@ export class DevtoolsComponent implements AfterViewInit {
 
   /** Dummy node for captures */
   public readonly node: INode;
+
+  /** Show or hide the capture panel */
+  public showCapturePanel: boolean = true;
+
+  /** Lazy load the code editor only when a tab is opened */
+  public loadMonaco: boolean = false;
 
   constructor(public readonly gs: GlobalService) {
     this.gs.topo.edges.clear();
@@ -32,19 +44,39 @@ export class DevtoolsComponent implements AfterViewInit {
     } as INode);
 
     this.node = this.gs.topo.nodes.get('devtools')!;
+
+    // Various modes of devtools set with the query parameter
+    // Default is everything (chrome extension)
+    const url = new URL(window.location.href);
+    switch (url.searchParams.get('devtools')) {
+      case 'visualizer':
+        this.showCapturePanel = false;
+        break;
+    }
+  }
+
+  ngOnInit() {
+    // Set listener for messages from outer window
+    window.addEventListener('message', (e) => {
+      switch (e.data.type) {
+        case PostMsg.ReceivePacket:
+          this.pushPacket(e.data.packet, e.data.timestamp, false);
+          break;
+
+        case PostMsg.SendPacket:
+          this.pushPacket(e.data.packet,  e.data.timestamp, true);
+          break;
+
+        case PostMsg.Visualize:
+          this.visualizedTlv = e.data.packet;
+          break;
+      }
+    }, false);
   }
 
   ngAfterViewInit() {
+    // Resize on window resize
     window.addEventListener('resize', this.paneResized.bind(this));
-
-    // Set listener for packets from outer window
-    window.addEventListener('message', (e) => {
-      if (e.data.type === 'recv-packet') {
-        this.pushPacket(e.data.packet, e.data.timestamp, false);
-      } else if (e.data.type === 'send-packet') {
-        this.pushPacket(e.data.packet,  e.data.timestamp, true);
-      }
-    }, false);
 
     // Trigger resize after 100ms
     setTimeout(() => this.paneResized(), 100);

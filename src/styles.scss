@@ -32,11 +32,11 @@
     --cap-selection-color: rebeccapurple;
 
     --vis-tlv-border: 1px solid #aaa;
-    --vis-red: darkorange;
+    --vis-red: orange;
     --vis-blue: deepskyblue;
     --vis-green: limegreen;
     --vis-gray: darkgray;
-    --vis-hover: rgba(255, 0, 255, 0.3);
+    --vis-hover: rgba(255, 0, 255, 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,6 +83,9 @@ pre, .thin-scrollbar {
 /** Global utilities **/
 .full-width {
     width: 100%;
+}
+.full-vh {
+    height: 100vh;
 }
 
 .main-tab {

@@ -181,8 +181,6 @@ export enum TLV_SVS {
     StateVector = 201,
     StateVectorEntry = 202,
     SvSeqNo = 204,
-    MappingData = 205,
-    MappingEntry = 206,
 }
 export const T_IN_StateVector = [TLV_V3.Name];
 export const T_IN_StateVectorEntry = [TLV_SVS.StateVector];

@@ -25,6 +25,8 @@ export class DctDagViewProvider extends Disposable implements vscode.WebviewView
             localResourceRoots: [getPlayUri(this.extensionRoot)],
         };
 
+
+        const _initTimer = setTimeout(() => this.refresh(), 3000);
         getPlayHtml({
             root: this.extensionRoot,
             webview: this._view.webview,
@@ -32,7 +34,6 @@ export class DctDagViewProvider extends Disposable implements vscode.WebviewView
         }).then((html) => {
             if (this._view) {
                 this._view.webview.html = html;
-                setTimeout(() => this.refresh(), 3000);
             }
         })
 
@@ -40,6 +41,7 @@ export class DctDagViewProvider extends Disposable implements vscode.WebviewView
             switch (e.type) {
                 case "ready":
                     this.refresh();
+                    clearTimeout(_initTimer);
                     break;
             }
         }));

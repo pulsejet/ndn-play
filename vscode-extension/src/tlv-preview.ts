@@ -67,14 +67,7 @@ export class TlvPreview extends Disposable {
             })
         );
 
-        this._register(this.webviewEditor.webview.onDidReceiveMessage((e) => {
-            switch (e.type) {
-                case "ready":
-                    this.refresh();
-                    break;
-            }
-        }));
-
+        const _initTimer = setTimeout(() => this.refresh(), 3000);
         getPlayHtml({
             root: this.extensionRoot,
             webview: this.webviewEditor.webview,
@@ -82,8 +75,16 @@ export class TlvPreview extends Disposable {
         }).then((html) => {
             this.webviewEditor.webview.html = html;
             this.update();
-            setTimeout(() => this.refresh(), 3000);
         })
+
+        this._register(this.webviewEditor.webview.onDidReceiveMessage((e) => {
+            switch (e.type) {
+                case "ready":
+                    this.refresh();
+                    clearTimeout(_initTimer);
+                    break;
+            }
+        }));
     }
 
     private async refresh(): Promise<void> {

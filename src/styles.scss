@@ -5,6 +5,9 @@
     // Start override definitions
     --bg-color-override: var(--vscode-editor-background);
 
+    // Non-theme globals
+    --monospace: var(--vscode-editor-font-family, monospace);
+
     // Start light theme
     --bg-color: var(--bg-color-override, white);
     --scrollbar-color: #ddd;
@@ -22,8 +25,6 @@
     --vis-green: green;
     --vis-gray: gray;
     --vis-hover: rgba(255, 255, 0, 0.3);
-
-    --monospace: var(--vscode-editor-font-family), monospace;
 }
 
 @mixin dark-theme {
@@ -89,6 +90,9 @@ pre, .thin-scrollbar {
 /** Global utilities **/
 .full-width {
     width: 100%;
+}
+.full-height {
+    height: 100%;
 }
 .full-vh {
     height: 100vh;

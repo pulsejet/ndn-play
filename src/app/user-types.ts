@@ -116,11 +116,11 @@ declare global {
 
         // Augment console methods
         console: Console & {
-            log_play: (...args: any[]) => void;
-            info_play: (...args: any[]) => void;
-            warn_play: (...args: any[]) => void;
-            error_play: (...args: any[]) => void;
-            clear_play: () => void;
+            log_play?: (...args: any[]) => void;
+            info_play?: (...args: any[]) => void;
+            warn_play?: (...args: any[]) => void;
+            error_play?: (...args: any[]) => void;
+            clear_play?: () => void;
         };
 
         // Other modules

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
 import { untangleGraph } from '../algorithm';
@@ -32,9 +32,9 @@ interface ICertDagEdge extends Edge {
   styleUrls: ['dct.component.scss']
 })
 export class DCTComponent implements OnInit, AfterViewInit {
-  public schema = String();
-  public script = String();
-  public schemaOutput = String();
+  public schema: string = String();
+  public script: string = String();
+  public schemaOutput: string = String();
 
   private readonly certDag = {
     nodes: new DataSet<ICertDagNode>(),
@@ -46,10 +46,13 @@ export class DCTComponent implements OnInit, AfterViewInit {
     showHidden: false,
   };
 
+  // Only show DAG visualizer
+  @Input() public dagOnly: boolean = false;
+
   // Native Elements
-  @ViewChild('tabs') public tabs!: TabsComponent;
-  @ViewChild('visualizerTab') public visualizerTab!: TabComponent;
-  @ViewChild('dagContainer') public dagContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('tabs') public tabs?: TabsComponent;
+  @ViewChild('visualizerTab') public visualizerTab?: TabComponent;
+  @ViewChild('dagContainer') public dagContainer?: ElementRef<HTMLDivElement>;
 
   constructor(
     private readonly wasm: WasmService,
@@ -59,6 +62,13 @@ export class DCTComponent implements OnInit, AfterViewInit {
     // Explose global DCT object
     window.DCT = initIface(this.wasm);
 
+    // Load defaults if needed
+    if (!this.dagOnly) {
+      this.fetchDefaults()
+    }
+  }
+
+  private fetchDefaults() {
     // Load schema from localStorage
     localforage.getItem<string>(LS.schema).then((schema) => {;
       schema = schema?.trim() ?? null;
@@ -129,15 +139,17 @@ export class DCTComponent implements OnInit, AfterViewInit {
       },
     };
 
-    // Create network
-    this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
+    if (this.dagContainer) {
+      // Create network
+      this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
 
-    // Add event handlers
-    this.certDagNet.on('select', this.onSelect.bind(this));
+      // Add event handlers
+      this.certDagNet.on('select', this.onSelect.bind(this));
+    }
   }
 
   public async compileSchema(debug: boolean = false): Promise<boolean> {
-    window.console.clear_play();
+    window.console.clear_play?.();
     this.preHookFS();
 
     try {
@@ -165,7 +177,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
     // This can be the case even if the compiler fails
     if (this.schemaOutput.includes('digraph')) {
       this.refreshVisualizer();
-      this.tabs.set(this.visualizerTab);
+      this.tabs?.set(this.visualizerTab!);
     }
   }
 
@@ -339,7 +351,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
   public async runScript(): Promise<void> {
     this.preHookFS();
-    window.console.clear_play();
+    window.console.clear_play?.();
 
     // ZoneAwarePromise cannot be used with async functions
     // So we first construct an async function and transpile it

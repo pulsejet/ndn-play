@@ -2,7 +2,11 @@
 @import 'xterm/css/xterm.css';
 
 :root {
-    --bg-color: white;
+    // Start override definitions
+    --bg-color-override: var(--vscode-editor-background);
+
+    // Start light theme
+    --bg-color: var(--bg-color-override, white);
     --scrollbar-color: #ddd;
     --is-dark: 0;
 
@@ -23,7 +27,7 @@
 }
 
 @mixin dark-theme {
-    --bg-color: #141414;
+    --bg-color: var(--bg-color-override, #141414);
     --scrollbar-color: #444;
     --is-dark: 1;
 

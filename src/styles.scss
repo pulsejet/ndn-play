@@ -18,6 +18,8 @@
     --vis-green: green;
     --vis-gray: gray;
     --vis-hover: rgba(255, 255, 0, 0.3);
+
+    --monospace: var(--vscode-editor-font-family), monospace;
 }
 
 @mixin dark-theme {
@@ -32,11 +34,11 @@
     --cap-selection-color: rebeccapurple;
 
     --vis-tlv-border: 1px solid #aaa;
-    --vis-red: orange;
+    --vis-red: #DCDCAA;
     --vis-blue: deepskyblue;
     --vis-green: limegreen;
     --vis-gray: darkgray;
-    --vis-hover: rgba(255, 0, 255, 0.2);
+    --vis-hover: rgba(0, 0, 255, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {

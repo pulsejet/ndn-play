@@ -221,8 +221,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
         if (this.certDag.nodes.get(root)) {
           this.certDag.nodes.updateOnly({
             id: root,
-            color: COLOR_MAP.red,
-            font: { color: 'white' },
+            color: COLOR_MAP.NODE_RED,
+            font: { color: '#DDDDDD' },
           });
         }
 
@@ -231,7 +231,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
         if (this.certDag.nodes.get(leaf)) {
           this.certDag.nodes.updateOnly({
             id: leaf,
-            color: COLOR_MAP.lightorange,
+            color: COLOR_MAP.NODE_ORANGE,
             shape: 'box',
           });
         }
@@ -273,7 +273,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
           : typeof node.color === 'object'
           ? node.color.background
           : COLOR_MAP.DEFAULT_NODE_COLOR;
-        let fontColor = '#000000';
+        let fontColor = COLOR_MAP.NODE_FONT;
 
         // Hide grayed out nodes by default
         const hide = color === 'gray';

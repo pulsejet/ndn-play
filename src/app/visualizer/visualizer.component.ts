@@ -48,7 +48,7 @@ export class VisualizerComponent implements OnInit {
       localforage.getItem<string>(LF_KEYS.TLV_TYPES),
     ]);
 
-    this.gs.topo.tlvTypesCode += _externalConfig?.customTlvTypes ?? customTypes ?? String();
+    this.gs.topo.tlvTypesCode += globalThis._externalConfig?.customTlvTypes ?? customTypes ?? String();
     this.compiledTlvCode = compiledCode ?? String();
     this.tlvTypes = compiledTypes ? JSON.parse(compiledTypes) : undefined;
 

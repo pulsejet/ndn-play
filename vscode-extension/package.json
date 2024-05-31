@@ -46,6 +46,17 @@
           "when": "resourceLangId == versec || resourceExtname == .rules"
         }
       ]
+    },
+    "configuration": {
+      "title": "NDN-Play",
+      "properties": {
+        "ndn-play.custom-tlv-types": {
+          "type": "string",
+          "default": "",
+          "description": "Custom TLV types for visualizer.",
+          "editPresentation": "multilineText"
+        }
+      }
     }
   },
   "scripts": {

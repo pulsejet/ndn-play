@@ -23,6 +23,12 @@ export async function getPlayHtml(opts: {
     const isdark = [vscode.ColorThemeKind.Dark, vscode.ColorThemeKind.HighContrast].includes(vscode.window.activeColorTheme.kind);
     const theme = isdark ? 'dark' : 'light'
 
+    // Load extension configuration
+    const config = vscode.workspace.getConfiguration('ndn-play');
+    const configStr = btoa(JSON.stringify({
+        customTlvTypes: config.get<string>('custom-tlv-types') ?? undefined,
+    }));
+
     const extraHeader = `
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src ${cspSource}; script-src 'unsafe-inline' 'unsafe-eval' ${cspSource}; style-src 'unsafe-inline' ${cspSource}; img-src blob: data: ${cspSource}; font-src blob: data: ${cspSource};">
 
@@ -31,8 +37,27 @@ export async function getPlayHtml(opts: {
             url.searchParams.set('devtools', '${opts.mode}');
             window.history.pushState(null, '', url.toString());
 
-            document.documentElement.setAttribute('data-theme', '${theme}')
+            document.documentElement.setAttribute('data-theme', '${theme}');
+
+            globalThis._externalConfig = JSON.parse(atob("${configStr}"));
         </script>`;
 
     return html.replace('<base href="/">', `<base href="${baseUrl}/"> ${extraHeader}`)
+}
+
+export function handleMessage(callbacks: {
+    ready?: () => void,
+}) {
+    return (data: any) => {
+        if (typeof data?.type !== 'string') return;
+
+        const cb = (<any>callbacks)[data.type];
+        if (cb) return cb();
+
+        switch (data.type) {
+            case "customTlvTypes":
+                vscode.workspace.getConfiguration('ndn-play').update('custom-tlv-types', data.data || undefined);
+                break;
+        }
+    }
 }

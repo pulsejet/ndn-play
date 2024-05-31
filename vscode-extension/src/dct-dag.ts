@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getPlayHtml, getPlayUri } from './play';
+import { getPlayHtml, getPlayUri, handleMessage } from './play';
 import { Disposable } from './disposable';
 
 export class DctDagViewProvider extends Disposable implements vscode.WebviewViewProvider {
@@ -37,14 +37,12 @@ export class DctDagViewProvider extends Disposable implements vscode.WebviewView
             }
         })
 
-        this._register(this._view?.webview.onDidReceiveMessage((e) => {
-            switch (e.type) {
-                case "ready":
-                    this.refresh();
-                    clearTimeout(_initTimer);
-                    break;
+        this._register(this._view?.webview.onDidReceiveMessage(handleMessage({
+            ready: () => {
+                this.refresh();
+                clearTimeout(_initTimer);
             }
-        }));
+        })))
 
         this._register(this._view.onDidDispose(() => {
             this._view = undefined;

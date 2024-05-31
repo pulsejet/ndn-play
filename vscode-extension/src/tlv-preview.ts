@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Disposable } from './disposable';
-import { getPlayUri, getPlayHtml } from './play';
+import { getPlayUri, getPlayHtml, handleMessage } from './play';
 
 type PreviewState = 'Disposed' | 'Visible' | 'Active';
 
@@ -77,14 +77,12 @@ export class TlvPreview extends Disposable {
             this.update();
         })
 
-        this._register(this.webviewEditor.webview.onDidReceiveMessage((e) => {
-            switch (e.type) {
-                case "ready":
-                    this.refresh();
-                    clearTimeout(_initTimer);
-                    break;
+        this._register(this.webviewEditor.webview.onDidReceiveMessage(handleMessage({
+            ready: () => {
+                this.refresh();
+                clearTimeout(_initTimer);
             }
-        }));
+        })))
     }
 
     private async refresh(): Promise<void> {

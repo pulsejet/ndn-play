@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { AltUri, Name, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
+import { postToParent } from '../helper';
 import { transpileModule } from 'typescript';
 import localforage from 'localforage';
 
@@ -38,7 +39,7 @@ export class VisualizerComponent implements OnInit {
   async ngOnInit() {
     const res = await fetch('assets/tlv-types.ts')
     const code = await res.text();
-    this.gs.topo.tlvTypesCode = code.trim();
+    this.gs.topo.tlvTypesCode = code.trim() + '\n';
 
     // Load cached values from local storage
     const [customTypes, compiledCode, compiledTypes] = await Promise.all([
@@ -47,7 +48,7 @@ export class VisualizerComponent implements OnInit {
       localforage.getItem<string>(LF_KEYS.TLV_TYPES),
     ]);
 
-    this.gs.topo.tlvTypesCode += customTypes ?? String();
+    this.gs.topo.tlvTypesCode += _externalConfig?.customTlvTypes ?? customTypes ?? String();
     this.compiledTlvCode = compiledCode ?? String();
     this.tlvTypes = compiledTypes ? JSON.parse(compiledTypes) : undefined;
 
@@ -116,9 +117,16 @@ export class VisualizerComponent implements OnInit {
     }
 
     // Persist custom TLV types
-    const i = this.compiledTlvCode.lastIndexOf('+==+==+');
-    const customTlvTypes = this.compiledTlvCode.substring(i + 7);
+    const delimiter = '+==+==+';
+    const i = this.compiledTlvCode.lastIndexOf(delimiter);
+    const customTlvTypes = this.compiledTlvCode.substring(i + delimiter.length).trim();
     localforage.setItem(LF_KEYS.CUSTOM_TLV, customTlvTypes);
+
+    // Post to parent for devtools
+    postToParent({
+      type: LF_KEYS.CUSTOM_TLV,
+      data: customTlvTypes,
+    })
   }
 
   getTlvTypeText(type: number, parent: number): string | undefined {

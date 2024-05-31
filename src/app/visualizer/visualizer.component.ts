@@ -81,6 +81,9 @@ export class VisualizerComponent implements OnInit {
   }
 
   checkTypes() {
+    if (!this._initialized) return;
+
+    // Refresh if the input TLV TS has changed
     if (this.compiledTlvCode !== this.gs.topo.tlvTypesCode) {
       this.refresh();
     }

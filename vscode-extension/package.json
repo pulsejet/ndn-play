@@ -4,7 +4,7 @@
   "displayName": "NDN Play",
   "icon": "images/logo.png",
   "description": "NDN-Play Debugging Tools",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": "https://github.com/pulsejet/ndn-play",
   "engines": {
     "vscode": "^1.89.0"

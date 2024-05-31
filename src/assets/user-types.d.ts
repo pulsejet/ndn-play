@@ -3172,6 +3172,8 @@ declare class Ident_2 extends Expr {
 }
 
 declare interface IEdge extends Edge {
+    /** Initialized flag */
+    init?: boolean;
     /** Latency in milliseconds */
     latency: number;
     /** Loss in percentage */
@@ -3258,6 +3260,8 @@ declare interface ImportCertOptions<A extends CryptoAlgorithm> {
 }
 
 declare interface INode extends Node_3 {
+    /** Initialized flag */
+    init?: boolean;
     nfw?: NFW;
     /** Extra data object */
     extra: INodeExtra;
@@ -7899,6 +7903,7 @@ declare class Topology {
     private ensureInitialized;
     updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra): void;
     updateEdgeColor(edge: IEdge): void;
+    private getEdgeColor;
     /** Get a node by ID or label */
     getNode(id: string | INode): INode | null;
 }

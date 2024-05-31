@@ -70,7 +70,7 @@ export function loadFileBin(): Promise<ArrayBuffer> {
 export function postToParent(object: any) {
     window.parent?.postMessage(object, '*');
 
-    const vscode = (<any>globalThis).acquireVsCodeApi?.();
+    const vscode = globalThis.acquireVsCodeApi?.();
     vscode?.postMessage(object);
 }
 

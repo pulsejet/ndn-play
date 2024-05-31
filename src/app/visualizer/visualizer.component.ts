@@ -34,6 +34,8 @@ export class VisualizerComponent implements OnInit {
   private tlvTypes?: Record<string, any>;
   private compiledTlvCode: string = String();
 
+  private _initialized: boolean = false;
+
   constructor(private readonly gs: GlobalService) { }
 
   async ngOnInit() {
@@ -57,10 +59,17 @@ export class VisualizerComponent implements OnInit {
 
     // Check if TLV types specified
     this.refresh();
+    this._initialized = true;
   }
 
   ngOnChanges() {
-    this.refresh();
+    if (this._initialized) {
+      // Prevent a refresh before the TLV types are loaded
+      // This is especially important for devtools because
+      // an incorrect custom types value may be posted to the
+      // parent and persisted
+      this.refresh();
+    }
   }
 
   refresh() {

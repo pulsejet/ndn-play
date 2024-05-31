@@ -72,20 +72,20 @@ export class VisualizerComponent implements OnInit {
     }
   }
 
-  refresh() {
-    if (this.tlv) {
-      this.visualizedTlv = this.visualize(this.tlv);
-    } else {
-      this.visualizedTlv = undefined;
-    }
-  }
-
-  checkTypes() {
+  public checkTypes() {
     if (!this._initialized) return;
 
     // Refresh if the input TLV TS has changed
     if (this.compiledTlvCode !== this.gs.topo.tlvTypesCode) {
       this.refresh();
+    }
+  }
+
+  private refresh() {
+    if (this.tlv) {
+      this.visualizedTlv = this.visualize(this.tlv);
+    } else {
+      this.visualizedTlv = undefined;
     }
   }
 
@@ -104,7 +104,7 @@ export class VisualizerComponent implements OnInit {
     this.resizeObserver?.disconnect();
   }
 
-  compileTlvTypes() {
+  private compileTlvTypes() {
     if (this.compiledTlvCode === this.gs.topo.tlvTypesCode) return;
     this.compiledTlvCode = this.gs.topo.tlvTypesCode;
 
@@ -141,7 +141,7 @@ export class VisualizerComponent implements OnInit {
     })
   }
 
-  getTlvTypeText(type: number, parent: number): string | undefined {
+  private getTlvTypeText(type: number, parent: number): string | undefined {
     /** Check if constrained parent is valid */
     const isValidParent = (text: string) => {
       const inClause = this.tlvTypes?.[`T_IN_${text}`];
@@ -159,7 +159,7 @@ export class VisualizerComponent implements OnInit {
     return undefined;
   }
 
-  visualize(tlv: TlvType): visTlv[] {
+  private visualize(tlv: TlvType): visTlv[] {
     if (!tlv) return [];
     this.compileTlvTypes();
 
@@ -194,7 +194,7 @@ export class VisualizerComponent implements OnInit {
     return this.decodeRecursive(buffer, 0);
   }
 
-  decodeRecursive(input: Uint8Array, parent: number): visTlv[] {
+  private decodeRecursive(input: Uint8Array, parent: number): visTlv[] {
     let t: Decoder.Tlv;
     let decoder = new Decoder(input);
     const arr: visTlv[] = [];
@@ -247,7 +247,7 @@ export class VisualizerComponent implements OnInit {
             if (typeof nniEnum === 'object') {
               obj.hs = nniEnum[obj.hs] || obj.hs;
             }
-          } catch {}
+          } catch { }
           obj.human = true;
         }
 

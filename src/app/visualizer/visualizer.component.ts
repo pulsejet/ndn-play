@@ -7,6 +7,12 @@ import localforage from 'localforage';
 
 import type { TlvType, visTlv } from '../interfaces';
 
+const LF_KEYS = {
+  CUSTOM_TLV: 'customTlvTypes',
+  TLV_TYPES_TS: 'tlvTypesTs',
+  TLV_TYPES: 'tlvTypes',
+}
+
 @Component({
   selector: 'app-visualizer',
   templateUrl: 'visualizer.component.html',
@@ -25,7 +31,7 @@ export class VisualizerComponent implements OnInit {
   public attemptUnknownDecode: boolean = false;
 
   private tlvTypes?: Record<string, any>;
-  private compiledTlvCode: string = '';
+  private compiledTlvCode: string = String();
 
   constructor(private readonly gs: GlobalService) { }
 
@@ -34,11 +40,16 @@ export class VisualizerComponent implements OnInit {
     const code = await res.text();
     this.gs.topo.tlvTypesCode = code.trim();
 
-    // Load custom TLV types from local storage
-    const customTlvTypes = await localforage.getItem<string>('customTlvTypes');
-    if (customTlvTypes) {
-      this.gs.topo.tlvTypesCode += customTlvTypes;
-    }
+    // Load cached values from local storage
+    const [customTypes, compiledCode, compiledTypes] = await Promise.all([
+      localforage.getItem<string>(LF_KEYS.CUSTOM_TLV),
+      localforage.getItem<string>(LF_KEYS.TLV_TYPES_TS),
+      localforage.getItem<string>(LF_KEYS.TLV_TYPES),
+    ]);
+
+    this.gs.topo.tlvTypesCode += customTypes ?? String();
+    this.compiledTlvCode = compiledCode ?? String();
+    this.tlvTypes = compiledTypes ? JSON.parse(compiledTypes) : undefined;
 
     // Compile TLV types
     this.compileTlvTypes();
@@ -94,6 +105,10 @@ export class VisualizerComponent implements OnInit {
     try {
       this.tlvTypes = new Function(code).call(null);
       console.warn('Compiled TLV types');
+
+      // Cache the compiled types
+      localforage.setItem(LF_KEYS.TLV_TYPES_TS, this.compiledTlvCode);
+      localforage.setItem(LF_KEYS.TLV_TYPES, JSON.stringify(this.tlvTypes));
     } catch (e) {
       console.error('Failed to compile TLV types');
       console.error(e);
@@ -103,7 +118,7 @@ export class VisualizerComponent implements OnInit {
     // Persist custom TLV types
     const i = this.compiledTlvCode.lastIndexOf('+==+==+');
     const customTlvTypes = this.compiledTlvCode.substring(i + 7);
-    localforage.setItem('customTlvTypes', customTlvTypes);
+    localforage.setItem(LF_KEYS.CUSTOM_TLV, customTlvTypes);
   }
 
   getTlvTypeText(type: number, parent: number): string | undefined {

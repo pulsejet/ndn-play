@@ -1,3 +1,4 @@
+/// <reference types="emscripten" />
 import { Injectable } from '@angular/core';
 
 /** List of WASM module names */

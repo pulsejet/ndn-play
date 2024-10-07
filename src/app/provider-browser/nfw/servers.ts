@@ -1,4 +1,4 @@
-import { Endpoint, Producer } from "@ndn/endpoint";
+import { Producer, produce } from "@ndn/endpoint";
 import { Data } from "@ndn/packet";
 import { NFW } from "./nfw";
 import { toUtf8 } from '@ndn/util';
@@ -25,11 +25,12 @@ export class DefaultServers {
 
         // Start new server
         const label = this.nfw.node.label;
-        this.pingServer = new Endpoint({ fw: this.nfw.fw }).produce(`/ndn/${label}/ping`, async (interest) => {
+        const { fw } = this.nfw;
+        this.pingServer = produce(`/ndn/${label}/ping`, async (interest) => {
             const data = new Data(interest.name, toUtf8('Ping Reply'), Data.FreshnessPeriod(0));
             this.nfw.securityOptions?.signer.sign(data);
             return data;
-        });
+        }, { fw });
     }
 
     private setupCertServer() {
@@ -38,13 +39,14 @@ export class DefaultServers {
 
         // Start new server
         const label = this.nfw.node.label;
-        this.certServer = new Endpoint({ fw: this.nfw.fw }).produce(`/ndn/${label}/cert`, async (interest) => {
+        const { fw } = this.nfw;
+        this.certServer = produce(`/ndn/${label}/cert`, async (interest) => {
             try {
                 const certName = (await this.nfw.securityOptions?.keyChain.listCerts(interest.name))?.[0];
                 return certName ? (await this.nfw.securityOptions?.keyChain.getCert(certName))?.data : undefined;
             } catch {
                 return undefined;
             }
-        });
+        }, { fw });
     }
 }

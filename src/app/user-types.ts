@@ -5,7 +5,7 @@ import * as keychain from '@ndn/keychain';
 import * as l3face from '@ndn/l3face';
 import * as lp from '@ndn/lp';
 import * as packet from '@ndn/packet';
-import * as sync from '@ndn/sync';
+import * as psync from '@ndn/psync';
 import * as tlv from "@ndn/tlv";
 import * as trust_schema from '@ndn/trust-schema';
 import * as util from '@ndn/util';
@@ -26,7 +26,7 @@ export type {
     l3face,
     lp,
     packet,
-    sync,
+    psync,
     tlv,
     trust_schema,
     util,
@@ -42,7 +42,7 @@ export const modules = {
     '@ndn/l3face': ['l3face', l3face],
     '@ndn/lp': ['lp', lp],
     '@ndn/packet': ['packet', packet],
-    '@ndn/sync': ['sync', sync],
+    '@ndn/psync': ['psync', psync],
     '@ndn/tlv': ['tlv', tlv],
     '@ndn/trust-schema': ['trust_schema', trust_schema],
     '@ndn/util': ['util', util],

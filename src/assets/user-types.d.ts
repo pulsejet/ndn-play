@@ -1,9 +1,7 @@
-/// <reference types="emscripten" />
-/// <reference types="node" />
 /// <reference lib="esnext.asynciterable" />
 
 import type * as asn1 from '@yoursunny/asn1';
-import assert from 'minimalistic-assert';
+import assert from 'tiny-invariant';
 import { DataSet } from './esm';
 import { Edge } from './esm';
 import { FullItem } from 'vis-data/declarations/data-interface';
@@ -166,6 +164,33 @@ declare class AltUriConverter {
 }
 
 declare const And: new () => Operator;
+
+/**
+ Create a type that represents either the value or an array of the value.
+
+ @see Promisable
+
+ @example
+ ```
+ import type {Arrayable} from 'type-fest';
+
+ function bundle(input: string, output: Arrayable<string>) {
+ 	const outputList = Array.isArray(output) ? output : [output];
+
+ 	// …
+
+ 	for (const output of outputList) {
+ 	  console.log(`write to: ${output}`);
+ 	}
+ }
+
+ bundle('src/index.js', 'dist/index.js');
+ bundle('src/index.js', ['dist/index.cjs', 'dist/index.mjs']);
+ ```
+
+ @category Array
+ */
+declare type Arrayable<T> = T | readonly T[];
 
 /**
  Provides all values for a constant array or tuple.
@@ -451,18 +476,13 @@ declare namespace CertFetcher {
     interface Options extends CacheOptions {
         /**
          * Cache instance owner as WeakMap key.
-         * @defaultValue `.endpoint ?? .cOpts.fw ?? Forwarder.getDefault()`
+         * @defaultValue `.cOpts.fw ?? Forwarder.getDefault()`
          *
          * @remarks
          * {@link CertFetcher}s with the same `.owner` share the same cache instance.
          * Cache options are determined when it's first created.
          */
         owner?: object;
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.cOpts`.
-         */
-        endpoint?: Endpoint;
         /**
          * Consumer options.
          *
@@ -477,11 +497,6 @@ declare namespace CertFetcher {
          * If specified, `.cOpts.modifyInterest` is overridden.
          */
         interestLifetime?: number;
-        /**
-         * RetxPolicy for certificate retrieval.
-         * @deprecated Specify in `.cOpts.retx`.
-         */
-        retx?: RetxPolicy;
     }
 }
 
@@ -711,6 +726,29 @@ declare const Colon: new () => Operator;
 
 declare const Comma: new () => Operator;
 
+declare interface CommonOptions {
+    /**
+     * Logical forwarder instance.
+     * @defaultValue `Forwarder.getDefault()`
+     */
+    fw?: Forwarder;
+    /**
+     * Description for debugging purpose.
+     * @defaultValue
+     * In a consumer, "consume" + Interest name.
+     * In a producer, "produce" + main prefix.
+     */
+    describe?: string;
+    /**
+     * AbortSignal that allows cancelation via AbortController.
+     *
+     * @remarks
+     * In a consumer, the promise returned by consume() is rejected.
+     * In a producer, the producer is closed.
+     */
+    signal?: AbortSignal;
+}
+
 declare function compile(schema: ast.Schema): TrustSchemaPolicy;
 
 /**
@@ -723,30 +761,28 @@ declare class Component {
     static decodeFrom(decoder: Decoder): Component;
     /** Parse from URI representation, or return existing Component. */
     static from(input: ComponentLike): Component;
-    /**
-     * Construct GenericNameComponent from TLV-VALUE.
-     * @deprecated Pass `TT.GenericNameComponent` as type.
-     */
-    constructor(type: undefined, value: Uint8Array | string);
+    /** Construct GenericNameComponent with TLV-LENGTH zero. */
+    constructor();
     /**
      * Construct from TLV-TYPE and TLV-VALUE.
-     * @param type - TLV-TYPE. Default is GenericNameComponent.
+     * @param type - TLV-TYPE.
      * @param value - TLV-VALUE. If specified as string, it's encoded as UTF-8 but not interpreted
      *                as URI. Use `Component.from()` to interpret URI.
      *
      * @throws Error
      * Thrown if `type` is not a valid name component TLV-TYPE.
      */
-    constructor(type?: number, value?: Uint8Array | string);
+    constructor(type: number, value?: Uint8Array | string);
     /**
      * Decode from TLV.
+     * @param tlv - Complete name component TLV.
      *
      * @throws Error
      * Thrown if `tlv` does not contain a complete name component TLV and nothing else.
      */
     constructor(tlv: Uint8Array);
     /** @internal */
-    constructor(type: number, isFrom: typeof FROM, encoder: Encoder, length: number);
+    constructor(type: number, encoder: Encoder, length: number);
     /** Whole TLV. */
     readonly tlv: Uint8Array;
     /** TLV-TYPE. */
@@ -1018,25 +1054,26 @@ declare function consume(interest: Interest | NameLike, opts?: ConsumerOptions):
  * annotated with the Interest and some counters.
  */
 declare interface ConsumerContext extends Promise<Data> {
+    /** Interest packet, after any modifications. */
     readonly interest: Interest;
+    /**
+     * Number of retransmissions sent so far.
+     *
+     * @remarks
+     * The initial Interest does not count as a retransmission.
+     */
     readonly nRetx: number;
+    /**
+     * Duration (milliseconds) between last Interest transmission and Data arrival.
+     *
+     * @remarks
+     * This is a valid RTT measurement if {@link nRetx} is zero.
+     */
+    readonly rtt: number | undefined;
 }
 
 /** {@link consume} options. */
-declare interface ConsumerOptions {
-    /**
-     * Logical forwarder instance.
-     * @defaultValue `Forwarder.getDefault()`
-     */
-    fw?: Forwarder;
-    /**
-     * Description for debugging purpose.
-     * @defaultValue
-     * "consume" + Interest name.
-     */
-    describe?: string;
-    /** AbortSignal that allows canceling the Interest via AbortController. */
-    signal?: AbortSignal;
+declare interface ConsumerOptions extends CommonOptions {
     /**
      * Modify Interest according to specified options.
      * @defaultValue
@@ -1345,12 +1382,6 @@ declare interface CtorTag_3 {
     [ctorAssign_3]: (f: Fields_2) => void;
 }
 
-/** @deprecated Use global `CustomEvent`. */
-declare const CustomEvent_2: {
-    new <T>(type: string, eventInitDict?: CustomEventInit<T> | undefined): CustomEvent<T>;
-    prototype: CustomEvent<any>;
-};
-
 /** Data packet. */
 declare class Data implements LLSign.Signable, LLVerify.Verifiable, Signer.Signable, Verifier.Verifiable {
     /**
@@ -1424,18 +1455,7 @@ declare interface DataStore {
     }, ...pkts: readonly Data[]) => Promise<void>;
 }
 
-declare namespace DataStore_2 {
-    export {
-        ListNames,
-        ListData,
-        Get,
-        Find,
-        Insert,
-        Delete
-    }
-}
-
-/** DataBuffer implementation based on `DataStore` from `@ndn/repo` package. */
+/** DataBuffer implementation based on `@ndn/repo`. */
 declare class DataStoreBuffer implements DataBuffer {
     readonly store: DataStore;
     /**
@@ -1451,6 +1471,7 @@ declare class DataStoreBuffer implements DataBuffer {
      * `DataStore` is declared as an interface instead of importing, in order to reduce bundle size
      * for webapps that do not use DataBuffer. The trade-off is that, applications wanting to use
      * DataBuffer would have to import `@ndn/repo` themselves.
+     * Note: {@link \@ndn/repo-api!DataArray} is insufficient because it lacks `expireTime` option.
      */
     constructor(store: DataStore, { ttl, dataSigner, }?: DataStoreBuffer.Options);
     private readonly ttl;
@@ -1561,16 +1582,6 @@ declare interface DebugEntry_4 {
     ownIblt: IBLT;
     recvIblt?: IBLT;
     content?: Name[];
-}
-
-declare interface DebugEntry_5 {
-    action: string;
-    own: Record<string, number>;
-    recv?: Record<string, number>;
-    state: string;
-    nextState?: string;
-    ourOlder?: number;
-    ourNewer?: number;
 }
 
 /**
@@ -1686,12 +1697,6 @@ declare class DefaultServers {
 /** Make a Promise that resolves after specified duration. */
 declare const delay: <T = void>(after: number, value?: T) => Promise<T>;
 
-/** DataStore interface, delete method. */
-declare interface Delete {
-    /** Delete Data packets with given names. */
-    delete: (...names: readonly Name[]) => Promise<void>;
-}
-
 declare class DigestComp implements NamingConvention<Uint8Array>, NamingConvention.WithAltUri {
     protected readonly tt: number;
     private readonly altUriPrefix;
@@ -1711,7 +1716,7 @@ declare type EcCurve = keyof typeof PointSizes;
 
 declare namespace EcCurve {
     const Default: EcCurve;
-    const Choices: readonly ("P-256" | "P-384" | "P-521")[];
+    const Choices: readonly EcCurve[];
 }
 
 /** Sha256WithEcdsa signing algorithm. */
@@ -1899,49 +1904,6 @@ EncryptionAlgorithm<I, Asym, G>,
 G
 ];
 
-/**
- * Endpoint provides basic consumer and producer functionality. It is the main entry point for an
- * application to interact with the logical forwarder.
- */
-declare class Endpoint {
-    readonly opts: Options;
-    /**
-     * Constructor.
-     * @deprecated Use {@link consume} and {@link produce} standalone functions.
-     */
-    constructor(opts?: Options);
-    /** Logical forwarder instance. */
-    get fw(): Forwarder;
-    get cOpts(): ConsumerOptions;
-    get pOpts(): ProducerOptions;
-    /**
-     * Retrieve a single piece of Data.
-     * @param interest - Interest or Interest name.
-     * @deprecated Use {@link consume} standalone function.
-     */
-    consume(interest: Interest | NameLike, opts?: ConsumerOptions): ConsumerContext;
-    /**
-     * Start a producer.
-     * @param prefix - Prefix registration; if `undefined`, prefixes may be added later.
-     * @param handler - Function to handle incoming Interest.
-     * @deprecated Use {@link produce} standalone function.
-     */
-    produce(prefix: NameLike | undefined, handler: ProducerHandler, opts?: ProducerOptions): Producer;
-}
-
-declare namespace Endpoint {
-    /**
-     * Delete default Forwarder instance (mainly for unit testing).
-     * @deprecated Use `Forwarder.deleteDefault`.
-     */
-    const deleteDefaultForwarder: typeof Forwarder.deleteDefault;
-    /**
-     * Describe how to derive route announcement from name prefix in {@link Endpoint.produce}.
-     * @deprecated Use `ProducerOptions.RouteAnnouncement`.
-     */
-    type RouteAnnouncement = ProducerOptions.RouteAnnouncement;
-}
-
 declare namespace endpoint {
     export {
         ConsumerContext,
@@ -1955,9 +1917,7 @@ declare namespace endpoint {
         produce,
         RetxOptions,
         RetxGenerator,
-        RetxPolicy,
-        Options,
-        Endpoint
+        RetxPolicy
     }
 }
 export { endpoint }
@@ -1985,7 +1945,7 @@ declare class EvDecoder<T> {
      * @param typeName - type name, used in error messages.
      * @param topTT - If specified, the top-level TLV-TYPE will be checked to be in this list.
      */
-    constructor(typeName: string, topTT?: number | readonly number[]);
+    constructor(typeName: string, topTT?: Arrayable<number>);
     applyDefaultsToRuleOptions({ order, required, repeat, }?: EvDecoder.RuleOptions): Required<EvDecoder.RuleOptions>;
     /**
      * Add a decoding rule.
@@ -2108,7 +2068,6 @@ declare namespace EvDecoder {
  * <zippy (open)="onOpen($event)" (close)="onClose($event)"></zippy>
  * ```
  *
- * @see [Observables in Angular](guide/observables-in-angular)
  * @publicApi
  */
 declare interface EventEmitter<T> extends Subject<T>, OutputRef<T> {
@@ -2212,14 +2171,6 @@ declare type EventMap_6 = {
 
 declare type EventMap_7 = {
     debug: CustomEvent<DebugEntry_4>;
-};
-
-declare type EventMap_8 = SyncProtocol.EventMap<Name> & {
-    debug: CustomEvent<DebugEntry_5>;
-};
-
-declare type EventMap_9 = {
-    error: CustomEvent<Error>;
 };
 
 /** Delete keys from a Set or Map until its size is below capacity. */
@@ -2475,12 +2426,6 @@ declare class Fields_2 {
  */
 declare type Filter<KeyType, ExcludeType> = IsEqual<KeyType, ExcludeType> extends true ? never : (KeyType extends ExcludeType ? never : KeyType);
 
-/** DataStore interface, find method. */
-declare interface Find {
-    /** Find Data that satisfies Interest. */
-    find: (interest: Interest) => Promise<Data | undefined>;
-}
-
 /**
  * Perform flatMap on an (async) iterable, but flatten at most once.
  * @remarks
@@ -2583,8 +2528,6 @@ declare class Fragmenter {
     fragment(full: LpPacket, mtu: number): LpPacket[];
 }
 
-declare const FROM: unique symbol;
-
 /**
  * Convert hexadecimal string to byte array.
  * @param s - Input hexadecimal string (case insensitive).
@@ -2605,8 +2548,7 @@ declare function fromUtf8(buf: Uint8Array): string;
 
 /** PSync - FullSync participant. */
 declare class FullSync extends TypedEventTarget<EventMap_4> implements SyncProtocol<Name> {
-    constructor({ p, syncPrefix, describe, endpoint, // eslint-disable-line etc/no-deprecated
-        cpOpts, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: FullSync.Options);
+    constructor({ p, syncPrefix, describe, cpOpts, syncReplyFreshness, signer, producerBufferLimit, syncInterestLifetime, syncInterestInterval, verifier, }: FullSync.Options);
     private readonly maybeHaveEventListener;
     readonly describe: string;
     private readonly syncPrefix;
@@ -2666,11 +2608,6 @@ declare namespace FullSync {
          * @defaultValue FullSync + syncPrefix
          */
         describe?: string;
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.cpOpts`.
-         */
-        endpoint?: Endpoint;
         /**
          * Consumer and producer options.
          *
@@ -2832,8 +2769,7 @@ declare namespace FwFace {
 declare class FwHint {
     static decodeValue(vd: Decoder): FwHint;
     constructor(copy?: FwHint);
-    constructor(name: NameLike);
-    constructor(delegations: readonly NameLike[]);
+    constructor(delegations: Arrayable<NameLike>);
     delegations: Name[];
     encodeTo(encoder: Encoder): void;
 }
@@ -2951,12 +2887,6 @@ declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, 
  * @param a - Signing algorithm and key generation options.
  */
 declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
-
-/** DataStore interface, get method. */
-declare interface Get {
-    /** Retrieve Data by exact name. */
-    get: (name: Name) => Promise<Data | undefined>;
-}
 
 export declare namespace globals {
     /**
@@ -3172,6 +3102,8 @@ declare class Ident_2 extends Expr {
 }
 
 declare interface IEdge extends Edge {
+    /** Initialized flag */
+    init?: boolean;
     /** Latency in milliseconds */
     latency: number;
     /** Loss in percentage */
@@ -3258,6 +3190,8 @@ declare interface ImportCertOptions<A extends CryptoAlgorithm> {
 }
 
 declare interface INode extends Node_3 {
+    /** Initialized flag */
+    init?: boolean;
     nfw?: NFW;
     /** Extra data object */
     extra: INodeExtra;
@@ -3284,31 +3218,6 @@ declare interface INodeExtra {
     replayWindowF?: number;
     /** Color of node */
     color?: string;
-}
-
-/** DataStore interface, insert method. */
-declare interface Insert<Options extends {} = {}> {
-    /**
-     * Insert one or more Data packets.
-     *
-     * @remarks
-     * Arguments include:
-     * - an optional Options object
-     * - zero or more Data, Iterable<Data>, or AsyncIterable<Data>
-     */
-    insert: (...args: Insert.Args<Options>) => Promise<void>;
-}
-
-declare namespace Insert {
-    type Args<O extends {}> = [...(object extends O ? [O] | [] : []), ...ReadonlyArray<Data | AnyIterable<Data>>];
-    interface ParsedArgs<O> {
-        readonly opts?: O;
-        readonly pkts: AsyncIterable<Data>;
-        readonly singles: Data[];
-        readonly batches: Array<AnyIterable<Data>>;
-    }
-    /** Normalize {@link Insert.insert} arguments. */
-    function parseArgs<O extends {}>(args: Args<O>): ParsedArgs<O>;
 }
 
 /** Interest packet. */
@@ -3601,7 +3510,7 @@ declare namespace KeyChain {
          *
          * If this is a Signer, it is used when no matching key or certificate is found.
          */
-        fallback?: Signer | ((name: Name, keyChain: KeyChain, err?: Error) => Promise<Signer>);
+        fallback?: Signer | GetSignerFallback;
         /**
          * Whether to prefer key name in KeyLocator.
          * @defaultValue false
@@ -3612,6 +3521,7 @@ declare namespace KeyChain {
          */
         useKeyNameKeyLocator?: boolean;
     }
+    type GetSignerFallback = (name: Name, keyChain: KeyChain, err?: Error) => Promise<Signer>;
     /**
      * Open a persistent KeyChain.
      * @param locator - Filesystem directory in Node.js; database name in browser.
@@ -3634,7 +3544,6 @@ declare namespace KeyChain {
 declare namespace keychain {
     export {
         CertNaming,
-        ValidityPeriod,
         AesEncryption,
         AesKeyLength,
         AesBlockSize,
@@ -4036,18 +3945,6 @@ declare type L3Pkt = Interest | Data | Nack;
 
 declare type Len = 1 | 2 | 4 | 8;
 
-/** DataStore interface, listData method. */
-declare interface ListData {
-    /** List Data packets, optionally filtered by name prefix. */
-    listData: (prefix?: Name) => AsyncIterable<Data>;
-}
-
-/** DataStore interface, listNames method. */
-declare interface ListNames {
-    /** List Data names, optionally filtered by name prefix. */
-    listNames: (prefix?: Name) => AsyncIterable<Name>;
-}
-
 /** Low level decryption function. */
 declare type LLDecrypt = (params: LLDecrypt.Params) => Promise<LLDecrypt.Result>;
 
@@ -4378,23 +4275,6 @@ declare namespace makeSyncpsCompatParam {
     }
 }
 
-/** SVS-PS MappingEntry element. */
-declare class MappingEntry implements EncodableObj {
-    seqNum: number;
-    name: Name;
-    static decodeFrom(decoder: Decoder): MappingEntry;
-    encodeTo(encoder: Encoder): void;
-    protected encodeValueExt(): Encodable[];
-}
-
-declare namespace MappingEntry {
-    interface Constructor<M extends MappingEntry = MappingEntry> extends Decodable<M> {
-        new (): M;
-    }
-    /** Class decorator on an extensible MappingEntry subclass. */
-    function extend<M extends MappingEntry & Extensible>(ctor: new () => M, ctx?: ClassDecoratorContext): void;
-}
-
 /** Context of matching a name. */
 declare class MatchState {
     readonly name: Name;
@@ -4438,7 +4318,7 @@ export declare const modules: {
     '@ndn/l3face': (string | typeof l3face)[];
     '@ndn/lp': (string | typeof lp)[];
     '@ndn/packet': (string | typeof packet)[];
-    '@ndn/sync': (string | typeof sync)[];
+    '@ndn/psync': (string | typeof psync)[];
     '@ndn/tlv': (string | typeof tlv)[];
     '@ndn/trust-schema': (string | typeof trust_schema)[];
     '@ndn/util': (string | typeof util)[];
@@ -4763,7 +4643,6 @@ declare class NFW {
     private expressInterest;
     private getConnection;
     strsFIB(): string[];
-    getEndpoint(opts?: Options): Endpoint;
 }
 
 /**
@@ -5003,18 +4882,8 @@ declare interface Operator_2<T, R> {
 declare interface OperatorFunction<T, R> extends UnaryFunction<Observable<T>, Observable<R>> {
 }
 
-/**
- * {@link Endpoint} constructor options.
- *
- * @remarks
- * This type includes consumer and producer options. These settings will be inherited by
- * {@link Endpoint.consume} and {@link Endpoint.produce} unless overridden.
- */
-declare interface Options extends ConsumerOptions, ProducerOptions {
-}
-
 /** StructBuilder field options. */
-declare interface Options_2<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
+declare interface Options<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
     /**
      * Whether the field is required.
      * If both `.required` and `.repeat` are false, the field may be set to undefined and is initialized as undefined.
@@ -5174,8 +5043,7 @@ declare function parseKeyName(name: Name): KeyNameFields;
 
 /** PSync - PartialSync publisher. */
 declare class PartialPublisher extends TypedEventTarget<EventMap_5> implements SyncProtocol<Name> {
-    constructor({ p, syncPrefix, describe, endpoint, // eslint-disable-line etc/no-deprecated
-        pOpts, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PartialPublisher.Options);
+    constructor({ p, syncPrefix, describe, pOpts, helloReplyFreshness, syncReplyFreshness, signer, producerBufferLimit, }: PartialPublisher.Options);
     private readonly maybeHaveEventListener;
     readonly describe: string;
     private readonly syncPrefix;
@@ -5220,15 +5088,9 @@ declare namespace PartialPublisher {
          */
         describe?: string;
         /**
-         * Endpoint for communication.
-         * @deprecated Specify `.pOpts`.
-         */
-        endpoint?: Endpoint;
-        /**
          * Producer options (advanced).
          *
          * @remarks
-         * - `.fw` is overridden as {@link Options.fw}.
          * - `.describe` is overridden as {@link Options.describe}.
          * - `.announcement` is overridden.
          * - `.routeCapture` is overridden.
@@ -5261,8 +5123,7 @@ declare namespace PartialPublisher {
 
 /** PSync - PartialSync subscriber. */
 declare class PartialSubscriber extends TypedEventTarget<EventMap_6> implements Subscriber<Name, Update, PartialSubscriber.TopicInfo> {
-    constructor({ p, syncPrefix, describe, endpoint, // eslint-disable-line etc/no-deprecated
-        cOpts, syncInterestLifetime, syncInterestInterval, verifier, }: PartialSubscriber.Options);
+    constructor({ p, syncPrefix, describe, cOpts, syncInterestLifetime, syncInterestInterval, verifier, }: PartialSubscriber.Options);
     readonly describe: string;
     private readonly helloPrefix;
     private readonly syncPrefix;
@@ -5310,11 +5171,6 @@ declare namespace PartialSubscriber {
          * @defaultValue PartialSubscriber + syncPrefix
          */
         describe?: string;
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.cOpts`.
-         */
-        endpoint?: Endpoint;
         /**
          * Consumer options.
          *
@@ -5537,20 +5393,7 @@ declare interface Producer extends Disposable {
 declare type ProducerHandler = (interest: Interest, producer: Producer) => Promise<Data | undefined>;
 
 /** {@link produce} options. */
-declare interface ProducerOptions {
-    /**
-     * Logical forwarder instance.
-     * @defaultValue `Forwarder.getDefault()`
-     */
-    fw?: Forwarder;
-    /**
-     * Description for debugging purpose.
-     * @defaultValue
-     * "produce" + prefix.
-     */
-    describe?: string;
-    /** AbortSignal that allows closing the producer via AbortController. */
-    signal?: AbortSignal;
+declare interface ProducerOptions extends CommonOptions {
     /**
      * Whether routes registered by producer would cause `@ndn/fw` internal FIB to stop matching
      * toward shorter prefixes.
@@ -5589,14 +5432,15 @@ declare interface ProducerOptions {
      * @remarks
      * Providing an outgoing Data buffer allows the {@link ProducerHandler} to prepare multiple Data
      * packets in response to one Interest, in which one Data satisfies the current Interest and
-     * additional Data satisfy upcoming Interest. This is useful for a producer that generates a
+     * additional Data satisfy upcoming Interests. This is useful for a producer that generates a
      * multi-segment response triggered by a single Interest, such as a
      * {@link https://redmine.named-data.net/projects/nfd/wiki/StatusDataset | StatusDataset}
      * producer in NFD Management protocol.
      *
-     * The producer can prepare the Data packets and insert them to the DataBuffer, and then return
-     * `undefined`, so that the Interest is used to query the DataBuffer and the first matching Data
-     * is sent. The producer can also return a specify Data packet to satisfy the current Interest.
+     * The producer handler can prepare the Data packets and insert them to the DataBuffer. Either it
+     * can return `undefined`, so that the DataBuffer is queried with the current Interest and the
+     * first matching Data is sent. Or it can return a specific Data packet for satisfying the
+     * current Interest.
      */
     dataBuffer?: DataBuffer;
     /**
@@ -5681,6 +5525,25 @@ declare class ProviderBrowser implements ForwardingProvider {
     loadExperimentDump(): Promise<void>;
     loadExperimentDumpFromBin(val: ArrayBuffer): void;
 }
+
+declare namespace psync {
+    export {
+        Subscriber,
+        Subscription,
+        SyncProtocol,
+        SyncNode,
+        SyncUpdate,
+        IBLT,
+        FullSync,
+        makePSyncCompatParam,
+        PSyncZlib,
+        PartialPublisher,
+        PartialSubscriber,
+        makeSyncpsCompatParam,
+        SyncpsPubsub
+    }
+}
+export { psync }
 
 declare class PSyncCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
@@ -6407,7 +6270,7 @@ declare const SigType: {
  ```
 
  @link https://github.com/microsoft/TypeScript/issues/15300
-
+ @see SimplifyDeep
  @category Object
  */
 declare type Simplify<T> = {[KeyType in keyof T]: T[KeyType]} & {};
@@ -6435,96 +6298,6 @@ declare namespace split {
          * `split(Z, "AZBZC", { limit: 1 })` returns `["A", "BZC"]`
          */
         limit?: number;
-    }
-}
-
-/** SVS state vector. */
-declare class StateVector {
-    /**
-     * Constructor.
-     * @param from - Copy from state vector or its JSON value.
-     * @param lastUpdate - Initial lastUpdate value for each node entry.
-     */
-    constructor(from?: StateVector | Record<string, number>, lastUpdate?: number);
-    private readonly m;
-    /**
-     * Get node sequence number.
-     *
-     * @remarks
-     * If the node does not exist, returns zero.
-     */
-    get(id: Name): number;
-    /**
-     * Get node entry.
-     *
-     * @remarks
-     * If the node does not exist, returns an entry with seqNum=0.
-     */
-    getEntry(id: Name): StateVector.NodeEntry;
-    /**
-     * Set node sequence number or entry.
-     * @param entry -
-     * If specified as number, it's interpreted as sequence number, and `Date.now()` is used as
-     * lastUpdate. Otherwise, it's used as the node entry.
-     *
-     * @remarks
-     * Setting sequence number to zero removes the node.
-     */
-    set(id: Name, entry: number | StateVector.NodeEntry): void;
-    /** Iterate over nodes and their sequence numbers. */
-    [Symbol.iterator](): IterableIterator<[id: Name, seqNum: number]>;
-    private iterOlderThan;
-    /** List nodes with older sequence number in this state vector than other. */
-    listOlderThan(other: StateVector): StateVector.DiffEntry[];
-    /** Update this state vector to have newer sequence numbers between this and other. */
-    mergeFrom(other: StateVector, lastUpdate?: number): void;
-    /** Serialize as JSON. */
-    toJSON(): Record<string, number>;
-    /** Encode TLV-VALUE only. */
-    encodeTo(encoder: Encoder): void;
-    /**
-     * Encode to name component.
-     * @deprecated No longer supported.
-     */
-    toComponent(): Component;
-    /** Decode TLV-VALUE only. */
-    static decodeFrom(decoder: Decoder): StateVector;
-    /**
-     * Decode from name component.
-     * @deprecated No longer supported.
-     */
-    static fromComponent(comp: Component): StateVector;
-}
-
-declare namespace StateVector {
-    /**
-     * StateVector TLV-TYPE.
-     *
-     * @remarks
-     * SVS v1 encodes StateVector as a name component of this type.
-     * SVS v2 encodes StateVector as a sub-element of this type within AppParameters.
-     */
-    const Type: 201;
-    /**
-     * TLV-TYPE of name component.
-     * @deprecated Use {@link Type}.
-     */
-    const NameComponentType: 201;
-    /** Per-node entry. */
-    interface NodeEntry {
-        /** Current sequence number (positive integer). */
-        seqNum: number;
-        /** Last update timestamp (from `Date.now()`). */
-        lastUpdate: number;
-    }
-    /** Result of {@link StateVector.listOlderThan}. */
-    interface DiffEntry {
-        /** Node ID. */
-        id: Name;
-        /** Low sequence number (inclusive). */
-        loSeqNum: number;
-        /** High sequence number (inclusive). */
-        hiSeqNum: number;
     }
 }
 
@@ -6640,7 +6413,7 @@ declare class StructBuilder<U extends {}> {
      * @param opts - Field options.
      * @returns StructBuilder annotated with field typing.
      */
-    add<T, K extends string, Required extends boolean = false, Repeat extends boolean = false, FlagPrefix extends string = K, FlagBit extends string = never>(tt: number, key: ValidateOptions<T, Repeat, FlagBit, K>, type: StructFieldType<T>, opts?: Options_2<Required, Repeat, FlagPrefix, FlagBit>): StructBuilder<Simplify<U & AddField<K, T, Required, Repeat> & AddFlags<FlagPrefix, FlagBit>>>;
+    add<T, K extends string, Required extends boolean = false, Repeat extends boolean = false, FlagPrefix extends string = K, FlagBit extends string = never>(tt: number, key: ValidateOptions<T, Repeat, FlagBit, K>, type: StructFieldType<T>, opts?: Options<Required, Repeat, FlagPrefix, FlagBit>): StructBuilder<Simplify<U & AddField<K, T, Required, Repeat> & AddFlags<FlagPrefix, FlagBit>>>;
     /** Change IsCritical on the EvDecoder. */
     setIsCritical(cb: EvDecoder.IsCritical): this;
     /**
@@ -7072,423 +6845,6 @@ declare interface SubscriptionLike extends Unsubscribable {
     readonly closed: boolean;
 }
 
-/** SVS-PS publisher. */
-declare class SvPublisher {
-    constructor({ endpoint, // eslint-disable-line etc/no-deprecated
-        pOpts, sync, id, store, chunkSize, innerSigner, outerSigner, mappingSigner, }: SvPublisher.Options);
-    private readonly node;
-    private readonly nodeSyncPrefix;
-    private readonly store;
-    private readonly chunkOptions;
-    private readonly innerSigner;
-    private readonly outerSigner;
-    private readonly outerProducer;
-    private readonly mappingProducer;
-    /** Publisher node ID. */
-    get id(): Name;
-    /**
-     * Stop publisher operations.
-     *
-     * @remarks
-     * This does not stop the {@link SvSync} instance or the {@link SvPublisher.DataStore}.
-     */
-    close(): Promise<void>;
-    /**
-     * Publish application data.
-     * @param name - Application-specified inner name.
-     * @param payload - Application payload.
-     * @param entry - MappingEntry for subscriber-side filtering.
-     * This is required if subscribers are expecting a certain MappingEntry subclass.
-     * @returns seqNum.
-     */
-    publish(name: NameLike, payload: Uint8Array, entry?: MappingEntry): Promise<number>;
-    private readonly handleOuter;
-    private readonly handleMapping;
-}
-
-declare namespace SvPublisher {
-    /**
-     * Data repository used by publisher.
-     *
-     * @remarks
-     * {@link \@ndn/repo!DataStore} satisfies the requirement.
-     * Other lightweight implementations may be possible.
-     */
-    type DataStore = DataStore_2.Get & DataStore_2.Find & DataStore_2.Insert;
-    interface Options {
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.pOpts`.
-         */
-        endpoint?: Endpoint;
-        /**
-         * Producer options.
-         *
-         * @remarks
-         * - `.describe` is overridden as "SVS-PS" + prefix.
-         * - `.dataSigner` is overridden.
-         */
-        pOpts?: ProducerOptions;
-        /**
-         * SvSync instance.
-         *
-         * @remarks
-         * Multiple {@link SvSubscriber}s and {@link SvPublisher}s may reuse the same SvSync instance.
-         * However, publications from a publisher cannot reach subscribers on the same SvSync instance.
-         */
-        sync: SvSync;
-        /** Publisher node ID. */
-        id: Name;
-        /** Data repository used for this publisher. */
-        store: DataStore;
-        /**
-         * Segment chunk size of inner Data packet.
-         * @defaultValue 8000
-         */
-        chunkSize?: number;
-        /**
-         * Inner Data signer.
-         * @defaultValue nullSigner
-         */
-        innerSigner?: Signer;
-        /**
-         * Outer Data signer.
-         * @defaultValue nullSigner
-         */
-        outerSigner?: Signer;
-        /**
-         * Mapping Data signer.
-         * @defaultValue nullSigner
-         */
-        mappingSigner?: Signer;
-    }
-}
-
-/**
- * SVS-PS subscriber.
- * @typeParam ME - Subclass of MappingEntry.
- * If it is not {@link MappingEntry} base class, its constructor must be specified in
- * {@link SvSubscriber.Options.mappingEntryType}.
- */
-declare class SvSubscriber<ME extends MappingEntry = MappingEntry> extends TypedEventTarget<EventMap_9> implements Subscriber<Name, SvSubscriber.Update, SvSubscriber.SubscribeInfo<ME>> {
-    constructor({ endpoint, // eslint-disable-line etc/no-deprecated
-        cOpts, sync, retxLimit, mappingBatch, mappingEntryType, mustFilterByMapping, innerVerifier, outerVerifier, mappingVerifier, }: SvSubscriber.Options);
-    private readonly abort;
-    private readonly syncPrefix;
-    private readonly nameSubs;
-    private readonly nameFilters;
-    private readonly publisherSubs;
-    private readonly mappingBatch;
-    private readonly mappingEVD;
-    private readonly mustFilterByMapping;
-    private readonly innerVerifier;
-    private readonly outerFetchOpts;
-    private readonly outerConsumerOpts;
-    private readonly mappingConsumerOpts;
-    private emitError;
-    /**
-     * Stop subscriber operations.
-     *
-     * @remarks
-     * This does not stop the {@link SvSync} instance.
-     */
-    close(): void;
-    /** Subscribe to either a topic prefix or a publisher node ID. */
-    subscribe(topic: SvSubscriber.SubscribeInfo<ME>): Subscription<Name, SvSubscriber.Update>;
-    private readonly handleSyncUpdate;
-    private retrieveMapping;
-    private dispatchUpdate;
-    private listNameSubs;
-    private retrieveSegmented;
-}
-
-declare namespace SvSubscriber {
-    interface Options {
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.cOpts`.
-         */
-        endpoint?: Endpoint;
-        /**
-         * Consumer options.
-         *
-         * @remarks
-         * - `.describe` is overridden as "SVS-PS" + prefix.
-         * - `.retx` defaults to {@link Options.retxLimit}.
-         * - `.signal` and `.verifier` are overridden.
-         */
-        cOpts?: ConsumerOptions;
-        /**
-         * SvSync instance.
-         * @see {@link SvPublisher.Options.sync} regarding reuse
-         */
-        sync: SvSync;
-        /**
-         * Retransmission limit for Data retrieval.
-         * @defaultValue 2
-         */
-        retxLimit?: number;
-        /**
-         * Maximum quantity of MappingEntries to retrieve in a single query.
-         * @defaultValue 10.
-         * @see {@link https://github.com/named-data/ndn-svs/blob/e39538ed1ddd789de9a34c242af47c3ba4f3583d/ndn-svs/svspubsub.cpp#L199}
-         */
-        mappingBatch?: number;
-        /**
-         * MappingEntry constructor.
-         * @defaultValue `MappingEntry` base type
-         */
-        mappingEntryType?: MappingEntry.Constructor;
-        /**
-         * If true, force the retrieval of MappingData.
-         *
-         * @remarks
-         * When an update matches a {@link SubscribePublisher}, by default the MappingData is not
-         * retrieved. Since the filter functions in {@link SubscribePrefixFilter} depend on
-         * MappingEntry, they are not called, and each SubscribePrefixFilter is treated like a
-         * {@link SubscribePrefix}, which would receive the message if the topic prefix matches.
-         * Set this option to `true` forces the retrieval of MappingData and ensures filter functions
-         * are called.
-         */
-        mustFilterByMapping?: boolean;
-        /**
-         * Inner Data verifier.
-         * @defaultValue no verification
-         */
-        innerVerifier?: Verifier;
-        /**
-         * Outer Data verifier.
-         * @defaultValue no verification
-         */
-        outerVerifier?: Verifier;
-        /**
-         * Mapping Data verifier.
-         * @defaultValue no verification
-         */
-        mappingVerifier?: Verifier;
-    }
-    /** Subscribe parameters. */
-    type SubscribeInfo<ME extends MappingEntry> = SubscribePrefix | SubscribePrefixFilter<ME> | SubscribePublisher;
-    /** Subscribe to messages udner a name prefix. */
-    type SubscribePrefix = Name;
-    /** Subscribe to messages under a name prefix that passes a filter. */
-    interface SubscribePrefixFilter<ME extends MappingEntry> {
-        /** Topic prefix. */
-        prefix: Name;
-        /**
-         * Filter function to determine whether to retrieve a message based on MappingEntry.
-         * @see {@link Options.mustFilterByMapping} for limitations on when this may not be invoked.
-         */
-        filter: (entry: ME) => boolean;
-    }
-    /** Subscribe to messages from the specified publisher. */
-    interface SubscribePublisher {
-        publisher: Name;
-    }
-    /** Received update. */
-    class Update extends Event {
-        readonly publisher: Name;
-        readonly seqNum: number;
-        readonly name: Name;
-        readonly payload: Uint8Array;
-        constructor(publisher: Name, seqNum: number, name: Name, payload: Uint8Array);
-    }
-}
-
-/** StateVectorSync participant. */
-declare class SvSync extends TypedEventTarget<EventMap_8> implements SyncProtocol<Name> {
-    readonly syncPrefix: Name;
-    readonly describe: string;
-    private readonly own;
-    private readonly modifyInterest;
-    private readonly cOpts;
-    private readonly steadyTimer;
-    private readonly suppressionTimer;
-    private readonly svs2suppressionPeriod;
-    private readonly signer;
-    private readonly verifier?;
-    static create({ syncPrefix, endpoint, // eslint-disable-line etc/no-deprecated
-        fw, describe, initialStateVector, initialize, syncInterestLifetime, steadyTimer, periodicTimeout, svs2suppression, suppressionTimer, suppressionPeriod, suppressionTimeout, signer, verifier, }: SvSync.Options): Promise<SvSync>;
-    private constructor();
-    private readonly maybeHaveEventListener;
-    private producer?;
-    /**
-     * In steady state, undefined.
-     * In suppression state, aggregated state vector of incoming sync Interests.
-     */
-    private aggregated?;
-    /** Sync Interest timer. */
-    private timer;
-    private debug;
-    close(): void;
-    get(id: NameLike): SyncNode<Name>;
-    add(id: NameLike): SyncNode<Name>;
-    /**
-     * Obtain a copy of own state vector.
-     *
-     * @remarks
-     * This may be used as {@link SvSync.Options.initialStateVector} to re-create an SvSync instance.
-     */
-    get currentStateVector(): StateVector;
-    /**
-     * Multi-purpose callback passed to {@link SvSyncNode} constructor.
-     *
-     * @remarks
-     * - `nodeOp(id)`: get seqNum
-     * - `nodeOp(id, n)`: set seqNum, return new seqNum
-     * - `nodeOp(id, 0)`: delete node during initialization
-     */
-    private readonly nodeOp;
-    private readonly handleSyncInterest;
-    private shouldEnterSuppression;
-    private resetTimer;
-    private readonly handleTimer;
-    private sendSyncInterest;
-}
-
-declare namespace SvSync {
-    /**
-     * Timer settings.
-     * @deprecated No longer supported.
-     */
-    type Timer = [ms: number, jitter: number];
-    /** {@link SvSync.create} options. */
-    interface Options {
-        /** Sync group prefix. */
-        syncPrefix: Name;
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.fw`.
-         */
-        endpoint?: Endpoint;
-        /**
-         * Use the specified logical forwarder.
-         * @defaultValue `Forwarder.getDefault()`
-         */
-        fw?: Forwarder;
-        /** Description for debugging purpose. */
-        describe?: string;
-        /**
-         * Initial state vector.
-         * @defaultValue empty state vector
-         */
-        initialStateVector?: StateVector;
-        /**
-         * Application initialization function.
-         *
-         * @remarks
-         * During initialization, it's possible to remove SyncNode or decrease seqNum.
-         * Calling `sync.close()` has no effect.
-         *
-         * Sync protocol starts running after the returned Promise is resolved.
-         */
-        initialize?: (sync: SvSync) => Promisable<void>;
-        /**
-         * Sync Interest lifetime in milliseconds.
-         * @defaultValue 1000
-         */
-        syncInterestLifetime?: number;
-        /**
-         * Sync Interest timer in steady state (SVS v1).
-         * @defaultValue `[30000ms, ±10%]`
-         * @remarks
-         * - median: median interval in milliseconds.
-         * - jitter: ± percentage, in [0.0, 1.0) range.
-         */
-        steadyTimer?: [median: number, jitter: number];
-        /**
-         * Sync Interest timer in steady state (SVS v2).
-         * @defaultValue `[30000ms, ±10%]`
-         * @remarks
-         * If specified as tuple,
-         * - median: median interval in milliseconds.
-         * - jitter: ± percentage, in [0.0, 1.0) range.
-         *
-         * If specified as number, it's interpreted as median.
-         *
-         * SVS v1 `steadyTimer` and SVS v2 `periodicTimeout` are equivalent.
-         * If both are specified, this option takes precedence.
-         * @experimental
-         */
-        periodicTimeout?: number | [median: number, jitter: number];
-        /**
-         * Use SVS v2 suppression timer and suppression logic.
-         * @defaultValue false
-         * @experimental
-         */
-        svs2suppression?: boolean;
-        /**
-         * Sync Interest timer in suppression state (SVS v1).
-         * @defaultValue `[200ms, ±50%]`
-         * @remarks
-         * - median: median interval in milliseconds.
-         * - jitter: ± percentage, in [0.0, 1.0) range.
-         *
-         * This option takes effect only if `.svs2suppression` is false.
-         */
-        suppressionTimer?: [median: number, jitter: number];
-        /**
-         * Sync Interest timer in suppression state, maximum value (SVS v2).
-         * @defaultValue `200ms`
-         * @experimental
-         */
-        suppressionPeriod?: number;
-        /**
-         * Sync Interest timer in suppression state, value generator (SVS v2).
-         * @defaultValue `SvSync.suppressionExpDelay(suppressionPeriod)`
-         * @remarks
-         * The maximum value returned by the generator function should be `suppressionPeriod`.
-         *
-         * This option takes effect only if `.svs2suppression` is true.
-         * @experimental
-         */
-        suppressionTimeout?: () => number;
-        /**
-         * Sync Interest signer.
-         * @defaultValue nullSigner
-         */
-        signer?: Signer;
-        /**
-         * Sync Interest verifier.
-         * @defaultValue no verification
-         */
-        verifier?: Verifier;
-    }
-    /**
-     * SVS v2 suppression timeout exponential decay function.
-     * @param c - Constant factor.
-     * @param f - Decay factor.
-     * @returns Function to generate suppression timeout values.
-     * @experimental
-     */
-    function suppressionExpDelay(c: number, f?: number): () => number;
-}
-
-declare namespace sync {
-    export {
-        Subscriber,
-        Subscription,
-        SyncNode,
-        SyncProtocol,
-        SyncUpdate,
-        IBLT,
-        makePSyncCompatParam,
-        makeSyncpsCompatParam,
-        PartialPublisher as PSyncPartialPublisher,
-        PartialSubscriber as PSyncPartialSubscriber,
-        FullSync as PSyncFull,
-        PSyncZlib,
-        SyncpsPubsub,
-        MappingEntry as SvMappingEntry,
-        StateVector as SvStateVector,
-        SvPublisher,
-        SvSubscriber,
-        SvSync,
-        TimedMappingEntry as SvTimedMappingEntry
-    }
-}
-export { sync }
-
 /**
  * A sync protocol node.
  * @typeParam ID - Node identifier type, typically number or Name.
@@ -7556,8 +6912,7 @@ declare namespace SyncpsCodec {
 
 /** syncps - pubsub service. */
 declare class SyncpsPubsub extends TypedEventTarget<EventMap_7> implements Subscriber<Name, CustomEvent<Data>> {
-    constructor({ p, syncPrefix, describe, endpoint, // eslint-disable-line etc/no-deprecated
-        cpOpts, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
+    constructor({ p, syncPrefix, describe, cpOpts, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
     private readonly maybeHaveEventListener;
     readonly describe: string;
     private readonly syncPrefix;
@@ -7652,11 +7007,6 @@ declare namespace SyncpsPubsub {
          * @defaultValue SyncpsPubsub + syncPrefix
          */
         describe?: string;
-        /**
-         * Endpoint for communication.
-         * @deprecated Specify `.cpOpts`.
-         */
-        endpoint?: Endpoint;
         /**
          * Consumer and producer options.
          *
@@ -7786,9 +7136,9 @@ declare class TapFace implements FwFace.RxTx {
     constructor(face: FwFace);
     get attributes(): {
         describe: string;
-        local?: boolean | undefined;
-        advertiseFrom?: boolean | undefined;
-        routeCapture?: boolean | undefined;
+        local?: boolean;
+        advertiseFrom?: boolean;
+        routeCapture?: boolean;
     };
     private readonly ctrl;
     readonly rx: Pushable<FwPacket<Interest | Data | Nack>>;
@@ -7807,13 +7157,6 @@ declare namespace TapFace {
 declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;
 
 declare type TestConnectionPacket = string | Name | Interest;
-
-/** SVS-PS MappingEntry with Timestamp element. */
-declare class TimedMappingEntry extends MappingEntry implements Extensible {
-    constructor();
-    readonly [Extensible.TAG]: ExtensionRegistry<Extensible>;
-    timestamp: Date;
-}
 
 /** Timing-safe equality comparison. */
 declare function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean;
@@ -7899,6 +7242,7 @@ declare class Topology {
     private ensureInitialized;
     updateNodeColor(nodeId: IdType, nodeExtra?: INodeExtra): void;
     updateEdgeColor(edge: IEdge): void;
+    private getEdgeColor;
     /** Get a node by ID or label */
     getNode(id: string | INode): INode | null;
 }
@@ -8293,7 +7637,6 @@ declare abstract class Transport {
             timingSafeEqual,
             sha256,
             trackEventListener,
-            CustomEvent_2 as CustomEvent,
             pushable,
             safeIter,
             flatMapOnce,
@@ -8339,16 +7682,6 @@ declare abstract class Transport {
         const MAX: ValidityPeriod;
         /** Construct ValidityPeriod for n days from now. */
         function daysFromNow(n: number): ValidityPeriod;
-        /**
-         * Retrieve ValidityPeriod from SigInfo.
-         * @deprecated Retrieve from `si.validity` directly.
-         */
-        function get(si: SigInfo): ValidityPeriod | undefined;
-        /**
-         * Assign ValidityPeriod onto SigInfo.
-         * @deprecated Assign to `si.validity` directly.
-         */
-        function set(si: SigInfo, v?: ValidityPeriod): void;
     }
 
     declare type ValueIsEvent<T> = {

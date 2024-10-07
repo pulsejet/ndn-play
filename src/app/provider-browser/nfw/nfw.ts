@@ -1,4 +1,3 @@
-import { Endpoint, Options as EndpointOptions } from "@ndn/endpoint";
 import { AltUri, Data, Interest, Name, Signer, Verifier } from "@ndn/packet";
 import { Forwarder, FwFace, FwPacket, RejectInterest } from "@ndn/fw";
 import { KeyChain } from "@ndn/keychain";
@@ -443,10 +442,6 @@ export class NFW {
 
             return `${AltUri.ofName(entry.prefix)} nexthops={${nexthops.join(', ')}}`;
         });
-    }
-
-    public getEndpoint(opts?: EndpointOptions) {
-        return new Endpoint({ fw: this.fw, ...opts });
     }
 }
 

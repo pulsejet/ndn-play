@@ -4,7 +4,6 @@
   "bundledPackages": [
     "@ndn/keychain",
     "@ndn/packet",
-    "@ndn/sync",
     "@ndn/tlv",
     "@ndn/ws-transport",
     "@ndn/autoconfig",

@@ -10,6 +10,7 @@ import { encode as msgpackEncode, decode as msgpackDecode } from "msgpack-lite"
 import { inflate as pakoInflate } from "pako";
 import { ModuleKind, ScriptTarget, transpile } from "typescript";
 import { modules as UserModules } from "../user-types";
+import { consume } from "@ndn/endpoint";
 
 const OFFICIAL_DUMP_PREFIX = 'https://raw.githubusercontent.com/pulsejet/ndn-play/';
 const TESTBED_JSON = 'https://testbed-status.named-data.net/testbed-nodes.json';
@@ -234,7 +235,8 @@ export class ProviderBrowser implements ForwardingProvider {
     const interest = new Interest(name, Interest.Lifetime(3000))
 
     const start = performance.now();
-    from.nfw!.getEndpoint().consume(interest).then(() => {
+    const { fw } = from.nfw!;
+    consume(interest, { fw }).then(() => {
       console.log('Received ping reply in', Math.round(performance.now() - start), 'ms');
     }).catch(console.error);
 
@@ -244,7 +246,8 @@ export class ProviderBrowser implements ForwardingProvider {
   public sendInterest(name: string, node: INode) {
     name = name.replace('$time', (new Date).getTime().toString());
     const interest = new Interest(name, Interest.Lifetime(3000))
-    node.nfw!.getEndpoint().consume(interest).then(() => {
+    const { fw } = node.nfw!;
+    consume(interest, { fw }).then(() => {
       console.log('Received data reply');
     }).catch(console.error);
   }

@@ -60,7 +60,7 @@ export class DevtoolsComponent implements AfterViewInit {
 
   pushPacket(base64: string, timestamp: number, outgoing: boolean) {
     const packet = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
-    let l3Type: "Interest" | "Data" | "Nack" | "Unknown" = "Unknown";
+    let l3Type: "Interest" | "Data" | "Nack" | "Unknown" | null = null;
 
     // Decode L2 or L3 packet
     let wire = packet;
@@ -71,6 +71,9 @@ export class DevtoolsComponent implements AfterViewInit {
       const lp = LpPacket.decodeFrom(decoder);
       wire = lp.payload ?? packet;
       decoder = new Decoder(wire);
+
+      // Mark NACK but continue to decode inner packet
+      if (lp.nack) l3Type ??= "Nack";
     }
 
     // Decode L3 packet
@@ -78,11 +81,14 @@ export class DevtoolsComponent implements AfterViewInit {
     switch (wire[0]) {
       case 5:
         l3 = Interest.decodeFrom(decoder);
-        l3Type = "Interest";
+        l3Type ??= "Interest";
         break;
       case 6:
         l3 = Data.decodeFrom(decoder);
-        l3Type = "Data";
+        l3Type ??= "Data";
+        break;
+      default:
+        l3Type ??= "Unknown";
         break;
     }
 

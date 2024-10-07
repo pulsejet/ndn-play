@@ -1,4 +1,8 @@
+/// <reference types="vscode-webview" />
+
 import { deflate as pakoDeflate } from 'pako';
+
+const vscode = globalThis.acquireVsCodeApi?.();
 
 /**
  * Download a file to user's computer
@@ -61,6 +65,15 @@ export function loadFileBin(): Promise<ArrayBuffer> {
         };
         input.click();
     });
+}
+
+/**
+ * Post an object to parent window or vscode
+ * @param object to send to paent
+ */
+export function postToParent(object: any) {
+    window.parent?.postMessage(object, '*');
+    vscode?.postMessage(object);
 }
 
 // Expose globally

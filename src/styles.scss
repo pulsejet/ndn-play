@@ -1,8 +1,15 @@
 @import 'bulma/bulma.scss';
-@import 'xterm/css/xterm.css';
+@import '@xterm/xterm/css/xterm.css';
 
 :root {
-    --bg-color: white;
+    // Start override definitions
+    --bg-color-override: var(--vscode-editor-background);
+
+    // Non-theme globals
+    --monospace: var(--vscode-editor-font-family, monospace);
+
+    // Start light theme
+    --bg-color: var(--bg-color-override, white);
     --scrollbar-color: #ddd;
     --is-dark: 0;
 
@@ -18,10 +25,13 @@
     --vis-green: green;
     --vis-gray: gray;
     --vis-hover: rgba(255, 255, 0, 0.3);
+
+    --vis-tooltip-bg: #f5f4ed;
+    --vis-tooltip-border: 1px solid black;
 }
 
 @mixin dark-theme {
-    --bg-color: #141414;
+    --bg-color: var(--bg-color-override, #141414);
     --scrollbar-color: #444;
     --is-dark: 1;
 
@@ -32,11 +42,14 @@
     --cap-selection-color: rebeccapurple;
 
     --vis-tlv-border: 1px solid #aaa;
-    --vis-red: darkorange;
+    --vis-red: #DCDCAA;
     --vis-blue: deepskyblue;
     --vis-green: limegreen;
     --vis-gray: darkgray;
-    --vis-hover: rgba(255, 0, 255, 0.3);
+    --vis-hover: rgba(0, 0, 255, 0.3);
+
+    --vis-tooltip-bg: var(--scrollbar-color);
+    --vis-tooltip-border: 1px solid #333;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,6 +96,12 @@ pre, .thin-scrollbar {
 /** Global utilities **/
 .full-width {
     width: 100%;
+}
+.full-height {
+    height: 100%;
+}
+.full-vh {
+    height: 100vh;
 }
 
 .main-tab {
@@ -141,4 +160,11 @@ input[type="checkbox"] {
         border-color: #007bff;
         color: white;
     }
+}
+
+// vis.js network overrides
+div.vis-tooltip {
+    background-color: var(--vis-tooltip-bg) !important;
+    border: var(--vis-tooltip-border) !important;
+    color: var(--bulma-text-strong) !important;
 }

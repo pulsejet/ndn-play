@@ -34,7 +34,7 @@
 
 .packets {
     width: 100%;
-    font-family: monospace;
+    font-family: var(--monospace);
 
     .Interest {
         background-color: var(--cap-interest-color);

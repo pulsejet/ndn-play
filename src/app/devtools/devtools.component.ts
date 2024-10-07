@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { GlobalService } from '../global.service';
 
 import { Decoder } from '@ndn/tlv';
@@ -6,13 +6,21 @@ import { LpPacket } from '@ndn/lp';
 import { AltUri, Data, Interest } from '@ndn/packet';
 
 import type { ICapturedPacket, INode, TlvType } from '../interfaces';
+import type { DCTComponent } from '../dct/dct.component';
+
+const PostMsg = {
+  ReceivePacket: 'recv-packet',
+  SendPacket: 'send-packet',
+  Visualize: 'visualize',
+  DctSchema: 'dct-schema',
+}
 
 @Component({
   selector: 'app-devtools',
   templateUrl: 'devtools.component.html',
   styleUrls: ['devtools.component.scss']
 })
-export class DevtoolsComponent implements AfterViewInit {
+export class DevtoolsComponent implements OnInit, AfterViewInit {
   /** Currently visualized tlv */
   public visualizedTlv: TlvType;
 
@@ -21,6 +29,22 @@ export class DevtoolsComponent implements AfterViewInit {
 
   /** Dummy node for captures */
   public readonly node: INode;
+
+  /** Types of modes available */
+  public readonly MODES = {
+    FULL: 'full',
+    TLV: 'tlv',
+    DCT_DAG: 'dct-dag'
+  }
+
+  /** Show or hide various components */
+  public mode: string = this.MODES.FULL;
+
+  /** Lazy load the code editor only when a tab is opened */
+  public loadMonaco: boolean = false;
+
+  // Template children
+  @ViewChild('dct') public dct?: DCTComponent;
 
   constructor(public readonly gs: GlobalService) {
     this.gs.topo.edges.clear();
@@ -32,19 +56,45 @@ export class DevtoolsComponent implements AfterViewInit {
     } as INode);
 
     this.node = this.gs.topo.nodes.get('devtools')!;
+
+    // Various modes of devtools set with the query parameter
+    // Default is everything (chrome extension)
+    const url = new URL(window.location.href);
+    const urlMode = url.searchParams.get('devtools');
+    for (const mode of Object.values(this.MODES)) {
+      if (urlMode == mode) this.mode = mode;
+    }
+  }
+
+  ngOnInit() {
+    // Set listener for messages from outer window
+    window.addEventListener('message', (e) => {
+      switch (e.data.type) {
+        case PostMsg.ReceivePacket:
+          this.pushPacket(e.data.packet, e.data.timestamp, false);
+          break;
+
+        case PostMsg.SendPacket:
+          this.pushPacket(e.data.packet,  e.data.timestamp, true);
+          break;
+
+        case PostMsg.Visualize:
+          this.visualizedTlv = e.data.packet;
+          break;
+
+        case PostMsg.DctSchema:
+          if (this.dct) {
+            this.dct.schema = e.data.schema;
+            this.dct.visualizeSchema();
+          }
+          break;
+      }
+    }, false);
   }
 
   ngAfterViewInit() {
+    // Resize on window resize
     window.addEventListener('resize', this.paneResized.bind(this));
-
-    // Set listener for packets from outer window
-    window.addEventListener('message', (e) => {
-      if (e.data.type === 'recv-packet') {
-        this.pushPacket(e.data.packet, e.data.timestamp, false);
-      } else if (e.data.type === 'send-packet') {
-        this.pushPacket(e.data.packet,  e.data.timestamp, true);
-      }
-    }, false);
 
     // Trigger resize after 100ms
     setTimeout(() => this.paneResized(), 100);

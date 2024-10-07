@@ -22,3 +22,12 @@ div.actions {
     height: 100%;
     width: 100%;
 }
+
+div.dag-error {
+    color: red;
+    font-family: var(--monospace);
+    font-size: 0.9rem;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+}

@@ -11,13 +11,13 @@
 // };
 //
 // In case your TLV types conflict or are repeated in multiple
-// contexts, you can use the T_IN_* prefix to constain TLVs
+// contexts, you can use the T_IN_* prefix to constrain TLVs
 // to a specific context.
 //
 // For example, if the type MyType can only be used inside
 // the content of a Data packet, you can add this constraint:
 //
-// export const T_IN_MyType = [TLV_V3.Content];
+// export let T_IN_MyType = [TLV_V3.Content];
 //
 // Note that only the immediate parent TLV is considered
 // as the context. So if the TLV MyType is inside a MyOtherType,
@@ -124,35 +124,35 @@ export enum TLV_Reserved {
 // TLV will not be decoded and will be treated as a opaque blob.
 // =============================================================
 
-export const BLOB_InterestSignatureValue = 1;
-export const BLOB_SignatureValue = 1;
-export const BLOB_KeyDigest = 1;
+export let BLOB_InterestSignatureValue = 1;
+export let BLOB_SignatureValue = 1;
+export let BLOB_KeyDigest = 1;
 
 // =============================================================
 // If an object with TEXT_* is exported then the corresponding.
 // TLV will be treated and displayed as plain text by default.
 // =============================================================
 
-export const TEXT_Name = 1;
-export const TEXT_GenericNameComponent = 1;
-export const TEXT_KeywordNameComponent = 1;
-export const TEXT_NotBefore = 1;
-export const TEXT_NotAfter = 1;
+export let TEXT_Name = 1;
+export let TEXT_GenericNameComponent = 1;
+export let TEXT_KeywordNameComponent = 1;
+export let TEXT_NotBefore = 1;
+export let TEXT_NotAfter = 1;
 
 // =============================================================
 // If an object with NNI_* is exported then the corresponding.
 // TLV will be decoded as an NNI, with values from the enum.
 // =============================================================
 
-export const NNI_FreshnessPeriod = 1;
-export const NNI_InterestLifetime = 1;
-export const NNI_SignatureTime = 1;
-export const NNI_SignatureSeqNum = 1;
-export const NNI_SegmentNameComponent = 1;
-export const NNI_ByteOffsetNameComponent = 1;
-export const NNI_VersionNameComponent = 1;
-export const NNI_TimestampNameComponent = 1;
-export const NNI_SequenceNumNameComponent = 1;
+export let NNI_FreshnessPeriod = 1;
+export let NNI_InterestLifetime = 1;
+export let NNI_SignatureTime = 1;
+export let NNI_SignatureSeqNum = 1;
+export let NNI_SegmentNameComponent = 1;
+export let NNI_ByteOffsetNameComponent = 1;
+export let NNI_VersionNameComponent = 1;
+export let NNI_TimestampNameComponent = 1;
+export let NNI_SequenceNumNameComponent = 1;
 
 export enum NNI_SignatureType {
     DigestSha256             = 0,
@@ -181,13 +181,11 @@ export enum TLV_SVS {
     StateVector = 201,
     StateVectorEntry = 202,
     SvSeqNo = 204,
-    MappingData = 205,
-    MappingEntry = 206,
 }
-export const T_IN_StateVector = [TLV_V3.Name];
-export const T_IN_StateVectorEntry = [TLV_SVS.StateVector];
-export const T_IN_SvSeqNo = [TLV_SVS.StateVectorEntry];
-export const NNI_SvSeqNo = 1;
+export let T_IN_StateVector = [TLV_V3.Name];
+export let T_IN_StateVectorEntry = [TLV_SVS.StateVector];
+export let T_IN_SvSeqNo = [TLV_SVS.StateVectorEntry];
+export let NNI_SvSeqNo = 1;
 
 // =============================================================
 // CUSTOM TLV TYPES

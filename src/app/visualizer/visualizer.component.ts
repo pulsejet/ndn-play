@@ -2,10 +2,17 @@ import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild }
 import { AltUri, Name, Component as NameComponent } from "@ndn/packet";
 import { Decoder, Encoder, NNI } from '@ndn/tlv';
 import { GlobalService } from '../global.service';
+import { postToParent } from '../helper';
 import { transpileModule } from 'typescript';
 import localforage from 'localforage';
 
 import type { TlvType, visTlv } from '../interfaces';
+
+const LF_KEYS = {
+  CUSTOM_TLV: 'customTlvTypes',
+  TLV_TYPES_TS: 'tlvTypesTs',
+  TLV_TYPES: 'tlvTypes',
+}
 
 @Component({
   selector: 'app-visualizer',
@@ -15,6 +22,7 @@ import type { TlvType, visTlv } from '../interfaces';
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: TlvType;
   @Input() public guessBox?: boolean = true;
+  @Input() public warnEmpty?: boolean = true;
   @Output() public readonly change = new EventEmitter<TlvType>();
 
   @ViewChild('outer') public outer?: ElementRef;
@@ -24,29 +32,56 @@ export class VisualizerComponent implements OnInit {
   public attemptUnknownDecode: boolean = false;
 
   private tlvTypes?: Record<string, any>;
-  private compiledTlvCode: string = '';
+  private compiledTlvCode: string = String();
+
+  private _initialized: boolean = false;
 
   constructor(private readonly gs: GlobalService) { }
 
   async ngOnInit() {
-    const res = await fetch('/assets/tlv-types.ts')
+    const res = await fetch('assets/tlv-types.ts')
     const code = await res.text();
-    this.gs.topo.tlvTypesCode = code.trim();
+    this.gs.topo.tlvTypesCode = code.trim() + '\n';
 
-    // Load custom TLV types from local storage
-    const customTlvTypes = await localforage.getItem<string>('customTlvTypes');
-    if (customTlvTypes) {
-      this.gs.topo.tlvTypesCode += customTlvTypes;
-    }
+    // Load cached values from local storage
+    const [customTypes, compiledCode, compiledTypes] = await Promise.all([
+      localforage.getItem<string>(LF_KEYS.CUSTOM_TLV),
+      localforage.getItem<string>(LF_KEYS.TLV_TYPES_TS),
+      localforage.getItem<string>(LF_KEYS.TLV_TYPES),
+    ]);
+
+    this.gs.topo.tlvTypesCode += globalThis._externalConfig?.customTlvTypes ?? customTypes ?? String();
+    this.compiledTlvCode = compiledCode ?? String();
+    this.tlvTypes = compiledTypes ? JSON.parse(compiledTypes) : undefined;
 
     // Compile TLV types
     this.compileTlvTypes();
 
     // Check if TLV types specified
-    this.ngOnChanges();
+    this.refresh();
+    this._initialized = true;
   }
 
   ngOnChanges() {
+    if (this._initialized) {
+      // Prevent a refresh before the TLV types are loaded
+      // This is especially important for devtools because
+      // an incorrect custom types value may be posted to the
+      // parent and persisted
+      this.refresh();
+    }
+  }
+
+  public checkTypes() {
+    if (!this._initialized) return;
+
+    // Refresh if the input TLV TS has changed
+    if (this.compiledTlvCode !== this.gs.topo.tlvTypesCode) {
+      this.refresh();
+    }
+  }
+
+  private refresh() {
     if (this.tlv) {
       this.visualizedTlv = this.visualize(this.tlv);
     } else {
@@ -69,7 +104,7 @@ export class VisualizerComponent implements OnInit {
     this.resizeObserver?.disconnect();
   }
 
-  compileTlvTypes() {
+  private compileTlvTypes() {
     if (this.compiledTlvCode === this.gs.topo.tlvTypesCode) return;
     this.compiledTlvCode = this.gs.topo.tlvTypesCode;
 
@@ -83,6 +118,10 @@ export class VisualizerComponent implements OnInit {
     try {
       this.tlvTypes = new Function(code).call(null);
       console.warn('Compiled TLV types');
+
+      // Cache the compiled types
+      localforage.setItem(LF_KEYS.TLV_TYPES_TS, this.compiledTlvCode);
+      localforage.setItem(LF_KEYS.TLV_TYPES, JSON.stringify(this.tlvTypes));
     } catch (e) {
       console.error('Failed to compile TLV types');
       console.error(e);
@@ -90,12 +129,19 @@ export class VisualizerComponent implements OnInit {
     }
 
     // Persist custom TLV types
-    const i = this.compiledTlvCode.lastIndexOf('+==+==+');
-    const customTlvTypes = this.compiledTlvCode.substring(i + 7);
-    localforage.setItem('customTlvTypes', customTlvTypes);
+    const delimiter = '+==+==+';
+    const i = this.compiledTlvCode.lastIndexOf(delimiter);
+    const customTlvTypes = this.compiledTlvCode.substring(i + delimiter.length).trim();
+    localforage.setItem(LF_KEYS.CUSTOM_TLV, customTlvTypes);
+
+    // Post to parent for devtools
+    postToParent({
+      type: LF_KEYS.CUSTOM_TLV,
+      data: customTlvTypes,
+    })
   }
 
-  getTlvTypeText(type: number, parent: number): string | undefined {
+  private getTlvTypeText(type: number, parent: number): string | undefined {
     /** Check if constrained parent is valid */
     const isValidParent = (text: string) => {
       const inClause = this.tlvTypes?.[`T_IN_${text}`];
@@ -107,13 +153,13 @@ export class VisualizerComponent implements OnInit {
     for (const key in this.tlvTypes) {
       if (key.startsWith('TLV_') && this.tlvTypes[key][type]) {
         const text = this.tlvTypes[key][type] as string;
-        return isValidParent(text) ? text : undefined;
+        if (isValidParent(text)) return text;
       }
     }
     return undefined;
   }
 
-  visualize(tlv: TlvType): visTlv[] {
+  private visualize(tlv: TlvType): visTlv[] {
     if (!tlv) return [];
     this.compileTlvTypes();
 
@@ -148,7 +194,7 @@ export class VisualizerComponent implements OnInit {
     return this.decodeRecursive(buffer, 0);
   }
 
-  decodeRecursive(input: Uint8Array, parent: number): visTlv[] {
+  private decodeRecursive(input: Uint8Array, parent: number): visTlv[] {
     let t: Decoder.Tlv;
     let decoder = new Decoder(input);
     const arr: visTlv[] = [];
@@ -201,7 +247,7 @@ export class VisualizerComponent implements OnInit {
             if (typeof nniEnum === 'object') {
               obj.hs = nniEnum[obj.hs] || obj.hs;
             }
-          } catch {}
+          } catch { }
           obj.human = true;
         }
 

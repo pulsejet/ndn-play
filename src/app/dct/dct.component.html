@@ -1,4 +1,20 @@
-<app-tabs class="tab-container" #tabs>
+<ng-template #visContent>
+    <div #dagContainer class="dag"></div>
+    <div *ngIf="compileError" class="dag-error">Compilation failed with non-zero status code</div>
+
+    <div class="actions">
+        <label class="checkbox is-small">
+            <input type="checkbox" [(ngModel)]="certDagOpts.showHidden" (change)="refreshVisualizer()">
+            Show hidden objects
+        </label>
+        <label class="checkbox is-small">
+            <input type="checkbox" [(ngModel)]="certDagOpts.hideChainInfo" (change)="refreshVisualizer()">
+            Hide #chainInfo
+        </label>
+    </div>
+</ng-template>
+
+<app-tabs class="tab-container" #tabs *ngIf="!dagOnly">
     <app-tab name="Schema">
         <app-editor [(code)]="schema" language="versec"></app-editor>
 
@@ -9,18 +25,7 @@
     </app-tab>
 
     <app-tab name="Visualizer" #visualizerTab>
-        <div #dagContainer class="dag"></div>
-
-        <div class="actions">
-            <label class="checkbox is-small">
-                <input type="checkbox" [(ngModel)]="certDagOpts.showHidden" (change)="refreshVisualizer()">
-                Show hidden objects
-            </label>
-            <label class="checkbox is-small">
-                <input type="checkbox" [(ngModel)]="certDagOpts.hideChainInfo" (change)="refreshVisualizer()">
-                Hide #chainInfo
-            </label>
-        </div>
+        <ng-container *ngTemplateOutlet="visContent"></ng-container>
     </app-tab>
 
     <app-tab name="Script">
@@ -31,3 +36,7 @@
         </div>
     </app-tab>
 </app-tabs>
+
+<div class="full-width full-height" *ngIf="dagOnly">
+    <ng-container *ngTemplateOutlet="visContent"></ng-container>
+</div>

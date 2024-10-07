@@ -9,7 +9,11 @@ export function isDark(): boolean {
 // Get initial cache
 isDark();
 
-/** Maps common colors to more pleasing counterparts */
+/**
+ * Maps common colors to more pleasing counterparts
+ *
+ * https://materialui.co/colors (not exclusively)
+ */
 export const COLOR_MAP: {[key: string]: string} = {
     get blue() { return '#75b7ff'; },
     get green() { return '#71f59f'; },
@@ -19,11 +23,17 @@ export const COLOR_MAP: {[key: string]: string} = {
     get lightgreen() { return '#a1ffc2'; },
     get lightorange() { return '#ffd1a6'; },
     get silver() { return '#e3e3e3'; },
-    get gray() { return '#666666'; },
+    get gray() { return '#888888'; },
 
-    get DEFAULT_LINK_COLOR() { return '#3583ea'; },
+    get DEFAULT_LINK_COLOR() { return dark ? '#303F9F' : '#8C9EFF'; },
     get BROKEN_LINK_COLOR() { return dark ? '#444444' : '#cccccc'; },
-    get DEFAULT_NODE_COLOR() { return '#a4b7fc'; },
-    get SELECTED_NODE_COLOR() { return '#4ee44e'; },
-    get ACTIVE_NODE_COLOR() { return '#ffcccb'; },
+
+    get DEFAULT_NODE_COLOR() { return dark ? '#303F9F' : '#8C9EFF'; },
+    get NODE_FONT() { return dark ? '#DDDDDD' : '#000000' },
+    get SELECTED_NODE_COLOR() { return dark ? '#004D40' : '#4ee44e'; },
+    get ACTIVE_NODE_COLOR() { return dark ? '#B71C1C' : '#ffcccb'; },
+
+    get NODE_RED() { return dark ? '#B71C1C' : '#e44e6c'; },
+    get NODE_ORANGE() { return dark ? '#E65100' : '#ffd1a6' },
+    get NODE_SILVER() { return dark ? '#2e2e2e' : '#e3e3e3' },
 };

@@ -165,18 +165,24 @@ export class Topology {
     for (const node of this.nodes.get()) {
       let color = node.color?.toString();
       color = color ? (COLOR_MAP[color] || color) : COLOR_MAP.DEFAULT_NODE_COLOR;
+      let updated = false;
 
       if (!node.init) {
+        updated = true;
         this.nodes.update({
           id: node.id,
           init: true,
           shape: node.isSwitch ? 'box' : 'ellipse',
           color: color,
-          font: { size: 15 },
+          font: {
+            size: 15,
+            color: COLOR_MAP.NODE_FONT,
+          },
         });
       }
 
       if (!node.extra) {
+        updated = true;
         this.nodes.update({
           id: node.id,
           extra: {
@@ -187,6 +193,10 @@ export class Topology {
             color: color,
           }
         });
+      }
+
+      if (updated) {
+        this.updateNodeColor(node.id);
       }
     }
   }

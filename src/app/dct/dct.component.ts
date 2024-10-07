@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { WasmService } from '../wasm.service';
 import { initialize as initIface } from './dct.interface';
 import { untangleGraph } from '../algorithm';
@@ -32,9 +32,9 @@ interface ICertDagEdge extends Edge {
   styleUrls: ['dct.component.scss']
 })
 export class DCTComponent implements OnInit, AfterViewInit {
-  public schema = String();
-  public script = String();
-  public schemaOutput = String();
+  public schema: string = String();
+  public script: string = String();
+  public schemaOutput: string = String();
 
   private readonly certDag = {
     nodes: new DataSet<ICertDagNode>(),
@@ -45,11 +45,15 @@ export class DCTComponent implements OnInit, AfterViewInit {
     hideChainInfo: true,
     showHidden: false,
   };
+  public compileError: boolean = false;
+
+  // Only show DAG visualizer
+  @Input() public dagOnly: boolean = false;
 
   // Native Elements
-  @ViewChild('tabs') public tabs!: TabsComponent;
-  @ViewChild('visualizerTab') public visualizerTab!: TabComponent;
-  @ViewChild('dagContainer') public dagContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('tabs') public tabs?: TabsComponent;
+  @ViewChild('visualizerTab') public visualizerTab?: TabComponent;
+  @ViewChild('dagContainer') public dagContainer?: ElementRef<HTMLDivElement>;
 
   constructor(
     private readonly wasm: WasmService,
@@ -59,6 +63,13 @@ export class DCTComponent implements OnInit, AfterViewInit {
     // Explose global DCT object
     window.DCT = initIface(this.wasm);
 
+    // Load defaults if needed
+    if (!this.dagOnly) {
+      this.fetchDefaults()
+    }
+  }
+
+  private fetchDefaults() {
     // Load schema from localStorage
     localforage.getItem<string>(LS.schema).then((schema) => {;
       schema = schema?.trim() ?? null;
@@ -129,15 +140,17 @@ export class DCTComponent implements OnInit, AfterViewInit {
       },
     };
 
-    // Create network
-    this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
+    if (this.dagContainer) {
+      // Create network
+      this.certDagNet = new Network(this.dagContainer?.nativeElement, this.certDag, options);
 
-    // Add event handlers
-    this.certDagNet.on('select', this.onSelect.bind(this));
+      // Add event handlers
+      this.certDagNet.on('select', this.onSelect.bind(this));
+    }
   }
 
   public async compileSchema(debug: boolean = false): Promise<boolean> {
-    window.console.clear_play();
+    window.console.clear_play?.();
     this.preHookFS();
 
     try {
@@ -159,13 +172,16 @@ export class DCTComponent implements OnInit, AfterViewInit {
   }
 
   public async visualizeSchema() {
-    await this.compileSchema(true);
+    this.compileError = !(await this.compileSchema(true));
 
     // Check if output contains a DAG
     // This can be the case even if the compiler fails
     if (this.schemaOutput.includes('digraph')) {
       this.refreshVisualizer();
-      this.tabs.set(this.visualizerTab);
+      this.tabs?.set(this.visualizerTab!);
+    } else {
+      this.certDag.nodes.clear();
+      this.certDag.edges.clear();
     }
   }
 
@@ -205,8 +221,8 @@ export class DCTComponent implements OnInit, AfterViewInit {
         if (this.certDag.nodes.get(root)) {
           this.certDag.nodes.updateOnly({
             id: root,
-            color: COLOR_MAP.red,
-            font: { color: 'white' },
+            color: COLOR_MAP.NODE_RED,
+            font: { color: '#DDDDDD' },
           });
         }
 
@@ -215,7 +231,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
         if (this.certDag.nodes.get(leaf)) {
           this.certDag.nodes.updateOnly({
             id: leaf,
-            color: COLOR_MAP.lightorange,
+            color: COLOR_MAP.NODE_ORANGE,
             shape: 'box',
           });
         }
@@ -257,14 +273,14 @@ export class DCTComponent implements OnInit, AfterViewInit {
           : typeof node.color === 'object'
           ? node.color.background
           : COLOR_MAP.DEFAULT_NODE_COLOR;
-        let fontColor = '#000000';
+        let fontColor = COLOR_MAP.NODE_FONT;
 
         // Hide grayed out nodes by default
         const hide = color === 'gray';
 
         // Color substitutions
         if (color === 'gray') {
-          color = COLOR_MAP.silver;
+          color = COLOR_MAP.NODE_SILVER;
           fontColor = COLOR_MAP.gray;
         }
 
@@ -309,8 +325,10 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
     // Helper to remove a node from the graph
     const removeNode = (id: IdType) => {
-      this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
-      this.certDag.nodes.remove(id);
+      try {
+        this.certDag.edges.remove(this.certDagNet.getConnectedEdges(id));
+        this.certDag.nodes.remove(id);
+      } catch (_) { }
     };
 
     // Remove chainInfo if hidden
@@ -339,7 +357,7 @@ export class DCTComponent implements OnInit, AfterViewInit {
 
   public async runScript(): Promise<void> {
     this.preHookFS();
-    window.console.clear_play();
+    window.console.clear_play?.();
 
     // ZoneAwarePromise cannot be used with async functions
     // So we first construct an async function and transpile it

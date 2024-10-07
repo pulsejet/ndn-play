@@ -154,7 +154,7 @@ export class WasmService {
     try {
       await fun(args[0], {
         ...args[1] ?? {},
-        print: (line) => stdout.push(line) && window.console.log_play(line),
+        print: (line) => stdout.push(line) && window.console.log_play?.(line),
       });
 
       return stdout.join('\n');

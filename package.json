@@ -32,6 +32,8 @@
     "@ndn/ws-transport": "https://ndnts-nightly.ndn.today/ws-transport.tgz",
     "bulma": "^1.0.2",
     "chroma-js": "^3.1.1",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
     "dct-wasm": "^0.0.6",
     "dijkstrajs": "^1.0.3",
     "it-pushable": "^3.2.3",
@@ -40,9 +42,7 @@
     "ngx-monaco-editor-v2": "^18.1.0",
     "pako": "^2.1.0",
     "rxjs": "~7.8.1",
-    "vis-network": "^9.1.9",
-    "xterm": "^5.3.0",
-    "xterm-addon-fit": "^0.8.0"
+    "vis-network": "^9.1.9"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "18.2.7",
@@ -53,6 +53,7 @@
     "@types/emscripten": "^1.39.13",
     "@types/msgpack-lite": "^0.1.11",
     "@types/pako": "^2.0.3",
+    "@types/vscode-webview": "^1.57.5",
     "tslib": "^2.7.0",
     "typescript": "^5.5"
   }

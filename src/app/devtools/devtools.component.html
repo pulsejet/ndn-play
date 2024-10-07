@@ -1,4 +1,4 @@
-<ng-template #mainUpperPane>
+<ng-template #capturePane>
     <app-tabs class="tab-container" #mainTabs>
         <app-tab name="Packet Capture" #captureTab>
             <div class="capture-tab m-1 mr-0">
@@ -11,12 +11,6 @@
             </div>
         </app-tab>
 
-        <app-tab name="TLV Types">
-            <div class="main-tab">
-                <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
-            </div>
-        </app-tab>
-
         <app-tab name="Tools" #lowerVisTab>
             <button class="button is-link m-1" (click)="dump()">
                 Generate Experiment Dump
@@ -25,21 +19,38 @@
     </app-tabs>
 </ng-template>
 
-<ng-template #mainLowerPane>
+<ng-template #tlvPane>
     <app-tabs class="tab-container main-lower" #lowerTabs>
-        <app-tab name="TLV Visualizer" #lowerVisTab>
+        <app-tab name="TLV Visualizer" #lowerVisTab (select)="visualizer.checkTypes()">
             <div class="p-2 tab-full-height">
-                <app-visualizer [tlv]="visualizedTlv"
+                <app-visualizer #visualizer
+                                [tlv]="visualizedTlv"
                                 (change)="lowerTabs.set(lowerVisTab)"
+                                [warnEmpty]="mode !== MODES.TLV"
                 ></app-visualizer>
+            </div>
+        </app-tab>
+
+        <app-tab name="TLV Types" (select)="loadMonaco = true">
+            <div class="main-tab" *ngIf="loadMonaco">
+                <app-editor [(code)]="gs.topo.tlvTypesCode" language="typescript"></app-editor>
             </div>
         </app-tab>
     </app-tabs>
 </ng-template>
 
-<div class="full-width">
-    <app-pane [pane1]="mainUpperPane" [pane2]="mainLowerPane"
+<div class="full-width full-vh" [ngSwitch]="mode">
+    <app-pane *ngSwitchCase="MODES.FULL"
+                [pane1]="capturePane" [pane2]="tlvPane"
                 [vertical]="true" basis="50%"
                 (resize)="paneResized()">
     </app-pane>
+
+    <ng-container *ngSwitchCase="MODES.TLV">
+        <ng-container *ngTemplateOutlet="tlvPane"></ng-container>
+    </ng-container>
+
+    <ng-container *ngSwitchCase="MODES.DCT_DAG">
+        <app-dct [dagOnly]="true" #dct></app-dct>
+    </ng-container>
 </div>

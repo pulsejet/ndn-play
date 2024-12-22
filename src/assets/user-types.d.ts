@@ -3,6 +3,7 @@
 import type * as asn1 from '@yoursunny/asn1';
 import assert from 'tiny-invariant';
 import { DataSet } from './esm';
+import { DefaultMap } from 'mnemonist';
 import { Edge } from './esm';
 import { FullItem } from 'vis-data/declarations/data-interface';
 import type { H3Transport } from '@ndn/quic-transport';
@@ -118,14 +119,7 @@ declare class Alt extends Expr {
     protected exprToTokens(): Iterable<T.Token>;
 }
 
-/**
- * Specify several alternate patterns in "OR" relation.
- *
- * @remarks
- * When matching a name, the first successful match is returned.
- *
- * When building a name, the first choice that does not have missing variable is returned.
- */
+/** Specify several alternate patterns in "OR" relation. */
 declare class AlternatePattern extends Pattern {
     readonly choices: Pattern[];
     constructor(choices?: Pattern[]);
@@ -180,7 +174,7 @@ declare const And: new () => Operator;
  	// …
 
  	for (const output of outputList) {
- 	  console.log(`write to: ${output}`);
+ 		console.log(`write to: ${output}`);
  	}
  }
 
@@ -190,7 +184,10 @@ declare const And: new () => Operator;
 
  @category Array
  */
-declare type Arrayable<T> = T | readonly T[];
+declare type Arrayable<T> =
+T
+// TODO: Use `readonly T[]` when this issue is resolved: https://github.com/microsoft/TypeScript/issues/17002
+| T[];
 
 /**
  Provides all values for a constant array or tuple.
@@ -217,8 +214,8 @@ declare type ArrayValues<T extends readonly unknown[]> = T[number];
 
 declare const ArrowL: new () => Operator;
 
-/** Convert ArrayBuffer or ArrayBufferView to DataView. */
-declare function asDataView(a: BufferSource): DataView;
+/** Convert (Shared)ArrayBuffer(View) to DataView. */
+declare function asDataView(a: ArrayBufferLike | ArrayBufferView): DataView;
 
 declare namespace ast {
     export {
@@ -240,8 +237,8 @@ declare namespace ast {
     }
 }
 
-/** Convert ArrayBuffer or ArrayBufferView to Uint8Array. */
-declare function asUint8Array(a: BufferSource): Uint8Array;
+/** Convert (Shared)ArrayBuffer(View) to Uint8Array. */
+declare function asUint8Array(a: ArrayBufferLike | ArrayBufferView): Uint8Array;
 
 declare namespace autoconfig {
     export {
@@ -413,6 +410,7 @@ declare class BuildState {
     readonly vars: Map<string, Name>;
     constructor(name: Name, vars: Map<string, Name>);
     append(...comps: Component[]): BuildState;
+    toString(): string;
 }
 
 /** Internal function call node. */
@@ -421,14 +419,14 @@ declare class Call extends Expr {
     args: Expr[];
     constructor(func: string, args?: Expr[]);
     protected exprParens(): boolean;
-    protected exprToTokens(): Generator<T.Token, void, undefined>;
+    protected exprToTokens(): Generator<T.Token, void, any>;
 }
 
 /** Request to cancel a pending Interest. */
 declare class CancelInterest implements FwPacket<Interest> {
     l3: Interest;
-    token?: unknown;
-    constructor(l3: Interest, token?: unknown);
+    token?: unknown | undefined;
+    constructor(l3: Interest, token?: unknown | undefined);
     readonly cancel = true;
 }
 
@@ -740,7 +738,7 @@ declare interface CommonOptions {
      */
     describe?: string;
     /**
-     * AbortSignal that allows cancelation via AbortController.
+     * AbortSignal that allows cancellation via AbortController.
      *
      * @remarks
      * In a consumer, the promise returned by consume() is rejected.
@@ -816,13 +814,15 @@ declare namespace Component {
         /** lhs is greater than rhs */
         GT = 2
     }
+    /** Compare two components. */
+    function compare(lhs: Component, rhs: Component): CompareResult;
 }
 
 /** Component constraint node. */
 declare class ComponentConstraint extends ComponentConstraintEq {
     terms: ComponentConstraintTerm[];
     constructor(terms?: ComponentConstraintTerm[]);
-    protected componentConstraintToTokens(): Generator<T.Token, void, undefined>;
+    protected componentConstraintToTokens(): Generator<T.Token, void, any>;
 }
 
 /** Component constraint equation. */
@@ -838,7 +838,7 @@ declare class ComponentConstraintRel extends ComponentConstraintEq {
     op: T.Operator;
     right: ComponentConstraintEq;
     constructor(left: ComponentConstraintEq, op: T.Operator, right: ComponentConstraintEq);
-    protected componentConstraintToTokens(parentOp: string): Generator<T.Token, void, undefined>;
+    protected componentConstraintToTokens(parentOp: string): Generator<T.Token, void, any>;
 }
 
 /** Component constraint term node. */
@@ -846,7 +846,7 @@ declare class ComponentConstraintTerm extends Node_2 {
     tag: Ident_2;
     expr: Expr;
     constructor(tag: Ident_2, expr: Expr);
-    toTokens(): Generator<T.Token, void, undefined>;
+    toTokens(): Generator<T.Token, void, any>;
 }
 
 /** Name component or component URI. */
@@ -1141,7 +1141,7 @@ declare class CounterIvGen extends IvGen {
     constructor(opts: CounterIvGen.Options);
     private readonly ivPrefix;
     private readonly ci;
-    protected generate(): Uint8Array;
+    protected generate(): Uint8Array<ArrayBufferLike>;
     protected update(plaintextLength: number, ciphertextLength: number): void;
 }
 
@@ -2232,8 +2232,8 @@ declare type ExceptOptions = {
 
 /** Expression node. */
 declare abstract class Expr extends Node_2 {
-    toTokens(): Generator<T.Token, void, undefined>;
-    protected static exprToTokens(node: Expr, parent?: Expr): Generator<T.Token, void, undefined>;
+    toTokens(): Generator<T.Token, void, any>;
+    protected static exprToTokens(node: Expr, parent?: Expr): Generator<T.Token, void, any>;
     protected abstract exprParens(parent: Expr): boolean;
     protected abstract exprToTokens(): Iterable<T.Token>;
 }
@@ -4306,6 +4306,7 @@ declare class MatchState {
      * @returns Updated state, or `false` if variables are inconsistent.
      */
     extend(incrementPos: number, ...varsL: Array<Iterable<readonly [string, Name]>>): MatchState | false;
+    toString(): string;
 }
 
 declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
@@ -4439,7 +4440,6 @@ declare class Name {
     equals(other: NameLike): boolean;
     /** Determine if this name is a prefix of other. */
     isPrefixOf(other: NameLike): boolean;
-    private comparePrefix;
     encodeTo(encoder: Encoder): void;
 }
 
@@ -4459,6 +4459,8 @@ declare namespace Name {
         /** rhs is less than, but not a prefix of lhs */
         GT = 2
     }
+    /** Compare two names. */
+    function compare(lhs: Name, rhs: Name): CompareResult;
 }
 
 /** Name node. */
@@ -4942,6 +4944,24 @@ declare interface OutputRefSubscription {
     unsubscribe(): void;
 }
 
+/**
+ * Specify several overlapped patterns in "AND" relation.
+ *
+ * @remarks
+ * When matching a name, every branch of this pattern must extract the same number of name
+ * components, and their variables must be consistent.
+ *
+ * When building a name, one branch is used to build the name as long as all required variables
+ * are present, and then the built name must match all branches.
+ */
+declare class OverlapPattern extends Pattern {
+    readonly branches: Pattern[];
+    constructor(branches?: Pattern[]);
+    simplify(): Pattern;
+    protected matchState(state: MatchState, branchIndex?: number, lastMatch?: MatchState): Iterable<MatchState>;
+    protected buildState(state: BuildState): Iterable<BuildState>;
+}
+
 declare namespace packet {
     export {
         lpm,
@@ -5245,7 +5265,8 @@ declare namespace pattern {
         VariablePattern,
         CertNamePattern,
         ConcatPattern,
-        AlternatePattern
+        AlternatePattern,
+        OverlapPattern
     }
 }
 
@@ -5337,6 +5358,16 @@ declare function print_3(policy: TrustSchemaPolicy): string;
 
 /** Print policy as ECMAScript module. */
 declare function printESM(policy: TrustSchemaPolicy): string;
+
+declare namespace printESM {
+    interface Context {
+        indent: string;
+        imports: DefaultMap<string, Set<string>>;
+    }
+    interface PrintableFilter extends VariablePattern.Filter {
+        printESM: (ctx: Context) => string;
+    }
+}
 
 /** Pretty-print TLV-TYPE number. */
 declare function printTT(tlvType: number): string;
@@ -5668,7 +5699,7 @@ declare function pushable<T>(): Pushable<T>;
 
 /** IV generator using all random bits. */
 declare class RandomIvGen extends IvGen {
-    protected generate(): Uint8Array;
+    protected generate(): Uint8Array<ArrayBuffer>;
 }
 
 /**
@@ -5754,8 +5785,8 @@ declare class Reassembler {
 declare class RejectInterest implements FwPacket<Interest> {
     reject: RejectInterest.Reason;
     l3: Interest;
-    token?: unknown;
-    constructor(reject: RejectInterest.Reason, l3: Interest, token?: unknown);
+    token?: unknown | undefined;
+    constructor(reject: RejectInterest.Reason, l3: Interest, token?: unknown | undefined);
 }
 
 declare namespace RejectInterest {
@@ -5892,7 +5923,7 @@ declare function scan_2(tokens: Iterable<T.Token>): Unit[];
 declare class Schema extends Node_2 {
     stmts: Stmt[];
     constructor(stmts?: Stmt[]);
-    toTokens(): Generator<T.Token, void, undefined>;
+    toTokens(): Generator<T.Token, void, any>;
 }
 
 /** Named secret key. */
@@ -6196,7 +6227,7 @@ declare const SigningAlgorithmListSlim: readonly SigningAlgorithm[];
 declare class SigningConstraint extends Node_2 {
     signers: Ident_2[];
     constructor(signers?: Ident_2[]);
-    toTokens(): Generator<T.Token, void, undefined>;
+    toTokens(): Generator<T.Token, void, any>;
 }
 
 declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [
@@ -6308,7 +6339,7 @@ declare class Stmt extends Node_2 {
     componentConstraint: ComponentConstraintEq | undefined;
     signingChain: SigningConstraint[];
     constructor(ident: Ident_2, definition?: Expr | undefined, componentConstraint?: ComponentConstraintEq | undefined, signingChain?: SigningConstraint[]);
-    toTokens(): Generator<T.Token, void, undefined>;
+    toTokens(): Generator<T.Token, void, any>;
 }
 
 /**
@@ -6399,12 +6430,14 @@ declare class StructBuilder<U extends {}> {
      * Subclass constructor.
      * This must be assigned, otherwise decoding function will not work.
      */
-    subclass?: Constructor<U, []>;
+    subclass?: Constructor<U, []> & Decodable<U>;
     private readonly fields;
     private readonly flagBits;
     private readonly EVD;
-    /** Return field names. */
-    get keys(): string[];
+    /** Access EvDecoder for certain customizations. */
+    static evdOf<U extends {}>(sb: StructBuilder<U>): Except<EvDecoder<U>, "add">;
+    /** Retrieve field names. */
+    static keysOf<U extends {}>(sb: StructBuilder<U>): Array<keyof U>;
     /**
      * Add a field.
      * @param tt - TLV-TYPE number.
@@ -7709,6 +7742,7 @@ declare abstract class Transport {
         readonly maxComps: number;
         readonly inner?: Pattern;
         readonly filter?: VariablePattern.Filter;
+        simplify(): Pattern;
         private innerMatch;
         private filtersAccept;
         protected matchState(state: MatchState): Iterable<MatchState>;

@@ -125,7 +125,7 @@ export class ProviderBrowser implements ForwardingProvider {
           id: nid, label: nid,
           x: node.position[1] * 2,
           y: -node.position[0] * 8,
-          color: node['ndn-up'] ? undefined : COLOR_MAP['orange'],
+          color: node['ndn-up'] ? undefined : COLOR_MAP.NODE_RED,
           title: tooltip,
           prefix: node.prefix,
         });

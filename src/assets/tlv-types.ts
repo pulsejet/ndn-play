@@ -180,12 +180,17 @@ export enum NNI_ContentType {
 export enum TLV_SVS {
     StateVector = 201,
     StateVectorEntry = 202,
-    SvSeqNo = 204,
+    SeqNoEntry = 210,
+    BootstrapTime = 212,
+    SeqNo = 214,
 }
-export let T_IN_StateVector = [TLV_V3.Name];
+export let T_IN_StateVector = [TLV_V3.Content];
 export let T_IN_StateVectorEntry = [TLV_SVS.StateVector];
-export let T_IN_SvSeqNo = [TLV_SVS.StateVectorEntry];
-export let NNI_SvSeqNo = 1;
+export let T_IN_SeqNoEntry = [TLV_SVS.StateVectorEntry];
+export let T_IN_BootstrapTime = [TLV_SVS.SeqNoEntry];
+export let T_IN_SeqNo = [TLV_SVS.SeqNoEntry];
+export let NNI_BootstrapTime = 1;
+export let NNI_SeqNo = 1;
 
 // =============================================================
 // CUSTOM TLV TYPES

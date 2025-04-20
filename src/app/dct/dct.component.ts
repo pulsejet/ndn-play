@@ -27,9 +27,10 @@ interface ICertDagEdge extends Edge {
 };
 
 @Component({
-  selector: 'app-dct',
-  templateUrl: 'dct.component.html',
-  styleUrls: ['dct.component.scss']
+    selector: 'app-dct',
+    templateUrl: 'dct.component.html',
+    styleUrls: ['dct.component.scss'],
+    standalone: false
 })
 export class DCTComponent implements OnInit, AfterViewInit {
   public schema: string = String();

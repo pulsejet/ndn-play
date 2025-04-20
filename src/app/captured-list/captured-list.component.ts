@@ -6,9 +6,10 @@ import { GlobalService } from '../global.service';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-captured-list[node]',
-  templateUrl: 'captured-list-component.html',
-  styleUrls: ['captured-list-component.scss']
+    selector: 'app-captured-list[node]',
+    templateUrl: 'captured-list-component.html',
+    styleUrls: ['captured-list-component.scss'],
+    standalone: false
 })
 export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Filtering by regex */
@@ -89,7 +90,7 @@ export class CapturedListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.redraw();
   }
 
-  public getNodeLabel(id: string) {
+  public getNodeLabel(id: string | number) {
     return this.provider.topo.nodes.get(id)?.label || id;
   }
 

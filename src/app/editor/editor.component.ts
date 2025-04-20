@@ -6,6 +6,9 @@ import versecLang from './versec.lang';
 import type { NgxMonacoEditorConfig } from 'ngx-monaco-editor-v2';
 
 export const monacoConfig: NgxMonacoEditorConfig = {
+  // https://github.com/microsoft/monaco-editor/issues/4778#issuecomment-2574889299
+  baseUrl: window.location.origin + '/assets/monaco/min/vs',
+
   onMonacoLoad: async () => {
     monaco.editor.defineTheme('custom-light', {
       base: 'vs',
@@ -80,8 +83,8 @@ export const monacoConfig: NgxMonacoEditorConfig = {
 };
 
 @Component({
-  selector: 'app-editor',
-  template: `
+    selector: 'app-editor',
+    template: `
     <div class="code-editor">
       <ngx-monaco-editor [options]="editorOptions"
                          [(ngModel)]="code"
@@ -89,12 +92,13 @@ export const monacoConfig: NgxMonacoEditorConfig = {
       </ngx-monaco-editor>
     </div>
   `,
-  styles: [
-    `.code-editor, .code-editor > * {
+    styles: [
+        `.code-editor, .code-editor > * {
       height: 100%;
       width: 100%;
     }`
-  ]
+    ],
+    standalone: false
 })
 export class EditorComponent {
   public readonly editorOptions = {

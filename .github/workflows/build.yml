@@ -20,7 +20,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/ndn-play
+          publish_dir: ./dist/ndn-play/browser
           publish_branch: gh-pages
           cname: play.ndn.today
           force_orphan: true

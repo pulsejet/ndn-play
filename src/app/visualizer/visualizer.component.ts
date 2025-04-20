@@ -15,9 +15,10 @@ const LF_KEYS = {
 }
 
 @Component({
-  selector: 'app-visualizer',
-  templateUrl: 'visualizer.component.html',
-  styleUrls: ['visualizer.component.scss']
+    selector: 'app-visualizer',
+    templateUrl: 'visualizer.component.html',
+    styleUrls: ['visualizer.component.scss'],
+    standalone: false
 })
 export class VisualizerComponent implements OnInit {
   @Input() public tlv?: TlvType;

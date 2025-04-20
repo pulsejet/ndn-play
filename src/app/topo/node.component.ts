@@ -4,8 +4,8 @@ import { INode } from '../interfaces';
 import { Topology } from './topo';
 
 @Component({
-  selector: 'topo-node[topo][node]',
-  template: `
+    selector: 'topo-node[topo][node]',
+    template: `
     <div>
         <h2 class="is-size-5 mb-3">Node {{ node.label }}</h2>
 
@@ -83,8 +83,8 @@ import { Topology } from './topo';
         </div>
     </div>
   `,
-  styles: [
-  ]
+    styles: [],
+    standalone: false
 })
 export class TopoNodeComponent implements OnInit {
 

@@ -3,8 +3,9 @@ import { GlobalService } from '../global.service';
 import { CAPTURED_FLAG_REPLAYING, ICapturedPacket, IEdge } from '../interfaces';
 
 @Component({
-  selector: 'app-captured-replay',
-  templateUrl: 'captured-replay.component.html',
+    selector: 'app-captured-replay',
+    templateUrl: 'captured-replay.component.html',
+    standalone: false
 })
 export class CapturedReplayComponent implements OnInit {
 

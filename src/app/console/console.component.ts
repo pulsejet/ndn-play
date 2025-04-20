@@ -4,16 +4,17 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 
 @Component({
-  selector: 'console',
-  template: `
+    selector: 'console',
+    template: `
     <div class="console" #console></div>
   `,
-  styles: [`
+    styles: [`
   .console {
     height: 100%;
     width: 100%;
   }
-  `]
+  `],
+    standalone: false
 })
 export class ConsoleComponent implements OnInit, AfterViewInit {
   @ViewChild('console') public console!: ElementRef;

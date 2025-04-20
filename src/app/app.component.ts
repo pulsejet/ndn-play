@@ -2,8 +2,9 @@ import { AfterViewInit, Component } from '@angular/core';
 import { postToParent } from './helper';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: 'app.html',
+    selector: 'app-root',
+    templateUrl: 'app.html',
+    standalone: false
 })
 export class AppComponent implements AfterViewInit {
   title = 'ndn-play';

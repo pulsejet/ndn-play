@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '22.x'
-      - run: rm package-lock.json && npm install
+      - run: npm ci
       - run: npm run build
 
       - uses: peaceiris/actions-gh-pages@v3

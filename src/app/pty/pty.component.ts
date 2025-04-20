@@ -5,18 +5,19 @@ import { FitAddon } from '@xterm/addon-fit';
 import { IPty } from '../interfaces';
 
 @Component({
-  selector: 'pty',
-  template: `
+    selector: 'pty',
+    template: `
     <div class="pty" #pty></div>
   `,
-  styles: [
-  `
+    styles: [
+        `
     .pty {
       height: 100%;
       width: 100%;
     }
   `
-  ]
+    ],
+    standalone: false
 })
 export class PtyComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('pty') public pty_e!: ElementRef<HTMLDivElement>;

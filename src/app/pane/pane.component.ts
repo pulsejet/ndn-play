@@ -1,9 +1,10 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
 
 @Component({
-  selector: 'app-pane',
-  templateUrl: 'pane.component.html',
-  styleUrls: ['pane.component.scss']
+    selector: 'app-pane',
+    templateUrl: 'pane.component.html',
+    styleUrls: ['pane.component.scss'],
+    standalone: false
 })
 export class PaneComponent implements AfterViewInit {
 

@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Topology } from './topo';
 
 @Component({
-  selector: 'topo-sidebar[topo]',
-  template: `
+    selector: 'topo-sidebar[topo]',
+    template: `
     <ng-container
         [ngTemplateOutlet]="sideBarInner"
         [ngTemplateOutletContext]="{node: topo.selectedNode, edge: topo.selectedEdge}">
@@ -15,8 +15,8 @@ import { Topology } from './topo';
         <topo-global *ngIf="!node && !edge" [topo]="topo"></topo-global>
     </ng-template>
   `,
-  styles: [
-  ]
+    styles: [],
+    standalone: false
 })
 export class TopoSidebarComponent implements OnInit {
 

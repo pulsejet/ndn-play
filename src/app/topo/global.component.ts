@@ -3,8 +3,8 @@ import * as miniNDN from '../minindn-config';
 import { Topology } from './topo';
 
 @Component({
-  selector: 'topo-global[topo]',
-  template: `
+    selector: 'topo-global[topo]',
+    template: `
     <div>
         <h2 class="is-size-5">Global Operations</h2>
         <br/>
@@ -140,8 +140,8 @@ import { Topology } from './topo';
         </div>
     </div>
   `,
-  styles: [
-  ]
+    styles: [],
+    standalone: false
 })
 export class TopoGlobalComponent {
 

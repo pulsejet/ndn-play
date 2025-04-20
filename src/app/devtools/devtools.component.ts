@@ -16,9 +16,10 @@ const PostMsg = {
 }
 
 @Component({
-  selector: 'app-devtools',
-  templateUrl: 'devtools.component.html',
-  styleUrls: ['devtools.component.scss']
+    selector: 'app-devtools',
+    templateUrl: 'devtools.component.html',
+    styleUrls: ['devtools.component.scss'],
+    standalone: false
 })
 export class DevtoolsComponent implements OnInit, AfterViewInit {
   /** Currently visualized tlv */

@@ -3,8 +3,8 @@ import { IEdge } from '../interfaces';
 import { Topology } from './topo';
 
 @Component({
-  selector: 'topo-edge[topo][edge]',
-  template: `
+    selector: 'topo-edge[topo][edge]',
+    template: `
     <div>
         <h2 class="is-size-5 mb-3">
             Link
@@ -38,12 +38,13 @@ import { Topology } from './topo';
         </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .label-btn {
       float: right;
       cursor: pointer;
     }
-  `]
+  `],
+    standalone: false
 })
 export class TopoEdgeComponent implements OnInit {
 

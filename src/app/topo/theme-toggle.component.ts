@@ -4,8 +4,8 @@ import { isDark } from './color.map';
 const LS_KEY_DARK = 'force-dark';
 
 @Component({
-  selector: 'theme-toggle',
-  template: `
+    selector: 'theme-toggle',
+    template: `
     <button class="theme-btn" (click)="toggle()">
       <svg width="30" height="30" class="theme-icon light">
         <circle cx="15" cy="15" r="6" fill="currentColor" />
@@ -24,7 +24,7 @@ const LS_KEY_DARK = 'force-dark';
       </svg>
     </button>
   `,
-  styles: [`
+    styles: [`
     .theme-btn {
       position: relative;
       transform: scale(0.8) translateY(6px);
@@ -39,7 +39,8 @@ const LS_KEY_DARK = 'force-dark';
         &.light { opacity: var(--is-dark); }
       }
     }
-  `]
+  `],
+    standalone: false
 })
 export class ThemeToggleComponent implements OnInit {
   constructor() { }

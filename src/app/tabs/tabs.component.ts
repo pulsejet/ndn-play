@@ -2,8 +2,8 @@ import { AfterContentInit, Component, ContentChildren, Input, OnInit, QueryList 
 import { TabComponent } from './tab.component';
 
 @Component({
-  selector: 'app-tabs',
-  template: `
+    selector: 'app-tabs',
+    template: `
     <div class="main-container" *ngIf="children && initialized">
       <div class="is-small tabs main-head">
         <ul>
@@ -22,8 +22,8 @@ import { TabComponent } from './tab.component';
       </div>
     </div>
   `,
-  styles: [
-    `
+    styles: [
+        `
       .main-container {
         display: flex;
         flex-flow: column;
@@ -54,7 +54,8 @@ import { TabComponent } from './tab.component';
         visibility: hidden;
       }
     `
-  ]
+    ],
+    standalone: false
 })
 export class TabsComponent implements OnInit, AfterContentInit   {
 

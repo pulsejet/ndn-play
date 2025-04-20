@@ -4,9 +4,10 @@ import type { ICapturedPacket, INode, TlvType } from '../interfaces';
 import type { PtyComponent } from '../pty/pty.component';
 
 @Component({
-  selector: 'app-play',
-  templateUrl: 'play.component.html',
-  styleUrls: ['play.component.scss']
+    selector: 'app-play',
+    templateUrl: 'play.component.html',
+    styleUrls: ['play.component.scss'],
+    standalone: false
 })
 export class PlayComponent implements OnInit, AfterViewInit {
   public readonly title = 'ndn-play';

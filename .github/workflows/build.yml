@@ -12,15 +12,15 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
-      - run: rm package-lock.json && npm install
+          node-version: '22.x'
+      - run: npm ci
       - run: npm run build
 
       - uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/master'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/ndn-play
+          publish_dir: ./dist/ndn-play/browser
           publish_branch: gh-pages
           cname: play.ndn.today
           force_orphan: true

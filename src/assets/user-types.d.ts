@@ -1,15 +1,13 @@
 /// <reference lib="esnext.asynciterable" />
 
-import type * as asn1 from '@yoursunny/asn1';
+import * as asn1 from '@yoursunny/asn1';
 import assert from 'tiny-invariant';
 import { DataSet } from './esm';
-import { DefaultMap } from 'mnemonist';
 import { Edge } from './esm';
 import { FullItem } from 'vis-data/declarations/data-interface';
-import type { H3Transport } from '@ndn/quic-transport';
 import { IdType } from './esm';
 import { Network } from './esm';
-import { Node as Node_3 } from './esm';
+import { Node as Node_2 } from './esm';
 import * as retry from 'retry';
 import type { WebSocket as WebSocket_2 } from 'ws';
 
@@ -111,20 +109,12 @@ declare namespace AesKeyLength {
     const Choices: readonly [128, 192, 256];
 }
 
-/** Alternate expressions or expression in parens node. */
-declare class Alt extends Expr {
-    choices: Expr[];
-    constructor(choices?: Expr[]);
-    protected exprParens(parent: Expr): boolean;
-    protected exprToTokens(): Iterable<T.Token>;
-}
-
 /** Specify several alternate patterns in "OR" relation. */
 declare class AlternatePattern extends Pattern {
-    readonly choices: Pattern[];
-    constructor(choices?: Pattern[]);
-    simplify(): Pattern;
+    readonly choices: readonly Pattern[];
+    constructor(choices: readonly Pattern[]);
     protected matchState(state: MatchState): Iterable<MatchState>;
+    protected computeMatchLengthRange(): [min: number, max: number];
     protected buildState(state: BuildState): Iterable<BuildState>;
 }
 
@@ -157,7 +147,75 @@ declare class AltUriConverter {
     readonly parseName: (input: string) => Name;
 }
 
-declare const And: new () => Operator;
+/**
+ Merges user specified options with default options.
+
+ @example
+ ```
+ type PathsOptions = {maxRecursionDepth?: number; leavesOnly?: boolean};
+ type DefaultPathsOptions = {maxRecursionDepth: 10; leavesOnly: false};
+ type SpecifiedOptions = {leavesOnly: true};
+
+ type Result = ApplyDefaultOptions<PathsOptions, DefaultPathsOptions, SpecifiedOptions>;
+ //=> {maxRecursionDepth: 10; leavesOnly: true}
+ ```
+
+ @example
+ ```
+ // Complains if default values are not provided for optional options
+
+ type PathsOptions = {maxRecursionDepth?: number; leavesOnly?: boolean};
+ type DefaultPathsOptions = {maxRecursionDepth: 10};
+ type SpecifiedOptions = {};
+
+ type Result = ApplyDefaultOptions<PathsOptions, DefaultPathsOptions, SpecifiedOptions>;
+ //                                              ~~~~~~~~~~~~~~~~~~~
+ // Property 'leavesOnly' is missing in type 'DefaultPathsOptions' but required in type '{ maxRecursionDepth: number; leavesOnly: boolean; }'.
+ ```
+
+ @example
+ ```
+ // Complains if an option's default type does not conform to the expected type
+
+ type PathsOptions = {maxRecursionDepth?: number; leavesOnly?: boolean};
+ type DefaultPathsOptions = {maxRecursionDepth: 10; leavesOnly: 'no'};
+ type SpecifiedOptions = {};
+
+ type Result = ApplyDefaultOptions<PathsOptions, DefaultPathsOptions, SpecifiedOptions>;
+ //                                              ~~~~~~~~~~~~~~~~~~~
+ // Types of property 'leavesOnly' are incompatible. Type 'string' is not assignable to type 'boolean'.
+ ```
+
+ @example
+ ```
+ // Complains if an option's specified type does not conform to the expected type
+
+ type PathsOptions = {maxRecursionDepth?: number; leavesOnly?: boolean};
+ type DefaultPathsOptions = {maxRecursionDepth: 10; leavesOnly: false};
+ type SpecifiedOptions = {leavesOnly: 'yes'};
+
+ type Result = ApplyDefaultOptions<PathsOptions, DefaultPathsOptions, SpecifiedOptions>;
+ //                                                                   ~~~~~~~~~~~~~~~~
+ // Types of property 'leavesOnly' are incompatible. Type 'string' is not assignable to type 'boolean'.
+ ```
+ */
+declare type ApplyDefaultOptions<
+	Options extends object,
+	Defaults extends Simplify<Omit<Required<Options>, RequiredKeysOf<Options>> & Partial<Record<RequiredKeysOf<Options>, never>>>,
+	SpecifiedOptions extends Options,
+> =
+	IfAny<SpecifiedOptions, Defaults,
+	IfNever<SpecifiedOptions, Defaults,
+	Simplify<Merge<Defaults, {
+    		[Key in keyof SpecifiedOptions
+    		as Key extends OptionalKeysOf<Options>
+    			? Extract<SpecifiedOptions[Key], undefined> extends never
+    				? Key
+    				: never
+    			: Key
+    		]: SpecifiedOptions[Key]
+    	}> & Required<Options>> // `& Required<Options>` ensures that `ApplyDefaultOptions<SomeOption, ...>` is always assignable to `Required<SomeOption>`
+	>>;
 
 /**
  Create a type that represents either the value or an array of the value.
@@ -212,30 +270,8 @@ T
  */
 declare type ArrayValues<T extends readonly unknown[]> = T[number];
 
-declare const ArrowL: new () => Operator;
-
 /** Convert (Shared)ArrayBuffer(View) to DataView. */
 declare function asDataView(a: ArrayBufferLike | ArrayBufferView): DataView;
-
-declare namespace ast {
-    export {
-        parse,
-        Node_2 as Node,
-        Expr,
-        ComponentLit_2 as ComponentLit,
-        Ident_2 as Ident,
-        Call,
-        Alt,
-        Name_2 as Name,
-        ComponentConstraintEq,
-        ComponentConstraintTerm,
-        ComponentConstraint,
-        ComponentConstraintRel,
-        SigningConstraint,
-        Stmt,
-        Schema
-    }
-}
 
 /** Convert (Shared)ArrayBuffer(View) to Uint8Array. */
 declare function asUint8Array(a: ArrayBufferLike | ArrayBufferView): Uint8Array;
@@ -281,15 +317,6 @@ declare class BloomFilter {
 
 declare interface BloomFilter extends Readonly<Parameters_2> {
 }
-
-/** Tokens enclosed in braces. */
-declare class Brace extends Nested {
-    constructor(left: T.Operator, mid?: Unit[]);
-}
-
-declare const BraceL: new () => Operator;
-
-declare const BraceR: new () => Operator;
 
 /**
  * A bridge passes packets between two logical forwarders.
@@ -357,6 +384,10 @@ declare namespace Bridge {
          * Ignored if both `.fwA` and `.fwB` are specified.
          */
         fwOpts?: Forwarder.Options;
+        /** Face attributes from forwarder A to forwarder B. */
+        attrAB?: L3Face.Attributes;
+        /** Face attributes from forwarder A to forwarder B. */
+        attrBA?: L3Face.Attributes;
         /**
          * Relay options for packets from forwarder A to forwarder B.
          * @defaultValue instant delivery
@@ -379,8 +410,8 @@ declare namespace Bridge {
         routesBA?: readonly NameLike[];
     }
     /** Create a bridge that passes packets between two logical forwarders. */
-    function create({ bridgeName, fwA, fwB, fwOpts, relayAB, relayBA, routesAB, routesBA, }?: CreateOptions): Bridge;
-    type Renamed<A extends string, B extends string> = Except<Bridge, "fwA" | "fwB" | "faceA" | "faceB"> & {
+    function create({ bridgeName, fwA, fwB, fwOpts, attrAB, attrBA, relayAB, relayBA, routesAB, routesBA, }?: CreateOptions): Bridge;
+    type Renamed<A extends string, B extends string> = Except<Bridge, "rename" | "fwA" | "fwB" | "faceA" | "faceB"> & {
         [k in `fw${A | B}`]: Forwarder;
     } & {
         [k in `face${A | B}`]: FwFace;
@@ -411,15 +442,6 @@ declare class BuildState {
     constructor(name: Name, vars: Map<string, Name>);
     append(...comps: Component[]): BuildState;
     toString(): string;
-}
-
-/** Internal function call node. */
-declare class Call extends Expr {
-    func: string;
-    args: Expr[];
-    constructor(func: string, args?: Expr[]);
-    protected exprParens(): boolean;
-    protected exprToTokens(): Generator<T.Token, void, any>;
 }
 
 /** Request to cancel a pending Interest. */
@@ -616,11 +638,12 @@ declare interface CertNameFields extends KeyNameFields {
  * The captured variable contains the whole KeyLocator or certificate name that can
  * be further recognized by {@link CertNaming.parseKeyName} and {@link CertNaming.parseCertName}.
  *
- * Using the same {@link ConcatPattern}, the constructed name would be the subject name.
+ * Using the same {@link ConcatPattern}, the constructed name would be the subject name only.
  * It can be passed to {@link \@ndn/keychain!KeyChain.getSigner} to find a key/certificate.
  */
 declare class CertNamePattern extends Pattern {
     protected matchState(state: MatchState): Iterable<MatchState>;
+    protected computeMatchLengthRange(): [min: number, max: number];
     protected buildState(state: BuildState): Iterable<BuildState>;
 }
 
@@ -720,10 +743,6 @@ declare class Closers extends Array<Closer | Disposable | AsyncDisposable> imple
     wait(): Promise<void>;
 }
 
-declare const Colon: new () => Operator;
-
-declare const Comma: new () => Operator;
-
 declare interface CommonOptions {
     /**
      * Logical forwarder instance.
@@ -746,8 +765,6 @@ declare interface CommonOptions {
      */
     signal?: AbortSignal;
 }
-
-declare function compile(schema: ast.Schema): TrustSchemaPolicy;
 
 /**
  * Name component.
@@ -818,69 +835,18 @@ declare namespace Component {
     function compare(lhs: Component, rhs: Component): CompareResult;
 }
 
-/** Component constraint node. */
-declare class ComponentConstraint extends ComponentConstraintEq {
-    terms: ComponentConstraintTerm[];
-    constructor(terms?: ComponentConstraintTerm[]);
-    protected componentConstraintToTokens(): Generator<T.Token, void, any>;
-}
-
-/** Component constraint equation. */
-declare abstract class ComponentConstraintEq extends Node_2 {
-    toTokens(): Iterable<T.Token>;
-    protected static componentConstraintToTokens(node: ComponentConstraintEq, parentOp: string): Iterable<T.Token>;
-    protected abstract componentConstraintToTokens(parentOp: string): Iterable<T.Token>;
-}
-
-/** Component constraint And/Or relation node. */
-declare class ComponentConstraintRel extends ComponentConstraintEq {
-    left: ComponentConstraintEq;
-    op: T.Operator;
-    right: ComponentConstraintEq;
-    constructor(left: ComponentConstraintEq, op: T.Operator, right: ComponentConstraintEq);
-    protected componentConstraintToTokens(parentOp: string): Generator<T.Token, void, any>;
-}
-
-/** Component constraint term node. */
-declare class ComponentConstraintTerm extends Node_2 {
-    tag: Ident_2;
-    expr: Expr;
-    constructor(tag: Ident_2, expr: Expr);
-    toTokens(): Generator<T.Token, void, any>;
-}
-
 /** Name component or component URI. */
 declare type ComponentLike = Component | string;
-
-/** Name component literal token. */
-declare class ComponentLit extends Token {
-    readonly comp: Component;
-    constructor(comp: Component);
-    toString(): string;
-}
-
-/** Name component literal node. */
-declare class ComponentLit_2 extends Expr {
-    comp: Component;
-    constructor(comp: Component);
-    protected exprParens(): boolean;
-    protected exprToTokens(): Generator<T.ComponentLit, void, unknown>;
-}
-
-declare interface Compression {
-    compress: (input: Uint8Array) => Uint8Array;
-    decompress: (compressed: Uint8Array) => Uint8Array;
-}
 
 /** Concatenate Uint8Arrays. */
 declare function concatBuffers(arr: readonly Uint8Array[], totalLength?: number): Uint8Array;
 
 /** Concatenate several patterns. */
 declare class ConcatPattern extends Pattern {
-    readonly parts: Pattern[];
-    constructor(parts?: Pattern[]);
-    simplify(): Pattern;
+    readonly parts: readonly Pattern[];
+    constructor(parts: readonly Pattern[]);
     protected matchState(state: MatchState, partIndex?: number): Iterable<MatchState>;
+    protected computeMatchLengthRange(): [min: number, max: number];
     protected buildState(state: BuildState, partIndex?: number): Iterable<BuildState>;
 }
 
@@ -997,6 +963,7 @@ declare class ConstPattern extends Pattern {
     constructor(name: NameLike);
     readonly name: Name;
     protected matchState(state: MatchState): Iterable<MatchState>;
+    protected computeMatchLengthRange(): [min: number, max: number];
     protected buildState(state: BuildState): Iterable<BuildState>;
 }
 
@@ -1259,7 +1226,7 @@ declare function createVerifier<I, Asym extends boolean>(name: Name, algo: Signi
  */
 declare function createVerifier(cert: Certificate, opts?: ImportCertOptions<SigningAlgorithm>): Promise<NamedVerifier.PublicKey>;
 
-/** Web Crypto API. */
+/** @deprecated Use `crypto` global object instead. */
 declare const crypto_2: Crypto;
 
 /**
@@ -1575,15 +1542,6 @@ declare interface DebugEntry_3 {
     action: string;
 }
 
-declare interface DebugEntry_4 {
-    action: string;
-    key?: number;
-    name?: Name;
-    ownIblt: IBLT;
-    recvIblt?: IBLT;
-    content?: Name[];
-}
-
 /**
  * An object that knows how to decode itself from TLV.
  * @typeParam R - Result type.
@@ -1682,6 +1640,10 @@ declare interface Decrypter<T = Data> {
     decrypt: (pkt: T) => Promise<void>;
 }
 
+declare type DefaultExceptOptions = {
+    	requireExactProps: false;
+};
+
 declare class DefaultServers {
     private readonly nfw;
     /** Server for ping */
@@ -1717,6 +1679,8 @@ declare type EcCurve = keyof typeof PointSizes;
 declare namespace EcCurve {
     const Default: EcCurve;
     const Choices: readonly EcCurve[];
+    /** Detect EcCurve from SubjectPublicKeyInfo. */
+    function detectFromSpki(der: asn1.ElementBuffer): EcCurve;
 }
 
 /** Sha256WithEcdsa signing algorithm. */
@@ -1727,10 +1691,17 @@ declare namespace ECDSA {
     interface GenParams {
         /**
          * EC curve.
-         * @defaultValue P-256
+         *
+         * @defaultValue
+         * During key generation when {@link importPkcs8} is absent, the default is "P-256".
+         * During key import when {@link importPkcs8} is specified, this is auto-detected from SPKI.
          */
         curve?: EcCurve;
-        /** Import PKCS#8 private key and SPKI public key instead of generating. */
+        /**
+         * Import PKCS#8 private key and SPKI public key instead of generating.
+         *
+         * If {@link curve} is also specified, it must match the SPKI public key.
+         */
         importPkcs8?: [pkcs8: Uint8Array, spki: Uint8Array];
     }
     interface Info {
@@ -2035,7 +2006,7 @@ declare namespace EvDecoder {
  * that create event emitters. When the title is clicked, the emitter
  * emits an open or close event to toggle the current visibility state.
  *
- * ```html
+ * ```angular-ts
  * @Component({
  *   selector: 'zippy',
  *   template: `
@@ -2169,12 +2140,13 @@ declare type EventMap_6 = {
     state: PartialSubscriber.StateEvent;
 };
 
-declare type EventMap_7 = {
-    debug: CustomEvent<DebugEntry_4>;
-};
-
-/** Delete keys from a Set or Map until its size is below capacity. */
-declare function evict<K>(capacity: number, ct: evict.Container<K>): void;
+/**
+ * Delete keys from a Set or Map until its size is below capacity.
+ * @param capacity - Maximum size after eviction.
+ * @param ct - Container.
+ * @param deleteCallback - Callback before item is deleted.
+ */
+declare function evict<K>(capacity: number, ct: evict.Container<K>, deleteCallback?: (key: K) => void): void;
 
 declare namespace evict {
     type Container<K> = Pick<Set<K> & Map<K, unknown>, "delete" | "size" | "keys">;
@@ -2209,11 +2181,34 @@ declare namespace evict {
 
  const fooWithoutB: FooWithoutB = {a: 1, b: '2'};
  //=> errors at 'b': Type 'string' is not assignable to type 'undefined'.
+
+ // The `Omit` utility type doesn't work when omitting specific keys from objects containing index signatures.
+
+ // Consider the following example:
+
+ type UserData = {
+ 	[metadata: string]: string;
+ 	email: string;
+ 	name: string;
+ 	role: 'admin' | 'user';
+ };
+
+ // `Omit` clearly doesn't behave as expected in this case:
+ type PostPayload = Omit<UserData, 'email'>;
+ //=> type PostPayload = { [x: string]: string; [x: number]: string; }
+
+ // In situations like this, `Except` works better.
+ // It simply removes the `email` key while preserving all the other keys.
+ type PostPayload = Except<UserData, 'email'>;
+ //=> type PostPayload = { [x: string]: string; name: string; role: 'admin' | 'user'; }
  ```
 
  @category Object
  */
-declare type Except<ObjectType, KeysType extends keyof ObjectType, Options extends ExceptOptions = {requireExactProps: false}> = {
+declare type Except<ObjectType, KeysType extends keyof ObjectType, Options extends ExceptOptions = {}> =
+	_Except<ObjectType, KeysType, ApplyDefaultOptions<ExceptOptions, DefaultExceptOptions, Options>>;
+
+declare type _Except<ObjectType, KeysType extends keyof ObjectType, Options extends Required<ExceptOptions>> = {
     	[KeyType in keyof ObjectType as Filter<KeyType, KeysType>]: ObjectType[KeyType];
 } & (Options['requireExactProps'] extends true
 	? Partial<Record<KeysType, never>>
@@ -2229,14 +2224,6 @@ declare type ExceptOptions = {
      	*/
     	requireExactProps?: boolean;
 };
-
-/** Expression node. */
-declare abstract class Expr extends Node_2 {
-    toTokens(): Generator<T.Token, void, any>;
-    protected static exprToTokens(node: Expr, parent?: Expr): Generator<T.Token, void, any>;
-    protected abstract exprParens(parent: Expr): boolean;
-    protected abstract exprToTokens(): Iterable<T.Token>;
-}
 
 /** An TLV element that allows extension sub element. */
 declare interface Extensible {
@@ -2554,7 +2541,6 @@ declare class FullSync extends TypedEventTarget<EventMap_4> implements SyncProto
     private readonly syncPrefix;
     private readonly c;
     private readonly codec;
-    private readonly syncInterestNameCumulativeNElements;
     private closed;
     private readonly pFreshness;
     private readonly pBuffer;
@@ -2571,7 +2557,7 @@ declare class FullSync extends TypedEventTarget<EventMap_4> implements SyncProto
     get(prefix: Name): SyncNode<Name> | undefined;
     add(prefix: Name): SyncNode<Name>;
     private handleSyncInterest;
-    private handleIncreaseSeqNum;
+    private readonly handleIncreaseSeqNum;
     private sendSyncData;
     private scheduleSyncInterest;
     private sendSyncInterest;
@@ -2579,19 +2565,6 @@ declare class FullSync extends TypedEventTarget<EventMap_4> implements SyncProto
 
 declare namespace FullSync {
     interface Parameters extends PSyncCore.Parameters, PSyncCodec.Parameters {
-        /**
-         * If true, sync Interest name contains cumulative number of elements in IBLT.
-         * @defaultValue true
-         *
-         * @remarks
-         * PSync C++ library commit d83af5255db9c4a557264542647f7ccb281e6840 (2024-04-09) introduced an
-         * algorithm change that involves a breaking change in sync Interest encoding.
-         * To interact with PSync since this commit, set to true.
-         * To interact with PSync before this commit, set to false.
-         *
-         * @experimental
-         */
-        syncInterestNameCumulativeNElements?: boolean;
     }
     interface Options {
         /**
@@ -2641,7 +2614,7 @@ declare namespace FullSync {
          * Interval between sync Interests, randomized within the range, in milliseconds.
          * @defaultValue `[syncInterestLifetime/2+100,syncInterestLifetime/2+500]`
          */
-        syncInterestInterval?: IntervalRange;
+        syncInterestInterval?: [min: number, max: number];
         /**
          * Verifier of sync reply Data packets.
          * @defaultValue no verification
@@ -2701,9 +2674,9 @@ declare interface FwFace extends TypedEventTarget<EventMap_2> {
      *
      * This function has no effect if `FwFace.Attributes.advertiseFrom` is set to `false`.
      */
-    addAnnouncement: (name: NameLike) => void;
+    addAnnouncement: (announcement: FwFace.PrefixAnnouncement) => void;
     /** Remove a prefix announcement associated with the face. */
-    removeAnnouncement: (name: NameLike) => void;
+    removeAnnouncement: (announcement: FwFace.PrefixAnnouncement) => void;
 }
 
 declare namespace FwFace {
@@ -2740,7 +2713,19 @@ declare namespace FwFace {
      * - number: n-component prefix of route name.
      * - {@link Name} or string: specified name.
      */
-    type RouteAnnouncement = boolean | number | NameLike;
+    type RouteAnnouncement = boolean | number | PrefixAnnouncement;
+    /** Prefix announcement passed to {@link FwFace.addAnnouncement}. */
+    type PrefixAnnouncement = NameLike | PrefixAnnouncementObj;
+    /**
+     * Prefix announcement object.
+     * This would be passed to ReadvertiseDestination for its selective use.
+     *
+     * @remarks
+     * One implementation is `PrefixAnn` in \@ndn/nfdmgmt package.
+     */
+    interface PrefixAnnouncementObj {
+        readonly announced: Name;
+    }
     type RxTxEventMap = Pick<EventMap_2, "up" | "down">;
     interface RxTxBase {
         readonly attributes?: Attributes;
@@ -2888,6 +2873,22 @@ declare function generateSigningKey<I, Asym extends boolean, G>(name: NameLike, 
  */
 declare function generateSigningKey<I, Asym extends boolean, G>(keyChain: KeyChain, name: NameLike, ...a: SigningOptG<I, Asym, G>): Promise<[NamedSigner<Asym>, NamedVerifier<Asym>]>;
 
+/**
+ * Retrieve or insert value in a Map-like container.
+ * @param ct - Map-like container.
+ * @param key - Map key.
+ * @param make - Function to create the value if needed.
+ * @returns Existing or newly created value.
+ */
+declare function getOrInsert<C extends getOrInsert.Container>(ct: C, key: Parameters<C["get"]>[0] & Parameters<C["set"]>[0], make: () => Parameters<C["set"]>[1]): Parameters<C["set"]>[1];
+
+declare namespace getOrInsert {
+    interface Container {
+        get: (key: any) => any | undefined;
+        set: (key: any, value: any) => void;
+    }
+}
+
 export declare namespace globals {
     /**
      * The current node on which the code runs
@@ -2934,6 +2935,41 @@ export declare namespace globals {
      * The DCT tools module.
      */
     const DCT: DCT;
+}
+
+/** HTTP/3 transport. */
+declare class H3Transport extends Transport {
+    private readonly uri;
+    private readonly opts;
+    private readonly tr;
+    /** Whether current browser supports WebTransport. */
+    static readonly supported: boolean;
+    /**
+     * Create a transport and connect to remote endpoint.
+     * @param uri - Server URI.
+     * @param opts - WebTransport options.
+     */
+    static connect(uri: string, opts?: H3Transport.Options): Promise<H3Transport>;
+    private constructor();
+    /** Report HTTP/3 maximum datagram size as MTU. */
+    get mtu(): number;
+    readonly rx: Transport.RxIterable;
+    tx(iterable: Transport.TxIterable): Promise<void>;
+    /** Reopen the transport by connecting again with the same options. */
+    reopen(): Promise<H3Transport>;
+}
+
+declare namespace H3Transport {
+    /** {@link H3Transport.connect} options. */
+    interface Options extends WebTransportOptions {
+        /**
+         * Connect timeout (in milliseconds).
+         * @defaultValue 10000
+         */
+        connectTimeout?: number;
+    }
+    /** Create a transport and add to forwarder. */
+    const createFace: L3Face.CreateFaceFunc<[uri: string, opts?: Options | undefined]>;
 }
 
 /** 32-bit hash function. */
@@ -3055,13 +3091,6 @@ declare namespace IBLT {
     }
 }
 
-declare class IbltCodec {
-    readonly ibltCompression: Compression;
-    protected readonly ibltParams: IBLT.PreparedParameters;
-    iblt2comp(iblt: IBLT): Component;
-    comp2iblt(comp: Component): IBLT;
-}
-
 declare type ICapturedPacket = [
 /** Internal flags */
 flags: number,
@@ -3083,24 +3112,6 @@ to?: IdType,
 p?: Uint8Array
 ];
 
-/** Identifier token. */
-declare class Ident extends Token {
-    readonly id: string;
-    constructor(id: string);
-    toString(): string;
-}
-
-/** Identifier node. */
-declare class Ident_2 extends Expr {
-    id: string;
-    /** Determine whether identifier could be a runtime variable name. */
-    static isRuntime(id: string): boolean;
-    static fromToken(token: N.Unit): Ident_2;
-    constructor(id: string);
-    protected exprParens(): boolean;
-    protected exprToTokens(): Generator<T.Ident, void, unknown>;
-}
-
 declare interface IEdge extends Edge {
     /** Initialized flag */
     init?: boolean;
@@ -3113,6 +3124,29 @@ declare interface IEdge extends Edge {
 }
 
 declare type If<Cond, True, False, Unknown = True | False> = Cond extends true ? True : Cond extends false ? False : Unknown;
+
+/**
+ An if-else-like type that resolves depending on whether the given type is `any`.
+
+ @see {@link IsAny}
+
+ @example
+ ```
+ import type {IfAny} from 'type-fest';
+
+ type ShouldBeTrue = IfAny<any>;
+ //=> true
+
+ type ShouldBeBar = IfAny<'not any', 'foo', 'bar'>;
+ //=> 'bar'
+ ```
+
+ @category Type Guard
+ @category Utilities
+ */
+declare type IfAny<T, TypeIfAny = true, TypeIfNotAny = false> = (
+	IsAny<T> extends true ? TypeIfAny : TypeIfNotAny
+);
 
 declare interface IFibEntry<PfxT = Name> {
     /** Name prefix */
@@ -3189,7 +3223,7 @@ declare interface ImportCertOptions<A extends CryptoAlgorithm> {
     now?: ValidityPeriod.TimestampInput;
 }
 
-declare interface INode extends Node_3 {
+declare interface INode extends Node_2 {
     /** Initialized flag */
     init?: boolean;
     nfw?: NFW;
@@ -3281,8 +3315,6 @@ declare namespace Interest {
     function makeModifyFunc(input?: Modify): ModifyFunc;
 }
 
-declare type IntervalRange = [min: number, max: number];
-
 /** Connected Pty */
 declare interface IPty {
     id: string;
@@ -3296,6 +3328,36 @@ declare interface IPty {
     focus?: EventEmitter<void>;
     initBuf?: Uint8Array;
 }
+
+/**
+ Returns a boolean for whether the given type is `any`.
+
+ @link https://stackoverflow.com/a/49928360/1490091
+
+ Useful in type utilities, such as disallowing `any`s to be passed to a function.
+
+ @example
+ ```
+ import type {IsAny} from 'type-fest';
+
+ const typedObject = {a: 1, b: 2} as const;
+ const anyObject: any = {a: 1, b: 2};
+
+ function get<O extends (IsAny<O> extends true ? {} : Record<string, number>), K extends keyof O = keyof O>(obj: O, key: K) {
+ 	return obj[key];
+ }
+
+ const typedA = get(typedObject, 'a');
+ //=> 1
+
+ const anyA = get(anyObject, 'a');
+ //=> any
+ ```
+
+ @category Type Guard
+ @category Utilities
+ */
+declare type IsAny<T> = 0 extends 1 & NoInfer_2<T> ? true : false;
 
 /** Determine whether the name is a certificate name. */
 declare function isCertName(name: Name): boolean;
@@ -3327,8 +3389,8 @@ declare function isCertName(name: Name): boolean;
  @category Utilities
  */
 declare type IsEqual<A, B> =
-	(<G>() => G extends A ? 1 : 2) extends
-	(<G>() => G extends B ? 1 : 2)
+	(<G>() => G extends A & G | G ? 1 : 2) extends
+	(<G>() => G extends B & G | G ? 1 : 2)
 		? true
 		: false;
 
@@ -3591,7 +3653,8 @@ declare namespace keychain {
         KeyStore,
         CertStore,
         KeyChain,
-        KeyChainSerialized
+        KeyChainSerialized,
+        KeyChainExternal
     }
 }
 export { keychain }
@@ -3602,6 +3665,36 @@ declare class KeyChainCertSource implements CertSource {
     constructor(keyChain: KeyChain);
     /** Find certificates by certificate name or key name. */
     findCerts(keyLocator: Name): AsyncIterable<Certificate>;
+}
+
+/**
+ * KeyChain adapter that copies from an external KeyChain.
+ */
+declare abstract class KeyChainExternal extends KeyChainSerialized {
+    protected readonly algoList: readonly CryptoAlgorithm[];
+    readonly needJwk: boolean;
+    private readonly insertKeyLoader;
+    private cached?;
+    protected constructor(algoList: readonly CryptoAlgorithm[], needJwk?: boolean);
+    /** Copy the external KeyChain to `dest`. */
+    protected abstract copyTo(dest: KeyChain): Promisable<KeyChain>;
+    private load;
+    protected sListKeys(prefix: Name): Promise<Name[]>;
+    protected sGetKeyPair(name: Name): Promise<KeyChain.KeyPair>;
+    protected sInsertKey(name: Name, stored: KeyStore.StoredKey): Promise<void>;
+    /** Insert a key pair in external KeyChain. */
+    protected abstract eInsertKey(keyPair: KeyStore.KeyPair): Promisable<void>;
+    protected sDeleteKey(name: Name): Promise<void>;
+    /** Delete a key pair in external KeyChain. */
+    protected abstract eDeleteKey(name: Name): Promisable<void>;
+    protected sListCerts(prefix: Name): Promise<Name[]>;
+    protected sGetCert(name: Name): Promise<Certificate>;
+    protected sInsertCert(cert: Certificate): Promise<void>;
+    /** Insert a certificate in external KeyChain. */
+    protected abstract eInsertCert(cert: Certificate): Promisable<void>;
+    protected sDeleteCert(name: Name): Promise<void>;
+    /** Delete a certificate in external KeyChain. */
+    protected abstract eDeleteCert(name: Name): Promisable<void>;
 }
 
 /**
@@ -3874,10 +3967,10 @@ declare namespace L3Face {
          * @defaultValue `false`.
          * This default is set in {@link CreateFaceFunc} but could be different elsewhere.
          * @remarks
-         * This attribute passed to {@link \@ndn/fw!FwFace.Attributes.advertiseFrom}. With the default
-         * `false` value, routes "announced" by an L3Face would not be readvertised to
-         * {@link \@ndn/fw!ReadvertiseDestination}s, so that remote forwarders would not depend on the
-         * local logical forwarder to forward Interests between L3Faces.
+         * This attribute is passed to {@link \@ndn/fw!FwFace.Attributes.advertiseFrom}. With the
+         * default `false` value, routes "announced" by an L3Face would not be readvertised to
+         * {@link \@ndn/fw!ReadvertiseDestination}s, so that the local logical forwarder would not
+         * forward Interests between L3Faces connected to different remote forwarders.
          */
         advertiseFrom?: boolean;
     }
@@ -4018,9 +4111,6 @@ declare namespace LLVerify {
         [OP]: (verifier: LLVerify) => Promise<void>;
     }
 }
-
-/** Load policy from VerSec syntax. */
-declare function load(input: string): TrustSchemaPolicy;
 
 /**
  * Acquire a semaphore for unlocking via Disposable.
@@ -4252,29 +4342,6 @@ declare namespace makePSyncCompatParam {
     }
 }
 
-/** Create algorithm parameters to be compatible with DNMP-v2 syncps library. */
-declare function makeSyncpsCompatParam({ keyToBufferLittleEndian, expectedEntries, }?: makeSyncpsCompatParam.Options): SyncpsPubsub.Parameters;
-
-declare namespace makeSyncpsCompatParam {
-    interface Options {
-        /**
-         * Whether to use little endian when converting a uint32 key to a byte array.
-         * @defaultValue true
-         *
-         * @remarks
-         * ndn-ind behaves differently on big endian and little endian machines,
-         * {@link https://github.com/operantnetworks/ndn-ind/blob/dd934a7a5106cda6ea14675554427e12df1ce18f/src/lite/util/crypto-lite.cpp#L114}
-         * This must be set to match other peers.
-         */
-        keyToBufferLittleEndian?: boolean;
-        /**
-         * Expected number of IBLT entries, i.e. expected number of updates in a sync cycle.
-         * @defaultValue 85
-         */
-        expectedEntries?: number;
-    }
-}
-
 /** Context of matching a name. */
 declare class MatchState {
     readonly name: Name;
@@ -4289,7 +4356,10 @@ declare class MatchState {
     constructor(name: Name, pos?: number, vars?: Vars);
     /** Length of unconsumed name. */
     get tailLength(): number;
-    /** Get first i components of unconsumed name. */
+    /**
+     * Get first i components of unconsumed name.
+     * @param i - Number of components, must be non-negative.
+     */
     tail(i?: number): Name;
     /** Whether the input name has been accepted by pattern. */
     get accepted(): boolean;
@@ -4308,6 +4378,46 @@ declare class MatchState {
     extend(incrementPos: number, ...varsL: Array<Iterable<readonly [string, Name]>>): MatchState | false;
     toString(): string;
 }
+
+/**
+ Merge two types into a new type. Keys of the second type overrides keys of the first type.
+
+ @example
+ ```
+ import type {Merge} from 'type-fest';
+
+ interface Foo {
+ 	[x: string]: unknown;
+ 	[x: number]: unknown;
+ 	foo: string;
+ 	bar: symbol;
+ }
+
+ type Bar = {
+ 	[x: number]: number;
+ 	[x: symbol]: unknown;
+ 	bar: Date;
+ 	baz: boolean;
+ };
+
+ export type FooBar = Merge<Foo, Bar>;
+ // => {
+ // 	[x: string]: unknown;
+ // 	[x: number]: number;
+ // 	[x: symbol]: unknown;
+ // 	foo: string;
+ // 	bar: Date;
+ // 	baz: boolean;
+ // }
+ ```
+
+ @category Object
+ */
+declare type Merge<Destination, Source> =
+Simplify<
+SimpleMerge<PickIndexSignature<Destination>, PickIndexSignature<Source>>
+& SimpleMerge<OmitIndexSignature<Destination>, OmitIndexSignature<Source>>
+>;
 
 declare const modifyFields: readonly ["canBePrefix", "mustBeFresh", "fwHint", "lifetime", "hopLimit"];
 
@@ -4333,18 +4443,6 @@ declare class MultiMap<K, V> extends KeyMultiMap<K, V, K> {
 
 declare class Mutex extends Semaphore {
     constructor();
-}
-
-declare namespace N {
-    export {
-        scan_2 as scan,
-        split,
-        unParen,
-        toTokens,
-        Unit,
-        Paren,
-        Brace
-    }
 }
 
 /** Nack packet. */
@@ -4463,14 +4561,6 @@ declare namespace Name {
     function compare(lhs: Name, rhs: Name): CompareResult;
 }
 
-/** Name node. */
-declare class Name_2 extends Expr {
-    comps: Expr[];
-    constructor(comps?: Expr[]);
-    protected exprParens(parent: Expr): boolean;
-    protected exprToTokens(): Iterable<T.Token>;
-}
-
 /** Named private key or secret key decrypter. */
 declare interface NamedDecrypter<Asym extends boolean = any> extends Key<KeyKind.PrivateSecret<Asym>>, LLDecrypt.Key {
 }
@@ -4577,13 +4667,6 @@ declare namespace NamingConvention {
     function isConvention(obj: any): obj is NamingConvention<any>;
 }
 
-declare class Nested {
-    readonly left: T.Operator;
-    readonly mid: Unit[];
-    right: T.Operator;
-    protected constructor(left: T.Operator, mid: Unit[], right: T.Operator);
-}
-
 declare class NFW {
     readonly topo: Topology;
     readonly nodeId: IdType;
@@ -4685,10 +4768,7 @@ declare namespace NNI {
     }): bigint;
 }
 
-/** AST node. */
-declare abstract class Node_2 {
-    abstract toTokens(): Iterable<T.Token>;
-}
+declare type NoInfer_2<T> = T extends infer U ? U : never;
 
 /** Encrypter and decrypter that do nothing. */
 declare const noopEncryption: Encrypter<any> & Decrypter<any>;
@@ -4705,8 +4785,6 @@ declare const nullSigner: Signer;
 /**
  * A representation of any set of values over any amount of time. This is the most basic building block
  * of RxJS.
- *
- * @class Observable<T>
  */
 declare class Observable<T> implements Subscribable<T> {
     /**
@@ -4716,10 +4794,9 @@ declare class Observable<T> implements Subscribable<T> {
     /**
      * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
      */
-    operator: Operator_2<any, T> | undefined;
+    operator: Operator<any, T> | undefined;
     /**
-     * @constructor
-     * @param {Function} subscribe the function that is called when the Observable is
+     * @param subscribe The function that is called when the Observable is
      * initially subscribed to. This function is given a Subscriber, to which new values
      * can be `next`ed, or an `error` method can be called to raise an error, or
      * `complete` can be called to notify of a successful completion.
@@ -4727,26 +4804,22 @@ declare class Observable<T> implements Subscribable<T> {
     constructor(subscribe?: (this: Observable<T>, subscriber: Subscriber_2<T>) => TeardownLogic);
     /**
      * Creates a new Observable by calling the Observable constructor
-     * @owner Observable
-     * @method create
-     * @param {Function} subscribe? the subscriber function to be passed to the Observable constructor
-     * @return {Observable} a new observable
-     * @nocollapse
+     * @param subscribe the subscriber function to be passed to the Observable constructor
+     * @return A new observable.
      * @deprecated Use `new Observable()` instead. Will be removed in v8.
      */
     static create: (...args: any[]) => any;
     /**
      * Creates a new Observable, with this Observable instance as the source, and the passed
      * operator defined as the new observable's operator.
-     * @method lift
      * @param operator the operator defining the operation to take on the observable
-     * @return a new observable with the Operator applied
+     * @return A new observable with the Operator applied.
      * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
      * If you have implemented an operator using `lift`, it is recommended that you create an
      * operator by simply returning `new Observable()` directly. See "Creating new operators from
      * scratch" section here: https://rxjs.dev/guide/operators
      */
-    lift<R>(operator?: Operator_2<T, R>): Observable<R>;
+    lift<R>(operator?: Operator<T, R>): Observable<R>;
     subscribe(observerOrNext?: Partial<Observer<T>> | ((value: T) => void)): Subscription_2;
     /** @deprecated Instead of passing separate callback arguments, use an observer argument. Signatures taking separate callback arguments will be removed in v8. Details: https://rxjs.dev/deprecations/subscribe-arguments */
     subscribe(next?: ((value: T) => void) | null, error?: ((error: any) => void) | null, complete?: (() => void) | null): Subscription_2;
@@ -4790,9 +4863,9 @@ declare class Observable<T> implements Subscribable<T> {
      * // 'Total: 6'
      * ```
      *
-     * @param next a handler for each value emitted by the observable
-     * @return a promise that either resolves on observable completion or
-     *  rejects with the handled error
+     * @param next A handler for each value emitted by the observable.
+     * @return A promise that either resolves on observable completion or
+     * rejects with the handled error.
      */
     forEach(next: (value: T) => void): Promise<void>;
     /**
@@ -4864,25 +4937,151 @@ declare interface Observer<T> {
     complete: () => void;
 }
 
-/** Operator token. */
-declare abstract class Operator extends Token {
-    /** Operator short string. */
-    abstract get operator(): string;
-    /** Operator nesting level. */
-    abstract get nest(): number;
-    /** If true, when this token appears at end of line, a comma should be inserted. */
-    abstract get autoCommaAfter(): boolean;
-}
+/**
+ Omit any index signatures from the given object type, leaving only explicitly defined properties.
+
+ This is the counterpart of `PickIndexSignature`.
+
+ Use-cases:
+ - Remove overly permissive signatures from third-party types.
+
+ This type was taken from this [StackOverflow answer](https://stackoverflow.com/a/68261113/420747).
+
+ It relies on the fact that an empty object (`{}`) is assignable to an object with just an index signature, like `Record<string, unknown>`, but not to an object with explicitly defined keys, like `Record<'foo' | 'bar', unknown>`.
+
+ (The actual value type, `unknown`, is irrelevant and could be any type. Only the key type matters.)
+
+ ```
+ const indexed: Record<string, unknown> = {}; // Allowed
+
+ const keyed: Record<'foo', unknown> = {}; // Error
+ // => TS2739: Type '{}' is missing the following properties from type 'Record<"foo" | "bar", unknown>': foo, bar
+ ```
+
+ Instead of causing a type error like the above, you can also use a [conditional type](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html) to test whether a type is assignable to another:
+
+ ```
+ type Indexed = {} extends Record<string, unknown>
+ 	? '✅ `{}` is assignable to `Record<string, unknown>`'
+ 	: '❌ `{}` is NOT assignable to `Record<string, unknown>`';
+ // => '✅ `{}` is assignable to `Record<string, unknown>`'
+
+ type Keyed = {} extends Record<'foo' | 'bar', unknown>
+ 	? "✅ `{}` is assignable to `Record<'foo' | 'bar', unknown>`"
+ 	: "❌ `{}` is NOT assignable to `Record<'foo' | 'bar', unknown>`";
+ // => "❌ `{}` is NOT assignable to `Record<'foo' | 'bar', unknown>`"
+ ```
+
+ Using a [mapped type](https://www.typescriptlang.org/docs/handbook/2/mapped-types.html#further-exploration), you can then check for each `KeyType` of `ObjectType`...
+
+ ```
+ import type {OmitIndexSignature} from 'type-fest';
+
+ type OmitIndexSignature<ObjectType> = {
+ 	[KeyType in keyof ObjectType // Map each key of `ObjectType`...
+ 	]: ObjectType[KeyType]; // ...to its original value, i.e. `OmitIndexSignature<Foo> == Foo`.
+ };
+ ```
+
+ ...whether an empty object (`{}`) would be assignable to an object with that `KeyType` (`Record<KeyType, unknown>`)...
+
+ ```
+ import type {OmitIndexSignature} from 'type-fest';
+
+ type OmitIndexSignature<ObjectType> = {
+ 	[KeyType in keyof ObjectType
+ 		// Is `{}` assignable to `Record<KeyType, unknown>`?
+ 		as {} extends Record<KeyType, unknown>
+ 			? ... // ✅ `{}` is assignable to `Record<KeyType, unknown>`
+ 			: ... // ❌ `{}` is NOT assignable to `Record<KeyType, unknown>`
+ 	]: ObjectType[KeyType];
+ };
+ ```
+
+ If `{}` is assignable, it means that `KeyType` is an index signature and we want to remove it. If it is not assignable, `KeyType` is a "real" key and we want to keep it.
+
+ @example
+ ```
+ import type {OmitIndexSignature} from 'type-fest';
+
+ interface Example {
+ 	// These index signatures will be removed.
+ 	[x: string]: any
+ 	[x: number]: any
+ 	[x: symbol]: any
+ 	[x: `head-${string}`]: string
+ 	[x: `${string}-tail`]: string
+ 	[x: `head-${string}-tail`]: string
+ 	[x: `${bigint}`]: string
+ 	[x: `embedded-${number}`]: string
+
+ 	// These explicitly defined keys will remain.
+ 	foo: 'bar';
+ 	qux?: 'baz';
+ }
+
+ type ExampleWithoutIndexSignatures = OmitIndexSignature<Example>;
+ // => { foo: 'bar'; qux?: 'baz' | undefined; }
+ ```
+
+ @see PickIndexSignature
+ @category Object
+ */
+declare type OmitIndexSignature<ObjectType> = {
+    	[KeyType in keyof ObjectType as {} extends Record<KeyType, unknown>
+    		? never
+    		: KeyType]: ObjectType[KeyType];
+};
 
 /***
  * @deprecated Internal implementation detail, do not use directly. Will be made internal in v8.
  */
-declare interface Operator_2<T, R> {
+declare interface Operator<T, R> {
     call(subscriber: Subscriber_2<R>, source: any): TeardownLogic;
 }
 
 declare interface OperatorFunction<T, R> extends UnaryFunction<Observable<T>, Observable<R>> {
 }
+
+/**
+ Extract all optional keys from the given type.
+
+ This is useful when you want to create a new type that contains different type values for the optional keys only.
+
+ @example
+ ```
+ import type {OptionalKeysOf, Except} from 'type-fest';
+
+ interface User {
+ 	name: string;
+ 	surname: string;
+
+ 	luckyNumber?: number;
+ }
+
+ const REMOVE_FIELD = Symbol('remove field symbol');
+ type UpdateOperation<Entity extends object> = Except<Partial<Entity>, OptionalKeysOf<Entity>> & {
+ 	[Key in OptionalKeysOf<Entity>]?: Entity[Key] | typeof REMOVE_FIELD;
+ };
+
+ const update1: UpdateOperation<User> = {
+ 	name: 'Alice'
+ };
+
+ const update2: UpdateOperation<User> = {
+ 	name: 'Bob',
+ 	luckyNumber: REMOVE_FIELD
+ };
+ ```
+
+ @category Utilities
+ */
+declare type OptionalKeysOf<BaseType extends object> =
+	BaseType extends unknown // For distributing `BaseType`
+		? (keyof {
+    			[Key in keyof BaseType as BaseType extends Record<Key, BaseType[Key]> ? never : Key]: never
+    		}) & (keyof BaseType) // Intersect with `keyof BaseType` to ensure result of `OptionalKeysOf<BaseType>` is always assignable to `keyof BaseType`
+		: never;
 
 /** StructBuilder field options. */
 declare interface Options<Required extends boolean, Repeat extends boolean, FlagPrefix extends string, FlagBit extends string> extends EvDecoder.RuleOptions {
@@ -4913,12 +5112,10 @@ declare interface Options<Required extends boolean, Repeat extends boolean, Flag
     flagBits?: Record<FlagBit, number>;
 }
 
-declare const Or: new () => Operator;
-
 /**
  * A reference to an Angular output.
  *
- * @developerPreview
+ * @publicAPI
  */
 declare interface OutputRef<T> {
     /**
@@ -4938,7 +5135,7 @@ declare interface OutputRef<T> {
  * Note: Angular will automatically clean up subscriptions
  * when the directive/component of the output is destroyed.
  *
- * @developerPreview
+ * @publicAPI
  */
 declare interface OutputRefSubscription {
     unsubscribe(): void;
@@ -4955,10 +5152,10 @@ declare interface OutputRefSubscription {
  * are present, and then the built name must match all branches.
  */
 declare class OverlapPattern extends Pattern {
-    readonly branches: Pattern[];
-    constructor(branches?: Pattern[]);
-    simplify(): Pattern;
+    readonly branches: readonly Pattern[];
+    constructor(branches: readonly Pattern[]);
     protected matchState(state: MatchState, branchIndex?: number, lastMatch?: MatchState): Iterable<MatchState>;
+    protected computeMatchLengthRange(): [min: number, max: number];
     protected buildState(state: BuildState): Iterable<BuildState>;
 }
 
@@ -5036,18 +5233,6 @@ declare class ParamsDigestComp extends DigestComp {
     /** Find ParamsDigest or placeholder in name. */
     findIn(name: Name, matchPlaceholder?: boolean): number;
 }
-
-/** Tokens enclosed in parens. */
-declare class Paren extends Nested {
-    constructor(left: T.Operator, mid?: Unit[]);
-}
-
-declare const ParenL: new () => Operator;
-
-declare const ParenR: new () => Operator;
-
-/** Parse a schema. */
-declare function parse(tokens: Iterable<T.Token>): Schema;
 
 /**
  * Parse a certificate name into fields.
@@ -5228,8 +5413,6 @@ declare namespace PartialSubscriber {
 
 /** Structure of a name. */
 declare abstract class Pattern {
-    /** Convert to a simpler pattern if possible. */
-    simplify(): Pattern;
     /**
      * Determine whether a name matches the structure of this pattern.
      * @param name - Input name.
@@ -5242,6 +5425,16 @@ declare abstract class Pattern {
      * @returns Iterable of potential matches.
      */
     protected abstract matchState(state: MatchState): Iterable<MatchState>;
+    /**
+     * Determine minimum and maximum match length.
+     *
+     * @remarks
+     * This optimization is used in {@link match} for early rejection of input names that are
+     * either too short or too long.
+     */
+    get matchLengthRange(): [min: number, max: number];
+    private matchLengthRange_?;
+    protected abstract computeMatchLengthRange(): [min: number, max: number];
     /**
      * Build names following the structure of this pattern.
      * @param varsL - Sets of variables to be replaced into the name.
@@ -5269,6 +5462,57 @@ declare namespace pattern {
         OverlapPattern
     }
 }
+
+/**
+ Pick only index signatures from the given object type, leaving out all explicitly defined properties.
+
+ This is the counterpart of `OmitIndexSignature`.
+
+ @example
+ ```
+ import type {PickIndexSignature} from 'type-fest';
+
+ declare const symbolKey: unique symbol;
+
+ type Example = {
+ 	// These index signatures will remain.
+ 	[x: string]: unknown;
+ 	[x: number]: unknown;
+ 	[x: symbol]: unknown;
+ 	[x: `head-${string}`]: string;
+ 	[x: `${string}-tail`]: string;
+ 	[x: `head-${string}-tail`]: string;
+ 	[x: `${bigint}`]: string;
+ 	[x: `embedded-${number}`]: string;
+
+ 	// These explicitly defined keys will be removed.
+ 	['kebab-case-key']: string;
+ 	[symbolKey]: string;
+ 	foo: 'bar';
+ 	qux?: 'baz';
+ };
+
+ type ExampleIndexSignature = PickIndexSignature<Example>;
+ // {
+ // 	[x: string]: unknown;
+ // 	[x: number]: unknown;
+ // 	[x: symbol]: unknown;
+ // 	[x: `head-${string}`]: string;
+ // 	[x: `${string}-tail`]: string;
+ // 	[x: `head-${string}-tail`]: string;
+ // 	[x: `${bigint}`]: string;
+ // 	[x: `embedded-${number}`]: string;
+ // }
+ ```
+
+ @see OmitIndexSignature
+ @category Object
+ */
+declare type PickIndexSignature<ObjectType> = {
+    	[KeyType in keyof ObjectType as {} extends Record<KeyType, unknown>
+    		? KeyType
+    		: never]: ObjectType[KeyType];
+};
 
 declare const PointSizes: {
     readonly "P-256": 32;
@@ -5326,43 +5570,13 @@ declare namespace PolicyVerifier {
     }
 }
 
-/** Position in schema document. */
-declare class Position {
-    /**
-     * Constructor
-     * @param line - 0-based line number.
-     * @param column - 0-based column number.
-     */
-    constructor(line?: number, column?: number);
-    /** 1-based line number, if known. */
-    readonly line?: number;
-    /** 1-based column number, if known. */
-    readonly column?: number;
-    toString(): string;
-}
-
-declare namespace Position {
-    const UNKNOWN: Position;
-    interface WithPosition {
-        position?: Position;
-    }
-    /** Extract first valid position from a sequence. */
-    function from(input?: WithPosition | Iterable<WithPosition>): Position;
-}
-
-/** Serialize a token stream. */
-declare function print_2(tokens: Iterable<Token>): string;
-
-/** Print policy to VerSec syntax. */
-declare function print_3(policy: TrustSchemaPolicy): string;
-
 /** Print policy as ECMAScript module. */
 declare function printESM(policy: TrustSchemaPolicy): string;
 
 declare namespace printESM {
     interface Context {
         indent: string;
-        imports: DefaultMap<string, Set<string>>;
+        addImport: (module: string, ...identifier: readonly string[]) => void;
     }
     interface PrintableFilter extends VariablePattern.Filter {
         printESM: (ctx: Context) => string;
@@ -5454,7 +5668,7 @@ declare interface ProducerOptions extends CommonOptions {
      * *Null*), it is automatically signed with this signer.
      *
      * This option does not apply to Data packets manually inserted into `.dataBuffer`. To auto-sign
-     * those packet, specify {@link DataStoreBuffer.Options.dataSigner} in addition.
+     * those packets, specify {@link DataStoreBuffer.Options.dataSigner} in addition.
      */
     dataSigner?: Signer;
     /**
@@ -5564,14 +5778,12 @@ declare namespace psync {
         SyncProtocol,
         SyncNode,
         SyncUpdate,
-        IBLT,
         FullSync,
+        IBLT,
         makePSyncCompatParam,
         PSyncZlib,
         PartialPublisher,
-        PartialSubscriber,
-        makeSyncpsCompatParam,
-        SyncpsPubsub
+        PartialSubscriber
     }
 }
 export { psync }
@@ -5579,15 +5791,20 @@ export { psync }
 declare class PSyncCodec {
     protected readonly ibltParams: IBLT.PreparedParameters;
     constructor(p: PSyncCodec.Parameters, ibltParams: IBLT.PreparedParameters);
-    state2buffer(state: PSyncCore.State): Uint8Array;
-    buffer2state(buffer: Uint8Array): PSyncCore.State;
+    iblt2comp(iblt: IBLT): Promise<Component>;
+    comp2iblt(comp: Component): Promise<IBLT>;
+    state2buffer(state: PSyncCore.State): Promise<Uint8Array>;
+    buffer2state(buffer: Uint8Array): Promise<PSyncCore.State>;
 }
 
-declare interface PSyncCodec extends Readonly<PSyncCodec.Parameters>, IbltCodec {
+declare interface PSyncCodec extends Readonly<PSyncCodec.Parameters> {
 }
 
 declare namespace PSyncCodec {
-    type Compression = Compression;
+    interface Compression {
+        compress: (input: Uint8Array) => Promisable<Uint8Array>;
+        decompress: (compressed: Uint8Array) => Promisable<Uint8Array>;
+    }
     interface Parameters {
         /** Compression method for IBLT in name component. */
         ibltCompression: Compression;
@@ -5704,7 +5921,7 @@ declare class RandomIvGen extends IvGen {
 
 /**
  * Create a random jitter generator function.
- * @param r - Jitter factor around 1.
+ * @param r - Jitter factor around median.
  * @param x - Median value.
  * @returns Jitter generator function.
  *
@@ -5714,6 +5931,11 @@ declare class RandomIvGen extends IvGen {
  * function that returns random values within `[1.8, 2.2]` range.
  */
 declare function randomJitter(r: number, x?: number): () => number;
+
+declare namespace randomJitter {
+    /** Create a random generator function between `[min,max]`. */
+    function between(min: number, max: number): () => number;
+}
 
 /**
  * A destination of prefix advertisement.
@@ -5744,8 +5966,20 @@ declare abstract class ReadvertiseDestination<State extends {} = {}> {
     withdraw(name: Name): void;
     protected restart(name: Name, record: ReadvertiseDestination.Record<State>): void;
     private process;
-    /** Create per-prefix state. */
+    /**
+     * Create per-prefix state.
+     *
+     * @remarks
+     * Must override if State type parameter is changed from the default.
+     */
     protected makeState(name: Name): State;
+    /**
+     * Retrieve application supplied prefix announcement objects.
+     *
+     * @remarks
+     * This is only available during {@link makeState} and {@link doAdvertise}.
+     */
+    protected listAnnouncementObjs(name: Name): Iterable<FwFace.PrefixAnnouncementObj>;
     /** Advertise a prefix once. */
     protected abstract doAdvertise(name: Name, state: State): Promise<void>;
     /** Withdraw a prefix once. */
@@ -5807,6 +6041,35 @@ declare class Reorder<T> {
     /** Return and remove in-order items. */
     shift(): T[];
 }
+
+/**
+ Extract all required keys from the given type.
+
+ This is useful when you want to create a new type that contains different type values for the required keys only or use the list of keys for validation purposes, etc...
+
+ @example
+ ```
+ import type {RequiredKeysOf} from 'type-fest';
+
+ declare function createValidation<Entity extends object, Key extends RequiredKeysOf<Entity> = RequiredKeysOf<Entity>>(field: Key, validator: (value: Entity[Key]) => boolean): ValidatorFn;
+
+ interface User {
+ 	name: string;
+ 	surname: string;
+
+ 	luckyNumber?: number;
+ }
+
+ const validator1 = createValidation<User>('name', value => value.length < 25);
+ const validator2 = createValidation<User>('surname', value => value.length < 25);
+ ```
+
+ @category Utilities
+ */
+declare type RequiredKeysOf<BaseType extends object> =
+	BaseType extends unknown // For distributing `BaseType`
+		? Exclude<keyof BaseType, OptionalKeysOf<BaseType>>
+		: never;
 
 /**
  * Function to generate retransmission intervals.
@@ -5912,19 +6175,6 @@ declare function rxFromStream(conn: NodeJS.ReadableStream): Transport.RxIterable
  * @returns Iterable that does not throw errors.
  */
 declare function safeIter<T>(iterable: AnyIterable<T>, onError?: (err?: unknown) => void): AsyncIterableIterator<T>;
-
-/** Tokenize a schema document. */
-declare function scan(doc: string): Iterable<Token>;
-
-/** Scan tokens into a sequences of units on the same nesting level. */
-declare function scan_2(tokens: Iterable<T.Token>): Unit[];
-
-/** Schema document node. */
-declare class Schema extends Node_2 {
-    stmts: Stmt[];
-    constructor(stmts?: Stmt[]);
-    toTokens(): Generator<T.Token, void, any>;
-}
 
 /** Named secret key. */
 declare type SecretKey = Key<"secret">;
@@ -6223,13 +6473,6 @@ declare const SigningAlgorithmListFull: readonly SigningAlgorithm[];
  */
 declare const SigningAlgorithmListSlim: readonly SigningAlgorithm[];
 
-/** Signing constraint node. */
-declare class SigningConstraint extends Node_2 {
-    signers: Ident_2[];
-    constructor(signers?: Ident_2[]);
-    toTokens(): Generator<T.Token, void, any>;
-}
-
 declare type SigningOptG<I, Asym extends boolean, G> = {} extends G ? [
 SigningAlgorithm<I, Asym, G>,
 G?
@@ -6246,6 +6489,10 @@ declare const SigType: {
     readonly Ed25519: 5;
     readonly Null: 200;
 };
+
+declare type SimpleMerge<Destination, Source> = {
+    	[Key in keyof Destination as Key extends keyof Source ? never : Key]: Destination[Key];
+} & Source;
 
 /**
  Useful to flatten the type output to improve type hints shown in editors. And also to transform an interface into a type to aide with assignability.
@@ -6306,41 +6553,8 @@ declare const SigType: {
  */
 declare type Simplify<T> = {[KeyType in keyof T]: T[KeyType]} & {};
 
-declare const Slash: new () => Operator;
-
-/**
- * Split by operator.
- * @param sep - Separator operator type.
- * @param sequence - A sequence of units.
- * @returns Sub sequences.
- */
-declare function split(sep: typeof T.Operator, sequence: readonly Unit[], { skipEmpty, limit }?: split.Options): Unit[][];
-
-declare namespace split {
-    interface Options {
-        /**
-         * If true, empty sub sequences are skipped.
-         * @defaultValue false
-         */
-        skipEmpty?: boolean;
-        /**
-         * Maximum number of splits.
-         * @remarks
-         * `split(Z, "AZBZC", { limit: 1 })` returns `["A", "BZC"]`
-         */
-        limit?: number;
-    }
-}
-
-/** Statement node. */
-declare class Stmt extends Node_2 {
-    ident: Ident_2;
-    definition: Expr | undefined;
-    componentConstraint: ComponentConstraintEq | undefined;
-    signingChain: SigningConstraint[];
-    constructor(ident: Ident_2, definition?: Expr | undefined, componentConstraint?: ComponentConstraintEq | undefined, signingChain?: SigningConstraint[]);
-    toTokens(): Generator<T.Token, void, any>;
-}
+/** Convert to a simpler pattern if possible. */
+declare function simplifyPattern(p: Pattern): Pattern;
 
 /**
  * KV store where each key is a Name.
@@ -6665,13 +6879,12 @@ declare class Subject<T> extends Observable<T> implements SubscriptionLike {
     /**
      * Creates a "subject" by basically gluing an observer to an observable.
      *
-     * @nocollapse
      * @deprecated Recommended you do not use. Will be removed at some point in the future. Plans for replacement still under discussion.
      */
     static create: (...args: any[]) => any;
     constructor();
     /** @deprecated Internal implementation detail, do not use directly. Will be made internal in v8. */
-    lift<R>(operator: Operator_2<T, R>): Observable<R>;
+    lift<R>(operator: Operator<T, R>): Observable<R>;
     next(value: T): void;
     error(err: any): void;
     complete(): void;
@@ -6681,7 +6894,7 @@ declare class Subject<T> extends Observable<T> implements SubscriptionLike {
      * Creates a new Observable with this Subject as the source. You can do this
      * to create custom Observer-side logic of the Subject and conceal it from
      * code that uses the Observable.
-     * @return {Observable} Observable that the Subject casts to
+     * @return Observable that this Subject casts to.
      */
     asObservable(): Observable<T>;
 }
@@ -6703,8 +6916,6 @@ declare interface Subscriber<Topic = Name, Update extends Event = SyncUpdate<Top
  * a Subscriber, in order to provide Subscription-like capabilities such as
  * `unsubscribe`. Subscriber is a common type in RxJS, and crucial for
  * implementing operators, but it is rarely used as a public API.
- *
- * @class Subscriber<T>
  */
 declare class Subscriber_2<T> extends Subscription_2 implements Observer<T> {
     /**
@@ -6717,7 +6928,6 @@ declare class Subscriber_2<T> extends Subscription_2 implements Observer<T> {
      * Observer.
      * @return A Subscriber wrapping the (partially defined)
      * Observer represented by the given arguments.
-     * @nocollapse
      * @deprecated Do not use. Will be removed in v8. There is no replacement for this
      * method, and there is no reason to be creating instances of `Subscriber` directly.
      * If you have a specific use case, please file an issue.
@@ -6736,23 +6946,20 @@ declare class Subscriber_2<T> extends Subscription_2 implements Observer<T> {
      * The {@link Observer} callback to receive notifications of type `next` from
      * the Observable, with a value. The Observable may call this method 0 or more
      * times.
-     * @param {T} [value] The `next` value.
-     * @return {void}
+     * @param value The `next` value.
      */
-    next(value?: T): void;
+    next(value: T): void;
     /**
      * The {@link Observer} callback to receive notifications of type `error` from
      * the Observable, with an attached `Error`. Notifies the Observer that
      * the Observable has experienced an error condition.
-     * @param {any} [err] The `error` exception.
-     * @return {void}
+     * @param err The `error` exception.
      */
     error(err?: any): void;
     /**
      * The {@link Observer} callback to receive a valueless notification of type
      * `complete` from the Observable. Notifies the Observer that the Observable
      * has finished sending push-based notifications.
-     * @return {void}
      */
     complete(): void;
     unsubscribe(): void;
@@ -6789,12 +6996,9 @@ declare namespace Subscription {
  * method, which will attach a child Subscription to the current Subscription.
  * When a Subscription is unsubscribed, all its children (and its grandchildren)
  * will be unsubscribed as well.
- *
- * @class Subscription
  */
 declare class Subscription_2 implements SubscriptionLike {
     private initialTeardown?;
-    /** @nocollapse */
     static EMPTY: Subscription_2;
     /**
      * A flag to indicate whether this Subscription has already been unsubscribed.
@@ -6815,7 +7019,6 @@ declare class Subscription_2 implements SubscriptionLike {
      * Disposes the resources held by the subscription. May, for instance, cancel
      * an ongoing Observable execution or cancel any other type of work that
      * started when the Subscription was created.
-     * @return {void}
      */
     unsubscribe(): void;
     /**
@@ -6921,198 +7124,6 @@ declare namespace SyncProtocol {
     };
 }
 
-declare class SyncpsCodec {
-    protected readonly ibltParams: IBLT.PreparedParameters;
-    constructor(p: SyncpsCodec.Parameters, ibltParams: IBLT.PreparedParameters);
-}
-
-declare interface SyncpsCodec extends Readonly<SyncpsCodec.Parameters>, IbltCodec {
-}
-
-declare namespace SyncpsCodec {
-    type Compression = Compression;
-    interface Parameters {
-        /** Compression method for IBLT in name component. */
-        ibltCompression: Compression;
-        /** Compute the hash of a publication. */
-        hashPub: (pub: Data) => number;
-        /** Encode Content to buffer. */
-        encodeContent: (pubs: readonly Data[], maxSize: number) => [wire: Uint8Array, count: number];
-        /** Decode Content from buffer. */
-        decodeContent: (payload: Uint8Array) => Data[];
-    }
-}
-
-/** syncps - pubsub service. */
-declare class SyncpsPubsub extends TypedEventTarget<EventMap_7> implements Subscriber<Name, CustomEvent<Data>> {
-    constructor({ p, syncPrefix, describe, cpOpts, syncInterestLifetime, syncDataPubSize, syncSigner, syncVerifier, maxPubLifetime, maxClockSkew, modifyPublication, isExpired, filterPubs, pubSigner, pubVerifier, }: SyncpsPubsub.Options);
-    private readonly maybeHaveEventListener;
-    readonly describe: string;
-    private readonly syncPrefix;
-    private readonly codec;
-    private closed;
-    private readonly iblt;
-    private readonly pubs;
-    private readonly maxPubLifetime;
-    private readonly maxClockSkew;
-    private readonly subs;
-    private readonly dModify;
-    private readonly dIsExpired;
-    private readonly dSigner;
-    private readonly dVerifier?;
-    private nOwnPubs;
-    /** IBLT of own publications with callback. */
-    private readonly dConfirmIblt;
-    private readonly pProducer;
-    private readonly pFilter;
-    private readonly pPubSize;
-    private readonly pPendings;
-    private readonly cOpts;
-    private readonly cLifetime;
-    private cAbort?;
-    private cTimer;
-    private cCurrentInterestNonce?;
-    private cDelivering;
-    private debug;
-    /** Stop the protocol operation. */
-    close(): void;
-    /**
-     * Publish a packet.
-     * @param pub - Data packet. This does not need to be signed.
-     * @param cb - Callback to get notified whether publication is confirmed,
-     *             i.e. its hash appears in a sync Interest from another participant.
-     * @returns - Promise that resolves when the publication is recorded.
-     *            It does not mean the publication has reached other participants.
-     */
-    publish(pub: Data, cb?: SyncpsPubsub.PublishCallback): Promise<void>;
-    /** Subscribe to a topic. */
-    subscribe(topic: Name): Subscription<Name, CustomEvent<Data>>;
-    private handleSyncInterest;
-    private processSyncInterest;
-    private processPendingInterests;
-    private scheduleSyncInterest;
-    private sendSyncInterest;
-    private isExpired;
-    private addToActive;
-    private invokePublishCb;
-}
-
-declare namespace SyncpsPubsub {
-    interface Parameters extends SyncpsCodec.Parameters {
-        iblt: IBLT.Parameters;
-    }
-    type ModifyPublicationCallback = (pub: Data) => void;
-    /**
-     * Callback to determine if a publication is expired.
-     *
-     * @remarks
-     * The callback can return either:
-     * - boolean to indicate whether the publication is expired.
-     * - number, interpreted as Unix timestamp (milliseconds) of publication creation time.
-     *   The publication is considered expired if this timestamp is before
-     *   `NOW - (maxPubLifetime+maxClockSkew)` or after `NOW + maxClockSkew`.
-     */
-    type IsExpiredCallback = (pub: Data) => boolean | number;
-    interface FilterPubItem {
-        /** A publication, i.e. Data packet. */
-        readonly pub: Data;
-        /** Whether the publication is owned by the local participant. */
-        readonly own: boolean;
-    }
-    /**
-     * Callback to decide what publications to be included in a response.
-     * @param items - Unexpired publications.
-     * @returns A priority list of publications to be included in the response.
-     */
-    type FilterPubsCallback = (items: FilterPubItem[]) => FilterPubItem[];
-    interface Options {
-        /**
-         * Algorithm parameters.
-         *
-         * @remarks
-         * They must be the same on every peer.
-         */
-        p: Parameters;
-        /** Sync group prefix. */
-        syncPrefix: Name;
-        /**
-         * Description for debugging purpose.
-         * @defaultValue SyncpsPubsub + syncPrefix
-         */
-        describe?: string;
-        /**
-         * Consumer and producer options.
-         *
-         * @remarks
-         * - `.fw` may be specified.
-         * - Most other fields are overridden.
-         */
-        cpOpts?: ConsumerOptions & ProducerOptions;
-        /**
-         * Sync Interest lifetime in milliseconds.
-         * @defaultValue 4000
-         */
-        syncInterestLifetime?: number;
-        /**
-         * Advisory maximum size for publications included in a sync reply Data packet.
-         * @defaultValue 1300
-         */
-        syncDataPubSize?: number;
-        /**
-         * Signer of sync reply Data packets.
-         * @defaultValue digestSigning
-         */
-        syncSigner?: Signer;
-        /**
-         * Verifier of sync reply Data packets.
-         * @defaultValue no verification
-         */
-        syncVerifier?: Verifier;
-        /**
-         * Publication lifetime.
-         * @defaultValue 1000
-         */
-        maxPubLifetime?: number;
-        /**
-         * Maximum clock skew, for calculating timers.
-         * @defaultValue 1000
-         */
-        maxClockSkew?: number;
-        /**
-         * Callback to modify publication before it's signed.
-         * @defaultValue appending a TimestampNameComponent to the name
-         */
-        modifyPublication?: ModifyPublicationCallback;
-        /**
-         * Callback to determine if a publication is expired.
-         *
-         * @defaultValue
-         * The last component is interpreted as TimestampNameComponent.
-         * If it is not a TimestampNameComponent, the publication is seen as expired.
-         */
-        isExpired?: IsExpiredCallback;
-        /**
-         * Callback to decide what publications to be included in a response.
-         *
-         * @defaultValue
-         * - Respond nothing if there's no own publication.
-         * - Otherwise, prioritize own publications over others, and prioritize later timestamp.
-         */
-        filterPubs?: FilterPubsCallback;
-        /**
-         * Signer of publications.
-         * @defaultValue digestSigning
-         */
-        pubSigner?: Signer;
-        /**
-         * Verifier of publications.
-         * @defaultValue no verification
-         */
-        pubVerifier?: Verifier;
-    }
-    type PublishCallback = (pub: Data, confirmed: boolean) => void;
-}
-
 /** A received update regarding a node. */
 declare class SyncUpdate<ID = any> extends Event {
     readonly node: SyncNode<ID>;
@@ -7133,30 +7144,8 @@ declare class SyncUpdate<ID = any> extends Event {
     seqNums(): Iterable<number>;
 }
 
-declare namespace T {
-    export {
-        scan,
-        print_2 as print,
-        Position,
-        Token,
-        Operator,
-        Comma,
-        Colon,
-        And,
-        Or,
-        ArrowL,
-        Slash,
-        ParenL,
-        ParenR,
-        BraceL,
-        BraceR,
-        Ident,
-        ComponentLit
-    }
-}
-
 /**
- * Create a secondary face by tapping on a primary face.
+ * Create a secondary face that shares the transport of a primary face.
  *
  * @remarks
  * TapFace is useful for sending in-band management commands to a specific neighbor, after being
@@ -7166,7 +7155,13 @@ declare namespace T {
  */
 declare class TapFace implements FwFace.RxTx {
     readonly face: FwFace;
-    constructor(face: FwFace);
+    /**
+     * Create a new secondary {@link Forwarder} and add a {@link TapFace}.
+     * @param face - FwFace on the existing primary forwarder.
+     * @returns FwFace on a new forwarder. The forwarder may be retrieved in `.fw` property.
+     */
+    static create(face: FwFace): FwFace;
+    private constructor();
     get attributes(): {
         describe: string;
         local?: boolean;
@@ -7176,15 +7171,6 @@ declare class TapFace implements FwFace.RxTx {
     private readonly ctrl;
     readonly rx: Pushable<FwPacket<Interest | Data | Nack>>;
     tx(iterable: AsyncIterable<FwPacket>): Promise<void>;
-}
-
-declare namespace TapFace {
-    /**
-     * Create a new {@link Forwarder} and add a {@link TapFace}.
-     * @param face - FwFace on the existing forwarder.
-     * @returns FwFace on a new forwarder. The forwarder may be retrieved in `.fw` property.
-     */
-    function create(face: FwFace): FwFace;
 }
 
 declare type TeardownLogic = Subscription_2 | Unsubscribable | (() => void) | void;
@@ -7232,14 +7218,6 @@ declare namespace toHex {
     const TABLE: Readonly<Record<number, string>>;
 }
 
-/** Token in schema document. */
-declare abstract class Token {
-    /** Token position. */
-    position: Position;
-    /** String representation of the token. */
-    abstract toString(): string;
-}
-
 /**
  * Get key name from key name or certificate name.
  *
@@ -7283,9 +7261,6 @@ declare class Topology {
 /** Get subject name from subject name, key name, or certificate name. */
 declare function toSubjectName(name: Name): Name;
 
-/** Flatten sequence to tokens. */
-declare function toTokens(...sequence: readonly Unit[]): Iterable<T.Token>;
-
 /** Convert string to UTF-8 byte array. */
 declare function toUtf8(s: string): Uint8Array;
 
@@ -7296,7 +7271,7 @@ declare function toUtf8(s: string): Uint8Array;
  *
  * @remarks
  * This may allow `EventTarget` subclass to skip certain event generation code paths.
- * Tracking is imprecise: it does not consider `once()` and `removeEventListener()`.
+ * Tracking is imprecise: it does not consider `options.once` and `options.signal`.
  */
 declare function trackEventListener(target: EventTarget): Record<string, boolean>;
 
@@ -7386,12 +7361,11 @@ declare abstract class Transport {
             HierarchicalSigner,
             HierarchicalVerifier,
             pattern,
-            versec,
-            versec as versec2021,
             TrustSchemaPolicy,
             printESM,
             TrustSchema,
             TrustSchemaSigner,
+            simplifyPattern,
             TrustSchemaVerifier
         }
     }
@@ -7643,12 +7617,6 @@ declare abstract class Transport {
         (source: T): R;
     }
 
-    /** A unit on the same nesting level. */
-    declare type Unit = T.Token | Paren | Brace;
-
-    /** Strip outer parens. */
-    declare function unParen(units: readonly Unit[]): readonly Unit[];
-
     declare interface Unsubscribable {
         unsubscribe(): void;
     }
@@ -7660,8 +7628,8 @@ declare abstract class Transport {
             assert,
             console_2 as console,
             concatBuffers,
-            crypto_2 as crypto,
             delay,
+            crypto_2 as crypto,
             asUint8Array,
             asDataView,
             lock,
@@ -7673,6 +7641,7 @@ declare abstract class Transport {
             pushable,
             safeIter,
             flatMapOnce,
+            getOrInsert,
             evict,
             Pushable,
             KeyMap,
@@ -7742,10 +7711,10 @@ declare abstract class Transport {
         readonly maxComps: number;
         readonly inner?: Pattern;
         readonly filter?: VariablePattern.Filter;
-        simplify(): Pattern;
         private innerMatch;
         private filtersAccept;
         protected matchState(state: MatchState): Iterable<MatchState>;
+        protected computeMatchLengthRange(): [min: number, max: number];
         protected buildState(state: BuildState): Iterable<BuildState>;
     }
 
@@ -7773,7 +7742,20 @@ declare abstract class Transport {
              * Otherwise, the inner pattern is used to build the name.
              */
             inner?: Pattern;
-            /** Filter that the name part must satisfy. */
+            /**
+             * Filter that the name part must satisfy.
+             *
+             * @remarks
+             * If {@link inner} is specified, the filter function can have access to variables
+             * interpreted by the inner pattern.
+             */
+            /**
+             * Filter that the name part must satisfy.
+             *
+             * @remarks
+             * If {@link inner} is specified, the filter function can have access to variables
+             * interpreted by the inner pattern.
+             */
             filter?: Filter;
         }
         /** Function to determine whether a name part is acceptable. */
@@ -7824,18 +7806,6 @@ declare abstract class Transport {
         function checkSigType(pkt: Readonly<PacketWithSignature>, expectedSigType: number): void;
         /** Throw bad signature error if not OK. */
         function throwOnBadSig(ok: boolean): asserts ok;
-    }
-
-    declare namespace versec {
-        export {
-            ast,
-            compile,
-            load,
-            N as filter,
-            N as nest,
-            print_3 as print,
-            T as token
-        }
     }
 
     declare interface WasmFS {

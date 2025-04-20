@@ -1,0 +1,13 @@
+diff --git a/node_modules/@yoursunny/webcrypto-ed25519/browser.js b/node_modules/@yoursunny/webcrypto-ed25519/browser.js
+index 4b5c0b6..f973095 100644
+--- a/node_modules/@yoursunny/webcrypto-ed25519/browser.js
++++ b/node_modules/@yoursunny/webcrypto-ed25519/browser.js
+@@ -162,7 +162,7 @@ async function checkNativeSupport() {
+         return false;
+     }
+ }
+-export const hasNativeSupport = await checkNativeSupport();
++export const hasNativeSupport = false;
+ export function ponyfillEd25519() {
+     if (hasNativeSupport) {
+         return crypto.subtle;

@@ -1,0 +1,8 @@
+diff --git a/node_modules/vis-network/declarations/network/dotparser.d.ts b/node_modules/vis-network/declarations/network/dotparser.d.ts
+index 06ec9e8..69d29dd 100644
+--- a/node_modules/vis-network/declarations/network/dotparser.d.ts
++++ b/node_modules/vis-network/declarations/network/dotparser.d.ts
+@@ -1,2 +1 @@
+-declare const whoKnowsWhat: any
+-export default whoKnowsWhat
++export declare const whoKnowsWhat: any;

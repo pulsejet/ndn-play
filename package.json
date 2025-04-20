@@ -58,6 +58,6 @@
     "@types/vscode-webview": "^1.57.5",
     "patch-package": "^8.0.0",
     "tslib": "^2.7.0",
-    "typescript": "^5.5"
+    "typescript": "^5.8.3"
   }
 }

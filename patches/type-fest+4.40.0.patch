@@ -1,0 +1,10 @@
+diff --git a/node_modules/type-fest/source/except.d.ts b/node_modules/type-fest/source/except.d.ts
+index c446290..02b92e4 100644
+--- a/node_modules/type-fest/source/except.d.ts
++++ b/node_modules/type-fest/source/except.d.ts
+@@ -1,4 +1,4 @@
+-import type {ApplyDefaultOptions} from './internal';
++import type {ApplyDefaultOptions} from './internal/index';
+ import type {IsEqual} from './is-equal';
+ 
+ /**
